@@ -43,6 +43,22 @@ Route::middleware(['web', 'admin_locale', 'user'])
     ->group(function () {
 
         // -----------------------------------------------
+        // WhatsApp Integration (Evolution API)
+        // -----------------------------------------------
+        Route::prefix('whatsapp')->controller(\SuiteZap\LawFirm\Http\Controllers\Admin\Whatsapp\ConnectionController::class)->group(function () {
+            Route::get('', 'index')->name('admin.lawfirm.whatsapp.index');
+            Route::post('connect', 'connect')->name('admin.lawfirm.whatsapp.connect');
+            Route::post('disconnect', 'disconnect')->name('admin.lawfirm.whatsapp.disconnect');
+            Route::get('status', 'status')->name('admin.lawfirm.whatsapp.status');
+        });
+
+        // -----------------------------------------------
+        // SaaS Dashboard (Minha Assinatura)
+        // -----------------------------------------------
+        Route::get('assinatura', [\SuiteZap\LawFirm\Http\Controllers\Admin\SaasDashboardController::class, 'index'])
+            ->name('admin.lawfirm.saas.index');
+
+        // -----------------------------------------------
         // Processos Routes
         // -----------------------------------------------
         Route::prefix('processos')->controller(ProcessoController::class)->group(function () {
@@ -73,6 +89,7 @@ Route::middleware(['web', 'admin_locale', 'user'])
             Route::get('{id}/edit', 'edit')->name('admin.prazos.edit');
             Route::put('{id}', 'update')->name('admin.prazos.update');
             Route::put('{id}/concluir', 'concluir')->name('admin.prazos.concluir');
+            Route::get('notify/{id}', 'notifyClient')->name('lawfirm.prazos.notify');
             Route::delete('{id}', 'destroy')->name('admin.prazos.destroy');
         });
 
@@ -93,6 +110,16 @@ Route::middleware(['web', 'admin_locale', 'user'])
 
         Route::get('documentos/contrato/{processId}', [LegalDocumentController::class, 'downloadContract'])
             ->name('lawfirm.documents.contract');
+
+        // -----------------------------------------------
+        // Legal Assistants (IA)
+        // -----------------------------------------------
+        Route::prefix('assistants')->controller(\SuiteZap\LawFirm\Http\Controllers\Admin\AssistantController::class)->group(function () {
+            Route::get('', 'index')->name('lawfirm.assistants.index');
+            Route::get('{slug}', 'show')->name('lawfirm.assistants.show');
+            Route::post('{slug}/generate', 'generate')->name('lawfirm.assistants.generate');
+            Route::post('{slug}/execute', 'execute')->name('lawfirm.assistants.execute');
+        });
     });
 
 // ============================================================================

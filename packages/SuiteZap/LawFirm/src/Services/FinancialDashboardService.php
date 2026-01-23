@@ -41,12 +41,13 @@ class FinancialDashboardService
         $responsibleId = request('responsible_id');
 
         // 1. Aplica Segurança (ACL)
-        if ($user->view_permission !== 'global') {
+        // Skip filtering if user is administrator (role_id = 1)
+        if ($user && $user->role_id != 1 && $user->view_permission !== 'global') {
             if ($user->view_permission == 'group') {
                 // Filtra por grupo
-                $userIds = $user->groups->mapMany(function ($group) {
+                $userIds = $user->groups->flatMap(function ($group) {
                     return $group->users->pluck('id');
-                })->flatten()->unique();
+                })->unique()->toArray();
                 $query->whereIn('processos.user_id', $userIds);
             } else {
                 // Individual

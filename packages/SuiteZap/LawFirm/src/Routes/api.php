@@ -50,3 +50,10 @@ Route::group(['prefix' => 'api/lawfirm', 'middleware' => ['api', 'auth:sanctum']
     Route::post('documents/{id}/upload', [SuiteZap\LawFirm\Http\Controllers\Api\DocumentChecklistApiController::class, 'uploadFile']);
 
 });
+
+// ===========================================
+// SaaS Webhooks (Secured by Token, not User)
+// ===========================================
+Route::group(['prefix' => 'api/lawfirm/saas', 'middleware' => ['api']], function () {
+    Route::post('webhook', [\SuiteZap\LawFirm\Http\Controllers\Api\SaasWebhookController::class, 'updateSubscription']);
+});

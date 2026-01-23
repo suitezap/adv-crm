@@ -40,7 +40,12 @@ class Anexo extends Model
         }
 
         // Use Storage::url() for S3 compatibility
-        return Storage::url($path);
+        $url = Storage::url($path);
+
+        // Fix potential double slash issue (e.g. http://domain.com//storage)
+        // caused by trailing slash in APP_URL + Storage config
+        // Replaces any // with / unless preceded by : (to preserve http://)
+        return preg_replace('/([^:])\/\//', '$1/', $url);
     }
 
     /**

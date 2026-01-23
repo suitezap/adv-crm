@@ -26,8 +26,59 @@ class ProcessDocumentController extends Controller
             ]);
         }
 
-        session()->flash('success', 'Checklist importado com sucesso!');
-        return redirect()->back();
+        // --- INICIO BLOCO WHATSAPP ---
+        try {
+            $processo = \SuiteZap\LawFirm\Models\Processo::with('person')->find($processId);
+
+            // 2. Verificar Telefone
+            $phone = null;
+            if ($processo && $processo->person) {
+                // Fix for "Undefined relationship" - contact_numbers is an array cast
+                $contactNumbers = collect($processo->person->contact_numbers);
+                $phoneData = $contactNumbers->first();
+                $phone = is_object($phoneData) ? $phoneData->value : ($phoneData['value'] ?? null);
+            }
+
+            // 3. Carregar Template
+            $templateMsg = core()->getConfigData('lawfirm.whatsapp_templates.messages.document_request');
+
+            if ($phone && !empty($templateMsg)) {
+
+                // 4. Gerar Lista de Documentos
+                $docListString = "";
+                if ($template && !empty($template->items)) {
+                    foreach ($template->items as $item) {
+                        $docListString .= "- " . $item . "\n";
+                    }
+                }
+
+                // 5. Substituir Variáveis
+                $msg = str_replace(
+                    ['{cliente_nome}', '{processo_titulo}', '{kit_nome}', '{lista_documentos}'],
+                    [
+                        $processo->person->name,
+                        $processo->titulo ?? 'Processo',
+                        $template->name ?? 'Documentação',
+                        $docListString
+                    ],
+                    $templateMsg
+                );
+
+                // 6. Enviar via Service
+                $evolutionService = app(\SuiteZap\LawFirm\Services\Whatsapp\EvolutionService::class);
+                $instanceName = env('EVOLUTION_INSTANCE_NAME', 'LawFirm');
+                $evolutionService->sendMessage($instanceName, $phone, $msg);
+
+                \Illuminate\Support\Facades\Log::info("Solicitação de documentos enviada via WhatsApp para {$processo->person->name}");
+                session()->flash('success', 'Checklist importado e solicitação enviada via WhatsApp!');
+                return redirect()->back();
+            }
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erro ao enviar solicitação de documentos: " . $e->getMessage());
+            // Não interrompa o fluxo principal, apenas logue o erro.
+        }
+        // --- FIM BLOCO WHATSAPP ---
     }
 
     // Atualiza o status de um documento (Ex: Pendente -> Recebido)

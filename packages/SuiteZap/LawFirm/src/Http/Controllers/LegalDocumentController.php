@@ -25,7 +25,7 @@ class LegalDocumentController extends Controller
         $client = [];
 
         if ($person) {
-            $client['name'] = strtoupper($person->name);
+            $client['name'] = mb_strtoupper($person->name, 'UTF-8');
 
             // Documentos (Prioridade: Extension > Person > Custom Attribute)
             $client['cpf'] = $detail->cpf ?? $person->cpf ?? $person->custom_attributes['cpf'] ?? null;
@@ -159,7 +159,7 @@ class LegalDocumentController extends Controller
         $client = [];
 
         if ($person) {
-            $client['name'] = strtoupper($person->name);
+            $client['name'] = mb_strtoupper($person->name, 'UTF-8');
 
             // Documentos (Prioridade: Extension > Person > Custom Attribute)
             $client['cpf'] = $detail->cpf ?? $person->cpf ?? $person->custom_attributes['cpf'] ?? null;

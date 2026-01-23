@@ -14,6 +14,8 @@ use Webkul\Lead\Repositories\LeadRepository;
 
 use SuiteZap\LawFirm\Rules\ValidarCNJ;
 use SuiteZap\LawFirm\Rules\ValidarCpfCnpj;
+use SuiteZap\LawFirm\Services\SaasStorageService;
+use SuiteZap\LawFirm\Events\PrazoCreated;
 
 class ProcessoController extends Controller
 {
@@ -224,13 +226,16 @@ class ProcessoController extends Controller
         // CREATE PRAZOS
         if (isset($data['prazos']) && is_array($data['prazos'])) {
             foreach ($data['prazos'] as $prazoData) {
-                $processo->prazos()->create([
+                $newPrazo = $processo->prazos()->create([
                     'titulo' => $prazoData['titulo'],
                     'data_vencimento' => $prazoData['data_vencimento'],
                     'status' => $prazoData['status'] ?? 'Pendente',
                     'descricao' => $prazoData['descricao'] ?? null,
                     'tipo' => 'comum'
                 ]);
+
+                // Dispara evento para WhatsApp
+                // event(new PrazoCreated($newPrazo));
             }
         }
 
@@ -283,18 +288,42 @@ class ProcessoController extends Controller
             }
         }
 
-        // UPLOAD ANEXOS (GED)
+        // UPLOAD ANEXOS (GED) - STRICT NAMING: [ID]-[HASH]_[SLUG].ext
         if (request()->hasFile('anexos')) {
-            foreach (request()->file('anexos') as $file) {
-                // Store using configurable disk (respects FILESYSTEM_DISK env)
-                $path = $file->store('processos/' . $processo->id, config('filesystems.default'));
+            $storageService = app(SaasStorageService::class);
 
+            foreach (request()->file('anexos') as $file) {
+                $fileSize = $file->getSize();
+
+                // 1. CHECK QUOTA before upload
+                if (!$storageService->checkQuota($fileSize)) {
+                    session()->flash('error', 'Cota de disco excedida. Limite de armazenamento atingido.');
+                    return redirect()->back()->withInput();
+                }
+
+                // 2. Generate components
+                $processId = $processo->id;
+                $randomHash = \Illuminate\Support\Str::random(7);
+                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $cleanName = \Illuminate\Support\Str::slug($originalName);
+                $extension = strtolower($file->getClientOriginalExtension());
+
+                // 3. Construct final name
+                $finalName = "{$processId}-{$randomHash}_{$cleanName}.{$extension}";
+
+                // 4. Store using configurable disk
+                $path = $file->storeAs('processos/' . $processId, $finalName, config('filesystems.default'));
+
+                // 5. Save to database
                 $processo->anexos()->create([
                     'path' => $path,
                     'nome_original' => $file->getClientOriginalName(),
                     'tipo_mime' => $file->getMimeType(),
-                    'tamanho' => $file->getSize(),
+                    'tamanho' => $fileSize,
                 ]);
+
+                // 6. INCREMENT USAGE after successful upload
+                $storageService->incrementUsage($fileSize);
             }
         }
 
@@ -473,7 +502,8 @@ class ProcessoController extends Controller
                     $prazoModel->update($attributes);
                 }
             } else {
-                $processo->prazos()->create($attributes);
+                $newPrazo = $processo->prazos()->create($attributes);
+                // event(new PrazoCreated($newPrazo));
             }
         }
 
@@ -543,18 +573,42 @@ class ProcessoController extends Controller
             }
         }
 
-        // UPLOAD ANEXOS (GED) - UPDATE - S3 Compatible
+        // UPLOAD ANEXOS (GED) - UPDATE - STRICT NAMING: [ID]-[HASH]_[SLUG].ext
         if (request()->hasFile('anexos')) {
-            foreach (request()->file('anexos') as $file) {
-                // Store using configurable disk (respects FILESYSTEM_DISK env)
-                $path = $file->store('processos/' . $processo->id, config('filesystems.default'));
+            $storageService = app(SaasStorageService::class);
 
+            foreach (request()->file('anexos') as $file) {
+                $fileSize = $file->getSize();
+
+                // 1. CHECK QUOTA before upload
+                if (!$storageService->checkQuota($fileSize)) {
+                    session()->flash('error', 'Cota de disco excedida. Limite de armazenamento atingido.');
+                    return redirect()->back()->withInput();
+                }
+
+                // 2. Generate components
+                $processId = $processo->id;
+                $randomHash = \Illuminate\Support\Str::random(7);
+                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $cleanName = \Illuminate\Support\Str::slug($originalName);
+                $extension = strtolower($file->getClientOriginalExtension());
+
+                // 3. Construct final name
+                $finalName = "{$processId}-{$randomHash}_{$cleanName}.{$extension}";
+
+                // 4. Store using configurable disk
+                $path = $file->storeAs('processos/' . $processId, $finalName, config('filesystems.default'));
+
+                // 5. Save to database
                 $processo->anexos()->create([
                     'path' => $path,
                     'nome_original' => $file->getClientOriginalName(),
                     'tipo_mime' => $file->getMimeType(),
-                    'tamanho' => $file->getSize(),
+                    'tamanho' => $fileSize,
                 ]);
+
+                // 6. INCREMENT USAGE after successful upload
+                $storageService->incrementUsage($fileSize);
             }
         }
 
@@ -656,6 +710,9 @@ class ProcessoController extends Controller
     {
         $anexo = \SuiteZap\LawFirm\Models\Anexo::findOrFail($id);
 
+        // Get file size BEFORE deleting (for quota decrement)
+        $fileSize = $anexo->tamanho ?? 0;
+
         // Delete from Storage (S3 Compatible - uses default disk)
         if (Storage::exists($anexo->path)) {
             Storage::delete($anexo->path);
@@ -663,6 +720,12 @@ class ProcessoController extends Controller
 
         // Delete from DB
         $anexo->delete();
+
+        // DECREMENT USAGE after successful deletion
+        if ($fileSize > 0) {
+            $storageService = app(SaasStorageService::class);
+            $storageService->decrementUsage($fileSize);
+        }
 
         session()->flash('success', 'Anexo excluído com sucesso.');
 

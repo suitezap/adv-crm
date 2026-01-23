@@ -6,10 +6,80 @@ use Illuminate\Http\Request;
 use SuiteZap\LawFirm\DataGrids\PrazoDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\Models\Prazo;
+use SuiteZap\LawFirm\Events\PrazoCreated;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+
+use SuiteZap\LawFirm\Services\Whatsapp\EvolutionService;
 
 class PrazoController extends Controller
 {
+    protected $evolutionService;
+
+    public function __construct(EvolutionService $evolutionService)
+    {
+        $this->evolutionService = $evolutionService;
+    }
+
+    /**
+     * Send manual WhatsApp notification.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function notifyClient($id)
+    {
+        try {
+            // 1. Buscar o Prazo
+            $prazo = Prazo::with(['processo.person'])->findOrFail($id);
+            $processo = $prazo->processo;
+
+            if (!$processo || !$processo->person) {
+                session()->flash('error', 'Este prazo não tem um processo/pessoa vinculada.');
+                return redirect()->back();
+            }
+
+            $person = $processo->person;
+
+            // 2. Validar Pessoa e Telefone
+            // contact_numbers is an array cast, not a relationship
+            $contactNumbers = collect($person->contact_numbers);
+            $phoneData = $contactNumbers->first();
+
+            if (!$phoneData) {
+                session()->flash('error', 'A pessoa vinculada não possui telefone cadastrado.');
+                return redirect()->back();
+            }
+
+            $phone = is_object($phoneData) ? $phoneData->value : $phoneData['value'];
+
+            // 3. Carregar Template
+            $template = core()->getConfigData('lawfirm.whatsapp_templates.messages.new_prazo_client');
+            if (empty($template)) {
+                session()->flash('warning', 'Template de mensagem não configurado em Ajustes.');
+                return redirect()->back();
+            }
+
+            // 4. Substituir Variáveis
+            $msg = str_replace(
+                ['{cliente_nome}', '{prazo_titulo}', '{prazo_data}', '{prazo_descricao}'],
+                [$person->name, $prazo->titulo, Carbon::parse($prazo->data_vencimento)->format('d/m/Y'), $prazo->descricao ?? ''],
+                $template
+            );
+
+            // 5. Enviar via Service
+            $instanceName = env('EVOLUTION_INSTANCE_NAME', 'LawFirm');
+            $this->evolutionService->sendMessage($instanceName, $phone, $msg);
+
+            session()->flash('success', 'Notificação enviada com sucesso para ' . $person->name);
+
+        } catch (\Exception $e) {
+            Log::error("Erro ao notificar prazo: " . $e->getMessage());
+            session()->flash('error', 'Erro ao enviar mensagem: ' . $e->getMessage());
+        }
+
+        return redirect()->back();
+    }
     /**
      * Display a listing of the resource.
      *
@@ -32,6 +102,7 @@ class PrazoController extends Controller
      */
     public function store(Request $request)
     {
+        \Log::info("PrazoController: store method hit.");
         $request->validate([
             'processo_id' => 'required|exists:processos,id',
             'titulo' => 'required|string|max:255',
@@ -40,7 +111,7 @@ class PrazoController extends Controller
             'descricao' => 'nullable|string',
         ]);
 
-        Prazo::create([
+        $prazo = Prazo::create([
             'processo_id' => $request->processo_id,
             'titulo' => $request->titulo,
             'data_vencimento' => $request->data_vencimento,
@@ -48,6 +119,9 @@ class PrazoController extends Controller
             'descricao' => $request->descricao,
             'status' => 'pendente',
         ]);
+
+        \Log::info("PrazoController: Disparando evento PrazoCreated para Prazo ID {$prazo->id}");
+        event(new PrazoCreated($prazo));
 
         session()->flash('success', trans('lawfirm::app.prazos.create-success'));
 

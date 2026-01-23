@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Procuração</title>
     <style>
         @page {
@@ -10,7 +10,7 @@
         }
 
         body {
-            font-family: 'Times New Roman', serif;
+            font-family: sans-serif;
             font-size: 11pt;
             line-height: 1.5;
             color: #000;
@@ -18,7 +18,7 @@
 
         h1 {
             text-align: center;
-            text-transform: uppercase;
+            /* text-transform: uppercase; REMOVED: Managed via PHP/HTML for UTF-8 safety */
             font-size: 14pt;
             margin-bottom: 1.5cm;
             font-weight: bold;
@@ -32,7 +32,7 @@
 
         .label {
             font-weight: bold;
-            text-transform: uppercase;
+            /* text-transform: uppercase; REMOVED */
         }
 
         .signature-block {
@@ -63,7 +63,42 @@
 
 <body>
 
-    <h1>Procuração Ad Judicia</h1>
+    @php
+        // Recupera dados de config
+        $companyName = core()->getConfigData('lawfirm.settings.general.company_name') ?? 'Nome do Escritório Não Configurado';
+
+        // Logo Path (Lógica Absoluta)
+        $logoRelPath = core()->getConfigData('lawfirm.settings.general.logo');
+
+        // Se não houver logo específico do LawFirm, tenta o logo geral do admin como fallback (opcional, mas bom para garantir)
+        // Mas o pedido diz para usar a chave do LawFirm. Vamos focar nela.
+        if (!$logoRelPath) {
+            $logoRelPath = core()->getConfigData('general.design.admin_logo.logo_image');
+        }
+
+        $logoAbsPath = $logoRelPath ? public_path('storage/' . $logoRelPath) : null;
+    @endphp
+
+    {{-- HEADER EM TABELA --}}
+    <table style="width: 100%; border-bottom: 1px solid #ccc; margin-bottom: 20px; padding-bottom: 10px;">
+        <tr>
+            {{-- COLUNA 1: LOGO (Esquerda) --}}
+            <td style="width: 30%; vertical-align: middle; text-align: left;">
+                @if($logoAbsPath && file_exists($logoAbsPath))
+                    <img src="{{ $logoAbsPath }}" style="max-height: 60px; width: auto;">
+                @else
+                    <span style="font-size: 10px; color: #999;">[Sem Logo]</span>
+                @endif
+            </td>
+
+            {{-- COLUNA 2: NOME DA EMPRESA (Direita ou Esquerda conforme padrão do Recibo) --}}
+            <td style="width: 70%; vertical-align: middle; text-align: left; padding-left: 15px;">
+                <h2 style="margin: 0; font-size: 18px; color: #333;">{{ $companyName }}</h2>
+            </td>
+        </tr>
+    </table>
+
+    <h1>PROCURAÇÃO AD JUDICIA</h1>
 
     <p>
         <span class="label">OUTORGANTE:</span>

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use SuiteZap\LawFirm\Events\PrazoCreated;
+use SuiteZap\LawFirm\Listeners\SendPrazoWhatsapp;
 
 class LawFirmServiceProvider extends ServiceProvider
 {
@@ -87,6 +89,14 @@ class LawFirmServiceProvider extends ServiceProvider
         // 6. EVENT LISTENERS - Injeções de Views
         // ====================================================================
         $this->registerEventListeners();
+
+        // DEBUG: Registro explícito do evento para garantir funcionamento
+        Event::listen(
+            PrazoCreated::class,
+            SendPrazoWhatsapp::class
+        );
+        Log::info('LawFirm: Evento PrazoCreated registrado explicitamente no boot.');
+
         Log::info('LawFirm: Event Listeners registrados.');
 
         // ====================================================================
@@ -140,6 +150,8 @@ class LawFirmServiceProvider extends ServiceProvider
             __DIR__ . '/../Config/system.php',
             'core_config'
         );
+
+        $this->app->register(EventServiceProvider::class);
     }
 
     /**

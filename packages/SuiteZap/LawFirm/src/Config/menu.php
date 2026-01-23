@@ -1,6 +1,7 @@
 <?php
 
 return [
+    // Parent Menu: Jurídico
     [
         'key' => 'lawfirm',
         'name' => 'Jurídico',
@@ -9,6 +10,8 @@ return [
         'icon-class' => 'icon-note',
         'permission' => 'lawfirm',
     ],
+
+    // Child 1: Processos
     [
         'key' => 'lawfirm.processos',
         'name' => 'Processos',
@@ -17,6 +20,8 @@ return [
         'icon-class' => '',
         'permission' => 'lawfirm.processos',
     ],
+
+    // Child 2: Prazos
     [
         'key' => 'lawfirm.prazos',
         'name' => 'Prazos',
@@ -25,6 +30,8 @@ return [
         'icon-class' => 'icon-calendar',
         'permission' => 'lawfirm.prazos',
     ],
+
+    // Child 3: Financeiro
     [
         'key' => 'lawfirm.financial',
         'name' => 'Dashboard Financeiro',
@@ -33,12 +40,42 @@ return [
         'icon-class' => 'icon-dashboard',
         'permission' => 'lawfirm.financial',
     ],
+
+    // Child 4: Assistentes IA
+    [
+        'key' => 'lawfirm.assistants',
+        'name' => 'Assistentes IA',
+        'route' => 'lawfirm.assistants.index',
+        'sort' => 4,
+        'icon-class' => 'icon-dashboard',
+        'permission' => 'lawfirm.assistants',
+    ],
+
+    // Child 4: Dados do Escritório
     [
         'key' => 'lawfirm.settings',
-        'name' => 'Configurações',
+        'name' => 'Dados do Escritório',
         'route' => 'admin.configuration.index',
         'params' => ['slug' => 'lawfirm', 'slug2' => 'settings'],
         'sort' => 20,
         'icon-class' => 'icon-setting',
+    ],
+
+    // Child 5: SaaS Dashboard (Minha Assinatura)
+    [
+        'key' => 'lawfirm.saas_dashboard',
+        'name' => 'Minha Assinatura',
+        'route' => 'admin.lawfirm.saas.index',
+        'sort' => 50,
+        'icon-class' => 'icon-settings',
+    ],
+
+    // Child 6: WhatsApp Integration
+    [
+        'key' => 'lawfirm.whatsapp',
+        'name' => 'WhatsApp',
+        'route' => 'admin.lawfirm.whatsapp.index',
+        'sort' => 60,
+        'icon-class' => 'icon-sales', // Using generic icon
     ],
 ];

@@ -92,6 +92,40 @@ return [
                 'channel_based' => true,
                 'info' => 'Ex: São Paulo. Usada na data de procurações e contratos.',
             ],
+            // --- BLOCO 4: Integrações (WhatsApp) ---
+            // Credenciais movidas para o .env por segurança
+        ],
+    ],
+    [
+        'key' => 'lawfirm.whatsapp_templates',
+        'name' => 'Templates WhatsApp',
+        'info' => 'Configure os textos das mensagens automáticas',
+        'sort' => 2,
+        'icon' => 'icon-speech-bubble',
+    ],
+    [
+        'key' => 'lawfirm.whatsapp_templates.messages',
+        'name' => 'Mensagens Automáticas',
+        'info' => 'Defina os modelos de mensagens',
+        'sort' => 1,
+        'fields' => [
+            [
+                'name' => 'new_prazo_client',
+                'title' => 'Novo Prazo (Notificação Cliente)',
+                'type' => 'textarea',
+                'validation' => 'required',
+                'channel_based' => true,
+                'info' => 'Variáveis disponíveis: {cliente_nome}, {prazo_titulo}, {prazo_data}, {prazo_descricao}.',
+                'default' => 'Olá {cliente_nome}, informamos um novo prazo no seu processo: {prazo_titulo}. Data: {prazo_data}. {prazo_descricao}',
+            ],
+            [
+                'name' => 'document_request',
+                'title' => 'Solicitação de Documentos (Importação de Kit)',
+                'type' => 'textarea',
+                'channel_based' => true,
+                'info' => 'Variáveis: {cliente_nome}, {processo_titulo}, {kit_nome}, {lista_documentos}.',
+                'default' => "Olá {cliente_nome}. Referente ao processo {processo_titulo}, precisamos que nos envie os seguintes documentos do kit {kit_nome}:\n{lista_documentos}\nPode enviar fotos legíveis por aqui mesmo.",
+            ],
         ],
     ],
 ];

@@ -1,0 +1,151 @@
+<?php
+
+namespace SuiteZap\LawFirm\Services\Whatsapp;
+
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
+
+class EvolutionService
+{
+    protected $client;
+    protected $baseUrl;
+    protected $apiKey;
+
+    public function __construct()
+    {
+        // Prioritize .env, fallback to System Config
+        $this->baseUrl = env('EVOLUTION_API_URL')
+            ?: core()->getConfigData('lawfirm.settings.general.evolution_api_url');
+
+        $this->apiKey = env('EVOLUTION_API_KEY')
+            ?: core()->getConfigData('lawfirm.settings.general.evolution_api_key');
+
+        // Normalize URL
+        $this->baseUrl = rtrim($this->baseUrl, '/');
+
+        if ($this->baseUrl && $this->apiKey) {
+            $this->client = new Client([
+                'base_uri' => $this->baseUrl,
+                'headers' => [
+                    'apikey' => $this->apiKey,
+                    'Content-Type' => 'application/json',
+                ],
+                'timeout' => 30,
+            ]);
+        }
+    }
+
+    /**
+     * Helper to handle Guzzle requests nicely
+     */
+    protected function request($method, $uri, $data = [])
+    {
+        if (!$this->client) {
+            return [
+                'success' => false,
+                'error' => 'Evolution API não configurada (URL ou Key ausentes).'
+            ];
+        }
+
+        try {
+            $options = [];
+            if (!empty($data)) {
+                $options['json'] = $data;
+            }
+
+
+            $response = $this->client->request($method, $uri, $options);
+            $body = json_decode($response->getBody(), true);
+
+            return ['success' => true, 'data' => $body];
+
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            // 4xx errors
+            $response = $e->getResponse();
+            $body = json_decode($response->getBody(), true);
+
+            return [
+                'success' => false,
+                'error' => $body['message'] ?? $body['error'] ?? $e->getMessage()
+            ];
+
+        } catch (\Exception $e) {
+            // Other errors
+            Log::error('Evolution API Error: ' . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Cria a instância (se não existir)
+     */
+    public function createInstance($instanceName)
+    {
+        return $this->request('POST', '/instance/create', [
+            'instanceName' => $instanceName,
+            'qrcode' => true,
+            'integration' => 'WHATSAPP-BAILEYS',
+        ]);
+    }
+
+    /**
+     * Retorna o status/QR code da conexão
+     */
+    public function connectInstance($instanceName)
+    {
+        // Primeiro tenta conexão
+        return $this->request('GET', "/instance/connect/{$instanceName}");
+    }
+
+    /**
+     * Busca informações da instância (estado, perfil, etc)
+     */
+    public function fetchInstance($instanceName)
+    {
+        return $this->request('GET', "/instance/fetchInstances", [
+            'instanceName' => $instanceName
+        ]);
+    }
+
+    /**
+     * Desconecta (Logout) e Deleta instância
+     */
+    /**
+     * Desconecta (Logout) e Deleta instância
+     */
+    public function disconnectInstance($instanceName)
+    {
+        if (!$this->client) {
+            return null;
+        }
+
+        try {
+            // Tenta fazer Logout primeiro
+            $this->client->delete("/instance/logout/{$instanceName}");
+        } catch (\Exception $e) {
+            // Ignora erro se já estiver deslogado
+        }
+
+        // Força a deleção da instância na API para garantir limpeza
+        try {
+            return $this->client->delete("/instance/delete/{$instanceName}");
+        } catch (\Exception $e) {
+            // Retorna null ou lança exceção controlada
+            Log::error("Erro ao deletar instância Evolution: " . $e->getMessage());
+            throw $e; // Re-throw to let controller handle it
+        }
+    }
+
+    /**
+     * Envia mensagem de texto
+     */
+    public function sendMessage($instanceName, $number, $text)
+    {
+        return $this->request('POST', "/message/sendText/{$instanceName}", [
+            'number' => $number,
+            'text' => $text,
+            'delay' => 1200,
+            'linkPreview' => false
+        ]);
+    }
+}

@@ -52,19 +52,21 @@ class FinancialDataGrid extends DataGrid
                 'persons.contact_numbers'
             );
 
-        // Security / ACL Scope
+        // Security / ACL Scope - Filter by User Permissions
         // -------------------------------------------------------------------------
         $user = auth()->guard('user')->user();
 
-        if ($user && $user->view_permission !== 'global') {
+        // Check 1: Skip filtering if user is administrator (role_id = 1 in Krayin)
+        // Check 2: Skip filtering if user has global view permission
+        if ($user && $user->role_id != 1 && $user->view_permission !== 'global') {
             if ($user->view_permission == 'group') {
-                // Filtra por grupo
-                $userIds = $user->groups->mapMany(function ($group) {
+                // Group scope: show financial records from processes owned by users in the same groups
+                $userIds = $user->groups->flatMap(function ($group) {
                     return $group->users->pluck('id');
-                })->flatten()->unique();
+                })->unique()->toArray();
                 $queryBuilder->whereIn('processos.user_id', $userIds);
             } else {
-                // Individual
+                // Individual scope: show only financial records from user's own processes
                 $queryBuilder->where('processos.user_id', $user->id);
             }
         }
