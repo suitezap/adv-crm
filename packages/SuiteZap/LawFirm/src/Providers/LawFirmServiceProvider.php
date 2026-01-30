@@ -23,6 +23,17 @@ class LawFirmServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // 1. Configuração Dinâmica de Storage (Multi-Tenant)
+        try {
+            // Só tenta configurar se não estiver rodando no console (artisan) para evitar erros em migrations
+            if (!app()->runningInConsole()) {
+                \SuiteZap\LawFirm\Services\MotherShipService::configureTenantStorage();
+            }
+        } catch (\Exception $e) {
+            // Falha silenciosa para não derrubar o sistema se o MotherShip estiver offline
+            // O sistema usará o bucket padrão do .env como fallback
+            Log::error('SAAS ERROR: Falha ao configurar storage dinâmico: ' . $e->getMessage());
+        }
         // ====================================================================
         // DEBUG: Início do Boot
         // ====================================================================
@@ -31,7 +42,7 @@ class LawFirmServiceProvider extends ServiceProvider
         // ====================================================================
         // 1. CARREGAR ROTAS
         // ====================================================================
-        $routesPath = __DIR__ . '/../Http/admin-routes.php';
+        $routesPath = __DIR__ . '/../Http/routes.php';
 
         if (file_exists($routesPath)) {
             $this->loadRoutesFrom($routesPath);
@@ -80,6 +91,16 @@ class LawFirmServiceProvider extends ServiceProvider
         }
 
         // ====================================================================
+        // 4.5 REGISTRAR COMANDOS DO CONSOLE
+        // ====================================================================
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \SuiteZap\LawFirm\Console\Commands\CalculateStorageUsage::class,
+            ]);
+            Log::info('LawFirm: Comandos do Console registrados.');
+        }
+
+        // ====================================================================
         // 5. REGISTRAR OBSERVERS
         // ====================================================================
         $this->registerObservers();
@@ -99,6 +120,9 @@ class LawFirmServiceProvider extends ServiceProvider
 
         Log::info('LawFirm: Event Listeners registrados.');
 
+        // Observer para limitar usuários SaaS
+        \Webkul\User\Models\User::observe(\SuiteZap\LawFirm\Observers\UserObserver::class);
+
         // ====================================================================
         // 7. VIEW COMPOSERS
         // ====================================================================
@@ -106,7 +130,7 @@ class LawFirmServiceProvider extends ServiceProvider
         Log::info('LawFirm: View Composers registrados.');
 
         // ====================================================================
-        // 8. BREADCRUMBS
+        // CONFIGURAÇÃO DO MENU LATERAL
         // ====================================================================
         $breadcrumbsPath = __DIR__ . '/../Routes/breadcrumbs.php';
         if (file_exists($breadcrumbsPath)) {
@@ -165,6 +189,18 @@ class LawFirmServiceProvider extends ServiceProvider
         \SuiteZap\LawFirm\Models\Prazo::observe(\SuiteZap\LawFirm\Observers\PrazoObserver::class);
         // \Webkul\Contact\Models\PersonProxy::observe(\SuiteZap\LawFirm\Observers\PersonObserver::class);
         // \Webkul\Contact\Models\OrganizationProxy::observe(\SuiteZap\LawFirm\Observers\OrganizationObserver::class);
+
+        // ✅ REGISTRO DO OBSERVER SAAS
+        // Intercepta qualquer criação de usuário no sistema para validar limites do plano
+        \Webkul\User\Models\User::observe(\SuiteZap\LawFirm\Observers\UserObserver::class);
+
+        // ✅ REGISTRO DO OBSERVER DE LIMPEZA S3
+        // Apaga arquivos do S3/MinIO quando um Lead/Processo é excluído
+        \Webkul\Lead\Models\Lead::observe(\SuiteZap\LawFirm\Observers\LeadObserver::class);
+
+        // ✅ REGISTRO DO OBSERVER DE LIMPEZA S3 (Anexos Individuais)
+        // Apaga arquivos do S3/MinIO quando um anexo individual é removido
+        \Webkul\Lead\Models\LeadAttachment::observe(\SuiteZap\LawFirm\Observers\LeadAttachmentObserver::class);
     }
 
     /**
