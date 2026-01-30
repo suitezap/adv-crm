@@ -27,8 +27,8 @@ class Anexo extends Model
     }
 
     /**
-     * Get the public URL for the file.
-     * Uses Storage::url() to be compatible with both local and S3.
+     * Get a secure signed URL for the file.
+     * Uses Storage::temporaryUrl() for private bucket access with 15min expiration.
      */
     public function getUrlAttribute(): string
     {
@@ -39,13 +39,14 @@ class Anexo extends Model
             $path = substr($path, 7);
         }
 
-        // Use Storage::url() for S3 compatibility
-        $url = Storage::url($path);
-
-        // Fix potential double slash issue (e.g. http://domain.com//storage)
-        // caused by trailing slash in APP_URL + Storage config
-        // Replaces any // with / unless preceded by : (to preserve http://)
-        return preg_replace('/([^:])\/\//', '$1/', $url);
+        // Use temporaryUrl for secure signed URLs (valid for 15 minutes)
+        try {
+            return Storage::temporaryUrl($path, now()->addMinutes(15));
+        } catch (\Exception $e) {
+            // Fallback to regular URL if temporaryUrl is not supported (e.g., local disk)
+            $url = Storage::url($path);
+            return preg_replace('/([^:])\/\//', '$1/', $url);
+        }
     }
 
     /**

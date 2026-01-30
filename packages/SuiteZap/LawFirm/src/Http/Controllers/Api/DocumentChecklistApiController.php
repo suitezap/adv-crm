@@ -58,7 +58,7 @@ class DocumentChecklistApiController extends Controller
         return response()->json([
             'message' => 'Arquivo enviado com sucesso',
             'data' => $document,
-            'file_url' => Storage::url($path)
+            'file_url' => Storage::temporaryUrl($path, now()->addMinutes(15))
         ]);
     }
 }
