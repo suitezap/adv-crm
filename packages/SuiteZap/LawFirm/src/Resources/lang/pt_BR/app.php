@@ -170,18 +170,18 @@ return [
         // Áreas do Direito
         'areas' => [
             'civil' => 'Cível',
-            'labor' => 'Trabalhista',
-            'criminal' => 'Criminal/Penal',
-            'tax' => 'Tributário',
-            'family' => 'Família',
             'consumer' => 'Consumidor',
+            'criminal' => 'Criminal/Penal',
+            'family' => 'Família',
+            'labor' => 'Trabalhista',
             'social-security' => 'Previdenciário',
+            'tax' => 'Tributário',
             // Aliases em português
             'civel' => 'Cível',
-            'trabalhista' => 'Trabalhista',
             'familia' => 'Família',
-            'tributario' => 'Tributário',
+            'trabalhista' => 'Trabalhista',
             'previdenciario' => 'Previdenciário',
+            'tributario' => 'Tributário',
         ],
 
         // Fases Processuais

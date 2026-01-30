@@ -19,6 +19,9 @@ class PrazoController extends Controller
     public function __construct(EvolutionService $evolutionService)
     {
         $this->evolutionService = $evolutionService;
+
+        // REMOVED: Invalid middleware call causing "Object of type Webkul\Core\Acl is not callable"
+        // $this->middleware('acl:lawfirm.prazos.view');
     }
 
     /**
@@ -68,7 +71,9 @@ class PrazoController extends Controller
             );
 
             // 5. Enviar via Service
-            $instanceName = env('EVOLUTION_INSTANCE_NAME', 'LawFirm');
+            $config = \SuiteZap\LawFirm\Services\MotherShipService::getEvolutionConfig();
+            $instanceName = $config['instance'] ?? env('EVOLUTION_INSTANCE_NAME', 'LawFirm');
+
             $this->evolutionService->sendMessage($instanceName, $phone, $msg);
 
             session()->flash('success', 'Notificação enviada com sucesso para ' . $person->name);

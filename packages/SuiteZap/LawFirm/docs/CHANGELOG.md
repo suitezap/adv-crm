@@ -1,5 +1,35 @@
 # Changelog
 
+## [v1.6] - 2026-01-25 - Assistentes Jurídicos IA & WhatsApp Improvements
+### Added
+- **Módulo Assistentes Jurídicos IA**: Sistema de templates para geração de prompts jurídicos com variáveis dinâmicas.
+  - `AssistantController`: Index, Show, Generate e Execute actions.
+  - `AssistantTemplate` model: Templates com prompts estruturados e variáveis.
+  - `AssistantHistory` model: Histórico de execuções por usuário.
+  - Views: `admin/assistants/index.blade.php` e `show.blade.php`.
+- **N8nService**: Integração com webhooks N8n para execução remota de workflows de IA.
+  - Suporte a URLs completas ou rotas relativas via `N8N_WEBHOOK_BASE_URL`.
+  - Timeout de 60s para chamadas de IA.
+- **SaasQuotaService**: Novo serviço para verificação de cotas de uso.
+- **Migration `create_lawfirm_assistants_tables`**: Tabelas `law_assistant_templates` e `law_assistant_histories`.
+- **Migration `alter_tamanho_to_bigint_on_anexos`**: Suporte a arquivos maiores (bigint).
+
+### Changed
+- **WhatsApp ConnectionController**: Refatoração para suportar Evolution API v2.
+  - Parsing dinâmico de campos `name`/`instanceName` e `connectionStatus`/`status`.
+  - Logging detalhado para debug de conexão.
+  - Limpeza local forçada em caso de falha de API remota.
+- **EvolutionService**: Priorização de `.env` sobre System Config para credenciais.
+- **Menu**: Adicionado item "Assistentes IA" com permissão `lawfirm.assistants`.
+
+### Technical
+- Total de Migrations: 19 (anteriormente 17)
+- Total de Controllers Admin: 6 (anteriormente 3)
+- Total de Models: 11 (anteriormente 8)
+- Total de Services: 5 (anteriormente 3)
+
+---
+
 ## [v1.5] - SaaS Module & WhatsApp Init
 ### Added
 - **SaaS Core:** Configuração oculta via Seeder (`lawfirm.saas.*`), Service de Controle de Storage e Lógica de Bloqueio (Middleware).

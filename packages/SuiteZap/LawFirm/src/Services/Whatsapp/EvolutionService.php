@@ -4,21 +4,34 @@ namespace SuiteZap\LawFirm\Services\Whatsapp;
 
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\Services\MotherShipService;
 
 class EvolutionService
 {
     protected $client;
     protected $baseUrl;
+    protected $instanceName;
     protected $apiKey;
 
     public function __construct()
     {
-        // Prioritize .env, fallback to System Config
-        $this->baseUrl = env('EVOLUTION_API_URL')
-            ?: core()->getConfigData('lawfirm.settings.general.evolution_api_url');
+        // Tenta carregar do Banco de Dados (MotherShip)
+        $config = MotherShipService::getEvolutionConfig();
 
-        $this->apiKey = env('EVOLUTION_API_KEY')
-            ?: core()->getConfigData('lawfirm.settings.general.evolution_api_key');
+        if ($config) {
+            $this->baseUrl = $config['base_url'];
+            $this->apiKey = $config['token'];
+            $this->instanceName = $config['instance'];
+        } else {
+            // 2. Fallback para .env (Legado ou Debug)
+            $this->baseUrl = env('EVOLUTION_API_URL')
+                ?: core()->getConfigData('lawfirm.settings.general.evolution_api_url');
+
+            $this->apiKey = env('EVOLUTION_API_KEY')
+                ?: core()->getConfigData('lawfirm.settings.general.evolution_api_key');
+
+            $this->instanceName = env('EVOLUTION_INSTANCE_NAME');
+        }
 
         // Normalize URL
         $this->baseUrl = rtrim($this->baseUrl, '/');

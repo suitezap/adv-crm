@@ -8,7 +8,7 @@ return [
         'route' => 'admin.processos.index',
         'sort' => 2,
         'icon-class' => 'icon-note',
-        'permission' => 'lawfirm',
+        'permission' => 'lawfirm', // Keep parent generic or update if needed, usually parent is just container
     ],
 
     // Child 1: Processos
@@ -18,7 +18,7 @@ return [
         'route' => 'admin.processos.index',
         'sort' => 1,
         'icon-class' => '',
-        'permission' => 'lawfirm.processos',
+        'permission' => 'lawfirm.processos.view',
     ],
 
     // Child 2: Prazos
@@ -28,7 +28,7 @@ return [
         'route' => 'admin.prazos.index',
         'sort' => 2,
         'icon-class' => 'icon-calendar',
-        'permission' => 'lawfirm.prazos',
+        'permission' => 'lawfirm.prazos.view',
     ],
 
     // Child 3: Financeiro
@@ -38,7 +38,7 @@ return [
         'route' => 'admin.lawfirm.financial.index',
         'sort' => 3,
         'icon-class' => 'icon-dashboard',
-        'permission' => 'lawfirm.financial',
+        'permission' => 'lawfirm.financial.view',
     ],
 
     // Child 4: Assistentes IA
@@ -59,6 +59,7 @@ return [
         'params' => ['slug' => 'lawfirm', 'slug2' => 'settings'],
         'sort' => 20,
         'icon-class' => 'icon-setting',
+        'permission' => 'lawfirm.settings.view',
     ],
 
     // Child 5: SaaS Dashboard (Minha Assinatura)

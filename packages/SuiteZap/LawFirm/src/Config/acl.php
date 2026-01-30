@@ -11,7 +11,7 @@ return [
 
     // Child 1: Processos
     [
-        'key' => 'lawfirm.processos',
+        'key' => 'lawfirm.processos.view',
         'name' => 'Processos',
         'route' => 'admin.processos.index',
         'sort' => 1,
@@ -19,7 +19,7 @@ return [
 
     // Child 2: Prazos
     [
-        'key' => 'lawfirm.prazos',
+        'key' => 'lawfirm.prazos.view',
         'name' => 'Prazos',
         'route' => 'admin.prazos.index',
         'sort' => 2,
@@ -27,7 +27,7 @@ return [
 
     // Child 3: Financeiro
     [
-        'key' => 'lawfirm.financial',
+        'key' => 'lawfirm.financial.view',
         'name' => 'Financeiro',
         'route' => 'admin.lawfirm.financial.index',
         'sort' => 3,
@@ -35,7 +35,7 @@ return [
 
     // Child 4: Dados do Escritório
     [
-        'key' => 'lawfirm.settings',
+        'key' => 'lawfirm.settings.view',
         'name' => 'Dados do Escritório',
         'route' => 'admin.configuration.index',
         'sort' => 4,

@@ -64,18 +64,8 @@ class PrazoDataGrid extends DataGrid
         $user = auth()->guard('user')->user();
 
         // Check 1: Skip filtering if user is administrator (role_id = 1 in Krayin)
-        // Check 2: Skip filtering if user has global view permission
-        if ($user && $user->role_id != 1 && $user->view_permission !== 'global') {
-            if ($user->view_permission == 'group') {
-                // Group scope: show deadlines from processes owned by users in the same groups
-                $userIds = $user->groups->flatMap(function ($group) {
-                    return $group->users->pluck('id');
-                })->unique()->toArray();
-                $queryBuilder->whereIn('processos.user_id', $userIds);
-            } else {
-                // Individual scope: show only deadlines from user's own processes
-                $queryBuilder->where('processos.user_id', $user->id);
-            }
+        if ($user && $user->role_id != 1) {
+            $queryBuilder->where('processos.user_id', $user->id);
         }
 
         // Ordenação: Não-concluídos primeiro (por data ASC), Concluídos no final

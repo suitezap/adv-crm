@@ -21,6 +21,9 @@ class FinancialController extends Controller
     public function __construct(FinancialDashboardService $dashboardService)
     {
         $this->dashboardService = $dashboardService;
+
+        // REMOVED: Invalid middleware call causing "Object of type Webkul\Core\Acl is not callable"
+        // $this->middleware('acl:lawfirm.financial.view');
     }
 
     /**

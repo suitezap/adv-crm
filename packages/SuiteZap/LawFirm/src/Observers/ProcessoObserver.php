@@ -3,10 +3,47 @@
 namespace SuiteZap\LawFirm\Observers;
 
 use SuiteZap\LawFirm\Models\Processo;
+use SuiteZap\LawFirm\Services\SaasStorageService;
 use Webkul\Activity\Repositories\ActivityRepository;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class ProcessoObserver
 {
+    /**
+     * Handle the Processo "deleting" event.
+     * Executado ANTES do registro ser removido do banco.
+     * Apaga a pasta inteira do processo no S3.
+     */
+    public function deleting(Processo $processo): void
+    {
+        $folderPath = 'processos/' . $processo->id;
+        $disk = config('filesystems.default');
+
+        try {
+            // Calcular tamanho total dos arquivos para decrementar quota
+            $totalSize = 0;
+            foreach ($processo->anexos as $anexo) {
+                $totalSize += $anexo->tamanho ?? 0;
+            }
+
+            // Deletar pasta inteira do S3
+            if (Storage::disk($disk)->exists($folderPath)) {
+                Storage::disk($disk)->deleteDirectory($folderPath);
+                Log::info("SAAS CLEANUP: Pasta S3 apagada: {$folderPath}");
+            }
+
+            // Decrementar uso de storage
+            if ($totalSize > 0) {
+                $storageService = app(SaasStorageService::class);
+                $storageService->decrementUsage($totalSize);
+                Log::info("SAAS CLEANUP: Storage decrementado em {$totalSize} bytes para Processo #{$processo->id}");
+            }
+        } catch (\Exception $e) {
+            Log::error("SAAS CLEANUP ERROR: Falha ao apagar pasta {$folderPath}: " . $e->getMessage());
+        }
+    }
+
     /**
      * Handle the Processo "created" event.
      *
@@ -65,3 +102,4 @@ class ProcessoObserver
         }
     }
 }
+

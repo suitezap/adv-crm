@@ -53,6 +53,13 @@ return [
         ],
     ],
 
+    'deadlines' => [
+        'title' => 'Prazos',
+        'status' => 'Status Real',
+        'due_date' => 'Data de Vencimento',
+        'name' => 'Nome do Prazo',
+    ],
+
     // --- 2. SEÇÃO PROCESSOS (Raiz) ---
     'processos' => [
         // Títulos de Página e Ações Principais
@@ -129,8 +136,8 @@ return [
             'adversary' => 'Parte Contrária',
             'advogado_contrario' => 'Advogado Contrário',
             'advogado_adversary' => 'Advogado da Parte Contrária',
-            'email' => 'E-mail (Adv. Contrário)', // Legacy check
-            'email_advogado' => 'E-mail (Adv. Contrário)', // Correct key
+            'email' => 'E-mail (Adv. Contrário)',
+            'email_advogado' => 'E-mail (Adv. Contrário)',
             'oab' => 'OAB (Adv. Contrário)',
             'whatsapp' => 'WhatsApp (Adv. Contrário)',
             'observacoes' => 'Observações',
@@ -154,7 +161,6 @@ return [
             'suspended' => 'Suspenso',
             'archived' => 'Arquivado',
             'encerrado' => 'Encerrado',
-            // Aliases em português
             'ativo' => 'Ativo',
             'suspenso' => 'Suspenso',
             'arquivado' => 'Arquivado',
@@ -169,18 +175,17 @@ return [
         // Áreas do Direito
         'areas' => [
             'civil' => 'Cível',
-            'labor' => 'Trabalhista',
-            'criminal' => 'Criminal/Penal',
-            'tax' => 'Tributário',
-            'family' => 'Família',
             'consumer' => 'Consumidor',
+            'criminal' => 'Criminal/Penal',
+            'family' => 'Família',
+            'labor' => 'Trabalhista',
             'social-security' => 'Previdenciário',
-            // Aliases em português
+            'tax' => 'Tributário',
             'civel' => 'Cível',
-            'trabalhista' => 'Trabalhista',
             'familia' => 'Família',
-            'tributario' => 'Tributário',
+            'trabalhista' => 'Trabalhista',
             'previdenciario' => 'Previdenciário',
+            'tributario' => 'Tributário',
         ],
 
         // Fases Processuais
@@ -192,7 +197,6 @@ return [
             'sentence' => 'Sentença',
             'appeal' => 'Fase Recursal',
             'execution' => 'Execução / Cumprimento',
-            // Aliases em português
             'inicial' => 'Petição Inicial',
             'contestacao' => 'Contestação',
             'replica' => 'Réplica',
@@ -210,5 +214,13 @@ return [
             'high' => 'Alta',
             'very-high' => 'Muito Alta',
         ],
+    ],
+
+    // --- 4. ACL / Permissões ---
+    'acl' => [
+        'lawfirm' => 'Advocacia (Módulo)',
+        'processos' => 'Processos',
+        'financial' => 'Financeiro',
+        'prazos' => 'Gestão de Prazos',
     ],
 ];

@@ -46,6 +46,7 @@ Route::group([
         Route::get('{id}/edit', 'edit')->name('admin.prazos.edit');
         Route::put('{id}', 'update')->name('admin.prazos.update');
         Route::put('{id}/concluir', 'concluir')->name('admin.prazos.concluir');
+        Route::get('{id}/notify', 'notifyClient')->name('lawfirm.prazos.notify');
         Route::delete('{id}', 'destroy')->name('admin.prazos.destroy');
     });
 });

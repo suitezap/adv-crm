@@ -203,10 +203,20 @@
 
             <!-- 4. Checklist de Documentos -->
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <p class="mb-4 text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                    <span class="icon-menu text-xl text-purple-600"></span>
-                    Checklist de Documentos
-                </p>
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                        <span class="icon-menu text-xl text-purple-600"></span>
+                        Checklist de Documentos
+                    </p>
+                    
+                    <button type="button" onclick="submitWhatsapp()" class="secondary-button flex items-center gap-2">
+                        <span>📤</span> Enviar Selecionados via WhatsApp
+                    </button>
+                    
+                    <form id="whatsappForm" action="{{ route('lawfirm.documents.send_whatsapp', $processo->id) }}" method="POST" style="display:none;">
+                        @csrf
+                    </form>
+                </div>
 
                 <!-- Barra de Ferramentas: Importar Template -->
                 <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -230,6 +240,9 @@
                     <table class="min-w-full w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b dark:border-gray-800">
                             <tr>
+                                <th scope="col" class="px-6 py-3 w-[50px]">
+                                    <input type="checkbox" id="checkAllDocs" onclick="toggleAllDocs(this)" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                </th>
                                 <th scope="col" class="px-6 py-3 w-[120px]">Status</th>
                                 <th scope="col" class="px-6 py-3">Documento Necessário</th>
                                 <th scope="col" class="px-6 py-3">Observações</th>
@@ -243,6 +256,9 @@
 
                             @forelse($documents as $doc)
                             <tr class="bg-white border-b hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-600">
+                                <td class="px-6 py-4">
+                                    <input type="checkbox" value="{{ $doc->id }}" class="doc-checkbox rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                </td>
                                 <td class="px-6 py-4">
                                     @if($doc->status == 'received')
                                         <span class="inline-flex px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Recebido</span>
@@ -279,7 +295,7 @@
                             </tr>
                             @empty
                             <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                <td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                     Nenhum documento solicitado. Use a importação acima para adicionar um kit.
                                 </td>
                             </tr>
@@ -665,6 +681,43 @@
 
         window.closeDocModal = function() {
             document.getElementById('docModal').style.display = 'none';
+        }
+
+        window.toggleAllDocs = function(source) {
+            checkboxes = document.getElementsByClassName('doc-checkbox');
+            for(var i=0, n=checkboxes.length;i<n;i++) {
+                checkboxes[i].checked = source.checked;
+            }
+        }
+
+        window.submitWhatsapp = function() {
+            var form = document.getElementById('whatsappForm');
+            // Limpa inputs anteriores
+            var oldInputs = form.querySelectorAll('input[name="selected_documents[]"]');
+            oldInputs.forEach(input => input.remove());
+            
+            var checkboxes = document.getElementsByClassName('doc-checkbox');
+            var selected = false;
+            
+            for(var i=0, n=checkboxes.length;i<n;i++) {
+                if(checkboxes[i].checked) {
+                    selected = true;
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'selected_documents[]';
+                    input.value = checkboxes[i].value;
+                    form.appendChild(input);
+                }
+            }
+            
+            if(!selected) {
+                alert('Selecione pelo menos um documento para enviar.');
+                return;
+            }
+            
+            if(confirm('Deseja enviar a solicitação dos documentos selecionados via WhatsApp?')) {
+                form.submit();
+            }
         }
     </script>
 </x-admin::layouts>

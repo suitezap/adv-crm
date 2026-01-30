@@ -12,6 +12,18 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
      *
      * @var string
      */
+    /**
+     * The connection name for the model.
+     *
+     * @var string|null
+     */
+    protected $connection = 'mothership';
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'lawfirm_assistant_templates';
 
     /**
@@ -20,14 +32,14 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
      * @var array
      */
     protected $fillable = [
+        'tenant_id',
         'title',
-        'slug',
         'category',
+        'icon',
+        'required_module',
         'description',
-        'form_schema',
         'prompt_structure',
         'n8n_webhook_url',
-        'token_cost',
         'is_active',
     ];
 
@@ -37,7 +49,25 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
      * @var array
      */
     protected $casts = [
-        'form_schema' => 'array',
         'is_active' => 'boolean',
     ];
+
+    /**
+     * Scope a query to only include templates for the current tenant or global ones.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeForCurrentTenant($query)
+    {
+        // Lógica: Traz templates GLOBAIS (tenant_id null) OU do cliente atual
+        $tenantId = \SuiteZap\LawFirm\Services\MotherShipService::getTenantId();
+
+        return $query->where(function ($q) use ($tenantId) {
+            $q->whereNull('tenant_id'); // Templates Globais
+            if ($tenantId) {
+                $q->orWhere('tenant_id', $tenantId); // Templates do Cliente
+            }
+        });
+    }
 }

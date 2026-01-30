@@ -1,6 +1,6 @@
 # Audit Report - SuiteZap/LawFirm CRM
-**Generated:** 2026-01-20  
-**Version:** v1.4  
+**Generated:** 2026-01-25  
+**Version:** v1.6  
 **Purpose:** Map current state to identify potential regressions and verify critical fixes
 
 ---
@@ -8,12 +8,13 @@
 ## 1. Executive Summary
 
 ### Package Status
-- **Total Files:** 95 files in `packages/SuiteZap/LawFirm`
-- **Migrations:** 17 database migrations
-- **Controllers:** 9 controllers (Admin: 3, API: 3, Other: 3)
-- **Models:** 8 Eloquent models
+- **Total Files:** 120+ files in `packages/SuiteZap/LawFirm`
+- **Migrations:** 19 database migrations
+- **Controllers:** 11 controllers (Admin: 6, API: 4, Other: 3)
+- **Models:** 11 Eloquent models (+ 4 MotherShip models)
 - **DataGrids:** 6 custom DataGrids
-- **Views:** 25+ Blade templates
+- **Services:** 5 services (FinancialDashboard, N8n, SaasQuota, SaasStorage, Evolution)
+- **Views:** 35+ Blade templates (Admin: 9 subfolders)
 - **Routes:** Admin routes (admin.php), API routes (api.php), Breadcrumbs
 - **Vue Components:** **NONE** (No .vue files found)
 
@@ -90,10 +91,13 @@
 │   │   └── LeadUpdatedListener.php
 │   ├── 📁 Models/
 │   │   ├── Anexo.php
+│   │   ├── AssistantHistory.php      ✨ NEW
+│   │   ├── AssistantTemplate.php     ✨ NEW
 │   │   ├── ChecklistTemplate.php
 │   │   ├── Financial.php
 │   │   ├── LawOrganizationDetail.php
 │   │   ├── LawPersonDetail.php
+│   │   ├── 📁 MotherShip/            ✨ NEW (4 models)
 │   │   ├── Prazo.php
 │   │   ├── ProcessDocument.php
 │   │   ├── Processo.php
@@ -137,7 +141,12 @@
 │   │   ├── ValidarCNJ.php
 │   │   └── ValidarCpfCnpj.php
 │   └── 📁 Services/
-│       └── FinancialDashboardService.php
+│       ├── FinancialDashboardService.php
+│       ├── N8nService.php             ✨ NEW (Webhook para IA/Automação)
+│       ├── SaasQuotaService.php       ✨ NEW (Controle de Cotas)
+│       ├── SaasStorageService.php     ✨ NEW (Controle de Armazenamento)
+│       └── 📁 Whatsapp/
+│           └── EvolutionService.php   ✨ NEW (Integração Evolution API)
 └── 📁 vendor/ (Composer autoload)
 ```
 

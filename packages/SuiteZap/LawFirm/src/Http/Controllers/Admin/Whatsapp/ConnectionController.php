@@ -149,8 +149,14 @@ class ConnectionController extends Controller
 
     protected function getInstanceName()
     {
-        // Simple naming convention for V1
-        $userId = auth()->guard('user')->id();
-        return 'lawfirm_tenant_' . $userId;
+        // Prioriza configuração dinâmica do banco (Multi-Tenant)
+        $config = \SuiteZap\LawFirm\Services\MotherShipService::getEvolutionConfig();
+
+        if ($config && !empty($config['instance'])) {
+            return $config['instance'];
+        }
+
+        // Fallback para .env (Legado/Dev)
+        return env('EVOLUTION_INSTANCE_NAME');
     }
 }

@@ -16,3 +16,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/saas-debug/whatsapp-test', function () {
+    $controller = app(\SuiteZap\LawFirm\Http\Controllers\Admin\Whatsapp\ConnectionController::class);
+    $response = $controller->status();
+    return $response;
+});

@@ -4,10 +4,12 @@ namespace SuiteZap\LawFirm\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\Models\AssistantTemplate;
 use SuiteZap\LawFirm\Models\AssistantHistory;
 use SuiteZap\LawFirm\Services\N8nService;
+use SuiteZap\LawFirm\Services\MotherShipService;
 
 class AssistantController extends Controller
 {
@@ -23,7 +25,20 @@ class AssistantController extends Controller
      */
     public function index()
     {
-        $templates = AssistantTemplate::where('is_active', true)
+        // 1. Descobrir quais módulos o cliente tem
+        $subscription = MotherShipService::getCurrentSubscription();
+
+        // Se não tiver assinatura, assume array vazio (só verá os gratuitos)
+        $allowedModules = $subscription ? ($subscription->active_modules ?? []) : [];
+
+        // 2. Filtrar Templates (usa scope MotherShip)
+        $templates = AssistantTemplate::forCurrentTenant()
+            ->where('is_active', true)
+            ->where(function ($query) use ($allowedModules) {
+                // Mostra se o módulo for NULL (Público) OU se estiver na lista permitida
+                $query->whereNull('required_module')
+                    ->orWhereIn('required_module', $allowedModules);
+            })
             ->orderBy('category')
             ->orderBy('title')
             ->get();
@@ -135,5 +150,160 @@ class AssistantController extends Controller
 
         // 5. Retornar JSON
         return response()->json(['result' => $result, 'success' => true, 'generated_prompt' => $result]);
+    }
+
+    /**
+     * Processa assistente com base na ação solicitada (Preview ou Execute).
+     */
+    public function process(Request $request)
+    {
+        // 1. Validação (usa conexão 'mothership' para buscar template)
+        $validated = $request->validate([
+            'template_id' => 'required|exists:mothership.lawfirm_assistant_templates,id',
+            'data' => 'array',
+            'action' => 'required|in:preview,execute',
+        ]);
+
+        // 2. Carregar Template
+        $template = AssistantTemplate::findOrFail($validated['template_id']);
+
+        // 3. Security Check: Verificar módulo exigido
+        if ($template->required_module) {
+            $subscription = MotherShipService::getCurrentSubscription();
+            $allowedModules = $subscription ? ($subscription->active_modules ?? []) : [];
+
+            if (!in_array($template->required_module, $allowedModules)) {
+                return response()->json([
+                    'error' => 'Módulo não disponível no seu plano.'
+                ], 403);
+            }
+        }
+
+        $data = $validated['data'] ?? [];
+        $action = $validated['action'];
+
+        // 4. Decisão baseada na Ação
+        if ($action === 'preview') {
+            // Preview: Sempre executa Localmente (gera o prompt)
+            return $this->executeLocal($template, $data);
+        }
+
+        if ($action === 'execute') {
+            // Execute: Envia para N8N (se configurado)
+            if (empty($template->n8n_webhook_url)) {
+                return response()->json([
+                    'error' => 'Este assistente não possui execução remota configurada.'
+                ], 400);
+            }
+
+            return $this->executeRemote($template, $data);
+        }
+
+        return response()->json(['error' => 'Ação inválida.'], 400);
+    }
+
+    /**
+     * Executa localmente substituindo variáveis no prompt.
+     */
+    protected function executeLocal(AssistantTemplate $template, array $data)
+    {
+        $generatedPrompt = $template->prompt_structure;
+
+        foreach ($data as $key => $value) {
+            $generatedPrompt = str_replace('{{' . $key . '}}', $value, $generatedPrompt);
+        }
+
+        // Salvar histórico
+        AssistantHistory::create([
+            'user_id' => auth()->guard('user')->id(),
+            'template_id' => $template->id,
+            'input_data' => $data,
+            'generated_content' => $generatedPrompt,
+            'execution_mode' => 'local',
+            'status' => 'completed',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'execution_mode' => 'local',
+            'generated_prompt' => $generatedPrompt,
+        ]);
+    }
+
+    /**
+     * Executa remotamente via N8N configurado no MotherShip.
+     */
+    protected function executeRemote(AssistantTemplate $template, array $data)
+    {
+        $n8nConfig = MotherShipService::getN8nConfig();
+
+        if (!$n8nConfig) {
+            Log::warning('N8N não configurado para este tenant', [
+                'template_id' => $template->id
+            ]);
+            return response()->json([
+                'error' => 'Serviço N8N não configurado para sua conta.'
+            ], 503);
+        }
+
+        // Montar URL
+        $targetUrl = rtrim($n8nConfig['url'], '/') . '/' . ltrim($template->n8n_webhook_url, '/');
+
+        // Payload
+        $payload = [
+            'inputs' => $data,
+            'user_id' => auth()->guard('user')->id(),
+            'template' => $template->title,
+            'timestamp' => now()->toIso8601String(),
+        ];
+
+        // Chamada HTTP (com API Key se disponível)
+        try {
+            $httpClient = Http::timeout(60);
+
+            if (!empty($n8nConfig['api_key'])) {
+                $httpClient = $httpClient->withHeaders([
+                    'Authorization' => 'Bearer ' . $n8nConfig['api_key'],
+                ]);
+            }
+
+            $response = $httpClient->post($targetUrl, $payload);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                $output = $result['output'] ?? $result['text'] ?? $result['message'] ?? $response->body();
+
+                AssistantHistory::create([
+                    'user_id' => auth()->guard('user')->id(),
+                    'template_id' => $template->id,
+                    'input_data' => $data,
+                    'generated_content' => $output,
+                    'execution_mode' => 'n8n_remote',
+                    'status' => 'completed',
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'execution_mode' => 'n8n_remote',
+                    'generated_prompt' => $output,
+                ]);
+            }
+
+            Log::error("N8N Error [{$targetUrl}]", [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            return response()->json([
+                'error' => 'Erro no serviço N8N: ' . ($response->json()['message'] ?? $response->status())
+            ], 502);
+
+        } catch (\Exception $e) {
+            Log::error("N8N Exception [{$targetUrl}]", ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'error' => 'Falha de conexão com N8N: ' . $e->getMessage()
+            ], 503);
+        }
     }
 }

@@ -124,3 +124,54 @@ O controle de limites é híbrido:
 ## 6. Integração WhatsApp (Evolution API)
 - **Conexão:** O Krayin atua como cliente. O QR Code é gerado no backend e exibido via Polling no frontend.
 - **Service:** `EvolutionService` centraliza todas as chamadas HTTP.
+- **Controller:** `Whatsapp\ConnectionController` gerencia index, connect, status e disconnect.
+- **Variáveis de Ambiente:**
+  - `EVOLUTION_API_URL`: URL base da Evolution API
+  - `EVOLUTION_API_KEY`: Chave de autenticação
+  - `EVOLUTION_INSTANCE_NAME`: Nome da instância do escritório
+
+## 7. Assistentes Jurídicos IA
+O módulo de Assistentes permite criar templates de prompts com variáveis dinâmicas para geração de documentos e análises via IA.
+
+### Fluxo de Uso
+1. Admin cadastra templates em `law_assistant_templates` (via Seeder ou futura UI).
+2. Usuário acessa menu "Assistentes IA" → lista de templates ativos.
+3. Usuário clica em um template → formulário dinâmico com os campos.
+4. **Generate**: Substitui variáveis `{{campo}}` no prompt e salva no histórico.
+5. **Execute**: Envia payload para webhook N8n e retorna resposta da IA.
+
+### Estrutura
+- `Models/AssistantTemplate`: Templates com `slug`, `prompt_structure`, `variables` (JSON).
+- `Models/AssistantHistory`: Registro de execuções por usuário.
+- `Services/N8nService`: Chamadas HTTP para webhooks N8n com timeout de 60s.
+- `Controllers/Admin/AssistantController`: CRUD + generate + execute.
+
+### Variáveis de Ambiente
+```env
+N8N_WEBHOOK_BASE_URL=https://seu-n8n.com/webhook/
+```
+
+## 8. Estrutura de Diretórios Atual (v1.6)
+```
+packages/SuiteZap/LawFirm/src/
+├── Config/           # menu.php, acl.php, system.php, module.php
+├── Contracts/        # Interfaces
+├── DataGrids/        # 6 DataGrids (Processo, Prazo, Financial, etc)
+├── Database/         # 19 Migrations + Seeders
+├── Events/           # Eventos customizados
+├── Http/
+│   ├── Controllers/
+│   │   ├── Admin/    # Processo, Prazo, Assistant, SaasDashboard
+│   │   │   └── Whatsapp/ConnectionController.php
+│   │   └── Api/      # Process, Deadline, DocumentChecklist
+│   └── Resources/    # API Resources
+├── Listeners/        # ContactSaveListener, LeadUpdatedListener
+├── Models/           # 11 models + MotherShip/
+├── Observers/        # Observers de sincronização
+├── Providers/        # LawFirmServiceProvider, ModuleServiceProvider
+├── Repositories/     # ProcessoRepository
+├── Resources/        # views/, lang/, assets/
+├── Routes/           # admin.php, api.php, breadcrumbs.php
+├── Rules/            # CPF, CNPJ, CNJ validations
+└── Services/         # Financial, N8n, SaasQuota, SaasStorage, Whatsapp/
+```

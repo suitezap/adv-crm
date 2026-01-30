@@ -66,6 +66,10 @@ class ProcessoController extends Controller
         $this->personRepository = $personRepository;
         $this->leadRepository = $leadRepository;
         $this->activityRepository = $activityRepository;
+
+        // REMOVED: Invalid middleware call causing "Object of type Webkul\Core\Acl is not callable"
+        // Permission checking is handled by 'user' middleware (Bouncer) via acl.php route mapping.
+        // $this->middleware('acl:lawfirm.processos.view');
     }
 
     /**

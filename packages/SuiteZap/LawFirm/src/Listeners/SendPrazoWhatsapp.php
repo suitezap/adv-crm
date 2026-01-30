@@ -113,7 +113,7 @@ class SendPrazoWhatsapp
             // 5. Enviar via Service
             // Enviar via EvolutionService usando sendMessage(instanceName, number, text)
             // Send Message
-            $instanceName = env('EVOLUTION_INSTANCE_NAME', 'LawFirm');
+            $instanceName = env('EVOLUTION_INSTANCE_NAME');
             Log::info("LawFirm: Usando Instância Evolution: '{$instanceName}'");
 
             // Cleaning phone

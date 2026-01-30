@@ -11,6 +11,10 @@ Este pacote adiciona funcionalidades específicas para gestão de escritórios d
 - **Gestão de Documentos**: Organização de documentos processuais
 - **Integração com Clientes**: Vinculação de processos aos clientes do CRM
 - **Relatórios Jurídicos**: Relatórios específicos para advocacia
+- **Dashboard Financeiro**: KPIs de receitas, despesas e honorários
+- **Assistentes IA**: Templates de prompts jurídicos com integração N8n (v1.6)
+- **Integração WhatsApp**: Conexão via Evolution API para comunicação (v1.5+)
+- **Módulo SaaS**: Controle de assinatura, storage e limites (v1.5+)
 
 ## Estrutura do Pacote
 
