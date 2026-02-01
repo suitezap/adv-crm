@@ -39,6 +39,7 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
         'required_module',
         'description',
         'prompt_structure',
+        'variables',
         'n8n_webhook_url',
         'is_active',
     ];
@@ -50,6 +51,7 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
      */
     protected $casts = [
         'is_active' => 'boolean',
+        'variables' => 'array',
     ];
 
     /**
