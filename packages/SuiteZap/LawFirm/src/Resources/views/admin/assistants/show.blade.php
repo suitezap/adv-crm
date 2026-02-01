@@ -87,6 +87,60 @@
             .dark .ai-result-box strong {
                 color: #fff;
             }
+
+            /* Button Styles - Krayin Standard */
+            .primary-button {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.75rem 1.5rem;
+                font-weight: 600;
+                border-radius: 0.5rem;
+                transition: all 0.2s;
+                background: linear-gradient(135deg, #7B2CBF 0%, #9D4EDD 100%);
+                color: #fff;
+                border: none;
+                cursor: pointer;
+            }
+            .primary-button:hover {
+                background: linear-gradient(135deg, #6A24A8 0%, #8B3FCC 100%);
+                transform: translateY(-1px);
+            }
+            .primary-button:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+            .secondary-button {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.75rem 1.5rem;
+                font-weight: 600;
+                border-radius: 0.5rem;
+                transition: all 0.2s;
+                background: #f3f4f6;
+                color: #374151;
+                border: 1px solid #d1d5db;
+                cursor: pointer;
+            }
+            .secondary-button:hover {
+                background: #e5e7eb;
+            }
+            .secondary-button:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+
+            .dark .secondary-button {
+                background: #374151;
+                color: #e5e7eb;
+                border-color: #4b5563;
+            }
+            .dark .secondary-button:hover {
+                background: #4b5563;
+            }
         </style>
 
         <div class="flex flex-col gap-4">
@@ -111,41 +165,51 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- LEFT: Form -->
                 <div class="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-                    <div style="padding: 1.5rem;">
+                    <div class="p-6">
                         <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Preencha os Campos</h3>
 
                         <form id="assistant-form" class="space-y-4" onsubmit="return false;">
                             @csrf
-                            @foreach($template->form_schema as $field)
-                                <div class="mb-4">
-                                    <label for="{{ $field['name'] }}"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        {{ $field['label'] }}
-                                    </label>
+                            @if($template->variables && is_array($template->variables))
+                                @foreach($template->variables as $var)
+                                    <div class="mb-4">
+                                        <label for="{{ $var['key'] }}"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            {{ $var['label'] }}
+                                        </label>
 
-                                    @if($field['type'] === 'textarea')
-                                        <textarea id="{{ $field['name'] }}" name="{{ $field['name'] }}" rows="4"
-                                            placeholder="{{ $field['placeholder'] ?? '' }}"
-                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"></textarea>
-                                    @else
-                                        <input type="text" id="{{ $field['name'] }}" name="{{ $field['name'] }}"
-                                            placeholder="{{ $field['placeholder'] ?? '' }}"
-                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white" />
-                                    @endif
-                                </div>
-                            @endforeach
+                                        @if($var['type'] === 'textarea')
+                                            <textarea id="{{ $var['key'] }}" name="{{ $var['key'] }}" rows="{{ $var['rows'] ?? 4 }}"
+                                                placeholder="{{ $var['placeholder'] ?? '' }}"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"></textarea>
+                                        @elseif($var['type'] === 'select' && isset($var['options']))
+                                            <select id="{{ $var['key'] }}" name="{{ $var['key']  }}"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white">
+                                                <option value="">Selecione...</option>
+                                                @foreach($var['options'] as $option)
+                                                    <option value="{{ $option }}">{{ $option }}</option>
+                                                @endforeach
+                                            </select>
+                                        @else
+                                            <input type="text" id="{{ $var['key'] }}" name="{{ $var['key'] }}"
+                                                placeholder="{{ $var['placeholder'] ?? '' }}"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white" />
+                                        @endif
+                                    </div>
+                                @endforeach
+                            @else
+                                <p class="text-gray-500 dark:text-gray-400">Nenhum campo configurado para este template.</p>
+                            @endif
 
-                            <div class="flex items-center gap-4 pt-2">
-                                <button type="button" id="generate-btn"
-                                    class="px-6 py-3 text-white rounded-lg font-bold transition-colors"
-                                    style="background-color: {{ core()->getConfigData('general.settings.menu_color.brand_color') ?? '#0041FF' }};">
-                                    🚀 Gerar Prompt
+                            <div class="flex items-center gap-4 pt-4">
+                                <button type="button" id="generate-btn" class="secondary-button">
+                                    <span id="generate-btn-text">📝 Gerar Prompt</span>
+                                    <span id="generate-btn-loading" class="hidden">⏳ Gerando...</span>
                                 </button>
-    
-                                <button type="button" id="btn-execute-ia"
-                                    class="px-6 py-3 text-white rounded-lg font-bold transition-colors"
-                                    style="background-color: #7B2CBF; border-color: #7B2CBF;">
-                                    <span class="icon magic-icon"></span> Executar com IA (Agente)
+
+                                <button type="button" id="btn-execute-ia" class="primary-button">
+                                    <span id="execute-btn-text">✨ Executar com IA</span>
+                                    <span id="execute-btn-loading" class="hidden">🧠 Processando...</span>
                                 </button>
                             </div>
                         </form>
@@ -154,7 +218,7 @@
 
                 <!-- RIGHT: Result -->
                 <div class="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-                    <div style="padding: 1.5rem;">
+                    <div class="p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-bold text-gray-800 dark:text-white">Resultado</h3>
                             <button id="copy-btn"
@@ -242,9 +306,12 @@
 
                         if (btnGen.disabled) return;
 
-                        const originalText = btnGen.innerHTML;
+                        // Toggle loading state
+                        const btnText = document.getElementById('generate-btn-text');
+                        const btnLoading = document.getElementById('generate-btn-loading');
                         btnGen.disabled = true;
-                        btnGen.innerHTML = '⏳ Gerando...';
+                        btnText.classList.add('hidden');
+                        btnLoading.classList.remove('hidden');
 
                         const resultArea = document.getElementById('raw-result');
                         const placeholder = document.getElementById('result-placeholder');
@@ -281,7 +348,8 @@
                             alert('Erro ao processar: ' + error.message);
                         } finally {
                             btnGen.disabled = false;
-                            btnGen.innerHTML = originalText;
+                            btnText.classList.remove('hidden');
+                            btnLoading.classList.add('hidden');
                         }
                     }
 
@@ -294,9 +362,12 @@
 
                         if (btnExec.disabled) return;
 
-                        const originalText = btnExec.innerHTML;
+                        // Toggle loading state
+                        const execText = document.getElementById('execute-btn-text');
+                        const execLoading = document.getElementById('execute-btn-loading');
                         btnExec.disabled = true;
-                        btnExec.innerHTML = '⏳ Enviando...';
+                        execText.classList.add('hidden');
+                        execLoading.classList.remove('hidden');
 
                         const resultArea = document.getElementById('raw-result');
                         const placeholder = document.getElementById('result-placeholder');
@@ -350,7 +421,8 @@
                         } finally {
                             loading.style.display = 'none';
                             btnExec.disabled = false;
-                            btnExec.innerHTML = originalText;
+                            execText.classList.remove('hidden');
+                            execLoading.classList.add('hidden');
                         }
                     }
 
