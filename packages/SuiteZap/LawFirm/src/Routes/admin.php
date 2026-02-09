@@ -110,4 +110,11 @@ Route::group([
 
     // Documents Routes (Documentos)
     // Route::resource('documents', DocumentController::class)->names('admin.lawfirm.documents');
+
+    // Assistant Routes
+    Route::get('assistant/templates', 'SuiteZap\LawFirm\Http\Controllers\AssistantController@getTemplates')
+        ->name('lawfirm.assistant.templates');
+
+    Route::post('assistant/execute', 'SuiteZap\LawFirm\Http\Controllers\AssistantController@execute')
+        ->name('lawfirm.assistant.execute');
 });

@@ -10,9 +10,9 @@ class AdditionalChecklistSeeder extends Seeder
     public function run()
     {
         $templates = [
-            // KIT CIVIL (Genérico)
+            // Docs. CIVIL (Genérico)
             [
-                'name' => 'Kit Cível (Geral)',
+                'name' => 'Docs. Cível (Geral)',
                 'area' => 'civil',
                 'items' => json_encode([
                     'Cópia do Contrato (Objeto da Ação)',
@@ -23,9 +23,9 @@ class AdditionalChecklistSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // KIT PENAL
+            // Docs. PENAL
             [
-                'name' => 'Kit Penal / Criminal',
+                'name' => 'Docs. Penal / Criminal',
                 'area' => 'penal',
                 'items' => json_encode([
                     'Boletim de Ocorrência (B.O.)',
@@ -36,9 +36,9 @@ class AdditionalChecklistSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // KIT CONSUMIDOR
+            // Docs. CONSUMIDOR
             [
-                'name' => 'Kit Consumidor',
+                'name' => 'Docs. Consumidor',
                 'area' => 'consumidor',
                 'items' => json_encode([
                     'Nota Fiscal do Produto/Serviço',
@@ -50,9 +50,9 @@ class AdditionalChecklistSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            // KIT TRIBUTÁRIO
+            // Docs. TRIBUTÁRIO
             [
-                'name' => 'Kit Tributário',
+                'name' => 'Docs. Tributário',
                 'area' => 'tributario',
                 'items' => json_encode([
                     'Notificação de Lançamento / Auto de Infração',

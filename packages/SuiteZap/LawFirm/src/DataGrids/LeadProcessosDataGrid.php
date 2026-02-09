@@ -41,6 +41,7 @@ class LeadProcessosDataGrid extends ProcessoDataGrid
             'label' => trans('lawfirm::app.processos.datagrid.id'),
             'type' => 'integer',
             'sortable' => true,
+            'filterable' => true,
         ]);
 
         $this->addColumn([
@@ -48,15 +49,15 @@ class LeadProcessosDataGrid extends ProcessoDataGrid
             'label' => trans('lawfirm::app.processos.datagrid.titulo'),
             'type' => 'string',
             'sortable' => true,
+            'filterable' => true,
         ]);
-
-        // Removido 'cliente_nome' pois estamos visualizando o Lead
 
         $this->addColumn([
             'index' => 'area_direito',
             'label' => trans('lawfirm::app.processos.form.area'),
             'type' => 'string',
             'sortable' => true,
+            'filterable' => true,
         ]);
 
         $this->addColumn([
@@ -64,6 +65,13 @@ class LeadProcessosDataGrid extends ProcessoDataGrid
             'label' => trans('lawfirm::app.processos.form.data_audiencia'),
             'type' => 'datetime',
             'sortable' => true,
+            'filterable' => true,
+            'closure' => function ($row) {
+                if (!$row->data_audiencia) {
+                    return '-';
+                }
+                return \Carbon\Carbon::parse($row->data_audiencia)->format('d/m/Y H:i');
+            },
         ]);
 
         $this->addColumn([
@@ -71,6 +79,7 @@ class LeadProcessosDataGrid extends ProcessoDataGrid
             'label' => trans('lawfirm::app.processos.datagrid.cnj'),
             'type' => 'string',
             'sortable' => true,
+            'filterable' => true,
         ]);
 
         $this->addColumn([
@@ -78,6 +87,9 @@ class LeadProcessosDataGrid extends ProcessoDataGrid
             'label' => trans('lawfirm::app.processos.datagrid.status'),
             'type' => 'string',
             'sortable' => true,
+            'filterable' => true,
         ]);
+
+        // Removed person_name intentionally
     }
 }

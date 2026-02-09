@@ -92,7 +92,7 @@ return [
         'datagrid' => [
             'id' => 'ID',
             'titulo' => 'Título',
-            'cnj' => 'Número CNJ',
+            'cnj' => 'Número ATSum / CNJ',
             'data_audiencia' => 'Data da Audiência',
             'status' => 'Status',
             'lead_id' => 'Oportunidade (Lead)',
@@ -110,7 +110,7 @@ return [
 
             // Campos do Formulário
             'titulo' => 'Título do Processo',
-            'cnj' => 'Número CNJ',
+            'cnj' => 'Número ATSum / CNJ',
             'link' => 'Link do Processo',
             'cliente' => 'Cliente',
             'person' => 'Pessoa Vinculada',

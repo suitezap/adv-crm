@@ -32,7 +32,7 @@ class AssistantController extends Controller
         $allowedModules = $subscription ? ($subscription->active_modules ?? []) : [];
 
         // 2. Filtrar Templates (usa scope MotherShip)
-        $templates = AssistantTemplate::forCurrentTenant()
+        $templates = AssistantTemplate::forTenant()
             ->where('is_active', true)
             ->where(function ($query) use ($allowedModules) {
                 // Mostra se o módulo for NULL (Público) OU se estiver na lista permitida

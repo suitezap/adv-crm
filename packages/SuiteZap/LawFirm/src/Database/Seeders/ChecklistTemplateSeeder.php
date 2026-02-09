@@ -14,9 +14,9 @@ class ChecklistTemplateSeeder extends Seeder
         DB::table('law_checklist_templates')->truncate();
 
         $templates = [
-            // 1. KIT BÁSICO (Padrão) - Solicitado como 1ª opção
+            // 1. Docs. BÁSICO (Padrão) - Solicitado como 1ª opção
             [
-                'name' => '00. Kit Básico (Padrão)',
+                'name' => 'Docs. Padrão Básico',
                 'area' => 'Geral',
                 'items' => json_encode([
                     ['name' => 'RG e CPF', 'required' => true],
@@ -25,9 +25,9 @@ class ChecklistTemplateSeeder extends Seeder
                     ['name' => 'Declaração de Hipossuficiência', 'required' => false]
                 ]),
             ],
-            // 2. Kit Divórcio Consensual
+            // 2. Docs. Divórcio Consensual
             [
-                'name' => 'Kit Divórcio Consensual',
+                'name' => 'Docs. Divórcio Consensual',
                 'area' => 'Família',
                 'items' => json_encode([
                     ['name' => 'Certidão de Casamento Atualizada', 'required' => true],
@@ -36,9 +36,9 @@ class ChecklistTemplateSeeder extends Seeder
                     ['name' => 'Certidão de Nascimento dos Filhos', 'required' => false],
                 ]),
             ],
-            // 3. Kit Usucapião
+            // 3. Docs. Usucapião
             [
-                'name' => 'Kit Usucapião',
+                'name' => 'Docs. Usucapião',
                 'area' => 'Civil',
                 'items' => json_encode([
                     ['name' => 'Planta do Imóvel', 'required' => true],
@@ -47,9 +47,9 @@ class ChecklistTemplateSeeder extends Seeder
                     ['name' => 'Contas de Consumo (últimos 5 anos)', 'required' => true],
                 ]),
             ],
-            // 4. Kit Cível (Geral)
+            // 4. Docs. Cível (Geral)
             [
-                'name' => 'Kit Cível (Geral)',
+                'name' => 'Docs. Cível (Geral)',
                 'area' => 'Civil',
                 'items' => json_encode([
                     ['name' => 'Cópia do Contrato (Objeto da Ação)', 'required' => true],
@@ -58,9 +58,9 @@ class ChecklistTemplateSeeder extends Seeder
                     ['name' => 'Rol de Testemunhas (Nome/RG/Endereço)', 'required' => false]
                 ]),
             ],
-            // 5. Kit Penal
+            // 5. Docs. Penal
             [
-                'name' => 'Kit Penal / Criminal',
+                'name' => 'Docs. Penal / Criminal',
                 'area' => 'Penal',
                 'items' => json_encode([
                     ['name' => 'Boletim de Ocorrência (B.O.)', 'required' => true],
@@ -69,9 +69,9 @@ class ChecklistTemplateSeeder extends Seeder
                     ['name' => 'Procuração Criminal Específica', 'required' => true]
                 ]),
             ],
-            // 6. Kit Consumidor
+            // 6. Docs. Consumidor
             [
-                'name' => 'Kit Consumidor',
+                'name' => 'Docs. Consumidor',
                 'area' => 'Consumidor',
                 'items' => json_encode([
                     ['name' => 'Nota Fiscal do Produto/Serviço', 'required' => true],
@@ -80,9 +80,9 @@ class ChecklistTemplateSeeder extends Seeder
                     ['name' => 'Fotos do Defeito/Produto', 'required' => true]
                 ]),
             ],
-            // 7. Kit Tributário
+            // 7. Docs. Tributário
             [
-                'name' => 'Kit Tributário',
+                'name' => 'Docs. Tributário',
                 'area' => 'Tributário',
                 'items' => json_encode([
                     ['name' => 'Notificação de Lançamento / Auto de Infração', 'required' => true],

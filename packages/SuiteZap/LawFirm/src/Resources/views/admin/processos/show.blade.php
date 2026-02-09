@@ -230,7 +230,7 @@
                             @endforeach
                         </select>
                         <button type="submit" class="primary-button">
-                            Importar Kit
+                            Importar
                         </button>
                     </form>
                 </div>

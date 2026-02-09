@@ -33,14 +33,14 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
      */
     protected $fillable = [
         'tenant_id',
-        'title',
         'category',
-        'icon',
-        'required_module',
+        'title',
         'description',
+        'icon',
         'prompt_structure',
         'variables',
         'n8n_webhook_url',
+        'required_module',
         'is_active',
     ];
 
@@ -60,7 +60,7 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeForCurrentTenant($query)
+    public function scopeForTenant($query, $tenantId = null)
     {
         // Lógica: Traz templates GLOBAIS (tenant_id null) OU do cliente atual
         $tenantId = \SuiteZap\LawFirm\Services\MotherShipService::getTenantId();

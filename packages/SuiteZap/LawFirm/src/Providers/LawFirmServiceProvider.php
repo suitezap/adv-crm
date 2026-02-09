@@ -38,6 +38,7 @@ class LawFirmServiceProvider extends ServiceProvider
         // DEBUG: Início do Boot
         // ====================================================================
         Log::info('LawFirm: Iniciando Boot...');
+        Log::info('LawFirm Provider Booted'); // Explicit debug log
 
         // ====================================================================
         // 1. CARREGAR ROTAS
@@ -139,6 +140,18 @@ class LawFirmServiceProvider extends ServiceProvider
         }
 
         // ====================================================================
+        // 8. BLADE COMPONENTS
+        // ====================================================================
+        // Register anonymous components path for package components
+        $componentsPath = __DIR__ . '/../Resources/views/components';
+        if (is_dir($componentsPath)) {
+            \Illuminate\Support\Facades\Blade::anonymousComponentPath($componentsPath, 'lawfirm');
+            Log::info('LawFirm: Anonymous Blade Components registrados.', ['path' => $componentsPath]);
+        }
+
+        \Illuminate\Support\Facades\Blade::component('lawfirm::assistant-panel', 'assistant-panel');
+
+        // ====================================================================
         // DEBUG: Fim do Boot
         // ====================================================================
         Log::info('LawFirm: Boot finalizado com sucesso!');
@@ -176,6 +189,12 @@ class LawFirmServiceProvider extends ServiceProvider
         );
 
         $this->app->register(EventServiceProvider::class);
+
+        // ✅ OVERRIDE: ActivityDataGrid (Defensive Coding)
+        $this->app->bind(
+            \Webkul\Admin\DataGrids\Activity\ActivityDataGrid::class,
+            \SuiteZap\LawFirm\DataGrids\SafeActivityDataGrid::class
+        );
     }
 
     /**
@@ -362,6 +381,19 @@ class LawFirmServiceProvider extends ServiceProvider
         Event::listen('admin.dashboard.index.open_leads_by_states.after', function ($viewRenderEventManager) {
             $viewRenderEventManager->addTemplate('lawfirm::admin.dashboard.widgets.law-firm-overview');
         });
+
+        // ---------------------------------------------------------------------
+        // Lead: Aba Processos (REMOVIDO por solicitação - Causando erro 500 e duplicidade)
+        // ---------------------------------------------------------------------
+        // Antiga injeção: admin.leads.view.activities.after -> lawfirm::admin.leads.tab_processos
+
+        // ---------------------------------------------------------------------
+        // Lead: Assistant Injection (Global/Layout)
+        // ---------------------------------------------------------------------
+        // ---------------------------------------------------------------------
+        // Lead: Assistant Injection (Global/Layout) - REMOVIDO
+        // ---------------------------------------------------------------------
+        // O código foi removido para limpar a interface e manter apenas o menu Jurídico.
     }
 
     /**

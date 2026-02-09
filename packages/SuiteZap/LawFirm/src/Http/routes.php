@@ -123,6 +123,9 @@ Route::middleware(['web', 'admin_locale', 'user'])
             Route::post('{slug}/generate', 'generate')->name('lawfirm.assistants.generate');
             Route::post('{slug}/execute', 'execute')->name('lawfirm.assistants.execute');
         });
+        // ---------------------------------------------------------------------
+        // Checklist Module Routes (Moved to match requested URL structure)
+        // ---------------------------------------------------------------------
     });
 
 // ============================================================================
@@ -189,5 +192,23 @@ Route::middleware(['web', 'user'])
                     'lawfirm.processos'
                 ]
             ];
+        });
+
+        // ---------------------------------------------------------------------
+        // Checklist Module Routes (Strict User Request)
+        // URL: /admin/lawfirm/checklist/...
+        // ---------------------------------------------------------------------
+        Route::prefix('checklist')->group(function () {
+            Route::get('/{leadId}', [\SuiteZap\LawFirm\Http\Controllers\ChecklistController::class, 'show'])
+                ->name('lawfirm.checklist.show');
+
+            Route::post('/{leadId}/init', [\SuiteZap\LawFirm\Http\Controllers\ChecklistController::class, 'initialize'])
+                ->name('lawfirm.checklist.init');
+
+            Route::post('/{leadId}/save', [\SuiteZap\LawFirm\Http\Controllers\ChecklistController::class, 'saveProgress'])
+                ->name('lawfirm.checklist.save');
+
+            Route::post('/{leadId}/validate-ai', [\SuiteZap\LawFirm\Http\Controllers\ChecklistController::class, 'validateWithAi'])
+                ->name('lawfirm.checklist.validate');
         });
     });
