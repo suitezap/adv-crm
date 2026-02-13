@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Http\Controllers\Admin\ProcessoController;
 use SuiteZap\LawFirm\Http\Controllers\Admin\PrazoController;
-use SuiteZap\LawFirm\Http\Controllers\FinancialController;
+use SuiteZap\LawFirm\Financial\Http\Controllers\FinancialController;
 use SuiteZap\LawFirm\Http\Controllers\ProcessDocumentController;
 use SuiteZap\LawFirm\Http\Controllers\LegalDocumentController;
 use SuiteZap\LawFirm\Http\Controllers\SaaSController;
@@ -105,6 +105,14 @@ Route::middleware(['web', 'admin_locale', 'user'])
         });
 
         // -----------------------------------------------
+        // GED (Gestão Eletrônica de Documentos) - Domain Refactor
+        // -----------------------------------------------
+        Route::prefix('ged')->controller(\SuiteZap\LawFirm\GED\Http\Controllers\ProcessDocumentController::class)->group(function () {
+            Route::post('store', 'store')->name('admin.lawfirm.ged.store');
+            Route::delete('{id}', 'destroy')->name('admin.lawfirm.ged.destroy');
+        });
+
+        // -----------------------------------------------
         // Documentos Jurídicos (Procuração, Contratos, etc.)
         // -----------------------------------------------
         Route::get('documentos/procuracao/{processId}', [LegalDocumentController::class, 'downloadProcuration'])
@@ -126,6 +134,16 @@ Route::middleware(['web', 'admin_locale', 'user'])
         // ---------------------------------------------------------------------
         // Checklist Module Routes (Moved to match requested URL structure)
         // ---------------------------------------------------------------------
+        // -----------------------------------------------
+        // Deadlines (Prazos) - Legal Module Refactor
+        // -----------------------------------------------
+        Route::prefix('prazos-legal')->controller(\SuiteZap\LawFirm\Legal\Http\Controllers\DeadlineController::class)->group(function () {
+            Route::post('store', 'store')->name('admin.lawfirm.legal.deadlines.store');
+            Route::put('{id}', 'update')->name('admin.lawfirm.legal.deadlines.update');
+            Route::delete('{id}', 'destroy')->name('admin.lawfirm.legal.deadlines.destroy');
+            Route::post('{id}/toggle', 'toggle')->name('admin.lawfirm.legal.deadlines.toggle');
+        });
+
     });
 
 // ============================================================================
@@ -210,5 +228,8 @@ Route::middleware(['web', 'user'])
 
             Route::post('/{leadId}/validate-ai', [\SuiteZap\LawFirm\Http\Controllers\ChecklistController::class, 'validateWithAi'])
                 ->name('lawfirm.checklist.validate');
+
+            Route::post('/{leadId}/execute-ai', [\SuiteZap\LawFirm\Http\Controllers\ChecklistController::class, 'executeAi'])
+                ->name('lawfirm.checklist.execute-ai');
         });
     });

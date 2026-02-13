@@ -1,11 +1,12 @@
 <?php
 
-namespace SuiteZap\LawFirm\Http\Controllers;
+namespace SuiteZap\LawFirm\Financial\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use SuiteZap\LawFirm\DataGrids\FinancialDataGrid;
-use SuiteZap\LawFirm\Services\FinancialDashboardService;
+use SuiteZap\LawFirm\Financial\DataGrids\FinancialDataGrid;
+use SuiteZap\LawFirm\Financial\Services\FinancialDashboardService;
+use SuiteZap\LawFirm\Financial\Services\FinancialService;
 use Webkul\Admin\Http\Controllers\Controller;
 
 class FinancialController extends Controller
@@ -16,14 +17,19 @@ class FinancialController extends Controller
     protected $dashboardService;
 
     /**
+     * @var FinancialService
+     */
+    protected $financialService;
+
+    /**
      * Create a new controller instance.
      */
-    public function __construct(FinancialDashboardService $dashboardService)
-    {
+    public function __construct(
+        FinancialDashboardService $dashboardService,
+        FinancialService $financialService
+    ) {
         $this->dashboardService = $dashboardService;
-
-        // REMOVED: Invalid middleware call causing "Object of type Webkul\Core\Acl is not callable"
-        // $this->middleware('acl:lawfirm.financial.view');
+        $this->financialService = $financialService;
     }
 
     /**
@@ -59,7 +65,7 @@ class FinancialController extends Controller
             'aging' => $metrics['aging'],
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'users' => $users, // Injetado
+            'users' => $users,
         ]);
     }
 
@@ -72,24 +78,20 @@ class FinancialController extends Controller
      */
     public function quickPay(Request $request, $id)
     {
-        // 1. Validação
         $validated = $request->validate([
             'payment_date' => 'required|date',
             'payment_method' => 'required|string',
         ]);
 
-        // 2. Busca e Atualização
-        $financial = \SuiteZap\LawFirm\Models\Financial::findOrFail($id);
-
-        $financial->update([
-            'status' => 'pago',
-            'payment_date' => $validated['payment_date'],
-            'payment_method' => $validated['payment_method'],
-        ]);
+        $financial = $this->financialService->quickPay(
+            $id,
+            $validated['payment_date'],
+            $validated['payment_method']
+        );
 
         return response()->json([
             'message' => 'Baixa realizada com sucesso!',
-            'data' => $financial
+            'data' => $financial,
         ]);
     }
 

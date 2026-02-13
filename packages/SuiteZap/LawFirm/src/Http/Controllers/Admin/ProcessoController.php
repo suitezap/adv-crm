@@ -16,6 +16,9 @@ use SuiteZap\LawFirm\Rules\ValidarCNJ;
 use SuiteZap\LawFirm\Rules\ValidarCpfCnpj;
 use SuiteZap\LawFirm\Services\SaasStorageService;
 use SuiteZap\LawFirm\Events\PrazoCreated;
+use SuiteZap\LawFirm\GED\Services\DocumentService;
+use SuiteZap\LawFirm\Legal\Services\DeadlineService;
+use SuiteZap\LawFirm\Financial\Services\FinancialService;
 
 class ProcessoController extends Controller
 {
@@ -48,6 +51,27 @@ class ProcessoController extends Controller
     protected $activityRepository;
 
     /**
+     * DocumentService object
+     *
+     * @var \SuiteZap\LawFirm\GED\Services\DocumentService
+     */
+    protected $documentService;
+
+    /**
+     * DeadlineService object
+     *
+     * @var \SuiteZap\LawFirm\Legal\Services\DeadlineService
+     */
+    protected $deadlineService;
+
+    /**
+     * FinancialService object
+     *
+     * @var \SuiteZap\LawFirm\Financial\Services\FinancialService
+     */
+    protected $financialService;
+
+    /**
      * Create a new controller instance.
      *
      * @param  \SuiteZap\LawFirm\Repositories\ProcessoRepository  $processoRepository
@@ -60,12 +84,18 @@ class ProcessoController extends Controller
         ProcessoRepository $processoRepository,
         PersonRepository $personRepository,
         LeadRepository $leadRepository,
-        ActivityRepository $activityRepository
+        ActivityRepository $activityRepository,
+        DocumentService $documentService,
+        DeadlineService $deadlineService,
+        FinancialService $financialService
     ) {
         $this->processoRepository = $processoRepository;
         $this->personRepository = $personRepository;
         $this->leadRepository = $leadRepository;
         $this->activityRepository = $activityRepository;
+        $this->documentService = $documentService;
+        $this->deadlineService = $deadlineService;
+        $this->financialService = $financialService;
 
         // REMOVED: Invalid middleware call causing "Object of type Webkul\Core\Acl is not callable"
         // Permission checking is handled by 'user' middleware (Bouncer) via acl.php route mapping.
@@ -230,13 +260,7 @@ class ProcessoController extends Controller
         // CREATE PRAZOS
         if (isset($data['prazos']) && is_array($data['prazos'])) {
             foreach ($data['prazos'] as $prazoData) {
-                $newPrazo = $processo->prazos()->create([
-                    'titulo' => $prazoData['titulo'],
-                    'data_vencimento' => $prazoData['data_vencimento'],
-                    'status' => $prazoData['status'] ?? 'Pendente',
-                    'descricao' => $prazoData['descricao'] ?? null,
-                    'tipo' => 'comum'
-                ]);
+                $newPrazo = $this->deadlineService->createDeadline(array_merge($prazoData, ['processo_id' => $processo->id]));
 
                 // Dispara evento para WhatsApp
                 // event(new PrazoCreated($newPrazo));
@@ -292,42 +316,15 @@ class ProcessoController extends Controller
             }
         }
 
-        // UPLOAD ANEXOS (GED) - STRICT NAMING: [ID]-[HASH]_[SLUG].ext
+        // UPLOAD ANEXOS (GED)
         if (request()->hasFile('anexos')) {
-            $storageService = app(SaasStorageService::class);
-
-            foreach (request()->file('anexos') as $file) {
-                $fileSize = $file->getSize();
-
-                // 1. CHECK QUOTA before upload
-                if (!$storageService->checkQuota($fileSize)) {
-                    session()->flash('error', 'Cota de disco excedida. Limite de armazenamento atingido.');
-                    return redirect()->back()->withInput();
+            try {
+                foreach (request()->file('anexos') as $file) {
+                    $this->documentService->storeFile($file, $processo);
                 }
-
-                // 2. Generate components
-                $processId = $processo->id;
-                $randomHash = \Illuminate\Support\Str::random(7);
-                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $cleanName = \Illuminate\Support\Str::slug($originalName);
-                $extension = strtolower($file->getClientOriginalExtension());
-
-                // 3. Construct final name
-                $finalName = "{$processId}-{$randomHash}_{$cleanName}.{$extension}";
-
-                // 4. Store using configurable disk
-                $path = $file->storeAs('processos/' . $processId, $finalName, config('filesystems.default'));
-
-                // 5. Save to database
-                $processo->anexos()->create([
-                    'path' => $path,
-                    'nome_original' => $file->getClientOriginalName(),
-                    'tipo_mime' => $file->getMimeType(),
-                    'tamanho' => $fileSize,
-                ]);
-
-                // 6. INCREMENT USAGE after successful upload
-                $storageService->incrementUsage($fileSize);
+            } catch (\Exception $e) {
+                session()->flash('error', $e->getMessage());
+                return redirect()->back()->withInput();
             }
         }
 
@@ -473,146 +470,54 @@ class ProcessoController extends Controller
 
         $processo = $this->processoRepository->update($data, $id);
 
-        // SYNC PRAZOS
-        $prazosEnviados = $data['prazos'] ?? [];
+        // -------------------------------------------------------------
+        // PRAZOS (DEADLINES) SYNC
+        // -------------------------------------------------------------
+        $prazosRequest = $data['prazos'] ?? [];
 
-        // 1. Identify IDs to keep
-        $idsParaManter = collect($prazosEnviados)->pluck('id')->filter()->toArray();
+        // 1. Get existing IDs from DB
+        $existingPrazosIds = $processo->prazos()->pluck('id')->toArray();
 
-        // 2. Delete removed items (iterate models to trigger Observer)
-        $prazosParaDeletar = $processo->prazos()->whereNotIn('id', $idsParaManter)->get();
-        foreach ($prazosParaDeletar as $prazo) {
-            $prazo->delete();
-        }
-
-        // 3. Create or Update
-        foreach ($prazosEnviados as $prazoData) {
-            $attributes = [
-                'titulo' => $prazoData['titulo'],
-                'data_vencimento' => $prazoData['data_vencimento'],
-                'status' => $prazoData['status'] ?? 'Pendente',
-                'descricao' => $prazoData['descricao'] ?? null,
-                'processo_id' => $processo->id,
-            ];
-
-            // Default 'tipo' for new items if not present
-            if (!isset($prazoData['id'])) {
-                $attributes['tipo'] = 'comum';
-            }
-
-            if (isset($prazoData['id']) && $prazoData['id']) {
-                $prazoModel = $processo->prazos()->where('id', $prazoData['id'])->first();
-                if ($prazoModel) {
-                    $prazoModel->update($attributes);
+        // 2. Get IDs from Request
+        $requestPrazosIds = [];
+        if (is_array($prazosRequest)) {
+            foreach ($prazosRequest as $key => $prazoData) {
+                if (isset($prazoData['id']) && $prazoData['id']) {
+                    $requestPrazosIds[] = $prazoData['id'];
                 }
-            } else {
-                $newPrazo = $processo->prazos()->create($attributes);
-                // event(new PrazoCreated($newPrazo));
             }
         }
 
-        // SYNC FINANCEIROS
-        $finEnviados = $data['financeiros'] ?? [];
+        // 3. Delete removed
+        $idsToDelete = array_diff($existingPrazosIds, $requestPrazosIds);
+        foreach ($idsToDelete as $idToDelete) {
+            $this->deadlineService->deleteDeadline($idToDelete);
+        }
 
-        // 1. IDs to keep
-        $idsFinManter = collect($finEnviados)->pluck('id')->filter()->toArray();
-
-        // 2. Delete removed
-        $processo->financeiros()->whereNotIn('id', $idsFinManter)->delete();
-
-        // 3. Create/Update
-        foreach ($finEnviados as $finData) {
-
-            // Check if it is a NEW record AND has installments
-            if ((!isset($finData['id']) || !$finData['id']) && isset($finData['parcelar']) && $finData['parcelar'] == '1' && isset($finData['parcelas_qtd']) && $finData['parcelas_qtd'] > 1) {
-                $qtd = (int) $finData['parcelas_qtd'];
-                $freq = (int) ($finData['parcelas_frequencia'] ?? 30);
-                $totalValue = (float) $finData['valor'];
-                $baseValue = floor(($totalValue / $qtd) * 100) / 100;
-                $remainder = round($totalValue - ($baseValue * $qtd), 2);
-                $startDate = Carbon::parse($finData['data_vencimento']);
-
-                for ($i = 1; $i <= $qtd; $i++) {
-                    $currentValue = $baseValue;
-                    if ($i == $qtd) {
-                        $currentValue += $remainder;
-                    }
-
-                    $dueDate = $startDate->copy()->addDays($freq * ($i - 1));
-
-                    $processo->financeiros()->create([
-                        'tipo' => $finData['tipo'],
-                        'nome' => $finData['nome'] . " (Parcela $i/$qtd)",
-                        'valor' => $currentValue,
-                        'data_vencimento' => $dueDate,
-                        'status' => $finData['status'] ?? 'pendente',
-                        'category' => $finData['category'] ?? null,
-                        'issued_at' => $finData['issued_at'] ?? null,
-                        'payment_method' => $finData['payment_method'] ?? null,
-                        'payment_date' => ($finData['status'] ?? 'pendente') === 'pago' ? ($finData['payment_date'] ?? now()->toDateString()) : null,
-                        'processo_id' => $processo->id
-                    ]);
+        // 4. Create or Update
+        if (is_array($prazosRequest)) {
+            foreach ($prazosRequest as $prazoData) {
+                if (isset($prazoData['id']) && $prazoData['id']) {
+                    // Update
+                    $this->deadlineService->updateDeadline($prazoData['id'], $prazoData);
+                } else {
+                    // Create
+                    $this->deadlineService->createDeadline(array_merge($prazoData, ['processo_id' => $processo->id]));
                 }
-                continue; // Skip standard create/update for this iteration
-            }
-
-            // Standard Create/Update (Single)
-            $attributes = [
-                'tipo' => $finData['tipo'],
-                'nome' => $finData['nome'],
-                'valor' => $finData['valor'],
-                'data_vencimento' => $finData['data_vencimento'],
-                'status' => $finData['status'] ?? 'pendente',
-                'category' => $finData['category'] ?? null,
-                'issued_at' => $finData['issued_at'] ?? null,
-                'payment_method' => $finData['payment_method'] ?? null,
-                'payment_date' => ($finData['status'] ?? 'pendente') === 'pago' ? ($finData['payment_date'] ?? now()->toDateString()) : null,
-                'processo_id' => $processo->id
-            ];
-
-            if (isset($finData['id']) && $finData['id']) {
-                $processo->financeiros()->where('id', $finData['id'])->update($attributes);
-            } else {
-                $processo->financeiros()->create($attributes);
             }
         }
+        // SYNC FINANCEIROS (Delegado ao FinancialService)
+        $this->financialService->syncFinancials($processo, $data['financeiros'] ?? []);
 
-        // UPLOAD ANEXOS (GED) - UPDATE - STRICT NAMING: [ID]-[HASH]_[SLUG].ext
+        // UPLOAD ANEXOS (GED)
         if (request()->hasFile('anexos')) {
-            $storageService = app(SaasStorageService::class);
-
-            foreach (request()->file('anexos') as $file) {
-                $fileSize = $file->getSize();
-
-                // 1. CHECK QUOTA before upload
-                if (!$storageService->checkQuota($fileSize)) {
-                    session()->flash('error', 'Cota de disco excedida. Limite de armazenamento atingido.');
-                    return redirect()->back()->withInput();
+            try {
+                foreach (request()->file('anexos') as $file) {
+                    $this->documentService->storeFile($file, $processo);
                 }
-
-                // 2. Generate components
-                $processId = $processo->id;
-                $randomHash = \Illuminate\Support\Str::random(7);
-                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $cleanName = \Illuminate\Support\Str::slug($originalName);
-                $extension = strtolower($file->getClientOriginalExtension());
-
-                // 3. Construct final name
-                $finalName = "{$processId}-{$randomHash}_{$cleanName}.{$extension}";
-
-                // 4. Store using configurable disk
-                $path = $file->storeAs('processos/' . $processId, $finalName, config('filesystems.default'));
-
-                // 5. Save to database
-                $processo->anexos()->create([
-                    'path' => $path,
-                    'nome_original' => $file->getClientOriginalName(),
-                    'tipo_mime' => $file->getMimeType(),
-                    'tamanho' => $fileSize,
-                ]);
-
-                // 6. INCREMENT USAGE after successful upload
-                $storageService->incrementUsage($fileSize);
+            } catch (\Exception $e) {
+                session()->flash('error', $e->getMessage());
+                return redirect()->back()->withInput();
             }
         }
 
@@ -712,26 +617,12 @@ class ProcessoController extends Controller
      */
     public function destroyAnexo($id)
     {
-        $anexo = \SuiteZap\LawFirm\Models\Anexo::findOrFail($id);
-
-        // Get file size BEFORE deleting (for quota decrement)
-        $fileSize = $anexo->tamanho ?? 0;
-
-        // Delete from Storage (S3 Compatible - uses default disk)
-        if (Storage::exists($anexo->path)) {
-            Storage::delete($anexo->path);
+        try {
+            $this->documentService->deleteFile($id);
+            session()->flash('success', 'Anexo excluído com sucesso.');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Erro ao excluir anexo: ' . $e->getMessage());
         }
-
-        // Delete from DB
-        $anexo->delete();
-
-        // DECREMENT USAGE after successful deletion
-        if ($fileSize > 0) {
-            $storageService = app(SaasStorageService::class);
-            $storageService->decrementUsage($fileSize);
-        }
-
-        session()->flash('success', 'Anexo excluído com sucesso.');
 
         return redirect()->back();
     }

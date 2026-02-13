@@ -38,3 +38,15 @@ node_modules/
 
 # Pacote customizado
 !/packages/SuiteZap
+
+# Temporary and local files
+*.txt
+/stubs
+/my-skills/
+git_status_output.txt
+staged.txt
+status.txt
+temp_error_log.txt
+temp_log.txt
+unstaged.txt
+dry_run.txt

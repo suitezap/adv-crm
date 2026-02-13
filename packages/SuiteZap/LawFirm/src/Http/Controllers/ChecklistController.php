@@ -32,6 +32,11 @@ class ChecklistController extends Controller
         $isWon = optional($lead->stage)->code === 'won';
         $leadStatusLabel = optional($lead->stage)->name ?? 'Unknown';
 
+        // Fetch Viability Template for AI Analysis in Pre-Screening
+        $viabilityTemplate = \SuiteZap\LawFirm\Models\AssistantTemplate::on('mothership')
+            ->where('id', 1)
+            ->first();
+
         // Se não existe, retornar indicação para o frontend mostrar seleção de área
         if (!$checklist) {
             return response()->json([
@@ -39,6 +44,7 @@ class ChecklistController extends Controller
                 'available_types' => ChecklistTemplates::getAvailableTypes(),
                 'is_won' => $isWon,
                 'lead_status_label' => $leadStatusLabel,
+                'viability_template' => $viabilityTemplate,
             ]);
         }
 
@@ -49,6 +55,7 @@ class ChecklistController extends Controller
             'steps' => ChecklistTemplates::getTemplate($checklist->type),
             'is_won' => $isWon,
             'lead_status_label' => $leadStatusLabel,
+            'viability_template' => $viabilityTemplate,
         ]);
     }
 
@@ -161,6 +168,51 @@ class ChecklistController extends Controller
                 ],
                 'mensagem' => 'A análise preliminar indica risco de prescrição se a ação não for ajuizada em 30 dias.'
             ]
+        ]);
+    }
+
+    /**
+     * Execute AI Template Analysis (Pre-Screening)
+     * Receives template_id and form data, processes with AI (stub for now).
+     */
+    public function executeAi(Request $request, $leadId)
+    {
+        $request->validate([
+            'template_id' => 'required|integer',
+            'data' => 'required|array',
+        ]);
+
+        $templateId = $request->input('template_id');
+        $formData = $request->input('data');
+
+        // Fetch template from mothership
+        $template = \SuiteZap\LawFirm\Models\AssistantTemplate::on('mothership')
+            ->where('id', $templateId)
+            ->first();
+
+        if (!$template) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Template não encontrado.',
+            ], 404);
+        }
+
+        // Log for debugging (URL construction simulation)
+        \Log::info('AI Template Execution', [
+            'lead_id' => $leadId,
+            'template_id' => $templateId,
+            'template_slug' => $template->slug ?? 'N/A',
+            'form_data' => $formData,
+            'webhook_url' => $template->n8n_webhook_url ?? 'N/A',
+        ]);
+
+        // TODO: Real integration with n8n/MotherShipService
+        // For now, return mock success response
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Solicitação enviada para IA',
+            'mock_response' => 'Análise simulada: Risco Médio. Recomenda-se verificar documentação antes de prosseguir.',
+            'template_used' => $template->title ?? 'Template de Triagem',
         ]);
     }
 }

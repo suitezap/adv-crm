@@ -92,218 +92,123 @@
                 </div>
             </div>
 
+
             <!-- 2. Financeiro -->
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <div class="flex items-center justify-between mb-4">
-                    <p class="text-lg font-bold text-gray-800 dark:text-white">
-                        Gestão Financeira
-                        @if($processo->valor_causa)
-                            <span class="text-sm font-normal text-gray-500 ml-2">
-                                - Valor da Causa: R$ {{ number_format((float) $processo->valor_causa, 2, ',', '.') }}
-                            </span>
-                        @endif
-                    </p>
-                </div>
-
-                <!-- Dashboard KPIs -->
-                <div class="flex flex-row flex-wrap gap-4 w-full items-stretch mb-6">
-                    <!-- Receita -->
-                    <div
-                        class="flex-1 min-w-[150px] flex flex-col justify-center rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                        <span class="text-[11px] font-bold uppercase text-green-600 tracking-wider">Total
-                            Receitas</span>
-                        <span class="mt-1 text-lg font-bold text-green-600 dark:text-green-400">
-                            {{ core()->formatBasePrice($processo->receita_total) }}
-                        </span>
-                    </div>
-                    <!-- Despesas -->
-                    <div
-                        class="flex-1 min-w-[150px] flex flex-col justify-center rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                        <span class="text-[11px] font-bold uppercase text-red-800 tracking-wider">Total Despesas</span>
-                        <span class="mt-1 text-lg font-bold text-red-800 dark:text-red-400">
-                            {{ core()->formatBasePrice($processo->despesas_totais) }}
-                        </span>
-                    </div>
-                    <!-- Saldo -->
-                    <div
-                        class="flex-1 min-w-[150px] flex flex-col justify-center rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                        <span
-                            class="text-[11px] font-bold uppercase text-gray-500 dark:text-gray-400 tracking-wider">Saldo
-                            Líquido</span>
-                        <span
-                            class="mt-1 text-lg font-bold {{ $processo->lucro_liquido >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400' }}">
-                            {{ core()->formatBasePrice($processo->lucro_liquido) }}
-                        </span>
-                    </div>
-                    <!-- Margem -->
-                    <div
-                        class="flex-1 min-w-[150px] flex flex-col justify-center rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                        <span class="text-[11px] font-bold uppercase text-blue-600 tracking-wider">Margem Lucro</span>
-                        <span class="mt-1 text-lg font-bold text-gray-600 dark:text-gray-300">
-                            {{ number_format($processo->margem_lucratividade, 2, ',', '.') }}%
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Table -->
-                <div class="relative overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
-                    <table class="min-w-full w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead
-                            class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b dark:border-gray-800">
-                            <tr>
-                                <th scope="col" class="px-6 py-3">Tipo</th>
-                                <th scope="col" class="px-6 py-3">Nome/Descrição</th>
-                                <th scope="col" class="px-6 py-3">Valor</th>
-                                <th scope="col" class="px-6 py-3">Vencimento</th>
-                                <th scope="col" class="px-6 py-3">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($processo->financeiros as $item)
-                                <tr
-                                    class="bg-white border-b hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-600">
-                                    <td
-                                        class="px-6 py-4 font-medium {{ $item->tipo === 'receita' ? 'text-green-600' : 'text-red-600' }}">
-                                        {{ ucfirst($item->tipo) }}
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-900 dark:text-white">
-                                        {{ $item->nome }}
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-900 dark:text-white">
-                                        R$ {{ number_format($item->valor, 2, ',', '.') }}
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-900 dark:text-white">
-                                        {{ $item->data_vencimento ? $item->data_vencimento->format('d/m/Y') : '-' }}
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-900 dark:text-white">
-                                        {{ ucfirst($item->status) }}
-                                    </td>
-                                </tr>
-                            @endforeach
-                            @if($processo->financeiros->isEmpty())
-                                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                        Nenhum lançamento financeiro.
-                                    </td>
-                                </tr>
-                            @endif
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 3. GED -->
-            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <p class="mb-4 text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                    <span class="icon-file text-xl text-blue-600"></span>
-                    Documentos Anexados
-                </p>
-                @include('lawfirm::admin.processos.partials.anexos', ['readOnly' => true, 'anexos' => $processo->anexos])
+                @include('lawfirm::admin.processos.partials.financeiro', ['processo' => $processo, 'readOnly' => true, 'startClosed' => true])
             </div>
 
             <!-- 4. Checklist de Documentos -->
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <div class="flex items-center justify-between mb-4">
-                    <p class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                <div class="flex items-center justify-between mb-4 cursor-pointer" onclick="toggleSection('checklist-content', 'checklist-icon')">
+                     <p class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
                         <span class="icon-menu text-xl text-purple-600"></span>
                         Checklist de Documentos
+                         <i id="checklist-icon" class="icon-arrow-down text-gray-500 ml-2"></i>
                     </p>
                     
-                    <button type="button" onclick="submitWhatsapp()" class="secondary-button flex items-center gap-2">
-                        <span>📤</span> Enviar Selecionados via WhatsApp
-                    </button>
-                    
-                    <form id="whatsappForm" action="{{ route('lawfirm.documents.send_whatsapp', $processo->id) }}" method="POST" style="display:none;">
-                        @csrf
-                    </form>
-                </div>
-
-                <!-- Barra de Ferramentas: Importar Template -->
-                <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <form action="{{ route('lawfirm.documents.import', $processo->id) }}" method="POST" class="flex flex-wrap gap-3 items-center">
-                        @csrf
-                        <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Importar Kit:</label>
-                        <select name="template_id" class="rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-3 py-2 text-sm" style="min-width: 280px;">
-                            <option value="">Selecione um Modelo...</option>
-                            @foreach(\SuiteZap\LawFirm\Models\ChecklistTemplate::all() as $tpl)
-                                <option value="{{ $tpl->id }}">{{ $tpl->name }} ({{ $tpl->area }})</option>
-                            @endforeach
-                        </select>
-                        <button type="submit" class="primary-button">
-                            Importar
+                    <div class="flex items-center gap-2" onclick="event.stopPropagation()">
+                        <button type="button" onclick="submitWhatsapp()" class="secondary-button flex items-center gap-2">
+                            <span>📤</span> Enviar Selecionados via WhatsApp
                         </button>
-                    </form>
+                    
+                        <form id="whatsappForm" action="{{ route('lawfirm.documents.send_whatsapp', $processo->id) }}" method="POST" style="display:none;">
+                            @csrf
+                        </form>
+                    </div>
                 </div>
 
-                <!-- Lista de Documentos -->
-                <div class="relative overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
-                    <table class="min-w-full w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b dark:border-gray-800">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 w-[50px]">
-                                    <input type="checkbox" id="checkAllDocs" onclick="toggleAllDocs(this)" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                </th>
-                                <th scope="col" class="px-6 py-3 w-[120px]">Status</th>
-                                <th scope="col" class="px-6 py-3">Documento Necessário</th>
-                                <th scope="col" class="px-6 py-3">Observações</th>
-                                <th scope="col" class="px-6 py-3 w-[180px]">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php 
-                                $documents = \SuiteZap\LawFirm\Models\ProcessDocument::where('processo_id', $processo->id)->get(); 
-                            @endphp
+                <div id="checklist-content" style="display: none;">
+                    <!-- Barra de Ferramentas: Importar Template -->
+                    <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <form action="{{ route('lawfirm.documents.import', $processo->id) }}" method="POST" class="flex flex-wrap gap-3 items-center">
+                            @csrf
+                            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Importar Kit:</label>
+                            <select name="template_id" class="rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-3 py-2 text-sm" style="min-width: 280px;">
+                                <option value="">Selecione um Modelo...</option>
+                                @foreach(\SuiteZap\LawFirm\Models\ChecklistTemplate::all() as $tpl)
+                                    <option value="{{ $tpl->id }}">{{ $tpl->name }} ({{ $tpl->area }})</option>
+                                @endforeach
+                            </select>
+                            <button type="submit" class="primary-button">
+                                Importar
+                            </button>
+                        </form>
+                    </div>
 
-                            @forelse($documents as $doc)
-                            <tr class="bg-white border-b hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-600">
-                                <td class="px-6 py-4">
-                                    <input type="checkbox" value="{{ $doc->id }}" class="doc-checkbox rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                                </td>
-                                <td class="px-6 py-4">
-                                    @if($doc->status == 'received')
-                                        <span class="inline-flex px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Recebido</span>
-                                    @elseif($doc->status == 'approved')
-                                        <span class="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Validado</span>
-                                    @else
-                                        <span class="inline-flex px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pendente</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 text-gray-900 dark:text-white font-medium">{{ $doc->name }}</td>
-                                <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ $doc->notes ?? '-' }}</td>
-                                <td class="actions" style="width: 100px; min-width: 100px;">
-                                    <div style="display: flex; align-items: center; gap: 5px;">
-                                        <!-- Botão Editar (Ícone Lápis) -->
-                                        <button type="button" class="transition text-blue-600 hover:text-blue-800" 
-                                            title="Analisar / Editar Nota"
-                                            data-id="{{ $doc->id }}"
-                                            data-status="{{ $doc->status }}"
-                                            data-notes="{{ $doc->notes ?? '' }}"
-                                            onclick="openDocModal(this)">
-                                            <span class="icon icon-edit text-2xl"></span>
-                                        </button>
+                    <!-- Lista de Documentos -->
+                    <div class="relative overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+                        <table class="min-w-full w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b dark:border-gray-800">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 w-[50px]">
+                                        <input type="checkbox" id="checkAllDocs" onclick="toggleAllDocs(this)" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 w-[120px]">Status</th>
+                                    <th scope="col" class="px-6 py-3">Documento Necessário</th>
+                                    <th scope="col" class="px-6 py-3">Observações</th>
+                                    <th scope="col" class="px-6 py-3 w-[180px]">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php 
+                                    $documents = \SuiteZap\LawFirm\Models\ProcessDocument::where('processo_id', $processo->id)->get(); 
+                                @endphp
 
-                                        <!-- Botão Excluir (Ícone Lixeira) -->
-                                        <form action="{{ route('lawfirm.documents.delete', $doc->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('Remover este documento?');">
-                                            @csrf 
-                                            @method('DELETE')
-                                            <button type="button" class="transition flex items-center justify-center text-red-600 hover:text-red-800" title="Remover" onclick="if(confirm('Remover este documento?')) this.closest('form').submit();">
-                                                <span class="icon icon-delete text-2xl"></span>
+                                @forelse($documents as $doc)
+                                <tr class="bg-white border-b hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-600">
+                                    <td class="px-6 py-4">
+                                        <input type="checkbox" value="{{ $doc->id }}" class="doc-checkbox rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($doc->status == 'received')
+                                            <span class="inline-flex px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Recebido</span>
+                                        @elseif($doc->status == 'approved')
+                                            <span class="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Validado</span>
+                                        @else
+                                            <span class="inline-flex px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pendente</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-900 dark:text-white font-medium">{{ $doc->name }}</td>
+                                    <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ $doc->notes ?? '-' }}</td>
+                                    <td class="actions" style="width: 100px; min-width: 100px;">
+                                        <div style="display: flex; align-items: center; gap: 5px;">
+                                            <!-- Botão Editar (Ícone Lápis) -->
+                                            <button type="button" class="transition text-blue-600 hover:text-blue-800" 
+                                                title="Analisar / Editar Nota"
+                                                data-id="{{ $doc->id }}"
+                                                data-status="{{ $doc->status }}"
+                                                data-notes="{{ $doc->notes ?? '' }}"
+                                                onclick="openDocModal(this)">
+                                                <span class="icon icon-edit text-2xl"></span>
                                             </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                <td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                                    Nenhum documento solicitado. Use a importação acima para adicionar um kit.
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+
+                                            <!-- Botão Excluir (Ícone Lixeira) -->
+                                            <form action="{{ route('lawfirm.documents.delete', $doc->id) }}" method="POST" style="margin:0;" onsubmit="return confirm('Remover este documento?');">
+                                                @csrf 
+                                                @method('DELETE')
+                                                <button type="button" class="transition flex items-center justify-center text-red-600 hover:text-red-800" title="Remover" onclick="if(confirm('Remover este documento?')) this.closest('form').submit();">
+                                                    <span class="icon icon-delete text-2xl"></span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                        Nenhum documento solicitado. Use a importação acima para adicionar um kit.
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
+
+            <!-- 3. GED -->
+            @include('lawfirm::admin.processos.partials.anexos', ['readOnly' => true, 'anexos' => $processo->anexos, 'startClosed' => true])
 
             <!-- 4. Identification & Process Details (2 Cols) -->
             <div class="flex gap-4">

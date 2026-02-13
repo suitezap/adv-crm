@@ -1,6 +1,6 @@
 <?php
 
-namespace SuiteZap\LawFirm\Services;
+namespace SuiteZap\LawFirm\Financial\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;

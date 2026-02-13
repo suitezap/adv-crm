@@ -24,16 +24,6 @@
                 </div>
             </div>
 
-            <!-- BLOCO 0: PRAZOS (TOPO) -->
-            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                @include('lawfirm::admin.processos.partials.prazos', ['prazos' => []])
-            </div>
-
-            <!-- BLOCO 0.5: FINANCEIRO -->
-            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                @include('lawfirm::admin.processos.partials.financeiro')
-            </div>
-
             <!-- BLOCO 0.7: GED / DOCUMENTOS -->
             @include('lawfirm::admin.processos.partials.anexos', ['editable' => true])
 

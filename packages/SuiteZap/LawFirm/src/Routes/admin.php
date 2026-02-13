@@ -65,7 +65,7 @@ Route::group([
     })->name('admin.lawfirm.index');
 
     // Financial Dashboard
-    Route::get('/financial', [\SuiteZap\LawFirm\Http\Controllers\FinancialController::class, 'index'])
+    Route::get('/financial', [\SuiteZap\LawFirm\Financial\Http\Controllers\FinancialController::class, 'index'])
         ->name('admin.lawfirm.financial.index');
 
     // DEBUG ROUTE
@@ -118,3 +118,14 @@ Route::group([
     Route::post('assistant/execute', 'SuiteZap\LawFirm\Http\Controllers\AssistantController@execute')
         ->name('lawfirm.assistant.execute');
 });
+
+// Rotas GED (Gestão Eletrônica de Documentos) - MOVED TO Http/routes.php
+// Route::group([
+//     'prefix' => 'admin/lawfirm/ged',
+//     'middleware' => ['web', 'user'],
+// ], function () {
+//     Route::controller(\SuiteZap\LawFirm\GED\Http\Controllers\ProcessDocumentController::class)->group(function () {
+//         Route::post('store', 'store')->name('admin.lawfirm.ged.store');
+//         Route::delete('{id}', 'destroy')->name('admin.lawfirm.ged.destroy');
+//     });
+// });

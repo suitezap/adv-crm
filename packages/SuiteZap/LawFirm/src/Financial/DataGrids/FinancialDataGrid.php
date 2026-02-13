@@ -1,6 +1,6 @@
 <?php
 
-namespace SuiteZap\LawFirm\DataGrids;
+namespace SuiteZap\LawFirm\Financial\DataGrids;
 
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;

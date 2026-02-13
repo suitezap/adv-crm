@@ -198,7 +198,7 @@ class MotherShipService
             'filesystems.disks.s3.region' => $metaData['region'] ?? 'us-east-1',
             'filesystems.disks.s3.bucket' => $tenantConfig->minio_bucket_name ?? ($metaData['bucket'] ?? 'lawfirm-fallback'),
             'filesystems.disks.s3.endpoint' => rtrim($storageNode->base_url, '/'),
-            'filesystems.disks.s3.use_path_style_endpoint' => $metaData['use_path_style_endpoint'] ?? false,
+            'filesystems.disks.s3.use_path_style_endpoint' => $metaData['use_path_style_endpoint'] ?? true,
             'filesystems.disks.s3.throw' => false,
         ]);
 

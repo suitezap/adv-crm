@@ -41,11 +41,15 @@ class Anexo extends Model
 
         // Use temporaryUrl for secure signed URLs (valid for 15 minutes)
         try {
-            return Storage::temporaryUrl($path, now()->addMinutes(15));
+            // Force S3 disk as configured by MotherShipService
+            return Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(15));
         } catch (\Exception $e) {
-            // Fallback to regular URL if temporaryUrl is not supported (e.g., local disk)
-            $url = Storage::url($path);
-            return preg_replace('/([^:])\/\//', '$1/', $url);
+            // Fallback to regular URL if temporaryUrl fails
+            try {
+                return Storage::disk('s3')->url($path);
+            } catch (\Exception $e2) {
+                return '';
+            }
         }
     }
 
