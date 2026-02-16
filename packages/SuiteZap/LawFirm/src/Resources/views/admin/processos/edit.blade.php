@@ -3,38 +3,44 @@
         @lang('lawfirm::app.processos.edit-title')
         </x-slot>
 
-        @inject('userRepository', 'Webkul\User\Repositories\UserRepository')
+    @inject('userRepository', 'Webkul\User\Repositories\UserRepository')
 
-        <x-admin::form :action="route('admin.processos.update', $processo->id)" method="PUT"
-            enctype="multipart/form-data">
+    <div class="flex flex-col gap-4">
+        <!-- HEADER & ACTIONS -->
+        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div class="flex flex-col gap-2">
+                <div class="flex cursor-pointer items-center gap-2">
+                    <x-admin::breadcrumbs name="lawfirm.processos.edit" :entity="$processo" />
+                </div>
+            </div>
+            <div class="flex items-center gap-x-2.5">
+                <!-- Save Button Linked to Main Form -->
+                <button type="submit" form="processo-form" class="primary-button">
+                    @lang('lawfirm::app.processos.save-btn')
+                </button>
+            </div>
+        </div>
+
+
+
+        <!-- MAIN PROCESSO FORM -->
+        <x-admin::form id="processo-form" :action="route('admin.processos.update', $processo->id)" method="PUT" enctype="multipart/form-data">
+            
             <div class="flex flex-col gap-4">
+                <!-- EXTERNAL MODULES (Top - Moved Inside Form) -->
+                @if(isset($processo) && $processo->id)
+                    <div class="flex flex-col gap-4">
+                        <!-- Prazos -->
+                        @include('lawfirm::Legal.processos.tabs.prazos')
 
-                <div
-                    class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                    <div class="flex flex-col gap-2">
-                        <div class="flex cursor-pointer items-center gap-2">
-                            <x-admin::breadcrumbs name="lawfirm.processos.edit" :entity="$processo" />
-                        </div>
+                        <!-- Financeiro -->
+                        @include('lawfirm::Financial.processos.tabs.financial', ['startClosed' => true])
+
+                        <!-- GED / Documents -->
+                        @include('lawfirm::GED.processos.tabs.documents', ['processo' => $processo])
                     </div>
-                    <div class="flex items-center gap-x-2.5">
-                        <button type="submit" class="primary-button">
-                            @lang('lawfirm::app.processos.save-btn')
-                        </button>
-                    </div>
-                </div>
-
-                <!-- BLOCO 0: PRAZOS (TOPO) -->
-                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                    @include('lawfirm::admin.processos.partials.prazos')
-                </div>
-
-                <!-- BLOCO 0.5: FINANCEIRO -->
-                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                    @include('lawfirm::admin.processos.partials.financeiro', ['startClosed' => true])
-                </div>
-
-                <!-- BLOCO 0.7: GED / DOCUMENTOS -->
-                @include('lawfirm::admin.processos.partials.anexos', ['editable' => true, 'anexos' => $processo->anexos, 'startClosed' => true])
+                @endif
+                <!-- SECTIONS MOVED FROM TOP (Original Layout preserved inside form) -->
 
                 <!-- BLOCO 1: CABEÇALHO -->
                 <div class="flex gap-4">
@@ -473,8 +479,7 @@
 
             </div>
         </x-admin::form>
-
-
+    </div>
 
         @push('scripts')
             <script>

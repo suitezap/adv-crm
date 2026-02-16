@@ -150,7 +150,7 @@ class ConnectionController extends Controller
     protected function getInstanceName()
     {
         // Prioriza configuração dinâmica do banco (Multi-Tenant)
-        $config = \SuiteZap\LawFirm\Services\MotherShipService::getEvolutionConfig();
+        $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
 
         if ($config && !empty($config['instance'])) {
             return $config['instance'];

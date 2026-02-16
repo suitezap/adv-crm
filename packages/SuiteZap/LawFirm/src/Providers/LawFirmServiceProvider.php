@@ -27,7 +27,7 @@ class LawFirmServiceProvider extends ServiceProvider
         try {
             // Só tenta configurar se não estiver rodando no console (artisan) para evitar erros em migrations
             if (!app()->runningInConsole()) {
-                \SuiteZap\LawFirm\Services\MotherShipService::configureTenantStorage();
+                \SuiteZap\LawFirm\SaaS\Services\MotherShipService::configureTenantStorage();
             }
         } catch (\Exception $e) {
             // Falha silenciosa para não derrubar o sistema se o MotherShip estiver offline
@@ -35,28 +35,20 @@ class LawFirmServiceProvider extends ServiceProvider
             Log::error('SAAS ERROR: Falha ao configurar storage dinâmico: ' . $e->getMessage());
         }
         // ====================================================================
-        // DEBUG: Início do Boot
-        // ====================================================================
-        Log::info('LawFirm: Iniciando Boot...');
-        Log::info('LawFirm Provider Booted'); // Explicit debug log
-
-        // ====================================================================
         // 1. CARREGAR ROTAS
         // ====================================================================
         $routesPath = __DIR__ . '/../Http/routes.php';
 
         if (file_exists($routesPath)) {
             $this->loadRoutesFrom($routesPath);
-            Log::info('LawFirm: Rotas carregadas.', ['path' => $routesPath]);
         } else {
-            Log::error('LawFirm: ERRO - Arquivo de rotas não encontrado!', ['path' => $routesPath]);
+            Log::error('LawFirm: Arquivo de rotas não encontrado!', ['path' => $routesPath]);
         }
 
-        // Rotas API (opcional)
+        // Rotas API
         $apiRoutesPath = __DIR__ . '/../Routes/api.php';
         if (file_exists($apiRoutesPath)) {
             $this->loadRoutesFrom($apiRoutesPath);
-            Log::info('LawFirm: Rotas API carregadas.', ['path' => $apiRoutesPath]);
         }
 
         // ====================================================================
@@ -66,9 +58,6 @@ class LawFirmServiceProvider extends ServiceProvider
 
         if (is_dir($viewsPath)) {
             $this->loadViewsFrom($viewsPath, 'lawfirm');
-            Log::info('LawFirm: Views carregadas.', ['path' => $viewsPath, 'namespace' => 'lawfirm']);
-        } else {
-            Log::error('LawFirm: ERRO - Diretório de views não encontrado!', ['path' => $viewsPath]);
         }
 
         // ====================================================================
@@ -78,7 +67,6 @@ class LawFirmServiceProvider extends ServiceProvider
 
         if (is_dir($migrationsPath)) {
             $this->loadMigrationsFrom($migrationsPath);
-            Log::info('LawFirm: Migrações carregadas.', ['path' => $migrationsPath]);
         }
 
         // ====================================================================
@@ -88,7 +76,6 @@ class LawFirmServiceProvider extends ServiceProvider
 
         if (is_dir($langPath)) {
             $this->loadTranslationsFrom($langPath, 'lawfirm');
-            Log::info('LawFirm: Traduções carregadas.', ['path' => $langPath, 'namespace' => 'lawfirm']);
         }
 
         // ====================================================================
@@ -98,37 +85,25 @@ class LawFirmServiceProvider extends ServiceProvider
             $this->commands([
                 \SuiteZap\LawFirm\Console\Commands\CalculateStorageUsage::class,
             ]);
-            Log::info('LawFirm: Comandos do Console registrados.');
         }
 
         // ====================================================================
         // 5. REGISTRAR OBSERVERS
         // ====================================================================
         $this->registerObservers();
-        Log::info('LawFirm: Observers registrados.');
 
         // ====================================================================
         // 6. EVENT LISTENERS - Injeções de Views
         // ====================================================================
         $this->registerEventListeners();
 
-        // DEBUG: Registro explícito do evento para garantir funcionamento
-        Event::listen(
-            PrazoCreated::class,
-            SendPrazoWhatsapp::class
-        );
-        Log::info('LawFirm: Evento PrazoCreated registrado explicitamente no boot.');
-
-        Log::info('LawFirm: Event Listeners registrados.');
-
-        // Observer para limitar usuários SaaS
-        \Webkul\User\Models\User::observe(\SuiteZap\LawFirm\Observers\UserObserver::class);
+        // PrazoCreated -> WhatsApp notification
+        Event::listen(PrazoCreated::class, SendPrazoWhatsapp::class);
 
         // ====================================================================
         // 7. VIEW COMPOSERS
         // ====================================================================
         $this->registerViewComposers();
-        Log::info('LawFirm: View Composers registrados.');
 
         // ====================================================================
         // CONFIGURAÇÃO DO MENU LATERAL
@@ -136,7 +111,6 @@ class LawFirmServiceProvider extends ServiceProvider
         $breadcrumbsPath = __DIR__ . '/../Routes/breadcrumbs.php';
         if (file_exists($breadcrumbsPath)) {
             require $breadcrumbsPath;
-            Log::info('LawFirm: Breadcrumbs carregados.', ['path' => $breadcrumbsPath]);
         }
 
         // ====================================================================
@@ -146,15 +120,9 @@ class LawFirmServiceProvider extends ServiceProvider
         $componentsPath = __DIR__ . '/../Resources/views/components';
         if (is_dir($componentsPath)) {
             \Illuminate\Support\Facades\Blade::anonymousComponentPath($componentsPath, 'lawfirm');
-            Log::info('LawFirm: Anonymous Blade Components registrados.', ['path' => $componentsPath]);
         }
 
         \Illuminate\Support\Facades\Blade::component('lawfirm::assistant-panel', 'assistant-panel');
-
-        // ====================================================================
-        // DEBUG: Fim do Boot
-        // ====================================================================
-        Log::info('LawFirm: Boot finalizado com sucesso!');
     }
 
     /**
@@ -167,7 +135,7 @@ class LawFirmServiceProvider extends ServiceProvider
         // Registrar o Repository / Contract Binding
         $this->app->bind(
             \SuiteZap\LawFirm\Contracts\Processo::class,
-            \SuiteZap\LawFirm\Models\Processo::class
+            \SuiteZap\LawFirm\Legal\Models\Processo::class
         );
 
         // Merge Config (Menu)
@@ -204,8 +172,8 @@ class LawFirmServiceProvider extends ServiceProvider
      */
     protected function registerObservers()
     {
-        \SuiteZap\LawFirm\Models\Processo::observe(\SuiteZap\LawFirm\Observers\ProcessoObserver::class);
-        \SuiteZap\LawFirm\Models\Prazo::observe(\SuiteZap\LawFirm\Observers\PrazoObserver::class);
+        \SuiteZap\LawFirm\Legal\Models\Processo::observe(\SuiteZap\LawFirm\Observers\ProcessoObserver::class);
+        \SuiteZap\LawFirm\Legal\Models\Prazo::observe(\SuiteZap\LawFirm\Observers\PrazoObserver::class);
         // \Webkul\Contact\Models\PersonProxy::observe(\SuiteZap\LawFirm\Observers\PersonObserver::class);
         // \Webkul\Contact\Models\OrganizationProxy::observe(\SuiteZap\LawFirm\Observers\OrganizationObserver::class);
 
@@ -405,11 +373,11 @@ class LawFirmServiceProvider extends ServiceProvider
     {
         // Dashboard Widget - Dados
         View::composer('lawfirm::admin.dashboard.widgets.law-firm-overview', function ($view) {
-            $activeCount = \SuiteZap\LawFirm\Models\Processo::where('status', 'Ativo')->count();
-            $totalValorCausa = \SuiteZap\LawFirm\Models\Processo::where('status', 'Ativo')->sum('valor_causa');
-            $totalValorGanho = \SuiteZap\LawFirm\Models\Processo::whereIn('status', ['Encerrado', 'Arquivado', 'Concluído'])->sum('valor_causa');
+            $activeCount = \SuiteZap\LawFirm\Legal\Models\Processo::where('status', 'Ativo')->count();
+            $totalValorCausa = \SuiteZap\LawFirm\Legal\Models\Processo::where('status', 'Ativo')->sum('valor_causa');
+            $totalValorGanho = \SuiteZap\LawFirm\Legal\Models\Processo::whereIn('status', ['Encerrado', 'Arquivado', 'Concluído'])->sum('valor_causa');
 
-            $upcomingHearings = \SuiteZap\LawFirm\Models\Processo::query()
+            $upcomingHearings = \SuiteZap\LawFirm\Legal\Models\Processo::query()
                 ->where('status', 'Ativo')
                 ->whereNotNull('data_audiencia')
                 ->whereBetween('data_audiencia', [now()->startOfDay(), now()->addDays(7)->endOfDay()])

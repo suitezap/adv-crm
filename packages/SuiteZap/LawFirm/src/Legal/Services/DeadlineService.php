@@ -2,8 +2,8 @@
 
 namespace SuiteZap\LawFirm\Legal\Services;
 
-use SuiteZap\LawFirm\Models\Prazo;
-use SuiteZap\LawFirm\Models\Processo;
+use SuiteZap\LawFirm\Legal\Models\Prazo;
+use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Events\PrazoCreated;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -137,15 +137,53 @@ class DeadlineService
     }
 
     /**
+     * Sync deadlines for a process (Create, Update, Delete).
+     *
+     * @param mixed $processo Processo object or ID
+     * @param array $deadlinesData
+     * @return void
+     */
+    public function syncDeadlines($processo, array $deadlinesData)
+    {
+        if (!is_array($deadlinesData))
+            return;
+
+        $processoId = $processo instanceof Processo ? $processo->id : $processo;
+
+        foreach ($deadlinesData as $data) {
+            // If marked for deletion
+            if (isset($data['should_delete']) && $data['should_delete'] == 1) {
+                if (isset($data['id'])) {
+                    $this->deleteDeadline($data['id']);
+                }
+                continue;
+            }
+
+            // Create or Update
+            Prazo::updateOrCreate(
+                ['id' => $data['id'] ?? null],
+                array_merge($data, ['processo_id' => $processoId])
+            );
+        }
+    }
+
+    /**
      * Delete a deadline.
      *
      * @param int $id
-     * @return bool|null
+     * @return bool
      */
-    public function deleteDeadline(int $id): ?bool
+    public function deleteDeadline(int $id): bool
     {
         $prazo = Prazo::findOrFail($id);
-        Log::info("DeadlineService: Deleting deadline ID {$prazo->id}");
+
+        // Remove Activity if exists
+        if ($prazo->activity_id) {
+            // Note: Activity cleanup logic handles this observer-side usually,
+            // but we can ensure it here if needed.
+            // For now, let's rely on standard delete.
+        }
+
         return $prazo->delete();
     }
 }

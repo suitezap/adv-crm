@@ -4,7 +4,7 @@ namespace SuiteZap\LawFirm\Observers;
 
 use Illuminate\Support\Facades\Log;
 use Webkul\User\Models\User;
-use SuiteZap\LawFirm\Services\MotherShipService;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use Illuminate\Validation\ValidationException;
 
 /**

@@ -2,14 +2,29 @@
 
 namespace SuiteZap\LawFirm\Observers;
 
-use SuiteZap\LawFirm\Models\Processo;
-use SuiteZap\LawFirm\Services\SaasStorageService;
+use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\SaaS\Services\SaasStorageService;
+use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
 class ProcessoObserver
 {
+    protected $activityRepository;
+    protected $storageService;
+    protected $fileService;
+
+    public function __construct(
+        ActivityRepository $activityRepository,
+        SaasStorageService $storageService,
+        SaasFileService $fileService
+    ) {
+        $this->activityRepository = $activityRepository;
+        $this->storageService = $storageService;
+        $this->fileService = $fileService;
+    }
+
     /**
      * Handle the Processo "deleting" event.
      * Executado ANTES do registro ser removido do banco.
@@ -18,7 +33,6 @@ class ProcessoObserver
     public function deleting(Processo $processo): void
     {
         $folderPath = 'processos/' . $processo->id;
-        $disk = config('filesystems.default');
 
         try {
             // Calcular tamanho total dos arquivos para decrementar quota
@@ -27,16 +41,15 @@ class ProcessoObserver
                 $totalSize += $anexo->tamanho ?? 0;
             }
 
-            // Deletar pasta inteira do S3
-            if (Storage::disk($disk)->exists($folderPath)) {
-                Storage::disk($disk)->deleteDirectory($folderPath);
+            // Deletar pasta inteira do S3 (Via SaasFileService)
+            if ($this->fileService->exists($folderPath)) {
+                $this->fileService->deleteDirectory($folderPath);
                 Log::info("SAAS CLEANUP: Pasta S3 apagada: {$folderPath}");
             }
 
-            // Decrementar uso de storage
+            // Decrementar uso de storage (Via SaasStorageService)
             if ($totalSize > 0) {
-                $storageService = app(SaasStorageService::class);
-                $storageService->decrementUsage($totalSize);
+                $this->storageService->decrementUsage($totalSize);
                 Log::info("SAAS CLEANUP: Storage decrementado em {$totalSize} bytes para Processo #{$processo->id}");
             }
         } catch (\Exception $e) {
@@ -61,8 +74,8 @@ class ProcessoObserver
         $lead = $processo->lead;
         $leadTitle = $lead ? $lead->title : 'Lead #' . $processo->lead_id;
 
-        // Cria a atividade usando o repositório nativo do Krayin
-        $activity = app(ActivityRepository::class)->create([
+        // Cria a atividade usando o repositório injetado
+        $activity = $this->activityRepository->create([
             'type' => 'lunch',  // Tipo exibido como "Processo" na interface
             'title' => 'Processo ' . $processo->numero . ' vinculado ao Lead',
             'comment' => 'Lead: ' . $leadTitle . ' | Status: ' . $processo->status . ($processo->vara ? ' | Vara: ' . $processo->vara : ''),
@@ -88,7 +101,7 @@ class ProcessoObserver
             $lead = $processo->lead;
             $leadTitle = $lead ? $lead->title : 'Lead #' . $processo->lead_id;
 
-            $activity = app(ActivityRepository::class)->create([
+            $activity = $this->activityRepository->create([
                 'type' => 'lunch',
                 'title' => 'Processo ' . $processo->numero . ' - Status Alterado',
                 'comment' => 'Lead: ' . $leadTitle . ' | Novo status: ' . $processo->status,

@@ -5,8 +5,8 @@ namespace SuiteZap\LawFirm\Http\Controllers\Api;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use SuiteZap\LawFirm\Models\ProcessDocument;
-use SuiteZap\LawFirm\Models\Processo;
+use SuiteZap\LawFirm\GED\Models\ProcessDocument;
+use SuiteZap\LawFirm\Legal\Models\Processo;
 
 class DocumentChecklistApiController extends Controller
 {

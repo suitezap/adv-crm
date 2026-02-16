@@ -9,7 +9,7 @@ use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\Models\AssistantTemplate;
 use SuiteZap\LawFirm\Models\AssistantHistory;
 use SuiteZap\LawFirm\Services\N8nService;
-use SuiteZap\LawFirm\Services\MotherShipService;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 
 class AssistantController extends Controller
 {

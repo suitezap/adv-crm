@@ -4,7 +4,7 @@ namespace SuiteZap\LawFirm\Services\Whatsapp;
 
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
-use SuiteZap\LawFirm\Services\MotherShipService;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 
 class EvolutionService
 {

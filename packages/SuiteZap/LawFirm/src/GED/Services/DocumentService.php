@@ -5,22 +5,22 @@ namespace SuiteZap\LawFirm\GED\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use SuiteZap\LawFirm\Models\Anexo;
-use SuiteZap\LawFirm\Models\Processo;
-use SuiteZap\LawFirm\Services\SaasStorageService;
+use SuiteZap\LawFirm\Legal\Models\Anexo;
+use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\SaaS\Services\SaasStorageService;
+use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 
 class DocumentService
 {
     protected $storageService;
+    protected $fileService;
 
-    /**
-     * Disco padrão para GED SaaS (configurado dinamicamente pelo MotherShipService)
-     */
-    protected const STORAGE_DISK = 's3';
-
-    public function __construct(SaasStorageService $storageService)
-    {
+    public function __construct(
+        SaasStorageService $storageService,
+        SaasFileService $fileService
+    ) {
         $this->storageService = $storageService;
+        $this->fileService = $fileService;
     }
 
     /**
@@ -33,6 +33,11 @@ class DocumentService
      */
     public function storeFile(UploadedFile $file, Processo $processo): Anexo
     {
+        // 0. Safety Check - MotherShip Storage Injection
+        if (!$this->fileService->isAvailable()) {
+            throw new \Exception('Erro de Infraestrutura: Serviço de armazenamento não disponível (S3/Local falhou).');
+        }
+
         $fileSize = $file->getSize();
 
         // 1. Check Quota
@@ -48,13 +53,11 @@ class DocumentService
         $extension = strtolower($file->getClientOriginalExtension());
         $finalName = "{$processId}-{$randomHash}_{$cleanName}.{$extension}";
 
-        // 3. Store File (FORCE S3 - SaaS Compliance)
-        // O LawFirmServiceProvider já configurou o disco 's3' com as credenciais do tenant
-        $path = $file->storeAs(
-            'processos/' . $processId,
-            $finalName,
-            self::STORAGE_DISK
-        );
+        // 3. Store File (Updated to use SaasFileService)
+        // O caminho completo é construído aqui para garantir controle
+        $fullPath = 'processos/' . $processId . '/' . $finalName;
+
+        $path = $this->fileService->store($file, $fullPath);
 
         // 4. Create Record
         $anexo = $processo->anexos()->create([
@@ -82,9 +85,9 @@ class DocumentService
         $anexo = Anexo::findOrFail($documentId);
         $fileSize = $anexo->tamanho ?? 0;
 
-        // 1. Delete from Storage (FORCE S3 - SaaS Compliance)
-        if (Storage::disk(self::STORAGE_DISK)->exists($anexo->path)) {
-            Storage::disk(self::STORAGE_DISK)->delete($anexo->path);
+        // 1. Delete from Storage (Updated to use SaasFileService)
+        if ($this->fileService->exists($anexo->path)) {
+            $this->fileService->delete($anexo->path);
         }
 
         // 2. Delete Record
@@ -96,5 +99,46 @@ class DocumentService
         }
 
         return true;
+    }
+    /**
+     * Process uploads from request (single 'anexo' or multiple 'anexos').
+     *
+     * @param Processo $processo
+     * @param array|\Illuminate\Http\Request $request
+     * @return array
+     */
+    public function processUploads(Processo $processo, $request): array
+    {
+        $files = [];
+
+        // Handle Request object or array data
+        if ($request instanceof \Illuminate\Http\Request) {
+            if ($request->hasFile('anexos')) {
+                $files = $request->file('anexos');
+            } elseif ($request->hasFile('anexo')) {
+                $files = [$request->file('anexo')];
+            }
+        } elseif (is_array($request)) {
+            // Fallback if passed as array (less common for files but possible)
+            $files = $request['anexos'] ?? ($request['anexo'] ? [$request['anexo']] : []);
+        }
+
+        $uploadedDocs = [];
+
+        foreach ($files as $file) {
+            if (!$file->isValid())
+                continue;
+
+            try {
+                // Delegate to existing storeFile which determines path, naming, quota, etc.
+                $uploadedDocs[] = $this->storeFile($file, $processo);
+            } catch (\Exception $e) {
+                // Log error but continue processing other files? 
+                // matched user snippet behavior of skipping invalid, but here we catch exceptions.
+                \Illuminate\Support\Facades\Log::error("DocumentService::processUploads - Error storing file: " . $e->getMessage());
+            }
+        }
+
+        return $uploadedDocs;
     }
 }

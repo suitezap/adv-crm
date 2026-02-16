@@ -4,8 +4,8 @@ namespace SuiteZap\LawFirm\Financial\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use SuiteZap\LawFirm\Models\Financial;
-use SuiteZap\LawFirm\Models\Processo;
+use SuiteZap\LawFirm\Financial\Models\Financial;
+use SuiteZap\LawFirm\Legal\Models\Processo;
 
 class FinancialService
 {
@@ -23,14 +23,19 @@ class FinancialService
      */
     public function syncFinancials(Processo $processo, array $financeirosData): void
     {
-        // 1. Coletar IDs enviados para manter
-        $idsToKeep = collect($financeirosData)->pluck('id')->filter()->toArray();
-
-        // 2. Deletar os que foram removidos do formulário
-        $processo->financeiros()->whereNotIn('id', $idsToKeep)->delete();
-
-        // 3. Processar cada lançamento
         foreach ($financeirosData as $finData) {
+            // Pula itens vazios/inválidos (sem nome ou valor definidos)
+            if (empty($finData['nome']) && empty($finData['valor'])) {
+                continue;
+            }
+
+            // CHECK DELETE: Se veio marcado para deletar do front
+            if (isset($finData['should_delete']) && $finData['should_delete'] == 1) {
+                if (!empty($finData['id'])) {
+                    $processo->financeiros()->where('id', $finData['id'])->delete();
+                }
+                continue;
+            }
 
             // 3a. Novo registro COM parcelamento
             if ($this->shouldGenerateInstallments($finData)) {
@@ -39,8 +44,7 @@ class FinancialService
                 foreach ($installments as $installment) {
                     $processo->financeiros()->create($installment);
                 }
-
-                continue; // Pula criação/atualização individual
+                continue;
             }
 
             // 3b. Create/Update individual

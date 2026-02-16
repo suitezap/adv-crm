@@ -63,7 +63,7 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
     public function scopeForTenant($query, $tenantId = null)
     {
         // Lógica: Traz templates GLOBAIS (tenant_id null) OU do cliente atual
-        $tenantId = \SuiteZap\LawFirm\Services\MotherShipService::getTenantId();
+        $tenantId = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantId();
 
         return $query->where(function ($q) use ($tenantId) {
             $q->whereNull('tenant_id'); // Templates Globais

@@ -5,7 +5,7 @@ namespace SuiteZap\LawFirm\Events;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use SuiteZap\LawFirm\Models\Prazo;
+use SuiteZap\LawFirm\Legal\Models\Prazo;
 
 class PrazoCreated
 {
@@ -14,14 +14,14 @@ class PrazoCreated
     /**
      * The Prazo instance.
      *
-     * @var \SuiteZap\LawFirm\Models\Prazo
+     * @var \SuiteZap\LawFirm\Legal\Models\Prazo
      */
     public $prazo;
 
     /**
      * Create a new event instance.
      *
-     * @param  \SuiteZap\LawFirm\Models\Prazo  $prazo
+     * @param  \SuiteZap\LawFirm\Legal\Models\Prazo  $prazo
      * @return void
      */
     public function __construct(Prazo $prazo)

@@ -25,7 +25,9 @@
             </div>
 
             <!-- BLOCO 0.7: GED / DOCUMENTOS -->
-            @include('lawfirm::admin.processos.partials.anexos', ['editable' => true])
+            @if(isset($processo) && $processo->id)
+                @include('lawfirm::admin.processos.partials.anexos', ['editable' => true])
+            @endif
 
             <!-- BLOCO 1: CABEÇALHO -->
             <div class="flex gap-4">

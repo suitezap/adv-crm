@@ -4,7 +4,7 @@ namespace SuiteZap\LawFirm\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use SuiteZap\LawFirm\Models\Processo;
+use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Http\Resources\ProcessResource;
 use Illuminate\Support\Facades\Validator;
 

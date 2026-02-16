@@ -4,7 +4,7 @@ namespace SuiteZap\LawFirm\Http\Controllers\Admin;
 
 use Illuminate\Support\Facades\View;
 use Webkul\Admin\Http\Controllers\Controller;
-use SuiteZap\LawFirm\Services\SaasStorageService;
+use SuiteZap\LawFirm\SaaS\Services\SaasStorageService;
 
 class SaasDashboardController extends Controller
 {

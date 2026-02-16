@@ -2,7 +2,7 @@
 
 namespace SuiteZap\LawFirm\Observers;
 
-use SuiteZap\LawFirm\Models\Prazo;
+use SuiteZap\LawFirm\Legal\Models\Prazo;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Carbon\Carbon;
 
