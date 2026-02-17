@@ -10,7 +10,7 @@ use Carbon\Carbon;
 use SuiteZap\LawFirm\GED\Services\DocumentService;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\GED\Models\ProcessDocument;
-use SuiteZap\LawFirm\Models\ChecklistTemplate;
+use SuiteZap\LawFirm\Legal\Models\ChecklistTemplate;
 use SuiteZap\LawFirm\Models\LawPersonDetail;
 
 class ProcessDocumentController extends Controller
@@ -83,6 +83,31 @@ class ProcessDocumentController extends Controller
                 return response()->json(['message' => 'Erro ao excluir anexo.', 'status' => 'error'], 500);
             }
             return redirect()->back()->with('error', 'Erro ao excluir anexo.');
+        }
+    }
+
+    /**
+     * Remove the specified checklist item from storage.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function destroyChecklistItem($id)
+    {
+        try {
+            ProcessDocument::findOrFail($id)->delete();
+
+            if (request()->ajax()) {
+                return response()->json(['message' => 'Item do checklist excluído com sucesso.', 'status' => 'success']);
+            }
+
+            return redirect()->back()->with('success', 'Item do checklist excluído com sucesso.');
+
+        } catch (\Exception $e) {
+            if (request()->ajax()) {
+                return response()->json(['message' => 'Erro ao excluir item do checklist.', 'status' => 'error'], 500);
+            }
+            return redirect()->back()->with('error', 'Erro ao excluir item do checklist.');
         }
     }
 

@@ -107,7 +107,7 @@ class FinancialController extends Controller
      */
     public function downloadReceipt($id)
     {
-        $transaction = \SuiteZap\LawFirm\Models\Financial::with('processo.person')->findOrFail($id);
+        $transaction = \SuiteZap\LawFirm\Financial\Models\Financial::with('processo.person')->findOrFail($id);
 
         // 1. Busca as Configurações Globais do Escritório
         $companyName = core()->getConfigData('lawfirm.settings.general.company_name') ?? 'Escritório de Advocacia';
@@ -143,7 +143,7 @@ class FinancialController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $processId
-     * @return \Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
      */
     public function storeProcessFinancials(Request $request, $processId)
     {
@@ -169,6 +169,14 @@ class FinancialController extends Controller
         $this->financialService->syncFinancials($processo, $request->input('financeiros', []));
 
         session()->flash('success', 'Financeiro atualizado com sucesso!');
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Financeiro atualizado com sucesso!',
+                'data' => $processo->financeiros
+            ]);
+        }
 
         return redirect()->back();
     }

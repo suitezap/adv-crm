@@ -1,6 +1,6 @@
 <?php
 
-namespace SuiteZap\LawFirm\Services;
+namespace SuiteZap\LawFirm\Legal\Services;
 
 class ChecklistTemplates
 {

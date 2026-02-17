@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use SuiteZap\LawFirm\Legal\Http\Controllers\ProcessoController;
 use SuiteZap\LawFirm\Legal\Http\Controllers\PrazoController;
 use SuiteZap\LawFirm\Legal\Http\Controllers\DeadlineController;
+use SuiteZap\LawFirm\GED\Http\Controllers\ProcessDocumentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,7 +29,8 @@ Route::prefix('processos')->controller(ProcessoController::class)->group(functio
     Route::get('{id}/edit', 'edit')->name('admin.processos.edit');
     Route::put('{id}', 'update')->name('admin.processos.update');
     Route::delete('{id}', 'destroy')->name('admin.processos.destroy');
-    Route::delete('anexo/{id}', 'destroyAnexo')->name('admin.processos.delete_attachment');
+    Route::delete('anexo/{id}', [ProcessDocumentController::class, 'destroy'])->name('admin.processos.delete_attachment');
+    Route::post('documentos/store', [ProcessDocumentController::class, 'store'])->name('admin.processos.store_documents');
     Route::post('mass-delete', 'massDestroy')->name('admin.processos.mass_delete');
 
     // Filtered DataGrids (context tabs)

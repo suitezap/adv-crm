@@ -1,6 +1,6 @@
 <?php
 
-namespace SuiteZap\LawFirm\Models;
+namespace SuiteZap\LawFirm\Legal\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Lead\Models\Lead;
@@ -11,6 +11,7 @@ class CaseChecklist extends Model
 
     protected $fillable = [
         'lead_id',
+        'processo_id',
         'type',
         'current_step',
         'step_data',
@@ -31,6 +32,14 @@ class CaseChecklist extends Model
     public function lead()
     {
         return $this->belongsTo(Lead::class);
+    }
+
+    /**
+     * Obtém o Processo associado a este checklist.
+     */
+    public function processo()
+    {
+        return $this->belongsTo(Processo::class);
     }
 
     /**

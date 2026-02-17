@@ -230,15 +230,9 @@ class ProcessoController extends Controller
             'prazos.*.data_vencimento' => 'required|date',
             'prazos.*.status' => 'required|in:pendente,concluido',
             'prazos.*.descricao' => 'nullable|string',
-            'financeiros.*.tipo' => 'required|in:receita,despesa',
-            'financeiros.*.nome' => 'required|string|max:255',
-            'financeiros.*.valor' => 'required|numeric',
-            'financeiros.*.data_vencimento' => 'required|date',
-            'financeiros.*.status' => 'required|in:pendente,pago,cancelado',
-            'financeiros.*.category' => 'nullable|string|max:50',
-            'financeiros.*.issued_at' => 'nullable|date',
-            'financeiros.*.payment_method' => 'nullable|string|max:50',
-            'financeiros.*.payment_date' => 'nullable|date',
+            // Financials are now handled via AJAX in a separate component
+            // 'financeiros.*.tipo' => 'required|in:receita,despesa',
+            // ...
             // EXPANDED MIMES LIST: Added log, md, xml, odt, ods
             'anexos.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,txt,csv,xls,xlsx,rtf,log,md,xml,odt,ods|max:20480',
         ], [
@@ -269,9 +263,10 @@ class ProcessoController extends Controller
         }
 
         // CREATE FINANCEIROS (Delegated to FinancialService)
-        if (isset($data['financeiros']) && is_array($data['financeiros'])) {
-            $this->financialService->syncFinancials($processo, $data['financeiros']);
-        }
+        // CREATE FINANCEIROS (Handled by isolated component via AJAX)
+        // if (isset($data['financeiros']) && is_array($data['financeiros'])) {
+        //     $this->financialService->syncFinancials($processo, $data['financeiros']);
+        // }
 
         // PROCESS UPLOADS (Delegated to DocumentService)
         if (request()->hasFile('anexos') || request()->hasFile('anexo')) {
@@ -403,15 +398,9 @@ class ProcessoController extends Controller
             'prazos.*.data_vencimento' => 'required|date',
             'prazos.*.status' => 'required|in:pendente,concluido',
             'prazos.*.descricao' => 'nullable|string',
-            'financeiros.*.tipo' => 'required|in:receita,despesa',
-            'financeiros.*.nome' => 'required|string|max:255',
-            'financeiros.*.valor' => 'required|numeric',
-            'financeiros.*.data_vencimento' => 'required|date',
-            'financeiros.*.status' => 'required|in:pendente,pago,cancelado',
-            'financeiros.*.category' => 'nullable|string|max:50',
-            'financeiros.*.issued_at' => 'nullable|date',
-            'financeiros.*.payment_method' => 'nullable|string|max:50',
-            'financeiros.*.payment_date' => 'nullable|date',
+            // Financials are now handled via AJAX in a separate component
+            // 'financeiros.*.tipo' => 'required|in:receita,despesa',
+            // ...
             // EXPANDED MIMES LIST: Added log, md, xml, odt, ods
             'anexos.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,txt,csv,xls,xlsx,rtf,log,md,xml,odt,ods|max:20480',
         ], [
@@ -442,13 +431,12 @@ class ProcessoController extends Controller
         $processo = $this->processoRepository->update($data, $id);
 
         // 1. Sincronizar Financeiro
-        if (request()->has('financials')) {
-            // Note: Service expects Processo object, keeping type safety
-            $this->financialService->syncFinancials($processo, request('financials'));
-        } elseif (request()->has('financeiros')) {
-            // Fallback for previous field name consistency if frontend sends 'financeiros'
-            $this->financialService->syncFinancials($processo, request('financeiros'));
-        }
+        // 1. Sincronizar Financeiro (Handled by isolated component via AJAX)
+        // if (request()->has('financials')) {
+        //     $this->financialService->syncFinancials($processo, request('financials'));
+        // } elseif (request()->has('financeiros')) {
+        //     $this->financialService->syncFinancials($processo, request('financeiros'));
+        // }
 
         // 2. Processar Uploads
         if (request()->hasFile('anexos') || request()->hasFile('anexo')) {
@@ -545,23 +533,7 @@ class ProcessoController extends Controller
         }
     }
 
-    /**
-     * Remove the specified attachment.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function destroyAnexo($id)
-    {
-        try {
-            $this->documentService->deleteFile($id);
-            session()->flash('success', 'Anexo excluído com sucesso.');
-        } catch (\Exception $e) {
-            session()->flash('error', 'Erro ao excluir anexo: ' . $e->getMessage());
-        }
 
-        return redirect()->back();
-    }
 
     /**
      * Ensure calendar event logic: Create, Update OR Delete based on state.

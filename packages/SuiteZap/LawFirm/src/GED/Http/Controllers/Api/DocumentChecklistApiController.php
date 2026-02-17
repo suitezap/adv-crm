@@ -1,6 +1,6 @@
 <?php
 
-namespace SuiteZap\LawFirm\Http\Controllers\Api;
+namespace SuiteZap\LawFirm\GED\Http\Controllers\Api;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;

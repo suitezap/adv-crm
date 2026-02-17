@@ -1,6 +1,6 @@
 <?php
 
-namespace SuiteZap\LawFirm\Http\Controllers\Admin\Whatsapp;
+namespace SuiteZap\LawFirm\Whatsapp\Http\Controllers;
 
 use Illuminate\Support\Facades\View;
 use Illuminate\Http\Request;

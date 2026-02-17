@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
 
         // 3. Seeders de Checklists
         $this->call(ChecklistTemplateSeeder::class);
-        $this->call(AdditionalChecklistSeeder::class);
+
 
         // 4. Seeders de IA / Assistants
         $this->call(AssistantSeeder::class);

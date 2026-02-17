@@ -1,6 +1,6 @@
 <?php
 
-namespace SuiteZap\LawFirm\Http\Controllers\Admin;
+namespace SuiteZap\LawFirm\SaaS\Http\Controllers\Admin;
 
 use Illuminate\Support\Facades\View;
 use Webkul\Admin\Http\Controllers\Controller;

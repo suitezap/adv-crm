@@ -1,15 +1,16 @@
 <?php
 
-namespace SuiteZap\LawFirm\Http\Controllers\Admin;
+namespace SuiteZap\LawFirm\AI\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Webkul\Admin\Http\Controllers\Controller;
-use SuiteZap\LawFirm\Models\AssistantTemplate;
-use SuiteZap\LawFirm\Models\AssistantHistory;
+use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
+use SuiteZap\LawFirm\AI\Models\AssistantHistory;
 use SuiteZap\LawFirm\Services\N8nService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\AI\Jobs\ProcessAiAssistant;
 
 class AssistantController extends Controller
 {
@@ -135,21 +136,48 @@ class AssistantController extends Controller
             return response()->json(['error' => 'URL do n8n não pronta. Verifique o .env (N8N_WEBHOOK_BASE_URL) ou o cadastro.'], 500);
         }
 
-        // 4. Chamar Service N8n
-        $result = $this->n8nService->executeWebhook($targetUrl, $payload);
-
-        // 4. Salvar Histórico
-        AssistantHistory::create([
+        // 4. Salvar Histórico (Status: QUEUED)
+        $history = AssistantHistory::create([
             'user_id' => auth()->guard('user')->id(),
             'template_id' => $template->id,
             'input_data' => $request->all(),
-            'generated_content' => $result,
+            'generated_content' => null, // Will be filled by Job
             'execution_mode' => 'agent_exec',
-            'status' => 'completed'
+            'status' => 'queued'
         ]);
 
-        // 5. Retornar JSON
-        return response()->json(['result' => $result, 'success' => true, 'generated_prompt' => $result]);
+        // 5. Dispatch Job
+        ProcessAiAssistant::dispatch($history, $template, $request->all());
+
+        // 6. Retornar JSON para Polling
+        return response()->json([
+            'success' => true,
+            'history_id' => $history->id,
+            'status' => 'queued',
+            'message' => 'Solicitação enviada para processamento.'
+        ]);
+    }
+
+    /**
+     * Check status of an AI execution.
+     *
+     * @param int $id History ID
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkStatus($id)
+    {
+        $history = AssistantHistory::findOrFail($id);
+
+        if ($history->user_id !== auth()->guard('user')->id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'id' => $history->id,
+            'status' => $history->status,
+            'generated_content' => $history->generated_content,
+            'error_message' => $history->error_message
+        ]);
     }
 
     /**

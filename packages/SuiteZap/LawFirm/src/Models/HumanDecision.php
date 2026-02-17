@@ -4,6 +4,7 @@ namespace SuiteZap\LawFirm\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Webkul\User\Models\User;
+use SuiteZap\LawFirm\AI\Models\AiExecution;
 
 class HumanDecision extends Model
 {

@@ -17,7 +17,7 @@ use SuiteZap\LawFirm\Http\Controllers\ChecklistController;
 // -----------------------------------------------
 // WhatsApp Integration (Evolution API)
 // -----------------------------------------------
-Route::prefix('whatsapp')->controller(\SuiteZap\LawFirm\Http\Controllers\Admin\Whatsapp\ConnectionController::class)->group(function () {
+Route::prefix('whatsapp')->controller(\SuiteZap\LawFirm\Whatsapp\Http\Controllers\ConnectionController::class)->group(function () {
     Route::get('', 'index')->name('admin.lawfirm.whatsapp.index');
     Route::post('connect', 'connect')->name('admin.lawfirm.whatsapp.connect');
     Route::post('disconnect', 'disconnect')->name('admin.lawfirm.whatsapp.disconnect');
@@ -33,12 +33,13 @@ Route::get('assinatura', [SaaSController::class, 'index'])
 // -----------------------------------------------
 // AI Assistants
 // -----------------------------------------------
-Route::prefix('assistants')->controller(\SuiteZap\LawFirm\Http\Controllers\Admin\AssistantController::class)->group(function () {
+Route::prefix('assistants')->controller(\SuiteZap\LawFirm\AI\Http\Controllers\Admin\AssistantController::class)->group(function () {
     Route::get('', 'index')->name('lawfirm.assistants.index');
     Route::post('processar', 'process')->name('lawfirm.assistants.process');
     Route::get('{slug}', 'show')->name('lawfirm.assistants.show');
     Route::post('{slug}/generate', 'generate')->name('lawfirm.assistants.generate');
     Route::post('{slug}/execute', 'execute')->name('lawfirm.assistants.execute');
+    Route::get('status/{id}', 'checkStatus')->name('lawfirm.assistants.check_status');
 });
 
 // -----------------------------------------------

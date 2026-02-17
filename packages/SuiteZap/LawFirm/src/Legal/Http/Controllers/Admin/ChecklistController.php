@@ -1,50 +1,61 @@
 <?php
 
-namespace SuiteZap\LawFirm\Http\Controllers;
+namespace SuiteZap\LawFirm\Legal\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use SuiteZap\LawFirm\Models\CaseChecklist;
-use SuiteZap\LawFirm\Services\ChecklistTemplates;
+use SuiteZap\LawFirm\Legal\Repositories\ChecklistRepository;
+use SuiteZap\LawFirm\Legal\Services\ChecklistTemplates;
 use Webkul\Lead\Repositories\LeadRepository;
 
 class ChecklistController extends Controller
 {
     protected $leadRepository;
 
-    public function __construct(LeadRepository $leadRepository)
-    {
+    protected $checklistRepository;
+
+    public function __construct(
+        LeadRepository $leadRepository,
+        ChecklistRepository $checklistRepository
+    ) {
         $this->leadRepository = $leadRepository;
+        $this->checklistRepository = $checklistRepository;
     }
 
     /**
-     * Retorna o estado atual do checklist para um Lead específico.
-     * Se não existir, retorna status 'new_lead' para o frontend mostrar seleção de área.
+     * Retorna o estado atual do checklist para um Lead ou Processo.
+     * Se não existir, retorna status 'new_lead' (ou equivalente) para o frontend.
      */
-    public function show($leadId)
+    public function show(Request $request, $id)
     {
-        $checklist = CaseChecklist::where('lead_id', $leadId)->first();
+        $context = $request->get('context', 'lead'); // 'lead' or 'processo'
 
-        // Retrieve Lead to check status
-        $lead = $this->leadRepository->find($leadId);
-
-        // Safe check using optional() to prevent 500 if stage is null
-        $isWon = optional($lead->stage)->code === 'won';
-        $leadStatusLabel = optional($lead->stage)->name ?? 'Unknown';
+        if ($context === 'processo') {
+            $checklist = $this->checklistRepository->getByProcessoId($id);
+            $processo = \SuiteZap\LawFirm\Legal\Models\Processo::find($id);
+            $isWon = true; // Processo already exists, so it's "won" or equivalent
+            $statusLabel = optional($processo)->status ?? 'Ativo';
+        } else {
+            $checklist = $this->checklistRepository->getByLeadId($id);
+            $lead = $this->leadRepository->find($id);
+            $isWon = optional($lead->stage)->code === 'won';
+            $statusLabel = optional($lead->stage)->name ?? 'Unknown';
+        }
 
         // Fetch Viability Template for AI Analysis in Pre-Screening
-        $viabilityTemplate = \SuiteZap\LawFirm\Models\AssistantTemplate::on('mothership')
+        $viabilityTemplate = \SuiteZap\LawFirm\AI\Models\AssistantTemplate::on('mothership')
             ->where('id', 1)
             ->first();
 
         // Se não existe, retornar indicação para o frontend mostrar seleção de área
         if (!$checklist) {
             return response()->json([
-                'status' => 'new_lead',
+                'status' => 'new_lead', // Frontend handles this as "show area selection"
                 'available_types' => ChecklistTemplates::getAvailableTypes(),
                 'is_won' => $isWon,
-                'lead_status_label' => $leadStatusLabel,
+                'lead_status_label' => $statusLabel,
                 'viability_template' => $viabilityTemplate,
+                'context' => $context,
             ]);
         }
 
@@ -54,41 +65,57 @@ class ChecklistController extends Controller
             'data' => $checklist,
             'steps' => ChecklistTemplates::getTemplate($checklist->type),
             'is_won' => $isWon,
-            'lead_status_label' => $leadStatusLabel,
+            'lead_status_label' => $statusLabel,
             'viability_template' => $viabilityTemplate,
+            'context' => $context,
         ]);
     }
 
     /**
      * Inicializa o checklist com o tipo selecionado pelo usuário.
      */
-    public function initialize(Request $request, $leadId)
+    public function initialize(Request $request, $id)
     {
         $request->validate([
             'type' => 'required|string|in:labor_claimant,family_divorce,civil_general',
         ]);
 
+        $context = $request->get('context', 'lead');
         $type = $request->input('type');
         $steps = ChecklistTemplates::getTemplate($type);
 
         // Verificar se já existe (evitar duplicatas)
-        $existing = CaseChecklist::where('lead_id', $leadId)->first();
+        if ($context === 'processo') {
+            $existing = $this->checklistRepository->getByProcessoId($id);
+            $dataToCreate = [
+                'processo_id' => $id,
+                'type' => $type,
+                'current_step' => 1,
+                'step_data' => [],
+                'status' => 'draft',
+                'created_by' => auth()->guard('user')->id(),
+            ];
+        } else {
+            $existing = $this->checklistRepository->getByLeadId($id);
+            $dataToCreate = [
+                'lead_id' => $id,
+                'type' => $type,
+                'current_step' => 1,
+                'step_data' => [],
+                'status' => 'draft',
+                'created_by' => auth()->guard('user')->id(),
+            ];
+        }
+
         if ($existing) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Checklist já existe para este Lead.',
+                'message' => 'Checklist já existe para este registro.',
             ], 400);
         }
 
         // Criar o registro
-        $checklist = CaseChecklist::create([
-            'lead_id' => $leadId,
-            'type' => $type,
-            'current_step' => 1,
-            'step_data' => [],
-            'status' => 'draft',
-            'created_by' => auth()->guard('user')->id(),
-        ]);
+        $checklist = $this->checklistRepository->create($dataToCreate);
 
         return response()->json([
             'status' => 'success',
@@ -101,9 +128,19 @@ class ChecklistController extends Controller
     /**
      * Salva o progresso de uma etapa.
      */
-    public function saveProgress(Request $request, $leadId)
+    public function saveProgress(Request $request, $id)
     {
-        $checklist = CaseChecklist::where('lead_id', $leadId)->firstOrFail();
+        $context = $request->get('context', 'lead');
+
+        if ($context === 'processo') {
+            $checklist = $this->checklistRepository->getByProcessoId($id);
+        } else {
+            $checklist = $this->checklistRepository->getByLeadId($id);
+        }
+
+        if (!$checklist) {
+            abort(404, 'Checklist not found.');
+        }
 
         $step = $request->input('step');
         $data = $request->input('data');
@@ -139,7 +176,7 @@ class ChecklistController extends Controller
             $checklist->status = 'in_progress';
         }
 
-        $checklist->save();
+        $this->checklistRepository->update($checklist->toArray(), $checklist->id);
 
         return response()->json([
             'status' => 'success',
@@ -186,7 +223,7 @@ class ChecklistController extends Controller
         $formData = $request->input('data');
 
         // Fetch template from mothership
-        $template = \SuiteZap\LawFirm\Models\AssistantTemplate::on('mothership')
+        $template = \SuiteZap\LawFirm\AI\Models\AssistantTemplate::on('mothership')
             ->where('id', $templateId)
             ->first();
 

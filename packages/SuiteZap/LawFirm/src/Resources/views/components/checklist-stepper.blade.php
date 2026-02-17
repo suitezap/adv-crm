@@ -1,16 +1,29 @@
-{{-- CHECKLIST COMPONENT - Multi-Area Support - REFACTORED 2026-02-08 --}}
+{{-- CHECKLIST COMPONENT - Multi-Area Support - REFACTORED 2026-02-16 --}}
 @php
-    use SuiteZap\LawFirm\Models\CaseChecklist;
-    use SuiteZap\LawFirm\Services\ChecklistTemplates;
+    use SuiteZap\LawFirm\Legal\Models\CaseChecklist;
+    use SuiteZap\LawFirm\Legal\Services\ChecklistTemplates;
 
-    $leadId = isset($lead) && $lead ? ($lead->id ?? 0) : 0;
+    // Determine Context (Lead or Processo)
+    $entityId = $id ?? ($lead->id ?? ($processo->id ?? 0));
+    $leadId = $entityId; // Alias for template compatibility (used in HTML ids/onclick)
+    $context = isset($processo) ? 'processo' : 'lead'; // Default to lead if not specified
+
     $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?? '#0041FF';
 
     // 1. Determine Access
-    $isWon = optional($lead->stage)->code === 'won';
+    if ($context === 'processo') {
+        $isWon = true; // Processo is always "won" context
+    } else {
+        $isWon = optional($lead->stage)->code === 'won';
+    }
 
     // 2. Fetch Existing Checklist
-    $checklist = CaseChecklist::where('lead_id', $leadId)->first();
+    $repo = app(\SuiteZap\LawFirm\Legal\Repositories\ChecklistRepository::class);
+    if ($context === 'processo') {
+        $checklist = $repo->getByProcessoId($entityId);
+    } else {
+        $checklist = $repo->getByLeadId($entityId);
+    }
 
     // 3. Prepare Config
     if ($checklist) {
@@ -21,8 +34,8 @@
         $stepData = $checklist->step_data ?? [];
         $availableTypes = []; // Not needed for existing
     } else {
-        // New Lead
-        $status = 'new_lead';
+        // New Checklist
+        $status = 'new';
         $currentStep = 1;
         $steps = [];
         $stepData = [];
@@ -30,7 +43,8 @@
     }
 
     $initialConfig = [
-        'leadId' => $leadId,
+        'entityId' => $entityId,
+        'context' => $context,
         'isWon' => $isWon,
         'status' => $status,
         'currentStep' => $currentStep,
@@ -38,28 +52,34 @@
         'stepData' => $stepData,
         'availableTypes' => $availableTypes,
         'endpoints' => [
-            'save' => route('lawfirm.checklist.save', $leadId),
-            'init' => route('lawfirm.checklist.init', $leadId),
-            'validate' => route('lawfirm.checklist.validate', $leadId),
+            'save' => route('lawfirm.checklist.save', $entityId) . '?context=' . $context,
+            'init' => route('lawfirm.checklist.init', $entityId) . '?context=' . $context,
+            'validate' => route('lawfirm.checklist.validate', $entityId) . '?context=' . $context,
         ]
     ];
 @endphp
 
-{{-- MAIN CONTAINER - Strictly relative position to avoid bleeding --}}
-<div id="lf-checklist-root-{{ $leadId }}" x-data="lawfirmChecklistApp(@json($initialConfig))"
-    class="lf-checklist-wrapper" style="position: relative; z-index: 1; width: 100%;">
+{{-- MAIN CONTAINER --}}
+<div id="lf-checklist-root-{{ $entityId }}" x-data="lawfirmChecklistApp(@json($initialConfig))"
+    class="lf-checklist-wrapper relative z-10 w-full">
 
     {{-- ERROR ALERT --}}
-    <div x-show="errorMessage && errorMessage.trim().length > 0" x-cloak class="alert alert-danger mb-3">
+    <div x-show="errorMessage && errorMessage.trim().length > 0" x-cloak
+        class="mb-4 rounded-lg bg-red-100 p-4 text-sm text-red-700 dark:bg-red-900 dark:text-red-100">
         <span x-text="errorMessage"></span>
     </div>
 
-    {{-- LOADING SPINNER (Overlay - Scoped to this container only) --}}
-    <div x-show="isLoading" class="lf-loading-overlay"
-        style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.7); z-index: 10; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
-        <div class="spinner-border text-primary" role="status" style="color: {{ $brandColor }} !important;">
-            <span class="sr-only">Carregando...</span>
-        </div>
+    {{-- LOADING SPINNER --}}
+    <div x-show="isLoading"
+        class="absolute inset-0 z-50 flex items-center justify-center rounded-lg bg-white/70 dark:bg-gray-900/70">
+        <!-- Krayin Spinner / Simple SVG -->
+        <svg class="h-10 w-10 animate-spin text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
+        </svg>
     </div>
 
     {{-- PRE-SCREENING PANEL (For Leads NOT WON) --}}
@@ -256,7 +276,7 @@
         (function () {
             'use strict';
 
-            var leadId = {{ $leadId }};
+            var entityId = {{ $entityId }};
             var token = '{{ csrf_token() }}';
             var dbColor = '{{ $brandColor }}';
 
@@ -281,7 +301,7 @@
                 return {
                     isLoading: false,
                     isWon: config.isWon,
-                    leadId: config.leadId,
+                    entityId: config.entityId,
                     errorMessage: '',
 
                     init() {
@@ -293,7 +313,7 @@
                         steps = config.steps || [];
 
                         // Set specific state
-                        if (config.status === 'new_lead') {
+                        if (config.status === 'new') {
                             state.isNew = true;
                             if (this.isWon) renderAreaSelection();
                         } else {
@@ -335,30 +355,29 @@
             }
 
             function renderAreaSelection() {
-                var areaEl = c('lf-area-selection-' + leadId);
-                var contentEl = c('lf-content-' + leadId);
+                var areaEl = c('lf-area-selection-' + entityId);
+                var contentEl = c('lf-content-' + entityId);
 
-                if (contentEl) contentEl.classList.add('lf-hidden');
-                if (areaEl) areaEl.classList.remove('lf-hidden');
+                if (contentEl) contentEl.classList.add('hidden');
+                if (areaEl) areaEl.classList.remove('hidden');
 
                 var cardsHtml = '';
                 availableTypes.forEach(function (type) {
-                    cardsHtml += '<div class="col-md-4 mb-3">';
-                    cardsHtml += '<div class="card action-card text-center h-100 p-3" style="cursor: pointer; border: 1px solid #e0e0e0; transition: all 0.2s;" onclick="window.lfInitArea' + leadId + '(\'' + type.key + '\')">';
-                    cardsHtml += '<div style="font-size: 36px; margin-bottom: 10px;">' + type.icon + '</div>';
-                    cardsHtml += '<h6 style="font-weight: bold;">' + type.label + '</h6>';
-                    cardsHtml += '<p class="text-muted small">' + type.description + '</p>';
-                    cardsHtml += '</div></div>';
+                    cardsHtml += '<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer dark:border-gray-800 dark:bg-gray-900" onclick="window.lfInitArea' + entityId + '(\'' + type.key + '\')">';
+                    cardsHtml += '<div class="text-3xl mb-2 text-center">' + type.icon + '</div>';
+                    cardsHtml += '<h6 class="font-bold text-center text-gray-800 dark:text-gray-200">' + type.label + '</h6>';
+                    cardsHtml += '<p class="text-sm text-gray-500 text-center">' + type.description + '</p>';
+                    cardsHtml += '</div>';
                 });
-                c('lf-area-cards-' + leadId).innerHTML = cardsHtml;
+                c('lf-area-cards-' + entityId).innerHTML = cardsHtml;
             }
 
             function renderChecklist() {
-                var areaEl = c('lf-area-selection-' + leadId);
-                var contentEl = c('lf-content-' + leadId);
+                var areaEl = c('lf-area-selection-' + entityId);
+                var contentEl = c('lf-content-' + entityId);
 
-                if (areaEl) areaEl.classList.add('lf-hidden');
-                if (contentEl) contentEl.classList.remove('lf-hidden');
+                if (areaEl) areaEl.classList.add('hidden');
+                if (contentEl) contentEl.classList.remove('hidden');
 
                 if (steps.length === 0) return;
 
@@ -366,27 +385,27 @@
                 var s = steps.find(function (x) { return x.id === state.step; });
                 if (!s) s = steps[0];
 
-                c('lf-step-title-header-' + leadId).textContent = s.id + '. ' + s.title;
+                c('lf-step-title-header-' + entityId).textContent = s.id + '. ' + s.title;
 
                 var pct = Math.round((state.done.length / totalSteps) * 100);
-                var pBar = c('lf-progress-fill-' + leadId);
+                var pBar = c('lf-progress-fill-' + entityId);
                 if (pBar) {
                     pBar.style.width = pct + '%';
                     pBar.style.backgroundColor = dbColor;
                 }
 
-                var badge = c('lf-status-badge-' + leadId);
+                var badge = c('lf-status-badge-' + entityId);
                 if (badge) {
-                    badge.className = 'badge';
+                    badge.className = 'px-2 py-1 text-xs font-semibold rounded-full';
                     if (state.status === 'completed') {
                         badge.textContent = 'Concluído';
-                        badge.classList.add('badge-success');
+                        badge.classList.add('bg-green-100', 'text-green-800');
                     } else if (state.status === 'draft') {
                         badge.textContent = 'Rascunho';
-                        badge.classList.add('badge-warning');
+                        badge.classList.add('bg-yellow-100', 'text-yellow-800');
                     } else {
                         badge.textContent = 'Em Andamento';
-                        badge.classList.add('badge-info');
+                        badge.classList.add('bg-blue-100', 'text-blue-800');
                     }
                 }
 
@@ -396,32 +415,32 @@
                     var isAct = (x.id === state.step);
                     var displayText = x.shortTitle || x.title;
 
-                    stH += '<div onclick="window.lfGoTo' + leadId + '(' + x.id + ')" class="text-center" style="cursor: pointer;">';
-                    var bg = isDone ? dbColor : (isAct ? dbColor : '#e9ecef');
-                    var txtCol = (isDone || isAct) ? '#fff' : '#495057';
+                    stH += '<div onclick="window.lfGoTo' + entityId + '(' + x.id + ')" class="text-center cursor-pointer">';
+                    var bg = isDone ? dbColor : (isAct ? dbColor : '#e5e7eb');
+                    var txtCol = (isDone || isAct) ? '#fff' : '#374151';
 
-                    stH += '<div class="lf-step-btn ' + (isAct ? 'active' : '') + '" style="background-color: ' + bg + '; color: ' + txtCol + ';">';
+                    stH += '<div class="lf-step-btn ' + (isAct ? 'active ring-2 ring-offset-1 ring-blue-500' : '') + '" style="background-color: ' + bg + '; color: ' + txtCol + ';">';
                     stH += isDone ? '✓' : x.id;
                     stH += '</div>';
 
-                    stH += '<small class="d-block mt-1 ' + (isAct ? 'font-weight-bold text-dark' : 'text-muted') + '" style="line-height: 1.1; font-size: 10px;">' + displayText + '</small>';
+                    stH += '<small class="block mt-1 text-[10px] leading-tight ' + (isAct ? 'font-bold text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400') + '">' + displayText + '</small>';
                     stH += '</div>';
                 });
-                c('lf-stepper-' + leadId).innerHTML = stH;
+                c('lf-stepper-' + entityId).innerHTML = stH;
 
                 var bdH = '';
                 var flds = s.fields || [];
                 flds.forEach(function (f) {
-                    var fid = 'lf-field-' + leadId + '-' + s.id + '-' + f.key;
+                    var fid = 'lf-field-' + entityId + '-' + s.id + '-' + f.key;
                     var v = state.data[s.id] ? state.data[s.id][f.key] : '';
-                    bdH += '<div class="form-group mb-3">';
+                    bdH += '<div class="mb-4 flex flex-col gap-2">';
 
                     if (f.type === 'textarea') {
-                        bdH += '<label for="' + fid + '" class="small font-weight-bold text-secondary mb-1">' + f.label + '</label>';
-                        bdH += '<textarea id="' + fid + '" class="form-control" rows="3" onchange="window.lfUpd' + leadId + '(' + s.id + ',\'' + f.key + '\',this.value)">' + (v || '') + '</textarea>';
+                        bdH += '<label for="' + fid + '" class="text-sm font-semibold text-gray-700 dark:text-gray-300">' + f.label + '</label>';
+                        bdH += '<textarea id="' + fid + '" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" rows="3" onchange="window.lfUpd' + entityId + '(' + s.id + ',\'' + f.key + '\',this.value)">' + (v || '') + '</textarea>';
                     } else if (f.type === 'select') {
-                        bdH += '<label for="' + fid + '" class="small font-weight-bold text-secondary mb-1">' + f.label + '</label>';
-                        bdH += '<select id="' + fid + '" class="form-control" onchange="window.lfUpd' + leadId + '(' + s.id + ',\'' + f.key + '\',this.value)">';
+                        bdH += '<label for="' + fid + '" class="text-sm font-semibold text-gray-700 dark:text-gray-300">' + f.label + '</label>';
+                        bdH += '<select id="' + fid + '" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" onchange="window.lfUpd' + entityId + '(' + s.id + ',\'' + f.key + '\',this.value)">';
                         bdH += '<option value="">Selecione...</option>';
                         (f.options || []).forEach(function (opt) {
                             bdH += '<option value="' + opt + '" ' + (v === opt ? ' selected' : '') + '>' + opt + '</option>';
@@ -429,32 +448,32 @@
                         bdH += '</select>';
                     } else if (f.type === 'checkbox') {
                         var chk = v ? 'checked' : '';
-                        bdH += '<div class="custom-control custom-checkbox">';
-                        bdH += '<input type="checkbox" class="custom-control-input" id="' + fid + '" ' + chk + ' onchange="window.lfUpd' + leadId + '(' + s.id + ',\'' + f.key + '\',this.checked)">';
-                        bdH += '<label class="custom-control-label" for="' + fid + '">' + f.label + '</label>';
+                        bdH += '<div class="flex items-center gap-2">';
+                        bdH += '<input type="checkbox" id="' + fid + '" ' + chk + ' class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" onchange="window.lfUpd' + entityId + '(' + s.id + ',\'' + f.key + '\',this.checked)">';
+                        bdH += '<label class="text-sm text-gray-700 dark:text-gray-300" for="' + fid + '">' + f.label + '</label>';
                         bdH += '</div>';
                     } else if (f.type === 'date') {
-                        bdH += '<label for="' + fid + '" class="small font-weight-bold text-secondary mb-1">' + f.label + '</label>';
-                        bdH += '<input type="date" id="' + fid + '" class="form-control" value="' + (v || '') + '" onchange="window.lfUpd' + leadId + '(' + s.id + ',\'' + f.key + '\',this.value)">';
+                        bdH += '<label for="' + fid + '" class="text-sm font-semibold text-gray-700 dark:text-gray-300">' + f.label + '</label>';
+                        bdH += '<input type="date" id="' + fid + '" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" value="' + (v || '') + '" onchange="window.lfUpd' + entityId + '(' + s.id + ',\'' + f.key + '\',this.value)">';
                     } else {
-                        bdH += '<label for="' + fid + '" class="small font-weight-bold text-secondary mb-1">' + f.label + '</label>';
-                        bdH += '<input type="text" id="' + fid + '" class="form-control" value="' + (v || '') + '" onchange="window.lfUpd' + leadId + '(' + s.id + ',\'' + f.key + '\',this.value)">';
+                        bdH += '<label for="' + fid + '" class="text-sm font-semibold text-gray-700 dark:text-gray-300">' + f.label + '</label>';
+                        bdH += '<input type="text" id="' + fid + '" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" value="' + (v || '') + '" onchange="window.lfUpd' + entityId + '(' + s.id + ',\'' + f.key + '\',this.value)">';
                     }
                     bdH += '</div>';
                 });
-                c('lf-body-' + leadId).innerHTML = bdH;
+                c('lf-body-' + entityId).innerHTML = bdH;
 
-                c('lf-btn-prev-' + leadId).classList.toggle('lf-hidden', state.step === 1);
-                c('lf-btn-skip-' + leadId).classList.toggle('lf-hidden', state.step === totalSteps || state.status === 'completed');
+                c('lf-btn-prev-' + entityId).classList.toggle('hidden', state.step === 1);
+                c('lf-btn-skip-' + entityId).classList.toggle('hidden', state.step === totalSteps || state.status === 'completed');
 
-                var resetBtn = c('lf-btn-reset-' + leadId);
-                var nextBtn = c('lf-btn-next-' + leadId);
+                var resetBtn = c('lf-btn-reset-' + entityId);
+                var nextBtn = c('lf-btn-next-' + entityId);
                 if (state.status === 'completed') {
-                    if (resetBtn) resetBtn.classList.remove('lf-hidden');
-                    if (nextBtn) nextBtn.classList.add('lf-hidden');
+                    if (resetBtn) resetBtn.classList.remove('hidden');
+                    if (nextBtn) nextBtn.classList.add('hidden');
                 } else {
-                    if (resetBtn) resetBtn.classList.add('lf-hidden');
-                    if (nextBtn) nextBtn.classList.remove('lf-hidden');
+                    if (resetBtn) resetBtn.classList.add('hidden');
+                    if (nextBtn) nextBtn.classList.remove('hidden');
                     if (nextBtn) {
                         if (state.step === totalSteps) nextBtn.innerHTML = '✓ Finalizar';
                         else nextBtn.innerHTML = 'Salvar e Avançar &rarr;';
@@ -463,7 +482,7 @@
             }
 
             function setAlpineLoading(val) {
-                var el = document.getElementById('lf-checklist-root-' + leadId);
+                var el = document.getElementById('lf-checklist-root-' + entityId);
                 if (el && el.__x) {
                     el.__x.$data.isLoading = val;
                 }
@@ -500,7 +519,7 @@
                     });
             }
 
-            window['lfInitArea' + leadId] = function (type) {
+            window['lfInitArea' + entityId] = function (type) {
                 setAlpineLoading(true);
                 fetch(endpoints.init, {
                     method: 'POST',
@@ -531,17 +550,17 @@
                     });
             };
 
-            window['lfReset' + leadId] = function () {
+            window['lfReset' + entityId] = function () {
                 if (!confirm('Deseja reabrir este checklist? O progresso será mantido, mas o status voltará para Rascunho.')) return;
                 state.status = 'in_progress';
                 save(false);
             };
 
-            window['lfNext' + leadId] = function () { save(true); };
-            window['lfPrev' + leadId] = function () { if (state.step > 1) { state.step--; renderChecklist(); } };
-            window['lfSkip' + leadId] = function () { save(true); };
+            window['lfNext' + entityId] = function () { save(true); };
+            window['lfPrev' + entityId] = function () { if (state.step > 1) { state.step--; renderChecklist(); } };
+            window['lfSkip' + entityId] = function () { save(true); };
 
-            window['lfGoTo' + leadId] = function (s) {
+            window['lfGoTo' + entityId] = function (s) {
                 if (s < state.step || state.done.includes(s)) {
                     state.step = s;
                     renderChecklist();
@@ -550,12 +569,12 @@
                 }
             };
 
-            window['lfUpd' + leadId] = function (sStep, key, val) {
+            window['lfUpd' + entityId] = function (sStep, key, val) {
                 if (!state.data[sStep]) state.data[sStep] = {};
                 state.data[sStep][key] = val;
             };
 
-            window['lfAi' + leadId] = function () {
+            window['lfAi' + entityId] = function () {
                 alert('Funcionalidade IA em desenvolvimento');
             };
 

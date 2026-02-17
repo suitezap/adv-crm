@@ -1,6 +1,6 @@
 <?php
 
-namespace SuiteZap\LawFirm\Models;
+namespace SuiteZap\LawFirm\Legal\Models;
 
 use Illuminate\Database\Eloquent\Model;
 

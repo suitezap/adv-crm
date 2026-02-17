@@ -1,6 +1,6 @@
 <?php
 
-namespace SuiteZap\LawFirm\Models;
+namespace SuiteZap\LawFirm\AI\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use SuiteZap\LawFirm\Contracts\AssistantTemplate as AssistantTemplateContract;

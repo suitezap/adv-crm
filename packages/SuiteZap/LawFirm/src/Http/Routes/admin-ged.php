@@ -20,7 +20,7 @@ Route::group(['prefix' => 'documentos', 'controller' => \SuiteZap\LawFirm\GED\Ht
     Route::post('import-v2/{processId}', 'importTemplate')->name('lawfirm.documents.import_v2');
     Route::post('send-whatsapp-v2/{processId}', 'sendChecklist')->name('lawfirm.documents.send_whatsapp_v2');
     Route::put('update/{id}', 'updateStatus')->name('lawfirm.documents.update');
-    Route::delete('delete/{id}', 'destroy')->name('lawfirm.documents.delete');
+    Route::delete('delete/{id}', 'destroyChecklistItem')->name('lawfirm.documents.delete');
 });
 
 // -----------------------------------------------

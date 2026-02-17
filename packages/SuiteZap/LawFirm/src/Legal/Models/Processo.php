@@ -292,4 +292,12 @@ class Processo extends Model implements ProcessoContract
     {
         return $this->hasMany(\SuiteZap\LawFirm\GED\Models\ProcessDocument::class);
     }
+
+    /**
+     * Get the checklists for the process.
+     */
+    public function checklists()
+    {
+        return $this->hasMany(\SuiteZap\LawFirm\Legal\Models\CaseChecklist::class, 'processo_id');
+    }
 }

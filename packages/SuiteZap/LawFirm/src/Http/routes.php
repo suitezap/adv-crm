@@ -81,19 +81,19 @@ Route::middleware(['web', 'user'])
 
         // Checklist Module
         Route::prefix('checklist')->group(function () {
-            Route::get('/{leadId}', [\SuiteZap\LawFirm\Http\Controllers\ChecklistController::class, 'show'])
+            Route::get('/{leadId}', [\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\ChecklistController::class, 'show'])
                 ->name('lawfirm.checklist.show');
 
-            Route::post('/{leadId}/init', [\SuiteZap\LawFirm\Http\Controllers\ChecklistController::class, 'initialize'])
+            Route::post('/{leadId}/init', [\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\ChecklistController::class, 'initialize'])
                 ->name('lawfirm.checklist.init');
 
-            Route::post('/{leadId}/save', [\SuiteZap\LawFirm\Http\Controllers\ChecklistController::class, 'saveProgress'])
+            Route::post('/{leadId}/save', [\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\ChecklistController::class, 'saveProgress'])
                 ->name('lawfirm.checklist.save');
 
-            Route::post('/{leadId}/validate-ai', [\SuiteZap\LawFirm\Http\Controllers\ChecklistController::class, 'validateWithAi'])
+            Route::post('/{leadId}/validate-ai', [\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\ChecklistController::class, 'validateWithAi'])
                 ->name('lawfirm.checklist.validate');
 
-            Route::post('/{leadId}/execute-ai', [\SuiteZap\LawFirm\Http\Controllers\ChecklistController::class, 'executeAi'])
+            Route::post('/{leadId}/execute-ai', [\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\ChecklistController::class, 'executeAi'])
                 ->name('lawfirm.checklist.execute-ai');
         });
     });

@@ -38,6 +38,8 @@
 
                         <!-- GED / Documents -->
                         @include('lawfirm::GED.processos.tabs.documents', ['processo' => $processo])
+
+
                     </div>
                 @endif
                 <!-- SECTIONS MOVED FROM TOP (Original Layout preserved inside form) -->
@@ -84,16 +86,7 @@
                             <x-admin::form.control-group.error control-name="protocolo_distribuicao" />
                         </x-admin::form.control-group>
 
-                        <!-- Link -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                @lang('lawfirm::app.processos.form.link')
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="text" name="link_acesso"
-                                :value="old('link_acesso', $processo->link_acesso)"
-                                :label="trans('lawfirm::app.processos.form.link')" placeholder="https://" />
-                            <x-admin::form.control-group.error control-name="link_acesso" />
-                        </x-admin::form.control-group>
+
 
                         <!-- Status -->
                         <x-admin::form.control-group>
@@ -124,103 +117,169 @@
                         </x-admin::form.control-group>
                     </div>
 
-                    <!-- COLUNA DIREITA: Detalhes Processuais -->
-                    <div
-                        class="flex w-1/2 flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <p class="text-lg font-bold text-gray-800 dark:text-white">
-                            @lang('lawfirm::app.processos.form.group-details')
-                        </p>
+                <!-- COLUNA DIREITA: Datas e Observações -->
+                <div class="flex w-1/2 flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <p class="text-lg font-bold text-gray-800 dark:text-white">
+                        Datas e Observações
+                    </p>
 
-                        <!-- Tribunal -->
-                        <x-admin::form.control-group>
+                    <div class="flex gap-4">
+                        <!-- Data Distribuição -->
+                        <x-admin::form.control-group class="w-1/2">
                             <x-admin::form.control-group.label>
-                                @lang('lawfirm::app.processos.form.tribunal')
+                                @lang('lawfirm::app.processos.form.data_distribuicao')
                             </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="text" name="tribunal" :value="old('tribunal', $processo->tribunal)" :label="trans('lawfirm::app.processos.form.tribunal')"
-                                :placeholder="trans('lawfirm::app.processos.form.tribunal')" />
-                            <x-admin::form.control-group.error control-name="tribunal" />
+                            <x-admin::form.control-group.control type="date" name="data_distribuicao"
+                                :value="$processo->data_distribuicao ? \Carbon\Carbon::parse($processo->data_distribuicao)->format('Y-m-d') : ''"
+                                :label="trans('lawfirm::app.processos.form.data_distribuicao')" />
+                            <x-admin::form.control-group.error control-name="data_distribuicao" />
                         </x-admin::form.control-group>
 
-                        <!-- Comarca -->
-                        <x-admin::form.control-group>
+                        <!-- Data Audiencia -->
+                        <x-admin::form.control-group class="w-1/2">
                             <x-admin::form.control-group.label>
-                                @lang('lawfirm::app.processos.form.comarca')
+                                @lang('lawfirm::app.processos.form.data_audiencia')
                             </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="text" name="comarca" :value="old('comarca', $processo->comarca)" :label="trans('lawfirm::app.processos.form.comarca')"
-                                :placeholder="trans('lawfirm::app.processos.form.comarca')" />
-                            <x-admin::form.control-group.error control-name="comarca" />
+                            <x-admin::form.control-group.control type="datetime" name="data_audiencia"
+                                :value="old('data_audiencia', $processo->data_audiencia)"
+                                :label="trans('lawfirm::app.processos.form.data_audiencia')" />
+                            <x-admin::form.control-group.error control-name="data_audiencia" />
                         </x-admin::form.control-group>
-
-                        <!-- Vara -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                @lang('lawfirm::app.processos.form.vara')
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="text" name="vara" :value="old('vara', $processo->vara)" :label="trans('lawfirm::app.processos.form.vara')"
-                                :placeholder="trans('lawfirm::app.processos.form.placeholder-vara')" />
-                            <x-admin::form.control-group.error control-name="vara" />
-                        </x-admin::form.control-group>
-
-                        <!-- Juiz Atual -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                Juiz(a) Atual
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="text" name="juiz_atual" :value="old('juiz_atual', $processo->juiz_atual)" label="Juiz(a) Atual" placeholder="Juiz(a) Atual" />
-                            <x-admin::form.control-group.error control-name="juiz_atual" />
-                        </x-admin::form.control-group>
-
-                        <!-- Fase Processual (SPLIT) -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                @lang('lawfirm::app.processos.form.fase')
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="select" name="fase_processual"
-                                :label="trans('lawfirm::app.processos.form.fase')"
-                                value="{{ old('fase_processual', $processo->fase_processual) }}">
-                                <option value="">@lang('lawfirm::app.processos.form.select-choose')</option>
-                                @foreach(['Inicial', 'Contestação', 'Réplica', 'Instrução', 'Julgamento', 'Sentença', 'Recurso', 'Execução'] as $phase)
-                                    <option value="{{ $phase }}" {{ old('fase_processual', $processo->fase_processual) == $phase ? 'selected' : '' }}>
-                                        {{ $phase }}
-                                    </option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
-                            <x-admin::form.control-group.error control-name="fase_processual" />
-                        </x-admin::form.control-group>
-
-                        <!-- Linha Interna: Área e Sub-área -->
-                        <div class="flex gap-4">
-                            <!-- Area -->
-                            <x-admin::form.control-group class="w-1/2">
-                                <x-admin::form.control-group.label>
-                                    @lang('lawfirm::app.processos.form.area')
-                                </x-admin::form.control-group.label>
-                                <x-admin::form.control-group.control type="select" name="area_direito"
-                                    :label="trans('lawfirm::app.processos.form.area')"
-                                    value="{{ old('area_direito', $processo->area_direito) }}">
-                                    <option value="">@lang('lawfirm::app.processos.form.select-choose')</option>
-                                    @foreach(['Civil', 'Trabalhista', 'Penal', 'Tributário', 'Família', 'Consumidor', 'Previdenciário'] as $area)
-                                        <option value="{{ $area }}" {{ old('area_direito', $processo->area_direito) == $area ? 'selected' : '' }}>
-                                            {{ $area }}
-                                        </option>
-                                    @endforeach
-                                </x-admin::form.control-group.control>
-                                <x-admin::form.control-group.error control-name="area_direito" />
-                            </x-admin::form.control-group>
-
-                            <!-- Sub-Area -->
-                            <x-admin::form.control-group class="w-1/2">
-                                <x-admin::form.control-group.label>
-                                    @lang('lawfirm::app.processos.form.subarea')
-                                </x-admin::form.control-group.label>
-                                <x-admin::form.control-group.control type="text" name="subarea_direito"
-                                    :value="old('subarea_direito', $processo->subarea_direito)"
-                                    :label="trans('lawfirm::app.processos.form.subarea')"
-                                    :placeholder="trans('lawfirm::app.processos.form.placeholder-subarea')" />
-                                <x-admin::form.control-group.error control-name="subarea_direito" />
-                            </x-admin::form.control-group>
-                        </div>
                     </div>
+
+                    <!-- Link -->
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('lawfirm::app.processos.form.link')
+                        </x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="link_acesso"
+                            :value="old('link_acesso', $processo->link_acesso)"
+                            :label="trans('lawfirm::app.processos.form.link')" placeholder="https://" />
+                        <x-admin::form.control-group.error control-name="link_acesso" />
+                    </x-admin::form.control-group>
+
+                    <!-- Link Audiencia -->
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('lawfirm::app.processos.form.link_audiencia')
+                        </x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="link_audiencia"
+                            :value="old('link_audiencia', $processo->link_audiencia)"
+                            :label="trans('lawfirm::app.processos.form.link_audiencia')"
+                            placeholder="Zoom/Meet Link" />
+                        <x-admin::form.control-group.error control-name="link_audiencia" />
+                    </x-admin::form.control-group>
+
+                    <!-- Observações -->
+                    <x-admin::form.control-group class="!mb-0 h-full">
+                        <x-admin::form.control-group.control type="textarea" name="descricao"
+                            class="!h-full min-h-[100px]" rows="4" :value="old('descricao', $processo->descricao)"
+                            :label="trans('lawfirm::app.processos.form.desc')" 
+                            placeholder="Informe aqui suas observações"/>
+                        <x-admin::form.control-group.error control-name="descricao" />
+                    </x-admin::form.control-group>
+                </div>
+            </div>
+
+            <!-- BLOCO 2: INFORMAÇÕES COMPLEMENTARES (DETALHES) -->
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <p class="text-lg font-bold text-gray-800 dark:text-white mb-4">
+                    @lang('lawfirm::app.processos.form.group-details')
+                </p>
+
+                <div class="flex gap-4">
+                    <!-- Tribunal -->
+                    <x-admin::form.control-group class="w-1/4">
+                        <x-admin::form.control-group.label>
+                            @lang('lawfirm::app.processos.form.tribunal')
+                        </x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="tribunal" :value="old('tribunal', $processo->tribunal)" :label="trans('lawfirm::app.processos.form.tribunal')"
+                            :placeholder="trans('lawfirm::app.processos.form.tribunal')" />
+                        <x-admin::form.control-group.error control-name="tribunal" />
+                    </x-admin::form.control-group>
+
+                    <!-- Comarca -->
+                    <x-admin::form.control-group class="w-1/4">
+                        <x-admin::form.control-group.label>
+                            @lang('lawfirm::app.processos.form.comarca')
+                        </x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="comarca" :value="old('comarca', $processo->comarca)" :label="trans('lawfirm::app.processos.form.comarca')"
+                            :placeholder="trans('lawfirm::app.processos.form.comarca')" />
+                        <x-admin::form.control-group.error control-name="comarca" />
+                    </x-admin::form.control-group>
+
+                    <!-- Vara -->
+                    <x-admin::form.control-group class="w-1/4">
+                        <x-admin::form.control-group.label>
+                            @lang('lawfirm::app.processos.form.vara')
+                        </x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="vara" :value="old('vara', $processo->vara)" :label="trans('lawfirm::app.processos.form.vara')"
+                            :placeholder="trans('lawfirm::app.processos.form.placeholder-vara')" />
+                        <x-admin::form.control-group.error control-name="vara" />
+                    </x-admin::form.control-group>
+
+                    <!-- Juiz Atual -->
+                    <x-admin::form.control-group class="w-1/4">
+                        <x-admin::form.control-group.label>
+                            Juiz(a) Atual
+                        </x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="juiz_atual" :value="old('juiz_atual', $processo->juiz_atual)" label="Juiz(a) Atual" placeholder="Juiz(a) Atual" />
+                        <x-admin::form.control-group.error control-name="juiz_atual" />
+                    </x-admin::form.control-group>
+                </div>
+
+                <div class="flex gap-4">
+                    <!-- Area -->
+                    <x-admin::form.control-group class="w-1/4">
+                        <x-admin::form.control-group.label>
+                            @lang('lawfirm::app.processos.form.area')
+                        </x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="select" name="area_direito"
+                            :label="trans('lawfirm::app.processos.form.area')"
+                            value="{{ old('area_direito', $processo->area_direito) }}">
+                            <option value="">@lang('lawfirm::app.processos.form.select-choose')</option>
+                            @foreach(['Civil', 'Trabalhista', 'Penal', 'Tributário', 'Família', 'Consumidor', 'Previdenciário'] as $area)
+                                <option value="{{ $area }}" {{ old('area_direito', $processo->area_direito) == $area ? 'selected' : '' }}>
+                                    {{ $area }}
+                                </option>
+                            @endforeach
+                        </x-admin::form.control-group.control>
+                        <x-admin::form.control-group.error control-name="area_direito" />
+                    </x-admin::form.control-group>
+
+                    <!-- Sub-Area -->
+                    <x-admin::form.control-group class="w-1/4">
+                        <x-admin::form.control-group.label>
+                            @lang('lawfirm::app.processos.form.subarea')
+                        </x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="subarea_direito"
+                            :value="old('subarea_direito', $processo->subarea_direito)"
+                            :label="trans('lawfirm::app.processos.form.subarea')"
+                            :placeholder="trans('lawfirm::app.processos.form.placeholder-subarea')" />
+                        <x-admin::form.control-group.error control-name="subarea_direito" />
+                    </x-admin::form.control-group>
+
+                    <!-- Fase Processual -->
+                    <x-admin::form.control-group class="w-1/4">
+                        <x-admin::form.control-group.label>
+                            @lang('lawfirm::app.processos.form.fase')
+                        </x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="select" name="fase_processual"
+                            :label="trans('lawfirm::app.processos.form.fase')"
+                            value="{{ old('fase_processual', $processo->fase_processual) }}">
+                            <option value="">@lang('lawfirm::app.processos.form.select-choose')</option>
+                            @foreach(['Inicial', 'Contestação', 'Réplica', 'Instrução', 'Julgamento', 'Sentença', 'Recurso', 'Execução'] as $phase)
+                                <option value="{{ $phase }}" {{ old('fase_processual', $processo->fase_processual) == $phase ? 'selected' : '' }}>
+                                    {{ $phase }}
+                                </option>
+                            @endforeach
+                        </x-admin::form.control-group.control>
+                        <x-admin::form.control-group.error control-name="fase_processual" />
+                    </x-admin::form.control-group>
+                    
+                    <!-- Empty Spacer for now or Link could go here if moved -->
+                    <div class="w-1/4"></div>
+                </div>
                 </div>
 
                 <!-- NEW CARD: DADOS ESTRATÉGICOS -->
@@ -417,65 +476,7 @@
                     </div>
                 </div>
 
-                <!-- BLOCO 3: DATAS E OBSERVAÇÕES -->
-                <div class="flex gap-4">
-                    <!-- COLUNA ESQUERDA: Datas -->
-                    <div
-                        class="flex w-1/2 flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <p class="text-lg font-bold text-gray-800 dark:text-white">
-                            @lang('lawfirm::app.processos.form.group-dates')
-                        </p>
 
-                        <!-- Data Distribuição -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                @lang('lawfirm::app.processos.form.data_distribuicao')
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="date" name="data_distribuicao"
-                                :value="$processo->data_distribuicao ? \Carbon\Carbon::parse($processo->data_distribuicao)->format('Y-m-d') : ''"
-                                :label="trans('lawfirm::app.processos.form.data_distribuicao')" />
-                            <x-admin::form.control-group.error control-name="data_distribuicao" />
-                        </x-admin::form.control-group>
-
-                        <!-- Data Audiencia -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                @lang('lawfirm::app.processos.form.data_audiencia')
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="datetime" name="data_audiencia"
-                                :value="old('data_audiencia', $processo->data_audiencia)"
-                                :label="trans('lawfirm::app.processos.form.data_audiencia')" />
-                            <x-admin::form.control-group.error control-name="data_audiencia" />
-                        </x-admin::form.control-group>
-
-                        <!-- Link Audiencia -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                @lang('lawfirm::app.processos.form.link_audiencia')
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="text" name="link_audiencia"
-                                :value="old('link_audiencia', $processo->link_audiencia)"
-                                :label="trans('lawfirm::app.processos.form.link_audiencia')"
-                                placeholder="Zoom/Meet Link" />
-                            <x-admin::form.control-group.error control-name="link_audiencia" />
-                        </x-admin::form.control-group>
-                    </div>
-
-                    <!-- COLUNA DIREITA: Observações -->
-                    <div
-                        class="flex w-1/2 flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <p class="text-lg font-bold text-gray-800 dark:text-white">
-                            @lang('lawfirm::app.processos.form.desc')
-                        </p>
-
-                        <x-admin::form.control-group class="!mb-0 h-full">
-                            <x-admin::form.control-group.control type="textarea" name="descricao"
-                                class="!h-full min-h-[150px]" rows="6" :value="old('descricao', $processo->descricao)"
-                                :label="trans('lawfirm::app.processos.form.desc')" />
-                            <x-admin::form.control-group.error control-name="descricao" />
-                        </x-admin::form.control-group>
-                    </div>
-                </div>
 
             </div>
         </x-admin::form>

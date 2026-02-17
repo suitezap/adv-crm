@@ -102,10 +102,12 @@
                 border: none;
                 cursor: pointer;
             }
+
             .primary-button:hover {
                 background: linear-gradient(135deg, #6A24A8 0%, #8B3FCC 100%);
                 transform: translateY(-1px);
             }
+
             .primary-button:disabled {
                 opacity: 0.6;
                 cursor: not-allowed;
@@ -125,9 +127,11 @@
                 border: 1px solid #d1d5db;
                 cursor: pointer;
             }
+
             .secondary-button:hover {
                 background: #e5e7eb;
             }
+
             .secondary-button:disabled {
                 opacity: 0.6;
                 cursor: not-allowed;
@@ -138,6 +142,7 @@
                 color: #e5e7eb;
                 border-color: #4b5563;
             }
+
             .dark .secondary-button:hover {
                 background: #4b5563;
             }
@@ -253,15 +258,13 @@
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                console.log('--- Assistant Script Loaded v4 (Full) ---');
+                console.log('--- Assistant Script Loaded v5 (Async Polling) ---');
 
                 // SAFETY: Global Error Handler to catch unexpected loops
                 window.onerror = function (msg, url, line, col, error) {
                     const loading = document.getElementById('loading-indicator');
                     if (loading) loading.style.display = 'none';
-
                     alert("Erro Crítico no Script:\n" + msg + "\nLinha: " + line);
-
                     // Unlock buttons
                     const btns = document.querySelectorAll('button');
                     btns.forEach(b => b.disabled = false);
@@ -289,24 +292,59 @@
                             return text;
                         }
                     } else {
-                        console.warn('Marked library not loaded');
                         return text.replace(/\n/g, '<br>');
                     }
                 }
 
-                // EVENT DELEGATION for both buttons
+                // POLLING LOGIC
+                async function pollStatus(historyId, onComplete, onError) {
+                    const maxAttempts = 60; // 2 minutes (2s interval)
+                    let attempts = 0;
+
+                    const interval = setInterval(async () => {
+                        attempts++;
+                        try {
+                            // Construct URL dynamically
+                            const statusUrl = "{{ route('lawfirm.assistants.check_status', ':id') }}".replace(':id', historyId);
+
+                            const res = await fetch(statusUrl);
+                            if (!res.ok) throw new Error('Falha ao verificar status: ' + res.status);
+
+                            const data = await res.json();
+
+                            console.log('Poll Status:', data.status, 'Attempt:', attempts);
+
+                            if (data.status === 'completed') {
+                                clearInterval(interval);
+                                onComplete(data.generated_content);
+                            } else if (data.status === 'failed') {
+                                clearInterval(interval);
+                                onError(data.error_message || 'Falha desconhecida no processamento.');
+                            } else if (attempts >= maxAttempts) {
+                                clearInterval(interval);
+                                onError('Tempo limite excedido. O processamento pode ainda estar ocorrendo em segundo plano.');
+                            }
+                        } catch (err) {
+                            console.error('Polling Error:', err);
+                            // Don't stop polling on transient network errors unless strictly max attempts reached
+                            if (attempts >= maxAttempts) {
+                                clearInterval(interval);
+                                onError('Erro de conexão durante polling: ' + err.message);
+                            }
+                        }
+                    }, 2000);
+                }
+
+                // EVENT DELEGATION
                 document.body.addEventListener('click', async function (e) {
 
-                    // --- GENERATE PROMPT BUTTON ---
+                    // --- GENERATE PROMPT BUTTON (Local Sync) ---
                     const btnGen = e.target.closest('#generate-btn');
                     if (btnGen) {
                         e.preventDefault();
-                        e.stopPropagation();
-                        console.log('>>> GENERATE CLICK <<<');
-
                         if (btnGen.disabled) return;
 
-                        // Toggle loading state
+                        // UI State
                         const btnText = document.getElementById('generate-btn-text');
                         const btnLoading = document.getElementById('generate-btn-loading');
                         btnGen.disabled = true;
@@ -328,16 +366,10 @@
 
                             if (data.generated_prompt || data.success) {
                                 const content = data.generated_prompt || '';
-
-                                // Update Raw
-                                const rawArea = document.getElementById('raw-result');
-                                rawArea.value = content;
-
-                                // Update Visual
+                                resultArea.value = content;
                                 const visualResult = document.getElementById('visual-result');
                                 visualResult.innerHTML = parseMarkdown(content);
                                 visualResult.classList.remove('hidden');
-
                                 placeholder.classList.add('hidden');
                                 loading.style.display = 'none';
                                 copyBtn.classList.remove('hidden');
@@ -353,16 +385,13 @@
                         }
                     }
 
-                    // --- EXECUTE AI (N8N) BUTTON ---
+                    // --- EXECUTE AI (Async Job) BUTTON ---
                     const btnExec = e.target.closest('#btn-execute-ia');
                     if (btnExec) {
                         e.preventDefault();
-                        e.stopPropagation();
-                        console.log('>>> EXECUTE AI CLICK <<<');
-
                         if (btnExec.disabled) return;
 
-                        // Toggle loading state
+                        // UI State
                         const execText = document.getElementById('execute-btn-text');
                         const execLoading = document.getElementById('execute-btn-loading');
                         btnExec.disabled = true;
@@ -374,52 +403,72 @@
                         const copyBtn = document.getElementById('copy-btn');
                         const loading = document.getElementById('loading-indicator');
 
-                        // UI State
+                        // Reset Result Area
                         resultArea.classList.add('hidden');
                         placeholder.classList.add('hidden');
-                        loading.style.display = 'block';
+                        loading.style.display = 'block'; // Show "Conectando ao Cérebro..."
+                        document.getElementById('visual-result').classList.add('hidden');
 
                         try {
+                            // 1. Start Execution
                             const response = await fetch("{{ route('lawfirm.assistants.execute', $template->slug) }}", {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
                                 body: JSON.stringify(getFormData())
                             });
 
-                            // Handle errors based on status first
                             if (!response.ok) {
                                 const errData = await response.json();
-                                throw new Error(errData.error || 'Erro na execução remota');
+                                throw new Error(errData.error || 'Erro na solicitação de execução');
                             }
 
                             const data = await response.json();
 
-                            if (data.result || data.success) {
-                                const content = data.result || data.generated_prompt || '';
+                            if (data.status === 'queued' && data.history_id) {
+                                // 2. Start Polling
+                                console.log('Job Queued. History ID:', data.history_id);
 
-                                // Update Raw
-                                const rawArea = document.getElementById('raw-result');
-                                rawArea.value = content;
+                                pollStatus(
+                                    data.history_id,
+                                    (content) => {
+                                        // Success Callback
+                                        const visualResult = document.getElementById('visual-result');
+                                        resultArea.value = content;
+                                        visualResult.innerHTML = parseMarkdown(content);
+                                        visualResult.classList.remove('hidden');
 
-                                // Update Visual
-                                const visualResult = document.getElementById('visual-result');
-                                visualResult.innerHTML = parseMarkdown(content);
-                                visualResult.classList.remove('hidden');
+                                        loading.style.display = 'none';
+                                        copyBtn.classList.remove('hidden');
 
-                                copyBtn.classList.remove('hidden');
+                                        // Reset Button
+                                        btnExec.disabled = false;
+                                        execText.classList.remove('hidden');
+                                        execLoading.classList.add('hidden');
+                                    },
+                                    (errorMessage) => {
+                                        // Error Callback
+                                        alert('Erro no processamento IA: ' + errorMessage);
+                                        loading.style.display = 'none';
+                                        placeholder.classList.remove('hidden'); // Show placeholder again
+
+                                        // Reset Button
+                                        btnExec.disabled = false;
+                                        execText.classList.remove('hidden');
+                                        execLoading.classList.add('hidden');
+                                    }
+                                );
+
                             } else {
-                                // Fallback
-                                const visualResult = document.getElementById('visual-result');
-                                visualResult.textContent = JSON.stringify(data, null, 2);
-                                visualResult.classList.remove('hidden');
+                                // Fallback for immediate response (if any)
+                                throw new Error('Resposta inesperada do servidor.');
                             }
+
                         } catch (error) {
                             console.error(error);
                             alert('Erro: ' + error.message);
-                            resultArea.classList.add('hidden');
-                            placeholder.classList.remove('hidden');
-                        } finally {
                             loading.style.display = 'none';
+                            placeholder.classList.remove('hidden');
+
                             btnExec.disabled = false;
                             execText.classList.remove('hidden');
                             execLoading.classList.add('hidden');
@@ -431,13 +480,10 @@
                     if (cBtn) {
                         e.preventDefault();
                         const rawArea = document.getElementById('raw-result');
-
-                        // Copy logic
-                        rawArea.style.display = 'block'; // Ensure visible for select()
+                        rawArea.style.display = 'block';
                         rawArea.select();
                         document.execCommand('copy');
-                        rawArea.style.display = 'none'; // Hide again
-
+                        rawArea.style.display = 'none';
                         cBtn.textContent = '✓ Copiado!';
                         setTimeout(() => cBtn.textContent = '📋 Copiar', 2000);
                     }
