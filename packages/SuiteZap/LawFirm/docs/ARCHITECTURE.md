@@ -156,22 +156,50 @@ N8N_WEBHOOK_BASE_URL=https://seu-n8n.com/webhook/
 packages/SuiteZap/LawFirm/src/
 ├── Config/           # menu.php, acl.php, system.php, module.php
 ├── Contracts/        # Interfaces
-├── DataGrids/        # 6 DataGrids (Processo, Prazo, Financial, etc)
-├── Database/         # 19 Migrations + Seeders
+├── DataGrids/        # DataGrids de Listagem (Lead, Organization, Person, SafeActivity)
+├── Database/         # Migrations + Seeders
 ├── Events/           # Eventos customizados
-├── Http/
-│   ├── Controllers/
-│   │   ├── Admin/    # Processo, Prazo, Assistant, SaasDashboard
-│   │   │   └── Whatsapp/ConnectionController.php
-│   │   └── Api/      # Process, Deadline, DocumentChecklist
-│   └── Resources/    # API Resources
 ├── Listeners/        # ContactSaveListener, LeadUpdatedListener
-├── Models/           # 11 models + MotherShip/
+├── Models/           # Models de Domínio
 ├── Observers/        # Observers de sincronização
 ├── Providers/        # LawFirmServiceProvider, ModuleServiceProvider
-├── Repositories/     # ProcessoRepository
+├── Repositories/     # Repositories globais
 ├── Resources/        # views/, lang/, assets/
 ├── Routes/           # admin.php, api.php, breadcrumbs.php
-├── Rules/            # CPF, CNPJ, CNJ validations
-└── Services/         # Financial, N8n, SaasQuota, SaasStorage, Whatsapp/
+├── Rules/            # Validações (CPF, CNPJ, CNJ)
+├── Services/         # ChecklistTemplates, N8n, SaasQuota, SaasStorage, Whatsapp/
+│
+├── Legal/            # Domínio Jurídico (Processos, Prazos)
+│   ├── Http/Controllers/
+│   │   └── ProcessoController.php
+│   └── Resources/
+│
+├── GED/              # Gestão Eletrônica de Documentos
+│   ├── Http/Controllers/
+│   │   └── ProcessDocumentController.php
+│   └── Resources/
+│
+└── Financial/        # Domínio Financeiro
+    ├── Http/Controllers/
+    └── Services/
+
 ```
+
+## 9. Padrões de Interface (UI/UX)
+Para formulários complexos (como Cadastro/Edição de Processos), adotar o seguinte padrão visual:
+
+### A. Topo (Critical Info)
+Dividir em duas colunas de largura igual (50/50):
+1. **Esquerda (Iniciando/Identificação):** Title, Person, Status.
+2. **Direita (Datas e Observações):** Distribuição, Audiência, Links, Observações.
+
+### B. Detalhes (Full Width)
+Blocos subsequentes ocupam toda a largura, organizados logicamente:
+- **Detalhes do Processo:** CNJ, Tribunal, Vara, Juiz.
+- **Dados Estratégicos:** Valor da Causa, Probabilidade de Êxito.
+- **Gestão das Partes:** Qualificação, Advogados (Interno/Externo), Oponente.
+
+### C. Campos Chave
+- **Link do Processo:** Deve estar agrupado com Links/Datas para acesso rápido.
+- **Observações:** Sempre visível no topo direito para contexto imediato.
+
