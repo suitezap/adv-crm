@@ -31,6 +31,23 @@ if (app()->environment('local')) {
 }
 
 // ============================================================================
+// GRACEFUL REDIRECTS — Catch malformed URLs without required IDs (405 fixes)
+// ============================================================================
+Route::middleware(['web', 'admin_locale', 'user'])
+    ->prefix(config('app.admin_path', 'admin'))
+    ->group(function () {
+        // /admin/leads/view (sem ID) → redireciona para lista de leads
+        Route::get('leads/view', function () {
+            return redirect()->route('admin.leads.index');
+        })->name('admin.leads.view.fallback');
+
+        // /admin/leads/edit (sem ID) → redireciona para lista de leads
+        Route::get('leads/edit', function () {
+            return redirect()->route('admin.leads.index');
+        })->name('admin.leads.edit.fallback');
+    });
+
+// ============================================================================
 // MAIN ROUTES — /admin/juridico
 // ============================================================================
 Route::middleware(['web', 'admin_locale', 'user'])

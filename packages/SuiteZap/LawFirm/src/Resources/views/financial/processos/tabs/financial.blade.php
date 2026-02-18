@@ -21,24 +21,108 @@
     $saldo = $totalReceitas - $totalDespesas;
 @endphp
 
+<style>
+    @media (max-width: 768px) {
+        /* Force table to not be like tables anymore */
+        #lf-fin-table-wrap table, 
+        #lf-fin-table-wrap thead, 
+        #lf-fin-table-wrap tbody, 
+        #lf-fin-table-wrap th, 
+        #lf-fin-table-wrap td, 
+        #lf-fin-table-wrap tr { 
+            display: block; 
+        }
+
+        /* Hide table headers (but not display: none;, for accessibility) */
+        #lf-fin-table-wrap thead tr { 
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+        }
+
+        #lf-fin-table-wrap tr { 
+            border: 1px solid #ccc; 
+            margin-bottom: 10px; 
+            border-radius: 8px;
+            padding: 10px;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        #lf-fin-table-wrap td { 
+            /* Behave  like a "row" */
+            border: none;
+            position: relative;
+            padding-left: 0;
+            padding-right: 0;
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        #lf-fin-table-wrap td:before { 
+            /* Now like a table header */
+            content: attr(data-label);
+            display: block;
+            font-weight: bold;
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+        
+        /* Specific adjustments for inputs to be full width */
+        #lf-fin-table-wrap input,
+        #lf-fin-table-wrap select {
+            width: 100%;
+        }
+
+        /* ACTIONS: Position top right as icon only */
+        #lf-fin-table-wrap td:last-child {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: auto;
+            padding: 0;
+            border: none;
+            background: transparent;
+        }
+        
+        #lf-fin-table-wrap td:last-child:before {
+            display: none;
+        }
+
+        #lf-fin-table-wrap td:last-child button {
+            border: none;
+            padding: 5px;
+            width: auto;
+        }
+        
+        #lf-fin-table-wrap td:last-child button span {
+            font-size: 1.25rem;
+        }
+    }
+</style>
+
 <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900" id="lf-financial-widget" v-pre>
 
     {{-- HEADER --}}
-    <div class="flex items-center justify-between mb-4 cursor-pointer select-none"
+    <div class="flex flex-wrap items-center justify-between mb-4 cursor-pointer select-none gap-4"
          onclick="window.lfFinToggle()">
-        <div class="flex items-center gap-4">
-            <p class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+        
+        <div class="flex flex-wrap items-center gap-4">
+            <p class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2 whitespace-nowrap">
                 Gestão Financeira
                 <i id="lf-fin-arrow" class="{{ $startClosed ? 'icon-arrow-down' : 'icon-arrow-up' }} text-gray-500 ml-2 text-lg"></i>
             </p>
-            <div class="flex gap-2">
-                <span class="px-2 py-1 text-xs rounded-full font-semibold bg-green-100 text-green-700">
+            
+            <div class="flex flex-wrap gap-2">
+                <span class="px-2 py-1 text-xs rounded-full font-semibold bg-green-100 text-green-700 whitespace-nowrap">
                     Rec: <span id="lf-fin-total-rec">R$ {{ number_format($totalReceitas, 2, ',', '.') }}</span>
                 </span>
-                <span class="px-2 py-1 text-xs rounded-full font-semibold bg-red-100 text-red-700">
+                <span class="px-2 py-1 text-xs rounded-full font-semibold bg-red-100 text-red-700 whitespace-nowrap">
                     Desp: <span id="lf-fin-total-desp">R$ {{ number_format($totalDespesas, 2, ',', '.') }}</span>
                 </span>
-                <span id="lf-fin-saldo-pill" class="px-2 py-1 text-xs rounded-full font-bold {{ $saldo >= 0 ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700' }}">
+                <span id="lf-fin-saldo-pill" class="px-2 py-1 text-xs rounded-full font-bold {{ $saldo >= 0 ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700' }} whitespace-nowrap">
                     Saldo: <span id="lf-fin-total-saldo">R$ {{ number_format($saldo, 2, ',', '.') }}</span>
                 </span>
             </div>
@@ -53,7 +137,7 @@
             </button>
             <button type="button" onclick="window.lfFinAddRow()" class="primary-button">
                 <span class="icon-plus text-lg inline-block align-middle mr-1"></span>
-                Novo Lançamento
+                Novo
             </button>
         </div>
         @endif
@@ -92,7 +176,7 @@
                     @foreach($financeiros as $idx => $fin)
                     <tr class="border-b bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800 transition-colors" data-fin-id="{{ $fin->id }}">
                         {{-- Tipo --}}
-                        <td class="px-2 py-2">
+                        <td class="px-2 py-2" data-label="Tipo">
                             <select data-field="tipo" onchange="window.lfFinOnTipoChange(this)"
                                 class="w-full rounded-md border px-2 py-1.5 text-sm {{ $fin->tipo === 'receita' ? 'text-green-700 bg-green-50 border-green-200' : 'text-red-700 bg-red-50 border-red-200' }}">
                                 <option value="receita" {{ $fin->tipo === 'receita' ? 'selected' : '' }}>Receita</option>
@@ -101,7 +185,7 @@
                         </td>
 
                         {{-- Categoria --}}
-                        <td class="px-2 py-2">
+                        <td class="px-2 py-2" data-label="Categoria">
                             <select data-field="category"
                                 class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm">
                                 <option value="">- Selecione -</option>
@@ -113,14 +197,14 @@
                         </td>
 
                         {{-- Nome --}}
-                        <td class="px-2 py-2">
+                        <td class="px-2 py-2" data-label="Descrição">
                             <input type="text" data-field="nome" value="{{ $fin->nome }}"
                                 class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500"
                                 placeholder="Ex: Honorários Iniciais">
                         </td>
 
                         {{-- Valor --}}
-                        <td class="px-2 py-2">
+                        <td class="px-2 py-2" data-label="Valor">
                             <div class="relative">
                                 <span class="absolute left-2 top-1.5 text-gray-500">R$</span>
                                 <input type="number" step="0.01" data-field="valor" value="{{ $fin->valor }}"
@@ -130,14 +214,14 @@
                         </td>
 
                         {{-- Vencimento --}}
-                        <td class="px-2 py-2">
+                        <td class="px-2 py-2" data-label="Vencimento">
                             <input type="date" data-field="data_vencimento"
                                 value="{{ $fin->data_vencimento ? \Carbon\Carbon::parse($fin->data_vencimento)->format('Y-m-d') : '' }}"
                                 class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm">
                         </td>
 
                         {{-- Status --}}
-                        <td class="px-2 py-2">
+                        <td class="px-2 py-2" data-label="Status">
                             <select data-field="status" onchange="window.lfFinOnStatusChange(this)"
                                 class="w-full rounded-md border px-2 py-1.5 text-sm font-medium
                                 @if($fin->status === 'pendente') bg-yellow-50 text-yellow-700 border-yellow-200
@@ -151,7 +235,7 @@
                         </td>
 
                         {{-- Pagamento --}}
-                        <td class="px-2 py-2">
+                        <td class="px-2 py-2" data-label="Pagamento">
                             <div class="flex flex-col gap-1">
                                 <select data-field="payment_method"
                                     class="w-full rounded-md border border-gray-300 px-1 py-1 text-xs"
@@ -170,7 +254,7 @@
 
                         {{-- Actions --}}
                         @if(!$readOnly)
-                        <td class="px-2 py-2 text-center">
+                        <td class="px-2 py-2 text-center" data-label="Ações">
                             <input type="hidden" data-field="id" value="{{ $fin->id }}">
                             <button type="button" onclick="window.lfFinDeleteRow(this)"
                                 class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors">
@@ -245,25 +329,53 @@
         }).join('');
 
         tr.innerHTML =
-            '<td class="px-2 py-2">' +
+        tr.innerHTML =
+            '<td class="px-2 py-2" data-label="Tipo">' +
                 '<select data-field="tipo" onchange="window.lfFinOnTipoChange(this)" class="w-full rounded-md border px-2 py-1.5 text-sm text-green-700 bg-green-50 border-green-200">' +
                 '<option value="receita" selected>Receita</option><option value="despesa">Despesa</option></select></td>' +
-            '<td class="px-2 py-2">' +
+            '<td class="px-2 py-2" data-label="Categoria">' +
                 '<select data-field="category" class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm">' +
                 '<option value="">- Selecione -</option>' + catOptions + '</select></td>' +
-            '<td class="px-2 py-2"><input type="text" data-field="nome" value="" class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500" placeholder="Ex: Honorários Iniciais"></td>' +
-            '<td class="px-2 py-2"><div class="relative"><span class="absolute left-2 top-1.5 text-gray-500">R$</span>' +
+            '<td class="px-2 py-2" data-label="Descrição"><input type="text" data-field="nome" value="" class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500" placeholder="Ex: Honorários Iniciais"></td>' +
+            '<td class="px-2 py-2" data-label="Valor"><div class="relative"><span class="absolute left-2 top-1.5 text-gray-500">R$</span>' +
                 '<input type="number" step="0.01" data-field="valor" value="" oninput="window.lfFinUpdateTotals()" class="w-full rounded-md border border-gray-300 pl-8 pr-2 py-1.5 text-sm font-semibold text-green-600"></div></td>' +
-            '<td class="px-2 py-2"><input type="date" data-field="data_vencimento" value="' + today + '" class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm"></td>' +
-            '<td class="px-2 py-2"><select data-field="status" onchange="window.lfFinOnStatusChange(this)" class="w-full rounded-md border px-2 py-1.5 text-sm font-medium bg-yellow-50 text-yellow-700 border-yellow-200">' +
+            '<td class="px-2 py-2" data-label="Vencimento">' +
+                '<input type="date" data-field="data_vencimento" value="' + today + '" class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm">' +
+                '<div class="mt-1">' +
+                    '<div class="flex items-center gap-1.5">' +
+                        '<input type="checkbox" onchange="window.lfFinToggleInstallments(this)" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-3 w-3">' +
+                        '<span class="text-xs text-gray-500 select-none">Parcelar?</span>' +
+                    '</div>' +
+                    '<div class="install-opts hidden mt-1 p-1.5 bg-gray-50 border border-gray-200 rounded text-xs grid grid-cols-2 gap-1">' +
+                        '<div><label class="block text-[10px] text-gray-400">Qtd</label>' +
+                        '<input type="number" data-field="parcelas_qtd" value="2" min="2" max="60" class="w-full px-1 py-0.5 border border-gray-300 rounded text-xs"></div>' +
+                        '<div><label class="block text-[10px] text-gray-400">Freq</label>' +
+                        '<select data-field="parcelas_frequencia" class="w-full px-1 py-0.5 border border-gray-300 rounded text-xs">' +
+                            '<option value="30">Mensal</option>' +
+                            '<option value="15">Quinzenal</option>' +
+                            '<option value="7">Semanal</option>' +
+                        '</select></div>' +
+                    '</div>' +
+                '</div>' +
+            '</td>' +
+            '<td class="px-2 py-2" data-label="Status"><select data-field="status" onchange="window.lfFinOnStatusChange(this)" class="w-full rounded-md border px-2 py-1.5 text-sm font-medium bg-yellow-50 text-yellow-700 border-yellow-200">' +
                 '<option value="pendente" selected>Pendente</option><option value="pago">Pago</option><option value="cancelado">Cancelado</option></select></td>' +
-            '<td class="px-2 py-2"><div class="flex flex-col gap-1">' +
+            '<td class="px-2 py-2" data-label="Pagamento"><div class="flex flex-col gap-1">' +
                 '<select data-field="payment_method" class="w-full rounded-md border border-gray-300 px-1 py-1 text-xs" disabled>' +
                 '<option value="">- Método -</option>' + pmOptions + '</select>' +
                 '<input type="date" data-field="payment_date" value="" class="w-full rounded-md border border-gray-300 px-1 py-1 text-xs" disabled></div></td>' +
-            actionsCell;
+            '<td class="px-2 py-2 text-center" data-label="Ações">' +
+            '<input type="hidden" data-field="id" value="">' +
+            '<button type="button" onclick="window.lfFinDeleteRow(this)" class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors">' +
+            '<span class="icon-delete text-xl"></span></button></td>';
 
-        tbody.appendChild(tr);
+        // Prepend to top instead of append
+        if (tbody.firstChild) {
+            tbody.insertBefore(tr, tbody.firstChild);
+        } else {
+            tbody.appendChild(tr);
+        }
+        
         lfFinUpdateVisibility();
         window.lfFinUpdateTotals();
 
@@ -403,12 +515,23 @@
         return true;
     }
 
+    // ===================== TOGGLE INSTALLMENTS =====================
+    window.lfFinToggleInstallments = function(chk) {
+        var opts = chk.closest('td').querySelector('.install-opts');
+        if (opts) {
+            opts.style.display = chk.checked ? 'grid' : 'none';
+        }
+    };
+
     // ===================== COLLECT DATA =====================
     function lfFinCollectData() {
         var tbody = document.getElementById('lf-fin-tbody');
         var items = [];
         if (!tbody) return items;
         tbody.querySelectorAll('tr').forEach(function(tr) {
+            var chkParcelar = tr.querySelector('input[type="checkbox"][onchange*="lfFinToggleInstallments"]');
+            var isParcelado = chkParcelar && chkParcelar.checked ? 1 : 0;
+
             items.push({
                 id: (tr.querySelector('[data-field="id"]') || {}).value || null,
                 tipo: (tr.querySelector('[data-field="tipo"]') || {}).value || 'receita',
@@ -418,7 +541,12 @@
                 data_vencimento: (tr.querySelector('[data-field="data_vencimento"]') || {}).value || '',
                 status: (tr.querySelector('[data-field="status"]') || {}).value || 'pendente',
                 payment_method: (tr.querySelector('[data-field="payment_method"]') || {}).value || '',
-                payment_date: (tr.querySelector('[data-field="payment_date"]') || {}).value || ''
+                payment_date: (tr.querySelector('[data-field="payment_date"]') || {}).value || '',
+                
+                // Installment Fields
+                parcelar: isParcelado,
+                parcelas_qtd: (tr.querySelector('[data-field="parcelas_qtd"]') || {}).value || null,
+                parcelas_frequencia: (tr.querySelector('[data-field="parcelas_frequencia"]') || {}).value || null
             });
         });
         return items;

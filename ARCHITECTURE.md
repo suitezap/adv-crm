@@ -189,6 +189,20 @@ classDiagram
     *   **Backend:** `ProcessDocumentController` expandido para gerenciar uploads (`store`), deleção de anexos (`destroy`) e deleção de checklists (`destroyChecklistItem`).
     *   **Rota:** Adicionada `documentos/store` e corrigida `documentos/delete`.
 
+### 5.5 Melhorias na Gestão Financeira (v3.3)
+*   **Novas Funcionalidades:**
+    *   **Parcelamento:** Adicionada lógica de geração automática de lançamentos parcelados (Recorrência/Parcelamento) no `FinancialService`.
+    *   **Responsividade:** Implementado "Card View" via CSS (`@media`) para tabelas em dispositivos móveis, eliminando scroll horizontal.
+*   **Refinamentos UI/UX:**
+    *   **Header Flexível:** Uso de `flex-wrap` para adaptação natural de títulos e botões.
+    *   **Prepend Rows:** Novos lançamentos são inseridos no topo da lista para feedback imediato.
+    *   **Mobile Actions:** Botões simplificados (ícones) para economizar espaço em telas pequenas.
+
+### 5.6 Graceful Redirects — URLs Malformadas (v3.4)
+*   **Problema:** Acessar `/admin/leads/view` ou `/admin/leads/edit` sem o parâmetro `{id}` causava erro `405 Method Not Allowed`.
+*   **Solução:** Adicionadas rotas de fallback no `routes.php` do LawFirm (sem modificar o core do Krayin) que redirecionam para `admin.leads.index`.
+*   **Padrão:** Para qualquer rota Krayin que exija `{id}`, registrar um `Route::get` sem parâmetro que redireciona para a listagem correspondente.
+
 ## 6. Padrões de Frontend (UI/UX - v3.2)
 
 ### 6.1 Conflito Vue.js vs Alpine.js
