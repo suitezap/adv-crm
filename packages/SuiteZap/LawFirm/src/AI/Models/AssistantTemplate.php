@@ -33,6 +33,7 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
      */
     protected $fillable = [
         'tenant_id',
+        'slug',
         'category',
         'title',
         'description',

@@ -4,6 +4,7 @@ namespace SuiteZap\LawFirm\AI\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Webkul\User\Models\User;
+use Webkul\Lead\Models\Lead;
 use SuiteZap\LawFirm\Contracts\AssistantHistory as AssistantHistoryContract;
 
 class AssistantHistory extends Model implements AssistantHistoryContract
@@ -22,6 +23,7 @@ class AssistantHistory extends Model implements AssistantHistoryContract
      */
     protected $fillable = [
         'user_id',
+        'lead_id',
         'template_id',
         'input_data',
         'generated_content',
@@ -52,5 +54,13 @@ class AssistantHistory extends Model implements AssistantHistoryContract
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Get the lead associated with this history entry.
+     */
+    public function lead()
+    {
+        return $this->belongsTo(Lead::class, 'lead_id');
     }
 }

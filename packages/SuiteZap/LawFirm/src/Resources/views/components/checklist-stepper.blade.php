@@ -11,6 +11,8 @@
     $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?? '#0041FF';
 
     // 1. Determine Access
+    $tenantId = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantId();
+
     if ($context === 'processo') {
         $isWon = true; // Processo is always "won" context
     } else {
@@ -88,58 +90,7 @@
             <div class="card-body text-center p-4">
 
                 <div class="mb-4">
-                    <span style="font-size: 32px;">🛠️</span>
-                    <h4 class="mt-2 text-primary font-weight-bold">Pré-Triagem & Negociação</h4>
-                    <p class="text-muted">
-                        O Lead ainda não foi ganho. Utilize estas ferramentas de apoio para qualificar o cliente.
-                    </p>
-                </div>
-
-                {{-- Bootstrap Grid for Action Cards --}}
-                <div class="row justify-content-center">
-
-                    {{-- Card 1: IA Analysis --}}
-                    <div class="col-md-4 mb-3">
-                        <div class="card action-card h-100 p-3 shadow-sm"
-                            style="cursor: pointer; border: 1px solid #e0e0e0; transition: all 0.2s;"
-                            onclick="alert('IA em desenvolvimento')">
-                            <div style="font-size: 24px; margin-bottom: 10px;">🧠</div>
-                            <h6 style="font-weight: bold;">Análise de Viabilidade</h6>
-                            <p class="text-muted small mb-2">Avaliar risco da causa com IA</p>
-                            <button class="btn btn-sm btn-outline-primary mt-auto">Executar Análise</button>
-                        </div>
-                    </div>
-
-                    {{-- Card 2: Proposal --}}
-                    <div class="col-md-4 mb-3">
-                        <div class="card action-card h-100 p-3 shadow-sm"
-                            style="cursor: pointer; border: 1px solid #e0e0e0; transition: all 0.2s;"
-                            onclick="alert('Gerador de Proposta em desenvolvimento')">
-                            <div style="font-size: 24px; margin-bottom: 10px;">📄</div>
-                            <h6 style="font-weight: bold;">Gerador de Proposta</h6>
-                            <p class="text-muted small mb-2">Minuta de Honorários</p>
-                            <button class="btn btn-sm btn-outline-success mt-auto">Criar Documento</button>
-                        </div>
-                    </div>
-
-                    {{-- Card 3: Script --}}
-                    <div class="col-md-4 mb-3">
-                        <div class="card action-card h-100 p-3 shadow-sm"
-                            style="cursor: pointer; border: 1px solid #e0e0e0; transition: all 0.2s;"
-                            onclick="alert('Script em desenvolvimento')">
-                            <div style="font-size: 24px; margin-bottom: 10px;">💬</div>
-                            <h6 style="font-weight: bold;">Script de Vendas</h6>
-                            <p class="text-muted small mb-2">Roteiro de Perguntas</p>
-                            <button class="btn btn-sm btn-outline-info mt-auto">Ver Roteiro</button>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="mt-3 pt-3 border-top">
-                    <small class="text-danger font-weight-bold">
-                        ⚠️ Marque este Lead como GANHO no Pipeline para iniciar o Processo Judicial.
-                    </small>
+                    <h4 class="mt-2 text-primary font-weight-bold">Checklist</h4>
                 </div>
 
             </div>
@@ -235,6 +186,9 @@
         </div>
     </div>
 
+    {{-- ASSISTANT MODAL COMPONENT --}}
+    @include('lawfirm::components.assistant-modal', ['entityId' => $entityId, 'lead' => $lead ?? null, 'tenantId' => $tenantId])
+
 </div>
 
 @push('styles')
@@ -272,9 +226,12 @@
 @endpush
 
 @push('scripts')
+    <!-- Include Markdown Parser if not already present -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         (function () {
-            'use strict';
+            // ... (rest of existing script)
+
 
             var entityId = {{ $entityId }};
             var token = '{{ csrf_token() }}';

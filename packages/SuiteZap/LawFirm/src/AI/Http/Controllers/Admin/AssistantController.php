@@ -11,6 +11,7 @@ use SuiteZap\LawFirm\AI\Models\AssistantHistory;
 use SuiteZap\LawFirm\Services\N8nService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\AI\Jobs\ProcessAiAssistant;
+use Webkul\Lead\Models\Lead;
 
 class AssistantController extends Controller
 {
@@ -231,19 +232,62 @@ class AssistantController extends Controller
     }
 
     /**
+     * Processa assistente especificamente para um Lead (Pré-Triagem).
+     */
+    public function processForLead(Request $request, $leadId)
+    {
+        // 1. Carregar Lead e Template
+        $lead = Lead::findOrFail($leadId);
+        $template = AssistantTemplate::where('slug', 'pre-triagem-lead')->firstOrFail();
+
+        // 2. Validar Ação
+        $action = $request->input('action', 'preview'); // preview | execute
+
+        // 3. Preparar Dados
+        $data = [
+            'title' => $lead->title,
+            'description' => $lead->description ?? 'Sem descrição.',
+        ];
+
+        // 4. Delegar Execução (passando o contexto do Lead)
+        if ($action === 'preview') {
+            return $this->executeLocal($template, $data, $lead->id);
+        }
+
+        if ($action === 'execute') {
+            // Security Check: Verificar módulo exigido (se houver)
+            if ($template->required_module) {
+                $subscription = MotherShipService::getCurrentSubscription();
+                $allowedModules = $subscription ? ($subscription->active_modules ?? []) : [];
+                if (!in_array($template->required_module, $allowedModules)) {
+                    return response()->json(['error' => 'Módulo não disponível.'], 403);
+                }
+            }
+
+            if (empty($template->n8n_webhook_url)) {
+                return response()->json(['error' => 'Execução remota não configurada.'], 400);
+            }
+            return $this->executeRemote($template, $data, $lead->id);
+        }
+
+        return response()->json(['error' => 'Ação inválida.'], 400);
+    }
+
+    /**
      * Executa localmente substituindo variáveis no prompt.
      */
-    protected function executeLocal(AssistantTemplate $template, array $data)
+    protected function executeLocal(AssistantTemplate $template, array $data, $leadId = null)
     {
         $generatedPrompt = $template->prompt_structure;
 
         foreach ($data as $key => $value) {
-            $generatedPrompt = str_replace('{{' . $key . '}}', $value, $generatedPrompt);
+            $generatedPrompt = str_replace('{{' . $key . '}}', $value ?? '', $generatedPrompt);
         }
 
         // Salvar histórico
         AssistantHistory::create([
             'user_id' => auth()->guard('user')->id(),
+            'lead_id' => $leadId,
             'template_id' => $template->id,
             'input_data' => $data,
             'generated_content' => $generatedPrompt,
@@ -261,7 +305,7 @@ class AssistantController extends Controller
     /**
      * Executa remotamente via N8N configurado no MotherShip.
      */
-    protected function executeRemote(AssistantTemplate $template, array $data)
+    protected function executeRemote(AssistantTemplate $template, array $data, $leadId = null)
     {
         $n8nConfig = MotherShipService::getN8nConfig();
 
@@ -281,6 +325,7 @@ class AssistantController extends Controller
         $payload = [
             'inputs' => $data,
             'user_id' => auth()->guard('user')->id(),
+            'lead_id' => $leadId,
             'template' => $template->title,
             'timestamp' => now()->toIso8601String(),
         ];
@@ -303,6 +348,7 @@ class AssistantController extends Controller
 
                 AssistantHistory::create([
                     'user_id' => auth()->guard('user')->id(),
+                    'lead_id' => $leadId,
                     'template_id' => $template->id,
                     'input_data' => $data,
                     'generated_content' => $output,
