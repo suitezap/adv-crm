@@ -4,6 +4,7 @@ namespace SuiteZap\LawFirm\SaaS\Services;
 
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use SuiteZap\LawFirm\SaaS\Models\InfrastructureNode;
+use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 use Webkul\User\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -201,5 +202,35 @@ class MotherShipService
         ]);
 
         Log::debug("SAAS: Storage configurado dinamicamente para nó {$storageNode->id}");
+    }
+
+    /**
+     * Retorna os Assistentes de IA disponíveis para o Tenant atual,
+     * baseado nos módulos ativos da assinatura.
+     *
+     * @param  string  $tenantId       ID do tenant atual
+     * @param  array   $activeModules  Módulos ativos da assinatura (ex: ['LEGAL', 'AI'])
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getAvailableAssistants(string $tenantId, array $activeModules)
+    {
+        $cacheKey = "tenant_{$tenantId}_available_assistants";
+
+        return Cache::remember($cacheKey, 300, function () use ($tenantId, $activeModules) {
+            return AssistantTemplate::on('mothership')
+                ->select(['id', 'title', 'description', 'icon', 'required_module', 'category'])
+                ->where('is_active', true)
+                ->where(function ($query) use ($tenantId) {
+                    $query->whereNull('tenant_id')           // Templates Globais
+                        ->orWhere('tenant_id', $tenantId); // Templates do Cliente
+                })
+                ->where(function ($query) use ($activeModules) {
+                    $query->whereNull('required_module')                // Templates livres
+                        ->orWhereIn('required_module', $activeModules); // Módulo contratado
+                })
+                ->orderBy('category')
+                ->orderBy('title')
+                ->get();
+        });
     }
 }

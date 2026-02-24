@@ -52,19 +52,17 @@
 @else
     <div id="lf-tools-panel" class="mt-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
 
-        {{-- Header --}}
-        <div class="border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+        {{-- Header — same pattern as assistants page --}}
+        <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
             <div class="flex items-center gap-2">
-                <span class="text-lg">🛠️</span>
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-white">Qualificação Jurídica & Negociação</h3>
+                <span class="icon-settings-flow text-base text-violet-600 dark:text-violet-400"></span>
+                <h3 class="text-sm font-semibold text-gray-800 dark:text-white">Qualificação Jurídica &amp; Negociação</h3>
             </div>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Utilize estas ferramentas de apoio para qualificar o cliente.
-            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Ferramentas de apoio à qualificação</p>
         </div>
 
-        {{-- Tools Grid --}}
-        <div class="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
+        {{-- Tools Grid — 2 cols, compact card style matching /admin/juridico/assistants --}}
+        <div class="grid grid-cols-2 gap-3 p-4 max-sm:grid-cols-1">
             @foreach($tools as $tool)
                 @php
                     $tpl = $toolTemplates[$tool['slug']] ?? null;
@@ -72,14 +70,35 @@
                     $btnDesc = $tpl->description ?? '';
                     $stageId = $tool['stageId'] ?? 'null';
                 @endphp
-                <button type="button"
-                    onclick="window.lfToolsPanel.open('{{ $tool['slug'] }}', '{{ addslashes($btnTitle) }}', {{ $stageId }})"
-                    class="group flex flex-col items-center gap-2 rounded-lg border border-gray-200 bg-white p-3 text-center transition-all hover:border-{{ $tool['color'] }}-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-{{ $tool['color'] }}-600">
-                    <span
-                        class="flex h-10 w-10 items-center justify-center rounded-full bg-{{ $tool['color'] }}-100 text-xl transition-transform group-hover:scale-110 dark:bg-{{ $tool['color'] }}-900/40">{{ $tool['icon'] }}</span>
-                    <span class="text-xs font-semibold text-gray-800 dark:text-gray-200">{{ $btnTitle }}</span>
-                    <span class="text-[10px] text-gray-500 dark:text-gray-400">{{ Str::limit($btnDesc, 40) }}</span>
-                </button>
+                <div
+                    class="flex flex-col justify-between rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-violet-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-violet-600">
+                    <div>
+                        {{-- Category badge --}}
+                        <span
+                            class="mb-2 inline-flex items-center rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-900/20 dark:text-violet-300">
+                            &#9679; IA
+                        </span>
+
+                        {{-- Icon + Title --}}
+                        <h4 class="text-sm font-bold text-gray-800 dark:text-white">
+                            {{ $tool['icon'] }} {{ $btnTitle }}
+                        </h4>
+
+                        {{-- Description --}}
+                        @if($btnDesc)
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ Str::limit($btnDesc, 60) }}</p>
+                        @endif
+                    </div>
+
+                    {{-- Action button --}}
+                    <div class="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
+                        <button type="button"
+                            onclick="window.lfToolsPanel.open('{{ $tool['slug'] }}', '{{ addslashes($btnTitle) }}', {{ $stageId }})"
+                            class="lf-btn-primary">
+                            ✨ Usar Assistente
+                        </button>
+                    </div>
+                </div>
             @endforeach
         </div>
 
@@ -138,7 +157,7 @@
                 <div class="lf-result-header">
                     <h4 class="lf-section-title">Resultado</h4>
                     <div class="lf-result-actions" id="lf-result-actions" style="display:none;">
-                        <button id="lf-save-note-btn" onclick="window.lfToolsPanel.saveAsNote()"
+                        <button id="lf-save-note-btn" onclick="window.lfToolsPanel.saveAsNote(this)"
                             class="lf-save-note-btn">
                             <span class="icon-note"></span> Salvar como Nota
                         </button>
@@ -183,8 +202,36 @@
 @push('styles')
     <style>
         /* ============================================================
-                                   LF TOOLS MODAL — Matches Krayin AI Assistant System Styles
-                                   ============================================================ */
+                                                   LF TOOLS MODAL — Matches Krayin AI Assistant System Styles
+                                                   ============================================================ */
+
+        /* Compact button — matches /admin/juridico/assistants style */
+        .lf-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.3rem 0.75rem;
+            font-weight: 600;
+            font-size: 0.8125rem;
+            border-radius: 0.375rem;
+            transition: all 0.15s;
+            background: linear-gradient(135deg, #7c3aed 0%, #9d4edd 100%);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .lf-btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .lf-btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
 
         /* Overlay */
         .lf-modal-overlay {
@@ -716,252 +763,243 @@
                 resultLoading = document.getElementById('lf-result-loading');
                 resultContent = document.getElementById('lf-result-content');
                 resultActions = document.getElementById('lf-result-actions');
-                saveNoteBtn = document.getElementById('lf-save-note-btn');
                 btnGenerate = document.getElementById('lf-btn-generate');
-                btnExecute = document.getElementById('lf-btn-execute');
-                genText = document.getElementById('lf-gen-text');
-                genLoading = document.getElementById('lf-gen-loading');
-                execText = document.getElementById('lf-exec-text');
-                execLoading = document.getElementById('lf-exec-loading');
 
-                console.log('LF Tools Panel: initialized ✅');
-            });
+                function showModal() { if (modal) modal.style.display = ''; }
+                function hideModal() { if (modal) modal.style.display = 'none'; }
 
-            function showModal() { if (modal) modal.style.display = ''; }
-            function hideModal() { if (modal) modal.style.display = 'none'; }
+                function showState(state) {
+                    resultPlaceholder.style.display = state === 'placeholder' ? '' : 'none';
+                    resultLoading.style.display = state === 'loading' ? '' : 'none';
+                    resultContent.style.display = state === 'result' ? '' : 'none';
+                    resultActions.style.display = state === 'result' ? '' : 'none';
 
-            function showState(state) {
-                resultPlaceholder.style.display = state === 'placeholder' ? '' : 'none';
-                resultLoading.style.display = state === 'loading' ? '' : 'none';
-                resultContent.style.display = state === 'result' ? '' : 'none';
-                resultActions.style.display = state === 'result' ? '' : 'none';
-
-                // Buttons
-                btnGenerate.disabled = state === 'loading';
-                btnExecute.disabled = state === 'loading';
-                genText.style.display = state === 'loading' ? 'none' : '';
-                genLoading.style.display = state === 'loading' ? '' : 'none';
-                execText.style.display = state === 'loading' ? 'none' : '';
-                execLoading.style.display = state === 'loading' ? '' : 'none';
-            }
-
-            function renderMd(text) {
-                if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
-                    try { return marked.parse(text); } catch (e) { return text; }
+                    // Buttons
+                    btnGenerate.disabled = state === 'loading';
+                    btnExecute.disabled = state === 'loading';
+                    genText.style.display = state === 'loading' ? 'none' : '';
+                    genLoading.style.display = state === 'loading' ? '' : 'none';
+                    execText.style.display = state === 'loading' ? 'none' : '';
+                    execLoading.style.display = state === 'loading' ? '' : 'none';
                 }
-                return text.replace(/\n/g, '<br>');
-            }
 
-            window.lfToolsPanel = {
-                open: function (slug, title, stageId) {
-                    activeSlug = slug;
-                    activeStageId = stageId || null;
-                    rawResult = '';
-                    modalTitle.textContent = '🤖 ' + title;
-                    formTitle.value = LEAD_TITLE;
-                    formDesc.value = LEAD_DESC;
-                    formTenant.value = TENANT_ID;
-                    formObservacoes.value = '';
-                    resultContent.innerHTML = '';
-                    showState('placeholder');
-                    showModal();
-                    console.log('LF Tools Panel: opened slug=' + slug + ' stageId=' + stageId);
-                },
-
-                close: function () {
-                    hideModal();
-                },
-
-                generate: async function () {
-                    showState('loading');
-                    try {
-                        var url = ROUTES.generate.replace('__SLUG__', activeSlug);
-                        var res = await fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': CSRF_TOKEN
-                            },
-                            body: JSON.stringify({
-                                title: formTitle.value,
-                                description: formDesc.value,
-                                observacoes: formObservacoes.value,
-                                tenant_id: TENANT_ID
-                            })
-                        });
-                        var data = await res.json();
-                        if (data.generated_prompt) {
-                            rawResult = data.generated_prompt;
-                            resultContent.innerHTML = renderMd(rawResult);
-                            showState('result');
-                        } else {
-                            alert('Erro: ' + JSON.stringify(data));
-                            showState('placeholder');
-                        }
-                    } catch (e) {
-                        alert('Erro: ' + e.message);
-                        showState('placeholder');
+                function renderMd(text) {
+                    if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+                        try { return marked.parse(text); } catch (e) { return text; }
                     }
-                },
-
-                execute: async function () {
-                    showState('loading');
-                    try {
-                        var url = ROUTES.execute.replace('__SLUG__', activeSlug);
-                        var res = await fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': CSRF_TOKEN
-                            },
-                            body: JSON.stringify({
-                                title: formTitle.value,
-                                description: formDesc.value,
-                                observacoes: formObservacoes.value,
-                                tenant_id: TENANT_ID
-                            })
-                        });
-
-                        if (!res.ok) {
-                            var err = await res.json();
-                            throw new Error(err.error || 'Erro na execução');
-                        }
-
-                        var data = await res.json();
-                        console.log('LF Tools Panel: execute response', data);
-
-                        // Update pipeline stage if configured
-                        if (activeStageId) {
-                            updatePipelineStage(activeStageId);
-                        }
-
-                        if (data.status === 'queued' && data.history_id) {
-                            pollStatus(data.history_id);
-                        } else {
-                            throw new Error('Resposta inesperada');
-                        }
-                    } catch (e) {
-                        alert('Erro: ' + e.message);
-                        showState('placeholder');
-                    }
-                },
-
-                copy: function () {
-                    var copyBtn = document.getElementById('lf-copy-btn');
-                    try {
-                        // Fallback for HTTP: use a temporary textarea + execCommand
-                        var ta = document.createElement('textarea');
-                        ta.value = rawResult;
-                        ta.style.position = 'fixed';
-                        ta.style.left = '-9999px';
-                        document.body.appendChild(ta);
-                        ta.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(ta);
-
-                        copyBtn.textContent = '✅ Copiado!';
-                        setTimeout(function () { copyBtn.textContent = '📋 Copiar'; }, 1500);
-                    } catch (e) {
-                        console.error('Copy failed:', e);
-                        alert('Não foi possível copiar. Use Ctrl+C manualmente.');
-                    }
-                },
-
-                saveAsNote: async function () {
-                    if (!rawResult) return;
-                    saveNoteBtn.disabled = true;
-                    saveNoteBtn.innerHTML = '⏳ Salvando...';
-
-                    try {
-                        var formData = new FormData();
-                        formData.append('_token', CSRF_TOKEN);
-                        formData.append('type', 'note');
-                        formData.append('comment', rawResult);
-                        formData.append('lead_id', LEAD_ID);
-
-                        var res = await fetch(ROUTES.saveNote, {
-                            method: 'POST',
-                            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                            body: formData
-                        });
-
-                        if (!res.ok) throw new Error('Erro ao salvar nota');
-
-                        var data = await res.json();
-                        saveNoteBtn.innerHTML = '✅ Nota Salva!';
-                        console.log('LF Tools Panel: note saved', data);
-
-                        setTimeout(function () {
-                            saveNoteBtn.innerHTML = '<span class="icon-note"></span> Salvar como Nota';
-                            saveNoteBtn.disabled = false;
-                        }, 2000);
-
-                    } catch (e) {
-                        alert('Erro ao salvar nota: ' + e.message);
-                        saveNoteBtn.innerHTML = '<span class="icon-note"></span> Salvar como Nota';
-                        saveNoteBtn.disabled = false;
-                    }
+                    return text.replace(/\n/g, '<br>');
                 }
-            };
 
-            // Update lead pipeline stage (fire-and-forget)
-            function updatePipelineStage(stageId) {
-                fetch(ROUTES.stageUpdate, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': CSRF_TOKEN
+                window.lfToolsPanel = {
+                    open: function (slug, title, stageId) {
+                        activeSlug = slug;
+                        activeStageId = stageId || null;
+                        rawResult = '';
+                        modalTitle.textContent = '🤖 ' + title;
+                        formTitle.value = LEAD_TITLE;
+                        formDesc.value = LEAD_DESC;
+                        formTenant.value = TENANT_ID;
+                        formObservacoes.value = '';
+                        resultContent.innerHTML = '';
+                        showState('placeholder');
+                        showModal();
+                        console.log('LF Tools Panel: opened slug=' + slug + ' stageId=' + stageId);
                     },
-                    body: JSON.stringify({ lead_pipeline_stage_id: stageId })
-                }).then(function (res) {
-                    if (res.ok) {
-                        console.log('LF Tools Panel: pipeline stage updated to ' + stageId);
-                    } else {
-                        console.warn('LF Tools Panel: failed to update stage', res.status);
-                    }
-                }).catch(function (e) {
-                    console.warn('LF Tools Panel: stage update error', e);
-                });
-            }
 
-            function pollStatus(historyId) {
-                var attempts = 0;
-                var maxAttempts = 60;
-                var interval = setInterval(async function () {
-                    attempts++;
-                    try {
-                        var url = ROUTES.status.replace('__ID__', historyId);
-                        var res = await fetch(url);
-                        var data = await res.json();
+                    close: function () {
+                        hideModal();
+                    },
 
-                        console.log('Poll Status:', data.status, 'Attempt:', attempts);
-
-                        if (data.status === 'completed') {
-                            clearInterval(interval);
-                            rawResult = data.generated_content;
-                            resultContent.innerHTML = renderMd(rawResult);
-                            showState('result');
-                        } else if (data.status === 'failed') {
-                            clearInterval(interval);
-                            alert('Erro: ' + (data.error_message || 'Falha desconhecida'));
-                            showState('placeholder');
-                        } else if (attempts >= maxAttempts) {
-                            clearInterval(interval);
-                            alert('Tempo limite excedido.');
+                    generate: async function () {
+                        showState('loading');
+                        try {
+                            var url = ROUTES.generate.replace('__SLUG__', activeSlug);
+                            var res = await fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': CSRF_TOKEN
+                                },
+                                body: JSON.stringify({
+                                    title: formTitle.value,
+                                    description: formDesc.value,
+                                    observacoes: formObservacoes.value,
+                                    tenant_id: TENANT_ID
+                                })
+                            });
+                            var data = await res.json();
+                            if (data.generated_prompt) {
+                                rawResult = data.generated_prompt;
+                                resultContent.innerHTML = renderMd(rawResult);
+                                showState('result');
+                            } else {
+                                alert('Erro: ' + JSON.stringify(data));
+                                showState('placeholder');
+                            }
+                        } catch (e) {
+                            alert('Erro: ' + e.message);
                             showState('placeholder');
                         }
-                    } catch (e) {
-                        if (attempts >= maxAttempts) {
-                            clearInterval(interval);
+                    },
+
+                    execute: async function () {
+                        showState('loading');
+                        try {
+                            var url = ROUTES.execute.replace('__SLUG__', activeSlug);
+                            var res = await fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': CSRF_TOKEN
+                                },
+                                body: JSON.stringify({
+                                    title: formTitle.value,
+                                    description: formDesc.value,
+                                    observacoes: formObservacoes.value,
+                                    tenant_id: TENANT_ID
+                                })
+                            });
+
+                            if (!res.ok) {
+                                var err = await res.json();
+                                throw new Error(err.error || 'Erro na execução');
+                            }
+
+                            var data = await res.json();
+                            console.log('LF Tools Panel: execute response', data);
+
+                            // Update pipeline stage if configured
+                            if (activeStageId) {
+                                updatePipelineStage(activeStageId);
+                            }
+
+                            if (data.status === 'queued' && data.history_id) {
+                                pollStatus(data.history_id);
+                            } else {
+                                throw new Error('Resposta inesperada');
+                            }
+                        } catch (e) {
+                            alert('Erro: ' + e.message);
                             showState('placeholder');
                         }
-                    }
-                }, 2000);
-            }
+                    },
 
-        })();
+                    copy: function () {
+                        var copyBtn = document.getElementById('lf-copy-btn');
+                        try {
+                            // Fallback for HTTP: use a temporary textarea + execCommand
+                            var ta = document.createElement('textarea');
+                            ta.value = rawResult;
+                            ta.style.position = 'fixed';
+                            ta.style.left = '-9999px';
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+
+                            copyBtn.textContent = '✅ Copiado!';
+                            setTimeout(function () { copyBtn.textContent = '📋 Copiar'; }, 1500);
+                        } catch (e) {
+                            console.error('Copy failed:', e);
+                            alert('Não foi possível copiar. Use Ctrl+C manualmente.');
+                        }
+                    },
+
+                    saveAsNote: async function (btn) {
+                        if (!rawResult) return;
+                        btn.disabled = true;
+                        btn.innerHTML = '⏳ Salvando...';
+
+                        try {
+                            var formData = new FormData();
+                            formData.append('_token', CSRF_TOKEN);
+                            formData.append('type', 'note');
+                            formData.append('comment', rawResult);
+                            formData.append('lead_id', LEAD_ID);
+
+                            var res = await fetch(ROUTES.saveNote, {
+                                method: 'POST',
+                                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                body: formData
+                            });
+
+                            if (!res.ok) throw new Error('Erro ao salvar nota');
+
+                            var data = await res.json();
+                            btn.innerHTML = '✅ Nota Salva!';
+                            console.log('LF Tools Panel: note saved', data);
+
+                            setTimeout(function () {
+                                btn.innerHTML = '<span class="icon-note"></span> Salvar como Nota';
+                                btn.disabled = false;
+                            }, 2000);
+
+                        } catch (e) {
+                            alert('Erro ao salvar nota: ' + e.message);
+                            btn.innerHTML = '<span class="icon-note"></span> Salvar como Nota';
+                            btn.disabled = false;
+                        }
+                    }
+                };
+
+                // Update lead pipeline stage (fire-and-forget)
+                function updatePipelineStage(stageId) {
+                    fetch(ROUTES.stageUpdate, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': CSRF_TOKEN
+                        },
+                        body: JSON.stringify({ lead_pipeline_stage_id: stageId })
+                    }).then(function (res) {
+                        if (res.ok) {
+                            console.log('LF Tools Panel: pipeline stage updated to ' + stageId);
+                        } else {
+                            console.warn('LF Tools Panel: failed to update stage', res.status);
+                        }
+                    }).catch(function (e) {
+                        console.warn('LF Tools Panel: stage update error', e);
+                    });
+                }
+
+                function pollStatus(historyId) {
+                    var attempts = 0;
+                    var maxAttempts = 60;
+                    var interval = setInterval(async function () {
+                        attempts++;
+                        try {
+                            var url = ROUTES.status.replace('__ID__', historyId);
+                            var res = await fetch(url);
+                            var data = await res.json();
+
+                            console.log('Poll Status:', data.status, 'Attempt:', attempts);
+
+                            if (data.status === 'completed') {
+                                clearInterval(interval);
+                                rawResult = data.generated_content;
+                                resultContent.innerHTML = renderMd(rawResult);
+                                showState('result');
+                            } else if (data.status === 'failed') {
+                                clearInterval(interval);
+                                alert('Erro: ' + (data.error_message || 'Falha desconhecida'));
+                                showState('placeholder');
+                            } else if (attempts >= maxAttempts) {
+                                clearInterval(interval);
+                                alert('Tempo limite excedido.');
+                                showState('placeholder');
+                            }
+                        } catch (e) {
+                            if (attempts >= maxAttempts) {
+                                clearInterval(interval);
+                                showState('placeholder');
+                            }
+                        }
+                    }, 2000);
+                }
+
+            })();
     </script>
 @endpush

@@ -200,7 +200,8 @@ class LawFirmServiceProvider extends ServiceProvider
         // ---------------------------------------------------------------------
         // Lead: Atualização pós-save
         // ---------------------------------------------------------------------
-        Event::listen('sales.lead.update.after', 'SuiteZap\LawFirm\Listeners\LeadUpdatedListener@handle');
+        Event::listen('sales.lead.update.after', 'SuiteZap\\LawFirm\\Listeners\\LeadUpdatedListener@handle');
+        Event::listen('lead.update.after', \SuiteZap\LawFirm\Listeners\LeadWonListener::class);
 
         // ---------------------------------------------------------------------
         // CONTATOS: Persistência de Dados (Substituindo Observers)

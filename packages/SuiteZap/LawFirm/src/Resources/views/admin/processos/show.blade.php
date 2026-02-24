@@ -3,36 +3,9 @@
         @lang('lawfirm::app.processos.view')
         </x-slot>
 
-        <style>
-            .modal-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 9999;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .modal-box {
-                background: #fff;
-                padding: 20px;
-                width: 400px;
-                border-radius: 8px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            }
-
-            .show-modal {
-                display: flex !important;
-            }
-        </style>
-
         <div class="flex flex-col gap-4">
 
-            <!-- Header -->
+            {{-- ── HEADER ──────────────────────────────────────── --}}
             <div
                 class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
@@ -56,102 +29,122 @@
                     <a href="{{ route('admin.processos.edit', $processo->id) }}" class="primary-button">
                         @lang('lawfirm::app.processos.edit')
                     </a>
-                    <a href="{{ route('admin.processos.index') }}" class="secondary-button">
-                        Voltar
-                    </a>
+                    <a href="{{ route('admin.processos.index') }}" class="secondary-button">Voltar</a>
                 </div>
             </div>
 
-            <!-- 1. Prazos -->
+            {{-- ── PRAZOS ───────────────────────────────────────── --}}
             @include('lawfirm::Legal.processos.tabs.prazos', ['readOnly' => true])
 
+            {{-- ── NOTAS ────────────────────────────────────────── --}}
+            @include('lawfirm::Legal.processos.tabs.notas', ['readOnly' => true, 'startClosed' => true])
 
-            <!-- 2. Financeiro -->
-            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                @include('lawfirm::Financial.processos.tabs.financial', ['processo' => $processo, 'readOnly' => true, 'startClosed' => true])
-            </div>
+            {{-- ── FINANCEIRO ───────────────────────────────────── --}}
+            @include('lawfirm::Financial.processos.tabs.financial', ['processo' => $processo, 'readOnly' => true, 'startClosed' => true])
 
-            <!-- 4. Checklist de Documentos -->
-            <!-- 4. Checklist de Documentos & GED -->
-            <!-- 4. Checklist de Documentos & GED -->
+            {{-- ── DOCUMENTOS ───────────────────────────────────── --}}
             @include('lawfirm::GED.processos.tabs.documents', ['processo' => $processo, 'readOnly' => true])
 
-            <!-- 4. Identification & Process Details (2 Cols) -->
-            <div class="flex gap-4">
-                <!-- Left: Basic Info -->
+            {{-- ── ROW 1: IDENTIFICAÇÃO + DETALHES ────────────── --}}
+            <div class="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
+
+                {{-- Card: Identificação --}}
                 <div
-                    class="w-1/2 flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                     <p class="text-lg font-bold text-gray-800 dark:text-white">
                         @lang('lawfirm::app.processos.form.group-info')
                     </p>
 
-                    <!-- Status Badge -->
+                    {{-- Pessoa Vinculada --}}
+                    <div class="space-y-1">
+                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                            @lang('lawfirm::app.processos.form.person')
+                        </p>
+                        <p class="text-base font-bold text-gray-900 dark:text-white">
+                            @if($processo->person)
+                                <a href="{{ route('admin.contacts.persons.view', $processo->person->id) }}"
+                                    class="text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300">
+                                    {{ $processo->person->name }}
+                                </a>
+                            @else
+                                -
+                            @endif
+                        </p>
+                    </div>
+
+                    {{-- Status --}}
                     <div class="space-y-1">
                         <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
                             @lang('lawfirm::app.processos.form.status')
                         </p>
-                        <span class="inline-flex px-2 py-1 text-xs rounded-full {{ 
-                        $processo->status == 'Ativo' ? 'bg-green-100 text-green-800' :
-    ($processo->status == 'Suspenso' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800') 
-                    }}">
+                        <span class="inline-flex px-2 py-1 text-xs rounded-full {{
+    $processo->status == 'Ativo' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300' :
+    ($processo->status == 'Suspenso' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300' :
+        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300') }}">
                             {{ $processo->status ?? '-' }}
                         </span>
                     </div>
 
-                    <div class="space-y-1">
-                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                            @lang('lawfirm::app.processos.form.titulo')
-                        </p>
-                        <p class="text-base text-gray-900 dark:text-white font-medium">{{ $processo->titulo ?? '-' }}
-                        </p>
-                    </div>
-
+                    {{-- CNJ --}}
                     <div class="space-y-1">
                         <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
                             @lang('lawfirm::app.processos.form.cnj')
                         </p>
-                        <p class="text-base text-gray-900 dark:text-white">{{ $processo->numero_cnj ?? '-' }}</p>
+                        <p class="text-base font-mono text-gray-900 dark:text-white">{{ $processo->numero_cnj ?? '-' }}
+                        </p>
                     </div>
 
+                    {{-- Protocolo --}}
                     <div class="space-y-1">
                         <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Protocolo de Distribuição</p>
                         <p class="text-base text-gray-900 dark:text-white">
-                            {{ $processo->protocolo_distribuicao ?? '-' }}
+                            {{ $processo->protocolo_distribuicao ?: 'Caso não tenha ATSumCNJ ainda' }}
                         </p>
                     </div>
 
-                    <div class="space-y-1">
-                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                            @lang('lawfirm::app.processos.form.link')
-                        </p>
-                        @if($processo->link_acesso)
-                            <a href="{{ $processo->link_acesso }}" target="_blank"
-                                class="text-blue-600 hover:underline break-all">
-                                {{ $processo->link_acesso }}
-                            </a>
-                        @else
-                            <p class="text-base text-gray-900 dark:text-white">-</p>
-                        @endif
-                    </div>
-
+                    {{-- Valor --}}
                     <div class="space-y-1">
                         <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
                             @lang('lawfirm::app.processos.form.valor')
                         </p>
-                        <p class="text-base text-gray-900 dark:text-white">R$
-                            {{ number_format((float) $processo->valor_causa, 2, ',', '.') }}
+                        <p class="text-base font-bold text-gray-900 dark:text-white">
+                            R$ {{ number_format((float) $processo->valor_causa, 2, ',', '.') }}
+                        </p>
+                    </div>
+
+                    {{-- Probabilidade --}}
+                    <div class="space-y-1">
+                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                            @lang('lawfirm::app.processos.form.probabilidade')
+                        </p>
+                        <p class="text-base text-gray-900 dark:text-white">{{ $processo->probabilidade_exito ?? '-' }}
                         </p>
                     </div>
                 </div>
 
-                <!-- Right: Details -->
+                {{-- Card: Detalhes Processuais --}}
                 <div
-                    class="w-1/2 flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                     <p class="text-lg font-bold text-gray-800 dark:text-white">
                         @lang('lawfirm::app.processos.form.group-details')
                     </p>
 
                     <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                                @lang('lawfirm::app.processos.form.area')
+                            </p>
+                            <p class="text-base text-gray-900 dark:text-white">{{ $processo->area_direito ?? '-' }}</p>
+                        </div>
+
+                        <div class="space-y-1">
+                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                                @lang('lawfirm::app.processos.form.fase')
+                            </p>
+                            <p class="text-base text-gray-900 dark:text-white">{{ $processo->fase_processual ?? '-' }}
+                            </p>
+                        </div>
+
                         <div class="space-y-1">
                             <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
                                 @lang('lawfirm::app.processos.form.tribunal')
@@ -166,63 +159,22 @@
                             <p class="text-base text-gray-900 dark:text-white">{{ $processo->comarca ?? '-' }}</p>
                         </div>
 
-                        <div class="space-y-1">
+                        <div class="space-y-1 col-span-2">
                             <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
                                 @lang('lawfirm::app.processos.form.vara')
                             </p>
                             <p class="text-base text-gray-900 dark:text-white">{{ $processo->vara ?? '-' }}</p>
                         </div>
-
-                        <div class="space-y-1">
-                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Juiz(a) Atual</p>
-                            <p class="text-base text-gray-900 dark:text-white">{{ $processo->juiz_atual ?? '-' }}</p>
-                        </div>
-                    </div>
-
-                    <div class="space-y-1">
-                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                            @lang('lawfirm::app.processos.form.fase')
-                        </p>
-                        <p class="text-base text-gray-900 dark:text-white">{{ $processo->fase_processual ?? '-' }}</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                                @lang('lawfirm::app.processos.form.area')
-                            </p>
-                            <p class="text-base text-gray-900 dark:text-white">{{ $processo->area_direito ?? '-' }}</p>
-                        </div>
-
-                        <div class="space-y-1">
-                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                                @lang('lawfirm::app.processos.form.subarea')
-                            </p>
-                            <p class="text-base text-gray-900 dark:text-white">{{ $processo->subarea_direito ?? '-' }}
-                            </p>
-                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 5. Strategic Data -->
-            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                <p class="text-lg font-bold text-gray-800 dark:text-white mb-2">
-                    Dados Estratégicos
-                </p>
-                <div class="space-y-1">
-                    <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                        @lang('lawfirm::app.processos.form.probabilidade')
-                    </p>
-                    <p class="text-base text-gray-900 dark:text-white">{{ $processo->probabilidade_exito ?? '-' }}</p>
-                </div>
-            </div>
+            {{-- ── ROW 2: RESPONSÁVEIS + PARTE CONTRÁRIA ───────── --}}
+            <div class="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
 
-            <!-- 6. Parts Management (2 Cols) -->
-            <div class="flex gap-4">
-                <!-- Left: Client Info -->
+                {{-- Card: Responsáveis --}}
                 <div
-                    class="w-1/2 flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                     <p class="text-lg font-bold text-gray-800 dark:text-white">
                         @lang('lawfirm::app.processos.form.group-parts')
                     </p>
@@ -231,117 +183,55 @@
                         <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
                             @lang('lawfirm::app.processos.form.person') (Cliente)
                         </p>
-                        <p class="text-base text-gray-900 dark:text-white font-medium">
+                        <p class="text-base font-medium text-gray-900 dark:text-white">
                             {{ $processo->person->name ?? '-' }}
                         </p>
                     </div>
 
                     <div class="space-y-1">
-                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Responsável Interno (CRM)</p>
+                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Responsável Interno</p>
                         <p class="text-base text-gray-900 dark:text-white">
                             {{ $processo->responsavel->name ?? $processo->user->name ?? '-' }}
                         </p>
                     </div>
-
-                    <div class="space-y-1">
-                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Advogado Responsável (Peça)
-                        </p>
-                        <p class="text-base text-gray-900 dark:text-white">
-                            {{ $processo->advogado_responsavel_nome ?: 'Não informado' }}
-                        </p>
-                    </div>
-
-                    <div class="space-y-1">
-                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">OAB (Responsável)</p>
-                        <p class="text-base text-gray-900 dark:text-white">
-                            {{ $processo->advogado_responsavel_oab ?: '-' }}
-                        </p>
-                    </div>
-
-                    <div class="space-y-1">
-                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Qualificação da Parte</p>
-                        <p class="text-base text-gray-900 dark:text-white capitalize">{{ $processo->tipo_parte ?? '-' }}
-                        </p>
-                    </div>
                 </div>
 
-                <!-- Right: Opposing Party -->
-                <!-- Right: Opposing Party -->
+                {{-- Card: Parte Contrária --}}
                 <div
-                    class="w-1/2 flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                    <p class="text-lg font-bold text-gray-800 dark:text-white mb-2">
-                        Parte Contrária (Oponente)
-                    </p>
-
-                    <!-- Dados do Oponente -->
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div class="flex flex-col">
-                            <span class="text-gray-500 text-xs font-semibold uppercase mb-1 dark:text-gray-400">Nome do
-                                Oponente</span>
-                            <span
-                                class="text-gray-800 font-medium dark:text-white break-words">{{ $processo->opposing_party_name ?? $processo->parte_contraria ?? '-' }}</span>
-                        </div>
-
-                        <div class="flex flex-col">
-                            <span class="text-gray-500 text-xs font-semibold uppercase mb-1 dark:text-gray-400">Tipo da
-                                Parte</span>
-                            <span
-                                class="text-gray-800 font-medium dark:text-white">{{ $processo->opposing_party_type ?? '-' }}</span>
-                        </div>
-
-                        <div class="flex flex-col col-span-2">
-                            <span
-                                class="text-gray-500 text-xs font-semibold uppercase mb-1 dark:text-gray-400">Documento
-                                (CPF/CNPJ)</span>
-                            <span
-                                class="text-gray-800 font-medium dark:text-white">{{ $processo->opposing_party_document ?? '-' }}</span>
-                        </div>
-                    </div>
-
-                    <hr class="border-gray-200 dark:border-gray-700 mb-4">
-
-                    <!-- Advogado do Oponente -->
-                    <p class="text-sm font-bold text-gray-800 dark:text-white mb-3">
-                        Advogado do Oponente
-                    </p>
+                    class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <p class="text-lg font-bold text-gray-800 dark:text-white">Parte Contrária (Oponente)</p>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="flex flex-col">
-                            <span class="text-gray-500 text-xs font-semibold uppercase mb-1 dark:text-gray-400">Nome do
-                                Advogado</span>
-                            <span
-                                class="text-gray-800 font-medium dark:text-white break-words">{{ $processo->advogado_parte_contraria ?? '-' }}</span>
+                        <div class="space-y-1">
+                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Nome / Razão Social</p>
+                            <p class="text-base font-medium text-gray-900 dark:text-white">
+                                {{ $processo->opposing_party_name ?? $processo->parte_contraria ?? '-' }}
+                            </p>
                         </div>
 
-                        <div class="flex flex-col">
-                            <span
-                                class="text-gray-500 text-xs font-semibold uppercase mb-1 dark:text-gray-400">OAB</span>
-                            <span
-                                class="text-gray-800 font-medium dark:text-white">{{ $processo->advogado_oab ?? '-' }}</span>
+                        <div class="space-y-1">
+                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Tipo</p>
+                            <p class="text-base text-gray-900 dark:text-white">
+                                {{ $processo->opposing_party_type ?? '-' }}
+                            </p>
                         </div>
 
-                        <div class="flex flex-col">
-                            <span
-                                class="text-gray-500 text-xs font-semibold uppercase mb-1 dark:text-gray-400">E-mail</span>
-                            <span
-                                class="text-gray-800 font-medium dark:text-white break-all">{{ $processo->email_advogado_contrario ?? '-' }}</span>
-                        </div>
-
-                        <div class="flex flex-col">
-                            <span
-                                class="text-gray-500 text-xs font-semibold uppercase mb-1 dark:text-gray-400">WhatsApp</span>
-                            <span
-                                class="text-gray-800 font-medium dark:text-white">{{ $processo->whatsapp_advogado_contrario ?? '-' }}</span>
+                        <div class="space-y-1 col-span-2">
+                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Documento (CPF/CNPJ)</p>
+                            <p class="text-base font-mono text-gray-900 dark:text-white">
+                                {{ $processo->opposing_party_document ?? '-' }}
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 7. Dates & Description -->
-            <div class="flex gap-4">
-                <!-- Left: Dates -->
+            {{-- ── ROW 3: DATAS + OBSERVAÇÕES ──────────────────── --}}
+            <div class="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
+
+                {{-- Card: Datas --}}
                 <div
-                    class="w-1/2 flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                     <p class="text-lg font-bold text-gray-800 dark:text-white">
                         @lang('lawfirm::app.processos.form.group-dates')
                     </p>
@@ -363,37 +253,20 @@
                             {{ $processo->data_audiencia ? $processo->data_audiencia->format('d/m/Y H:i') : '-' }}
                         </p>
                     </div>
-
-                    <div class="space-y-1">
-                        <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                            @lang('lawfirm::app.processos.form.link_audiencia')
-                        </p>
-                        @if($processo->link_audiencia)
-                            <a href="{{ $processo->link_audiencia }}" target="_blank"
-                                class="text-blue-600 hover:underline break-all">
-                                {{ $processo->link_audiencia }}
-                            </a>
-                        @else
-                            <p class="text-base text-gray-900 dark:text-white">-</p>
-                        @endif
-                    </div>
                 </div>
 
-                <!-- Right: Description -->
+                {{-- Card: Observações --}}
                 <div
-                    class="w-1/2 flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                    <p class="text-lg font-bold text-gray-800 dark:text-white mb-2">
+                    class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <p class="text-lg font-bold text-gray-800 dark:text-white">
                         @lang('lawfirm::app.processos.form.desc')
                     </p>
-                    <div class="flex flex-col h-full">
-                        <span
-                            class="text-gray-800 font-medium dark:text-white whitespace-pre-wrap leading-relaxed">{!! nl2br(e($processo->descricao ?? 'Sem observações.')) !!}</span>
-                    </div>
+                    <p class="text-base font-medium text-gray-800 dark:text-white whitespace-pre-wrap leading-relaxed">
+                        {!! nl2br(e($processo->descricao ?? 'Sem observações.')) !!}
+                    </p>
                 </div>
             </div>
 
         </div>
-
-        <!-- Modal HTML (Moved inside layout to ensure rendering) -->
 
 </x-admin::layouts>

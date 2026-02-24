@@ -71,6 +71,7 @@ class ProcessAiAssistant implements ShouldQueue
             $payload = [
                 'inputs' => $this->inputs,
                 'user_id' => $this->history->user_id,
+                'tenant_id' => MotherShipService::getTenantId(),
                 'template' => $this->template->title,
                 'timestamp' => now()->toIso8601String(),
                 'history_id' => $this->history->id

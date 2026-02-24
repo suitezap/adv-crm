@@ -15,6 +15,7 @@ use SuiteZap\LawFirm\Rules\ValidarCNJ;
 use SuiteZap\LawFirm\Rules\ValidarCpfCnpj;
 use SuiteZap\LawFirm\GED\Services\DocumentService;
 use SuiteZap\LawFirm\Legal\Services\DeadlineService;
+use SuiteZap\LawFirm\Legal\Services\ProcessoNotaService;
 use SuiteZap\LawFirm\Financial\Services\FinancialService;
 
 class ProcessoController extends Controller
@@ -69,6 +70,13 @@ class ProcessoController extends Controller
     protected $financialService;
 
     /**
+     * ProcessoNotaService object
+     *
+     * @var \SuiteZap\LawFirm\Legal\Services\ProcessoNotaService
+     */
+    protected $processoNotaService;
+
+    /**
      * Create a new controller instance.
      *
      * @param  \SuiteZap\LawFirm\Repositories\ProcessoRepository  $processoRepository
@@ -84,7 +92,8 @@ class ProcessoController extends Controller
         ActivityRepository $activityRepository,
         DocumentService $documentService,
         DeadlineService $deadlineService,
-        FinancialService $financialService
+        FinancialService $financialService,
+        ProcessoNotaService $processoNotaService
     ) {
         $this->processoRepository = $processoRepository;
         $this->personRepository = $personRepository;
@@ -93,6 +102,7 @@ class ProcessoController extends Controller
         $this->documentService = $documentService;
         $this->deadlineService = $deadlineService;
         $this->financialService = $financialService;
+        $this->processoNotaService = $processoNotaService;
     }
 
     /**
@@ -262,6 +272,11 @@ class ProcessoController extends Controller
             $this->deadlineService->syncDeadlines($processo, $data['prazos']);
         }
 
+        // SYNC NOTAS (Delegated to ProcessoNotaService)
+        if (isset($data['notas']) && is_array($data['notas'])) {
+            $this->processoNotaService->syncNotas($processo, $data['notas']);
+        }
+
         // CREATE FINANCEIROS (Delegated to FinancialService)
         // CREATE FINANCEIROS (Handled by isolated component via AJAX)
         // if (isset($data['financeiros']) && is_array($data['financeiros'])) {
@@ -410,6 +425,7 @@ class ProcessoController extends Controller
             'anexos.*.mimes' => 'Tipo de arquivo não permitido. Aceitos: PDF, Imagens, Office, Texto (txt, log, md, csv).',
             'anexos.*.max' => 'O tamanho máximo do arquivo é 20MB.',
         ]);
+        \Log::info("ProcessoController::update Payload Dump: " . json_encode(request()->all()));
 
         if ($validator->fails()) {
             // Log validation errors for debugging
@@ -446,6 +462,11 @@ class ProcessoController extends Controller
         // 3. Sincronizar Prazos
         if (request()->has('prazos')) {
             $this->deadlineService->syncDeadlines($processo, request('prazos'));
+        }
+
+        // 4. Sincronizar Notas
+        if (request()->has('notas')) {
+            $this->processoNotaService->syncNotas($processo, request('notas'));
         }
 
         $this->logProcessHistory($processo, 'Atualizado');

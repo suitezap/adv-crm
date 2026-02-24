@@ -180,7 +180,7 @@
                                     <div class="mb-4">
                                         <label for="{{ $var['key'] }}"
                                             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            {{ $var['label'] }}
+                                            {{ ucwords($var['label']) }}
                                         </label>
 
                                         @if($var['type'] === 'textarea')

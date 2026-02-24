@@ -27,5 +27,18 @@ class DatabaseSeeder extends Seeder
 
         // 4. Seeders de IA / Assistants
         $this->call(AssistantSeeder::class);
+
+        // 5. Modelos Específicos de IA Assistants
+        $this->call(RoteirizadorAudienciaTemplateSeeder::class);
+        $this->call(TransformadorRelatoTemplateSeeder::class);
+        $this->call(DecodificadorCnisTemplateSeeder::class);
+        $this->call(GeradorQuesitosMedicosTemplateSeeder::class);
+        $this->call(AuditorPppTemplateSeeder::class);
+        $this->call(FiltroDramaTemplateSeeder::class);
+        $this->call(ArquitetoConvivenciaTemplateSeeder::class);
+        $this->call(AnalistaSubrogacaoTemplateSeeder::class);
+        $this->call(CacadorClausulasLeoninasTemplateSeeder::class);
+        $this->call(DosimetroDanoMoralTemplateSeeder::class);
+        $this->call(AdvogadoDiaboTemplateSeeder::class);
     }
 }

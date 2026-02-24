@@ -1,24 +1,23 @@
 @push('styles')
     <style id="lawfirm-datagrid-styles">
         /* 
-                 * FIX DEFINITIVO PARA O GRID DO KRAYIN V2 
-                 * Atualizado para 10 colunas (Com Vara e Juiz)
-                 */
+                     * FIX DEFINITIVO PARA O GRID DO KRAYIN V2 
+                     * Atualizado para 9 colunas (Sem Juiz)
+                     */
         .table-responsive .row.grid,
         .row.grid {
             /* 
-                       1. Checkbox: 40px
-                       2. ID: 50px
-                       3. Título: 2fr
-                       4. CNJ: 150px
-                       5. Vara: 1fr
-                       6. Juiz: 1fr
-                       7. Nome: 1fr
-                       8. Data: 150px
-                       9. Status: 100px
-                       10. Ações: 100px
-                    */
-            grid-template-columns: 40px 50px 2fr 150px 1fr 1fr 1fr 150px 100px 100px !important;
+                           1. Checkbox: 40px
+                           2. ID: 50px
+                           3. Título: 2fr
+                           4. CNJ: 150px
+                           5. Vara: 1fr
+                           6. Nome: 1fr
+                           7. Data: 150px
+                           8. Status: 100px
+                           9. Ações: 100px
+                        */
+            grid-template-columns: 40px 50px 2fr 150px 1fr 1fr 150px 100px 100px !important;
             column-gap: 10px !important;
         }
 

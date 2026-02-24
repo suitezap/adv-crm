@@ -3,101 +3,81 @@
 namespace SuiteZap\LawFirm\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 
 class ChecklistTemplateSeeder extends Seeder
 {
+    /**
+     * Seed the Qualificação (pre-triagem-checklist) template.
+     * Webhook: lead_qualificacao
+     */
     public function run()
     {
-        // Limpa a tabela para reiniciar a ordem (IDs)
-        DB::table('law_checklist_templates')->truncate();
+        $promptStructure = <<<'PROMPT'
+Você é um assistente estratégico especializado em triagem jurídica.
+Analise os dados abaixo do lead e forneça um relatório preliminar de qualificação:
 
-        $templates = [
-            // 1. Docs. BÁSICO (Padrão) - Solicitado como 1ª opção
+Título do Caso: {{title}}
+Descrição do Caso: {{description}}
+Tenant ID: {{tenant_id}}
+Observações: {{observacoes}}
+
+Forneça:
+1. Classificação da Área Jurídica (Trabalhista, Cível, Família, etc.)
+2. Viabilidade da Causa (0-10) com justificativa
+3. Riscos Imediatos identificados
+4. Recomendações de Abordagem
+5. Documentos Sugeridos para Solicitar ao cliente
+6. Estimativa de Complexidade (Baixa/Média/Alta)
+
+Seja objetivo e profissional.
+PROMPT;
+
+        $variables = [
             [
-                'name' => 'Docs. Padrão Básico',
-                'area' => 'Geral',
-                'items' => json_encode([
-                    ['name' => 'RG e CPF', 'required' => true],
-                    ['name' => 'Comprovante de Residência (Atualizado)', 'required' => true],
-                    ['name' => 'Procuração Assinada', 'required' => true],
-                    ['name' => 'Declaração de Hipossuficiência', 'required' => false]
-                ]),
+                'key' => 'title',
+                'label' => 'Título do Caso',
+                'type' => 'text',
+                'placeholder' => 'Ex: Reclamação Trabalhista',
             ],
-            // 2. Docs. Divórcio Consensual
             [
-                'name' => 'Docs. Divórcio Consensual',
-                'area' => 'Família',
-                'items' => json_encode([
-                    ['name' => 'Certidão de Casamento Atualizada', 'required' => true],
-                    ['name' => 'RG e CPF dos Cônjuges', 'required' => true],
-                    ['name' => 'Comprovante de Residência', 'required' => true],
-                    ['name' => 'Certidão de Nascimento dos Filhos', 'required' => false],
-                ]),
+                'key' => 'description',
+                'label' => 'Descrição do Caso',
+                'type' => 'textarea',
+                'rows' => 4,
+                'placeholder' => 'Descreva o relato do cliente...',
             ],
-            // 3. Docs. Usucapião
             [
-                'name' => 'Docs. Usucapião',
-                'area' => 'Civil',
-                'items' => json_encode([
-                    ['name' => 'Planta do Imóvel', 'required' => true],
-                    ['name' => 'Memorial Descritivo', 'required' => true],
-                    ['name' => 'Contratos de Compra e Venda Antigos', 'required' => true],
-                    ['name' => 'Contas de Consumo (últimos 5 anos)', 'required' => true],
-                ]),
+                'key' => 'tenant_id',
+                'label' => 'Tenant ID',
+                'type' => 'text',
+                'placeholder' => '',
             ],
-            // 4. Docs. Cível (Geral)
             [
-                'name' => 'Docs. Cível (Geral)',
-                'area' => 'Civil',
-                'items' => json_encode([
-                    ['name' => 'Cópia do Contrato (Objeto da Ação)', 'required' => true],
-                    ['name' => 'Troca de Mensagens (Prints/E-mails)', 'required' => false],
-                    ['name' => 'Comprovantes de Pagamento', 'required' => true],
-                    ['name' => 'Rol de Testemunhas (Nome/RG/Endereço)', 'required' => false]
-                ]),
+                'key' => 'observacoes',
+                'label' => 'Observações',
+                'type' => 'textarea',
+                'rows' => 5,
+                'placeholder' => 'Informações adicionais...',
             ],
-            // 5. Docs. Penal
-            [
-                'name' => 'Docs. Penal / Criminal',
-                'area' => 'Penal',
-                'items' => json_encode([
-                    ['name' => 'Boletim de Ocorrência (B.O.)', 'required' => true],
-                    ['name' => 'Cópia do Inquérito Policial', 'required' => false],
-                    ['name' => 'Comprovante de Residência Atualizado', 'required' => true],
-                    ['name' => 'Procuração Criminal Específica', 'required' => true]
-                ]),
-            ],
-            // 6. Docs. Consumidor
-            [
-                'name' => 'Docs. Consumidor',
-                'area' => 'Consumidor',
-                'items' => json_encode([
-                    ['name' => 'Nota Fiscal do Produto/Serviço', 'required' => true],
-                    ['name' => 'Protocolos de Atendimento (SAC)', 'required' => false],
-                    ['name' => 'Certificado de Garantia', 'required' => false],
-                    ['name' => 'Fotos do Defeito/Produto', 'required' => true]
-                ]),
-            ],
-            // 7. Docs. Tributário
-            [
-                'name' => 'Docs. Tributário',
-                'area' => 'Tributário',
-                'items' => json_encode([
-                    ['name' => 'Notificação de Lançamento / Auto de Infração', 'required' => true],
-                    ['name' => 'Cópia do Processo Administrativo (PAF)', 'required' => false],
-                    ['name' => 'Certidão de Dívida Ativa (CDA)', 'required' => true],
-                    ['name' => 'Comprovantes de Pagamento de Tributos', 'required' => true]
-                ]),
-            ]
         ];
 
-        foreach ($templates as $data) {
-            DB::table('law_checklist_templates')->insert(array_merge($data, [
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]));
-        }
+        AssistantTemplate::updateOrCreate(
+            ['slug' => 'pre-triagem-checklist'],
+            [
+                'tenant_id' => null, // Global
+                'category' => 'leads',
+                'title' => 'Qualificação Jurídica',
+                'description' => 'Triagem e qualificação jurídica do Lead com análise de viabilidade.',
+                'icon' => '📋',
+                'prompt_structure' => $promptStructure,
+                'variables' => $variables,
+                'n8n_webhook_url' => 'lead_qualificacao',
+                'required_module' => null,
+                'is_active' => true,
+            ]
+        );
+
+        $this->command->info('✅ Template "Qualificação Jurídica" (pre-triagem-checklist) criado/atualizado com webhook lead_qualificacao.');
     }
 }

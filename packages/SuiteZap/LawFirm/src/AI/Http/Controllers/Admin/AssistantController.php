@@ -29,6 +29,7 @@ class AssistantController extends Controller
     {
         // 1. Descobrir quais módulos o cliente tem
         $subscription = MotherShipService::getCurrentSubscription();
+        $tenantId = MotherShipService::getTenantId();
 
         // Se não tiver assinatura, assume array vazio (só verá os gratuitos)
         $allowedModules = $subscription ? ($subscription->active_modules ?? []) : [];
@@ -45,7 +46,7 @@ class AssistantController extends Controller
             ->orderBy('title')
             ->get();
 
-        return view('lawfirm::admin.assistants.index', compact('templates'));
+        return view('lawfirm::admin.assistants.index', compact('templates', 'tenantId'));
     }
 
     /**
@@ -65,6 +66,15 @@ class AssistantController extends Controller
      */
     public function generate(Request $request, $slug)
     {
+        // Guard: Check AI balance before allowing generation
+        $subscription = MotherShipService::getCurrentSubscription();
+        $aiBalance = $subscription ? (float) ($subscription->ai_tokens_balance ?? 0) : 0;
+        if ($aiBalance <= 0) {
+            return response()->json([
+                'error' => 'Saldo de IA insuficiente. Recarregue seu saldo para continuar usando os assistentes.'
+            ], 402);
+        }
+
         $template = AssistantTemplate::where('slug', $slug)->firstOrFail();
 
         // Get form inputs
@@ -105,6 +115,15 @@ class AssistantController extends Controller
      */
     public function execute(Request $request, $slug)
     {
+        // Guard: Check AI balance before allowing execution
+        $subscription = MotherShipService::getCurrentSubscription();
+        $aiBalance = $subscription ? (float) ($subscription->ai_tokens_balance ?? 0) : 0;
+        if ($aiBalance <= 0) {
+            return response()->json([
+                'error' => 'Saldo de IA insuficiente. Recarregue seu saldo para continuar usando os assistentes.'
+            ], 402);
+        }
+
         // 1. Validar e Buscar Template
         $template = AssistantTemplate::where('slug', $slug)->firstOrFail();
 
@@ -325,6 +344,7 @@ class AssistantController extends Controller
         $payload = [
             'inputs' => $data,
             'user_id' => auth()->guard('user')->id(),
+            'tenant_id' => MotherShipService::getTenantId(),
             'lead_id' => $leadId,
             'template' => $template->title,
             'timestamp' => now()->toIso8601String(),

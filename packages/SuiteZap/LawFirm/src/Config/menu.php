@@ -51,6 +51,16 @@ return [
         'permission' => 'lawfirm.assistants',
     ],
 
+    // Child 5: Histórico IA
+    [
+        'key' => 'lawfirm.ai_history',
+        'name' => 'Histórico Assist. IA',
+        'route' => 'lawfirm.assistants.history.index',
+        'sort' => 5,
+        'icon-class' => 'icon-dashboard', // Ensure it has a recognizable icon
+        'permission' => 'lawfirm.assistants', // Shared permissions
+    ],
+
     // Child 4: Dados do Escritório
     [
         'key' => 'lawfirm.settings',

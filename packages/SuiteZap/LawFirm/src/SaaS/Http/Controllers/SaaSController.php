@@ -42,12 +42,24 @@ class SaaSController extends Controller
             $progressDate = ($daysPassed / $totalDays) * 100;
         }
 
+        // 4. Busca Assistentes de IA disponíveis para o Tenant
+        $availableAssistants = collect();
+        if ($subscription) {
+            $tenantId = MotherShipService::getTenantId();
+            $activeModules = $subscription->active_modules ?? [];
+
+            if ($tenantId) {
+                $availableAssistants = MotherShipService::getAvailableAssistants($tenantId, $activeModules);
+            }
+        }
+
         return view('lawfirm::subscription.index', compact(
             'subscription',
             'usersCount',
             'storageUsedBytes',
             'daysLeft',
-            'progressDate'
+            'progressDate',
+            'availableAssistants'
         ));
     }
 

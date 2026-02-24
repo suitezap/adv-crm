@@ -147,6 +147,16 @@ class Processo extends Model implements ProcessoContract
     }
 
     /**
+     * Get the notes (notas) for the processo.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function notas(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProcessoNota::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
      * Get the financials (revenues/expenses) for the processo.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany

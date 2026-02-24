@@ -33,13 +33,26 @@ class EventServiceProvider extends ServiceProvider
 
         // ---------------------------------------------------------------------
         // Injection: LawFirm Checklist Tab (Frontend Bridge)
+        // DISABLED — Checklist will be rebuilt from scratch
         // ---------------------------------------------------------------------
+        // Event::listen('admin.leads.view.activities.before', function ($viewRenderEventManager) {
+        //     $viewRenderEventManager->addTemplate('lawfirm::leads.checklist-tab-injection');
+        //     Log::debug('LawFirm: Injected Checklist Panel (Activities Before Hook)');
+        // });
+
         // ---------------------------------------------------------------------
-        // Injection: LawFirm Checklist Panel (Standalone)
+        // Injection: Pre-Triagem IA Button (Lead Header Actions)
+        // DISABLED — Will be rebuilt with the new Checklist
         // ---------------------------------------------------------------------
-        Event::listen('admin.leads.view.activities.before', function ($viewRenderEventManager) {
-            $viewRenderEventManager->addTemplate('lawfirm::leads.checklist-tab-injection');
-            Log::debug('LawFirm: Injected Checklist Panel (Activities Before Hook)');
+        // Event::listen('admin.leads.view.actions.after', function ($viewRenderEventManager) {
+        //     $viewRenderEventManager->addTemplate('lawfirm::leads.pre-triagem-button');
+        // });
+
+        // ---------------------------------------------------------------------
+        // Injection: Lead Tools Panel (AI Actions — below pipeline stages)
+        // ---------------------------------------------------------------------
+        Event::listen('admin.leads.view.stages.after', function ($viewRenderEventManager) {
+            $viewRenderEventManager->addTemplate('lawfirm::leads.lead-tools-panel');
         });
     }
 }

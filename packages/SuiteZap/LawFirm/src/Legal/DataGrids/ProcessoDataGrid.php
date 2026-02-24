@@ -37,7 +37,6 @@ class ProcessoDataGrid extends DataGrid
                 'processos.status',
                 'processos.area_direito',
                 'processos.data_audiencia',
-                'processos.juiz_atual',
                 'processos.vara',
                 'persons.name as person_name'
             );
@@ -57,7 +56,6 @@ class ProcessoDataGrid extends DataGrid
         $this->addFilter('area_direito', 'processos.area_direito');
         $this->addFilter('status', 'processos.status');
         $this->addFilter('data_audiencia', 'processos.data_audiencia');
-        $this->addFilter('juiz_atual', 'processos.juiz_atual');
         $this->addFilter('vara', 'processos.vara');
 
         // Sort by Audience Date (Urgency), putting NULLs last
@@ -104,14 +102,6 @@ class ProcessoDataGrid extends DataGrid
         $this->addColumn([
             'index' => 'vara',
             'label' => 'Vara / Fórum',
-            'type' => 'string',
-            'sortable' => true,
-            'filterable' => true,
-        ]);
-
-        $this->addColumn([
-            'index' => 'juiz_atual',
-            'label' => 'Juiz(a)',
             'type' => 'string',
             'sortable' => true,
             'filterable' => true,

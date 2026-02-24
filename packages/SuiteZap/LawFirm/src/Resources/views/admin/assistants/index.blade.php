@@ -3,547 +3,889 @@
         Assistentes Jurídicos (IA)
         </x-slot>
 
+        @php
+            $tenantId = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantId();
+            $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?? '#7c3aed';
+        @endphp
+
+        @push('styles')
+            <style>
+                /* ============================================================
+                                                   ASSISTANTS PAGE — Krayin-native styles
+                                                   Grid:  2 cards per row  (max-md: 1 col)
+                                                   Modal: Same lf-modal-* vocabulary as lead-tools-panel
+                                                ============================================================ */
+
+                /* ── Native CSS grid (same max-* convention as Krayin) ─── */
+                .lf-assist-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 1rem;
+                }
+
+                @media (max-width: 768px) {
+                    .lf-assist-grid {
+                        grid-template-columns: 1fr;
+                    }
+                }
+
+                /* ── Card hover ────────────────────────────────────────── */
+                .lf-assist-card {
+                    transition: border-color 0.15s, box-shadow 0.15s;
+                }
+
+                .lf-assist-card:hover {
+                    border-color: #c4b5fd !important;
+                    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.10);
+                }
+
+                /* ── Category label ─────────────────────────────────────── */
+                .lf-cat-label {
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    color: #9ca3af;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding-bottom: 0.5rem;
+                    margin-bottom: 0.75rem;
+                    border-bottom: 1px solid #e5e7eb;
+                }
+
+                .dark .lf-cat-label {
+                    border-color: #374151;
+                }
+
+                .lf-cat-label::before {
+                    content: '';
+                    width: 3px;
+                    height: 0.9rem;
+                    border-radius: 2px;
+                    background: #7c3aed;
+                    flex-shrink: 0;
+                    display: block;
+                }
+
+                /* ── Overlay ─────────────────────────────────────────────── */
+                .lf-modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    z-index: 10000;
+                }
+
+                /* ── Dialog ──────────────────────────────────────────────── */
+                .lf-modal-dialog {
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    z-index: 10001;
+                    width: 95%;
+                    max-width: 960px;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    background: #fff;
+                    border-radius: 12px;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                }
+
+                .dark .lf-modal-dialog {
+                    background: #111827;
+                    border: 1px solid #374151;
+                }
+
+                /* ── Header ──────────────────────────────────────────────── */
+                .lf-modal-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 16px 24px;
+                    border-bottom: 1px solid #e5e7eb;
+                }
+
+                .dark .lf-modal-header {
+                    border-color: #374151;
+                }
+
+                .lf-modal-title {
+                    font-size: 1.125rem;
+                    font-weight: 700;
+                    color: #1f2937;
+                    margin: 0;
+                }
+
+                .dark .lf-modal-title {
+                    color: #fff;
+                }
+
+                .lf-modal-close-btn {
+                    width: 32px;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: none;
+                    background: transparent;
+                    color: #6b7280;
+                    font-size: 18px;
+                    cursor: pointer;
+                    border-radius: 6px;
+                    transition: all 0.2s;
+                }
+
+                .lf-modal-close-btn:hover {
+                    background: #f3f4f6;
+                    color: #1f2937;
+                }
+
+                .dark .lf-modal-close-btn:hover {
+                    background: #374151;
+                    color: #fff;
+                }
+
+                /* ── Body: Two columns ───────────────────────────────────── */
+                .lf-modal-body {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 24px;
+                    padding: 24px;
+                }
+
+                @media (max-width: 768px) {
+                    .lf-modal-body {
+                        grid-template-columns: 1fr;
+                    }
+                }
+
+                /* ── Form side ───────────────────────────────────────────── */
+                .lf-modal-form {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 14px;
+                }
+
+                .lf-section-title {
+                    font-size: 0.88rem;
+                    font-weight: 700;
+                    color: #1f2937;
+                    margin: 0;
+                }
+
+                .dark .lf-section-title {
+                    color: #fff;
+                }
+
+                .lf-field {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+
+                .lf-label {
+                    font-size: 0.78rem;
+                    font-weight: 500;
+                    color: #6b7280;
+                }
+
+                .dark .lf-label {
+                    color: #9ca3af;
+                }
+
+                .lf-input {
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 8px;
+                    font-size: 0.875rem;
+                    color: #1f2937;
+                    background: #f9fafb;
+                    box-sizing: border-box;
+                    font-family: inherit;
+                }
+
+                .dark .lf-input {
+                    background: #1f2937;
+                    border-color: #4b5563;
+                    color: #e5e7eb;
+                }
+
+                .lf-input:focus {
+                    outline: none;
+                    border-color: #7c3aed;
+                    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+                }
+
+                .lf-textarea {
+                    resize: vertical;
+                    min-height: 90px;
+                }
+
+                /* Tenant ID info row */
+                .lf-tenant-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 12px;
+                    background: #f3f0ff;
+                    border: 1px solid #c4b5fd;
+                    border-radius: 8px;
+                    font-size: 0.8rem;
+                }
+
+                .dark .lf-tenant-row {
+                    background: rgba(124, 58, 237, 0.12);
+                    border-color: #6d28d9;
+                }
+
+                .lf-tenant-key {
+                    color: #6b7280;
+                    font-weight: 500;
+                }
+
+                .dark .lf-tenant-key {
+                    color: #9ca3af;
+                }
+
+                .lf-tenant-val {
+                    font-family: monospace;
+                    font-weight: 700;
+                    color: #5b21b6;
+                    word-break: break-all;
+                }
+
+                .dark .lf-tenant-val {
+                    color: #a78bfa;
+                }
+
+                /* ── Result side ─────────────────────────────────────────── */
+                .lf-modal-result {
+                    display: flex;
+                    flex-direction: column;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 8px;
+                    background: #f9fafb;
+                    min-height: 300px;
+                }
+
+                .dark .lf-modal-result {
+                    background: #1f2937;
+                    border-color: #374151;
+                }
+
+                .lf-result-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 12px 16px;
+                    border-bottom: 1px solid #e5e7eb;
+                }
+
+                .dark .lf-result-header {
+                    border-color: #374151;
+                }
+
+                .lf-copy-btn {
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                    color: #7c3aed;
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    transition: all 0.2s;
+                    display: none;
+                }
+
+                .lf-copy-btn:hover {
+                    background: #ede9fe;
+                }
+
+                .lf-result-body {
+                    flex: 1;
+                    padding: 16px;
+                    overflow-y: auto;
+                    max-height: 420px;
+                }
+
+                .lf-result-placeholder {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    min-height: 200px;
+                    text-align: center;
+                    color: #9ca3af;
+                    font-size: 0.875rem;
+                }
+
+                .lf-result-loading {
+                    display: none;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 12px;
+                    height: 100%;
+                    min-height: 200px;
+                    color: #7c3aed;
+                    font-weight: 600;
+                    font-size: 0.875rem;
+                }
+
+                .lf-spinner {
+                    width: 36px;
+                    height: 36px;
+                    border: 4px solid rgba(124, 58, 237, 0.2);
+                    border-top-color: #7c3aed;
+                    border-radius: 50%;
+                    animation: lf-spin 0.8s linear infinite;
+                }
+
+                @keyframes lf-spin {
+                    to {
+                        transform: rotate(360deg);
+                    }
+                }
+
+                .lf-result-content {
+                    display: none;
+                }
+
+                /* ── AI Result Box ───────────────────────────────────────── */
+                .ai-result-box {
+                    border: 1px solid #e0e0e0;
+                    border-radius: 5px;
+                    padding: 16px;
+                    background: #fff;
+                    min-height: 150px;
+                    line-height: 1.7;
+                    font-size: 0.875rem;
+                    color: #333;
+                }
+
+                .dark .ai-result-box {
+                    background: #1f2937;
+                    border-color: #374151;
+                    color: #e5e7eb;
+                }
+
+                .ai-result-box h1,
+                .ai-result-box h2,
+                .ai-result-box h3,
+                .ai-result-box h4 {
+                    color: #2c3e50;
+                    margin-top: 12px;
+                    font-weight: 700;
+                }
+
+                .dark .ai-result-box h1,
+                .dark .ai-result-box h2,
+                .dark .ai-result-box h3,
+                .dark .ai-result-box h4 {
+                    color: #fff;
+                }
+
+                .ai-result-box ul,
+                .ai-result-box ol {
+                    margin-left: 18px;
+                    margin-bottom: 8px;
+                }
+
+                .ai-result-box blockquote {
+                    border-left: 4px solid #7c3aed;
+                    padding-left: 10px;
+                    color: #666;
+                    font-style: italic;
+                }
+
+                .dark .ai-result-box strong {
+                    color: #fff;
+                }
+
+                /* ── Footer ──────────────────────────────────────────────── */
+                .lf-modal-footer {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    gap: 12px;
+                    padding: 16px 24px;
+                    border-top: 1px solid #e5e7eb;
+                }
+
+                .dark .lf-modal-footer {
+                    border-color: #374151;
+                }
+
+                /* Krayin-compact buttons — matches datagrid action scale */
+                .lf-btn-primary {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.35rem;
+                    padding: 0.3rem 0.75rem;
+                    font-weight: 600;
+                    font-size: 0.8125rem;
+                    border-radius: 0.375rem;
+                    transition: all 0.15s;
+                    background: linear-gradient(135deg, #7c3aed 0%, #9d4edd 100%);
+                    color: #fff;
+                    border: none;
+                    cursor: pointer;
+                    white-space: nowrap;
+                }
+
+                .lf-btn-primary:hover {
+                    opacity: 0.9;
+                    transform: translateY(-1px);
+                }
+
+                .lf-btn-primary:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+
+                .lf-btn-secondary {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.35rem;
+                    padding: 0.3rem 0.75rem;
+                    font-weight: 500;
+                    font-size: 0.8125rem;
+                    border-radius: 0.375rem;
+                    transition: all 0.15s;
+                    background: #f3f4f6;
+                    color: #374151;
+                    border: 1px solid #d1d5db;
+                    cursor: pointer;
+                    white-space: nowrap;
+                }
+
+                .lf-btn-secondary:hover {
+                    background: #e5e7eb;
+                }
+
+                .lf-btn-secondary:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                }
+
+                .dark .lf-btn-secondary {
+                    background: #374151;
+                    color: #e5e7eb;
+                    border-color: #4b5563;
+                }
+
+                .dark .lf-btn-secondary:hover {
+                    background: #4b5563;
+                }
+            </style>
+        @endpush
+
         <div class="flex flex-col gap-4">
-            <!-- Header -->
+
+            {{-- ── PAGE HEADER (Krayin standard) ──────────────── --}}
             <div
                 class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     <div class="flex cursor-pointer items-center">
                         <x-admin::breadcrumbs name="lawfirm.assistants.index" />
                     </div>
-                    <div class="text-xl font-bold dark:text-white">
-                        Assistentes Jurídicos (IA)
-                    </div>
-                </div>
-            </div>
-
-            <!-- Cards Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @forelse($templates as $template)
-                    <div
-                        class="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex flex-col justify-between hover:shadow-lg transition-shadow">
-                        <div style="padding: 1.5rem;">
-                            <span
-                                class="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 mb-3">
-                                {{ ucfirst($template->category) }}
-                            </span>
-                            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2">
-                                {{ $template->title }}
-                            </h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                                {{ $template->description ?? 'Sem descrição.' }}
-                            </p>
-                        </div>
-                        <div class="mt-4 px-8 pb-8">
-                            <button type="button" class="btn btn-sm btn-primary btn-open-assistant"
-                                data-id="{{ $template->id }}" data-title="{{ $template->title }}"
-                                data-structure="{{ json_encode($template->prompt_structure) }}"
-                                data-webhook="{{ !empty($template->n8n_webhook_url) ? '1' : '0' }}"
-                                style="background-color: {{ core()->getConfigData('general.settings.menu_color.brand_color') ?? '#0041FF' }} !important; border-color: {{ core()->getConfigData('general.settings.menu_color.brand_color') ?? '#0041FF' }} !important;"
-                                onclick="handleOpenAssistant(this)">
-                                Usar Assistente
-                            </button>
-                        </div>
-                    </div>
-                @empty
-                    <div
-                        class="col-span-full text-center py-12 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <p class="text-gray-500 dark:text-gray-400">Nenhum assistente disponível no momento.</p>
-                    </div>
-                @endforelse
-            </div>
-        </div>
-
-        <!-- Modal de Execução de Assistente (Inject by Antigravity) -->
-        <div id="assistantModal" class="assistant-modal-overlay">
-            <div class="assistant-modal-content">
-
-                <!-- Header -->
-                <div class="assistant-modal-header">
-                    <h3 id="modalTitle">Assistente</h3>
-                    <button type="button" class="assistant-modal-close" onclick="closeAssistantModal()">&times;</button>
+                    <div class="text-xl font-bold dark:text-white">Assistentes Jurídicos (IA)</div>
                 </div>
 
-                <!-- Passo 1: Formulário -->
-                <form id="assistantForm">
-                    <input type="hidden" id="templateId" name="template_id">
-                    <div id="dynamicInputs" class="mb-5">
-                        <!-- Inputs injetados via JS -->
+                {{-- tenant_id oculto (necessário para JS mas não visível ao usuário) --}}
+                <span id="lf-page-tenant-id" class="hidden">{{ $tenantId }}</span>
+            </div>
+
+            {{-- ── CARDS GRID ───────────────────────────────────── --}}
+            @forelse($templates->groupBy('category') as $category => $categoryTemplates)
+
+                {{-- Category wrapper --}}
+                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div class="lf-cat-label">{{ $category ?: 'Geral' }}</div>
+
+                    <div class="lf-assist-grid">
+                        @foreach($categoryTemplates as $template)
+                            <div
+                                class="lf-assist-card flex flex-col justify-between rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                                <div>
+                                    {{-- Category badge --}}
+                                    <span
+                                        class="mb-3 inline-flex items-center rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-900/20 dark:text-violet-300">
+                                        &#9679; {{ ucfirst($template->category) }}
+                                    </span>
+
+                                    {{-- Title --}}
+                                    <h3 class="mb-1 text-base font-bold text-gray-800 dark:text-white">
+                                        {{ $template->icon ?? '🤖' }} {{ $template->title }}
+                                    </h3>
+
+                                    {{-- Description --}}
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $template->description ?? 'Sem descrição.' }}
+                                    </p>
+
+                                    {{-- Module tag --}}
+                                    @if($template->required_module)
+                                        <div class="mt-3">
+                                            <span
+                                                class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                                Requer: {{ ucfirst(str_replace('_', ' ', $template->required_module)) }}
+                                            </span>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                {{-- Action button --}}
+                                <div class="mt-4 border-t border-gray-100 pt-3 dark:border-gray-800">
+                                    <button type="button" class="lf-btn-primary" onclick="window.lfAssistants.open(
+                                                                                                                        {{ $template->id }},
+                                                                                                                        '{{ addslashes($template->title) }}',
+                                                                                                                        '{{ $template->slug }}',
+                                                                                                                        {{ json_encode($template->prompt_structure) }},
+                                                                                                                        {{ $template->n8n_webhook_url ? 'true' : 'false' }}
+                                                                                                                    )">
+                                        ✨ Usar Assistente
+                                    </button>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+            @empty
+                <div
+                    class="flex flex-col items-center gap-2 rounded-lg border border-gray-200 bg-white py-10 text-center dark:border-gray-800 dark:bg-gray-900">
+                    <span class="text-4xl">🤖</span>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Nenhum assistente disponível no momento.</p>
+                </div>
+            @endforelse
+
+        </div>{{-- /flex flex-col --}}
+
+        {{-- ── MODAL (moved to
+
+        <body> via JS to escape Krayin Vue) ── --}}
+            <div id="lf-assist-modal" style="display:none;">
+                {{-- Overlay --}}
+                <div class="lf-modal-overlay" onclick="window.lfAssistants.close()"></div>
+
+                {{-- Dialog --}}
+                <div class="lf-modal-dialog">
+
+                    {{-- Header --}}
+                    <div class="lf-modal-header">
+                        <h3 id="lf-assist-title" class="lf-modal-title">🤖 Assistente IA</h3>
+                        <button onclick="window.lfAssistants.close()" class="lf-modal-close-btn">✕</button>
                     </div>
 
-                    <div id="formError" class="assistant-error-message"></div>
+                    {{-- Body: Form | Result --}}
+                    <div class="lf-modal-body">
 
-                    <div class="assistant-modal-footer">
-                        <!-- Botão Cancelar (Padrão Secundário) -->
-                        <button type="button" class="btn btn-lg btn-secondary" onclick="closeAssistantModal()">
-                            Cancelar
+                        {{-- LEFT: Form --}}
+                        <div class="lf-modal-form">
+                            <h4 class="lf-section-title">Parâmetros</h4>
+
+                            {{-- Dynamic inputs injected by JS --}}
+                            <div id="lf-assist-dynamic-inputs"></div>
+
+                            {{-- Hidden fields (tenant_id sent to backend but not visible to user) --}}
+                            <input type="hidden" id="lf-assist-template-id">
+                            <input type="hidden" id="lf-assist-slug">
+                            <input type="hidden" id="lf-assist-tenant" value="{{ $tenantId }}">
+
+                            {{-- Error --}}
+                            <div id="lf-assist-error"
+                                class="hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+                            </div>
+                        </div>
+
+                        {{-- RIGHT: Result --}}
+                        <div class="lf-modal-result">
+                            <div class="lf-result-header">
+                                <h4 class="lf-section-title">Resultado</h4>
+                                <button id="lf-assist-copy-btn" class="lf-copy-btn"
+                                    onclick="window.lfAssistants.copy()">
+                                    📋 Copiar
+                                </button>
+                            </div>
+                            <div class="lf-result-body">
+                                <div id="lf-assist-placeholder" class="lf-result-placeholder">
+                                    Preencha os campos e clique em <strong>"Gerar Prompt"</strong> ou <strong>"Executar
+                                        com IA"</strong>.
+                                </div>
+                                <div id="lf-assist-loading" class="lf-result-loading">
+                                    <div class="lf-spinner"></div>
+                                    <span>🧠 Processando com IA...</span>
+                                </div>
+                                <div id="lf-assist-result" class="lf-result-content">
+                                    <div id="lf-assist-result-box" class="ai-result-box"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>{{-- /lf-modal-body --}}
+
+                    {{-- Footer --}}
+                    <div class="lf-modal-footer">
+                        <button id="lf-assist-btn-generate" onclick="window.lfAssistants.generate()"
+                            class="lf-btn-secondary">
+                            <span id="lf-gen-text">📝 Gerar Prompt</span>
+                            <span id="lf-gen-loading" style="display:none;">⏳ Gerando...</span>
                         </button>
-
-                        <div class="assistant-modal-actions">
-                            <!-- Botão Copiar (Outline / Transparente) -->
-                            <button type="button" onclick="submitAssistant('preview')" class="btn btn-lg btn-transparent">
-                                <span class="icon heroicon-document-duplicate" style="margin-right: 5px;"></span>
-                                Copiar Texto
-                            </button>
-
-                            <!-- Botão IA (Destaque Premium) -->
-                            <button type="button" onclick="submitAssistant('execute')" id="btnExecuteIA"
-                                class="btn btn-lg btn-primary btn-ai-magic" style="display: none;">
-                                <span class="icon heroicon-sparkles" style="margin-right: 5px;"></span>
-                                Processar com IA
-                            </button>
-                        </div>
-                    </div>
-                </form>
-
-                <!-- Passo 2: Loading -->
-                <div id="loadingState" class="assistant-loading-state">
-                    <div class="spinner"></div>
-                    <p>A IA está processando sua solicitação...</p>
-                    <small>Aguarde, isso pode levar alguns segundos.</small>
-                </div>
-
-                <!-- Passo 3: Resultado -->
-                <div id="resultState" style="display: none;">
-                    <label class="assistant-result-label">Resultado Gerado:</label>
-                    <textarea id="resultOutput" class="assistant-result-textarea" rows="15"></textarea>
-
-                    <div class="assistant-result-actions">
-                        <button type="button" class="btn btn-secondary" onclick="resetModal()">Novo</button>
-                        <button type="button" class="btn btn-brand-dynamic" 
-                            style="background-color: {{ core()->getConfigData('general.settings.menu_color.brand_color') ?? '#0041FF' }} !important; border-color: {{ core()->getConfigData('general.settings.menu_color.brand_color') ?? '#0041FF' }} !important;"
-                            onclick="copyToClipboard()">
-                            Copiar Texto
+                        <button id="lf-assist-btn-execute" onclick="window.lfAssistants.execute()"
+                            class="lf-btn-primary" style="display:none;">
+                            <span id="lf-exec-text">✨ Executar com IA</span>
+                            <span id="lf-exec-loading" style="display:none;">🧠 Processando...</span>
                         </button>
+                        <button onclick="window.lfAssistants.reset()" class="lf-btn-secondary">Novo</button>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        @push('styles')
-            <style>
-                @keyframes spin {
-                    0% {
-                        transform: rotate(0deg);
-                    }
+                </div>{{-- /lf-modal-dialog --}}
+            </div>{{-- /lf-assist-modal --}}
 
-                    100% {
-                        transform: rotate(360deg);
-                    }
-                }
+            @push('scripts')
+                <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+                <script>
+                    (function () {
+                        'use strict';
 
-                .form-group {
-                    margin-bottom: 15px;
-                }
+                        var TENANT_ID = '{{ $tenantId }}';
+                        var CSRF_TOKEN = '{{ csrf_token() }}';
 
-                .form-group label {
-                    display: block;
-                    margin-bottom: 5px;
-                    font-weight: 600;
-                    font-size: 0.9em;
-                    text-transform: capitalize;
-                    color: #333;
-                }
+                        var ROUTES = {
+                            generate: "{{ route('lawfirm.assistants.generate', '__SLUG__') }}",
+                            execute: "{{ route('lawfirm.assistants.execute', '__SLUG__') }}",
+                            status: "{{ route('lawfirm.assistants.check_status', '__ID__') }}"
+                        };
 
-                .form-group input,
-                .form-group textarea {
-                    width: 100%;
-                    padding: 8px 12px;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                }
+                        // State
+                        var activeSlug = '';
+                        var rawResult = '';
 
-                .form-group input:focus {
-                    border-color: #0056b3;
-                    outline: none;
-                }
+                        // Lazy DOM helper — always gets fresh ref so timing is never an issue
+                        function el(id) { return document.getElementById(id); }
 
-                /* --- BUTTON RESETS & STYLES --- */
-                .btn {
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    column-gap: 0.625rem !important;
-                    font-family: inherit;
-                    cursor: pointer;
-                    /* Default sizing and border */
-                    padding: 0.6rem 1.2rem; 
-                    border: 1px solid transparent;
-                    border-radius: 6px;
-                    transition: all 0.2s;
-                }
-                
-                /* Sizes overriding default */
-                .btn-lg {
-                    padding: 0.75rem 1.5rem !important;
-                    font-size: 1rem !important;
-                }
-                .btn-sm {
-                    padding: 0.4rem 0.8rem !important;
-                    font-size: 0.875rem !important;
-                }
-
-                /* Standard Colors (Fixing missing formatting for generic buttons) */
-                .btn-primary {
-                    background-color: #0041FF; /* Fallback brand color */
-                    color: white;
-                    border-color: #0041FF;
-                }
-                .btn-primary:hover {
-                    opacity: 0.9;
-                }
-
-                .btn-secondary {
-                    background-color: #ffffff;
-                    border: 1px solid #d1d5db; /* Gray-300 */
-                    color: #374151; /* Gray-700 */
-                }
-                .btn-secondary:hover {
-                    background-color: #f9fafb;
-                    border-color: #9ca3af;
-                }
-
-                /* Green Success Button */
-                .btn-success {
-                    background-color: #38c172; /* Laravel/Krayin Green */
-                    color: white;
-                    border-color: #38c172;
-                }
-                .btn-success:hover {
-                    background-color: #2ea05e;
-                    border-color: #2ea05e;
-                }
-                
-                /* Botão GRID override */
-                .btn-open-assistant {
-                    border-width: 1px !important;
-                    border-style: solid !important;
-                    color: white !important;
-                    border-radius: 6px !important;
-                    padding: 8px 16px !important;
-                    font-size: 14px !important;
-                    font-weight: 600 !important;
-                    line-height: 1.5 !important;
-                }
-
-                /* PROPOSED: Dynamic Brand Button Structure (matches btn-open-assistant styles) */
-                .btn-brand-dynamic {
-                    border-width: 1px !important;
-                    border-style: solid !important;
-                    color: white !important;
-                    border-radius: 6px !important;
-                    padding: 8px 16px !important;
-                    font-size: 14px !important;
-                    font-weight: 600 !important;
-                    line-height: 1.5 !important;
-                    /* Core btn props ensured */
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    column-gap: 0.625rem !important;
-                    font-family: inherit;
-                    cursor: pointer;
-                }
-                .btn-brand-dynamic:hover {
-                    opacity: 0.9;
-                }
-
-                /* Botão Mágico IA */
-                .btn-ai-magic {
-                    background-image: linear-gradient(135deg, #6366f1 0%, #a855f7 100%) !important;
-                    background-color: transparent !important;
-                    border: 0 solid transparent !important; 
-                    border-radius: 8px !important;
-                    color: white !important;
-                    font-weight: 600 !important;
-                    transition: all 0.2s ease;
-                    position: relative;
-                    z-index: 10;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                    padding: 0.75rem 1.5rem !important; /* Force lg padding */
-                }
-                .btn-ai-magic:hover {
-                    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
-                    transform: translateY(-1px);
-                    opacity: 0.95;
-                    color: white !important;
-                }
-                
-                .btn .icon {
-                    vertical-align: middle;
-                    width: 20px;
-                    height: 20px;
-                }
-
-                .btn-transparent {
-                    background: transparent !important;
-                    border: 1px solid #d1d5db !important;
-                    border-radius: 8px !important;
-                    color: #4b5563 !important;
-                    padding: 0.5rem 1rem !important;
-                }
-                .btn-transparent:hover {
-                    background-color: #f3f4f6 !important;
-                    border-color: #9ca3af !important;
-                    color: #1f2937 !important;
-                }
-
-                /* --- MODAL STYLES (Cleaned) --- */
-                .assistant-modal-overlay {
-                    display: none;
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0,0,0,0.5);
-                    z-index: 9999 !important;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .assistant-modal-overlay.active {
-                    display: flex !important;
-                }
-
-                .assistant-modal-content {
-                    background: white;
-                    width: 600px;
-                    max-width: 90%;
-                    padding: 25px;
-                    border-radius: 8px;
-                    max-height: 90vh;
-                    overflow-y: auto;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                }
-
-                .assistant-modal-header {
-                    display: flex;
-                    justify-content: space-between;
-                    margin-bottom: 20px;
-                    border-bottom: 1px solid #eee;
-                    padding-bottom: 10px;
-                }
-
-                .assistant-modal-header h3 {
-                    font-size: 1.25rem;
-                    font-weight: bold;
-                    margin: 0;
-                }
-
-                .assistant-modal-close {
-                    font-size: 1.5rem;
-                    background: none;
-                    border: none;
-                    cursor: pointer;
-                }
-
-                .assistant-modal-footer {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-top: 25px;
-                    padding-top: 15px;
-                    border-top: 1px solid #e1e1e1;
-                }
-
-                .assistant-modal-actions {
-                    display: flex;
-                    gap: 10px;
-                }
-
-                .assistant-error-message {
-                    color: #dc3545;
-                    display: none;
-                    margin-bottom: 15px;
-                    padding: 10px;
-                    background: #f8d7da;
-                    border-radius: 4px;
-                }
-
-                .assistant-loading-state {
-                    display: none; 
-                    text-align: center; 
-                    padding: 40px;
-                }
-
-                .assistant-loading-state .spinner {
-                    border: 4px solid #f3f3f3;
-                    border-top: 4px solid #0056b3;
-                    border-radius: 50%;
-                    width: 40px;
-                    height: 40px;
-                    animation: spin 1s linear infinite;
-                    margin: 0 auto 20px;
-                }
-                .assistant-loading-state p {
-                    font-weight: 500;
-                }
-                .assistant-loading-state small {
-                     color: #6b7280;
-                }
-
-                .assistant-result-label {
-                    font-weight: bold;
-                    display: block;
-                    margin-bottom: 5px;
-                }
-
-                .assistant-result-textarea {
-                    width: 100%;
-                    border: 1px solid #ccc;
-                    padding: 10px;
-                    border-radius: 4px;
-                    font-family: monospace;
-                    background-color: #f9f9f9;
-                }
-
-                .assistant-result-actions {
-                    margin-top: 15px;
-                    text-align: right;
-                    display: flex;
-                    justify-content: flex-end;
-                    gap: 10px;
-                }
-            </style>
-        @endpush
-
-        @push('scripts')
-            <script>
-                function handleOpenAssistant(btn) {
-                    const id = btn.dataset.id;
-                    const title = btn.dataset.title;
-                    const hasWebhook = btn.dataset.webhook === "1"; 
-                    let structure = {};
-
-                    try {
-                        if (btn.dataset.structure && btn.dataset.structure !== "null") {
-                            structure = JSON.parse(btn.dataset.structure);
-                        }
-                    } catch (e) {
-                        console.error('Error parsing prompt structure', e);
-                    }
-
-                    openAssistant(id, title, structure, hasWebhook);
-                }
-
-                function openAssistant(id, title, promptStructure, hasWebhook) {
-                    document.getElementById('modalTitle').innerText = title;
-                    document.getElementById('templateId').value = id;
-
-                    const btnExecute = document.getElementById('btnExecuteIA');
-                    if (hasWebhook) {
-                        btnExecute.style.display = 'inline-block';
-                    } else {
-                        btnExecute.style.display = 'none';
-                    }
-
-                    resetModal();
-
-                    const inputsContainer = document.getElementById('dynamicInputs');
-                    inputsContainer.innerHTML = '';
-
-                    const regex = new RegExp('\\{\\{(.*?)\\}\\}', 'g');
-                    let match;
-                    const foundVars = new Set();
-
-                    if (!promptStructure) promptStructure = "";
-                    if (typeof promptStructure !== 'string') {
-                        promptStructure = JSON.stringify(promptStructure);
-                    }
-
-                    while ((match = regex.exec(promptStructure)) !== null) {
-                        const varName = match[1].trim();
-                        if (!foundVars.has(varName)) {
-                            foundVars.add(varName);
-
-                            const div = document.createElement('div');
-                            div.className = 'form-group';
-                            const labelText = varName.replace(/_/g, ' ');
-
-                            div.innerHTML = `
-                        <label>${labelText}</label>
-                        <input type="text" name="${varName}" required placeholder="Informe ${labelText}...">
-                    `;
-                            inputsContainer.appendChild(div);
-                        }
-                    }
-
-                    if (foundVars.size === 0) {
-                        inputsContainer.innerHTML = '<div style="padding: 10px; background: #e9ecef; border-radius: 4px;">Este assistente não requer informações adicionais. Clique em Gerar.</div>';
-                    }
-
-                    document.getElementById('assistantModal').classList.add('active');
-                }
-
-                function closeAssistantModal() {
-                    document.getElementById('assistantModal').classList.remove('active');
-                }
-
-                function resetModal() {
-                    document.getElementById('assistantForm').style.display = 'block';
-                    document.getElementById('loadingState').style.display = 'none';
-                    document.getElementById('resultState').style.display = 'none';
-                    document.getElementById('formError').style.display = 'none';
-                    document.getElementById('assistantForm').reset();
-                }
-
-                async function submitAssistant(action) {
-                    const form = document.getElementById('assistantForm');
-                    if (!form.checkValidity()) {
-                        form.reportValidity();
-                        return;
-                    }
-
-                    form.style.display = 'none';
-                    document.getElementById('loadingState').style.display = 'block';
-                    document.getElementById('formError').style.display = 'none';
-
-                    const formData = new FormData(form);
-                    const dataPayload = {};
-                    formData.forEach((value, key) => {
-                        if (key !== 'template_id') dataPayload[key] = value;
-                    });
-
-                    try {
-                        const url = "{{ route('lawfirm.assistants.process') }}";
-                        const response = await fetch(url, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                                "Accept": "application/json"
-                            },
-                            body: JSON.stringify({
-                                template_id: document.getElementById('templateId').value,
-                                data: dataPayload,
-                                action: action
-                            })
+                        // Move modal to <body> once DOM is ready (escapes Krayin Vue scope)
+                        document.addEventListener('DOMContentLoaded', function () {
+                            var modal = el('lf-assist-modal');
+                            if (modal) document.body.appendChild(modal);
                         });
 
-                        const result = await response.json();
+                        /* ── Helpers ─────────────────────────────── */
+                        function setState(state) {
+                            el('lf-assist-placeholder').style.display = state === 'placeholder' ? 'flex' : 'none';
+                            el('lf-assist-loading').style.display = state === 'loading' ? 'flex' : 'none';
+                            el('lf-assist-result').style.display = state === 'result' ? 'block' : 'none';
+                            el('lf-assist-copy-btn').style.display = state === 'result' ? 'inline' : 'none';
 
-                        if (!response.ok) {
-                            throw new Error(result.error || 'Erro desconhecido ao processar.');
+                            var busy = (state === 'loading');
+                            el('lf-assist-btn-generate').disabled = busy;
+                            el('lf-assist-btn-execute').disabled = busy;
+                            el('lf-gen-text').style.display = busy ? 'none' : '';
+                            el('lf-gen-loading').style.display = busy ? '' : 'none';
+                            el('lf-exec-text').style.display = busy ? 'none' : '';
+                            el('lf-exec-loading').style.display = busy ? '' : 'none';
                         }
 
-                        document.getElementById('loadingState').style.display = 'none';
-                        document.getElementById('resultState').style.display = 'block';
-                        document.getElementById('resultOutput').value = result.generated_prompt || result.result || 'Sucesso!';
+                        function renderMd(text) {
+                            if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+                                try { return marked.parse(String(text)); } catch (e) { }
+                            }
+                            return String(text).replace(/\n/g, '<br>');
+                        }
 
-                    } catch (error) {
-                        document.getElementById('loadingState').style.display = 'none';
-                        form.style.display = 'block';
-                        document.getElementById('formError').innerText = error.message;
-                        document.getElementById('formError').style.display = 'block';
-                    }
-                }
+                        function showError(msg) {
+                            var box = el('lf-assist-error');
+                            box.textContent = msg;
+                            box.classList.remove('hidden');
+                        }
+                        function hideError() { el('lf-assist-error').classList.add('hidden'); }
 
-                function copyToClipboard() {
-                    const copyText = document.getElementById("resultOutput");
-                    copyText.select();
-                    document.execCommand("copy"); 
-                    alert("Texto copiado!");
-                }
-            </script>
-        @endpush
+                        function buildPayload() {
+                            var payload = { tenant_id: TENANT_ID };
+                            var inputs = el('lf-assist-dynamic-inputs').querySelectorAll('[data-lf-var]');
+                            inputs.forEach(function (inp) { payload[inp.dataset.lfVar] = inp.value; });
+                            return payload;
+                        }
+
+                        function pollStatus(historyId) {
+                            var maxAttempts = 60, attempts = 0;
+                            var poll = setInterval(async function () {
+                                attempts++;
+                                try {
+                                    var url = ROUTES.status.replace('__ID__', historyId);
+                                    var res = await fetch(url);
+                                    var data = await res.json();
+                                    if (data.status === 'completed') {
+                                        clearInterval(poll);
+                                        rawResult = data.generated_content;
+                                        el('lf-assist-result-box').innerHTML = renderMd(rawResult);
+                                        setState('result');
+                                    } else if (data.status === 'failed') {
+                                        clearInterval(poll);
+                                        setState('placeholder');
+                                        showError('Falha: ' + (data.error_message || 'Erro desconhecido'));
+                                    } else if (attempts >= maxAttempts) {
+                                        clearInterval(poll);
+                                        setState('placeholder');
+                                        showError('Tempo limite excedido.');
+                                    }
+                                } catch (e) { /* silently continue */ }
+                            }, 2000);
+                        }
+
+                        /* ── Public API ──────────────────────────── */
+                        window.lfAssistants = {
+
+                            open: function (id, title, slug, promptStructure, hasWebhook) {
+                                activeSlug = slug;
+                                rawResult = '';
+
+                                el('lf-assist-template-id').value = id;
+                                el('lf-assist-slug').value = slug;
+                                el('lf-assist-title').textContent = '🤖 ' + title;
+
+                                // Build inputs from template placeholders
+                                var container = el('lf-assist-dynamic-inputs');
+                                container.innerHTML = '';
+                                var seen = new Set();
+                                var src = typeof promptStructure === 'string'
+                                    ? promptStructure
+                                    : JSON.stringify(promptStructure || '');
+
+                                // Must split {{ to prevent Blade parsing
+                                var regex = new RegExp('{' + '{(.*?)}' + '}', 'g'), m;
+                                while ((m = regex.exec(src)) !== null) {
+                                    var varName = m[1].trim();
+                                    if (seen.has(varName)) continue;
+                                    seen.add(varName);
+
+                                    var label = varName.replace(/_/g, ' ').replace(/\b\w/g, function (l) { return l.toUpperCase(); });
+                                    var isLong = varName.indexOf('descri') !== -1 || varName.indexOf('observ') !== -1 || varName.indexOf('texto') !== -1 || varName.indexOf('cnis') !== -1 || varName.indexOf('relato') !== -1 || varName.indexOf('fatos') !== -1;
+                                    var wrap = document.createElement('div');
+                                    wrap.className = 'lf-field';
+                                    if (isLong) {
+                                        wrap.innerHTML =
+                                            '<label class="lf-label">' + label + '</label>' +
+                                            '<textarea data-lf-var="' + varName + '" class="lf-input lf-textarea" placeholder="' + label + '..." rows="8"></textarea>';
+                                    } else {
+                                        wrap.innerHTML =
+                                            '<label class="lf-label">' + label + '</label>' +
+                                            '<input type="text" data-lf-var="' + varName + '" class="lf-input" placeholder="' + label + '...">';
+                                    }
+                                    container.appendChild(wrap);
+                                }
+
+                                if (seen.size === 0) {
+                                    container.innerHTML = '<p class="text-sm text-gray-400 py-2">Este assistente não requer parâmetros adicionais.</p>';
+                                }
+
+                                // Show/hide execute button
+                                el('lf-assist-btn-execute').style.display = hasWebhook ? 'inline-flex' : 'none';
+
+                                hideError();
+                                el('lf-assist-result-box').innerHTML = '';
+                                setState('placeholder');
+                                el('lf-assist-modal').style.display = '';
+                            },
+
+                            close: function () {
+                                el('lf-assist-modal').style.display = 'none';
+                            },
+
+                            reset: function () {
+                                el('lf-assist-result-box').innerHTML = '';
+                                hideError();
+                                setState('placeholder');
+                            },
+
+                            generate: async function () {
+                                hideError();
+                                setState('loading');
+                                try {
+                                    var url = ROUTES.generate.replace('__SLUG__', activeSlug);
+                                    var res = await fetch(url, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+                                        body: JSON.stringify(buildPayload())
+                                    });
+                                    var data = await res.json();
+                                    if (!res.ok) throw new Error(data.error || 'Erro ao gerar prompt');
+                                    rawResult = data.generated_prompt || '';
+                                    el('lf-assist-result-box').innerHTML = renderMd(rawResult);
+                                    setState('result');
+                                } catch (e) {
+                                    setState('placeholder');
+                                    showError(e.message);
+                                }
+                            },
+
+                            execute: async function () {
+                                hideError();
+                                setState('loading');
+                                try {
+                                    var url = ROUTES.execute.replace('__SLUG__', activeSlug);
+                                    var res = await fetch(url, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+                                        body: JSON.stringify(buildPayload())
+                                    });
+                                    var data = await res.json();
+                                    if (!res.ok) throw new Error(data.error || 'Erro na execução');
+                                    if (data.status === 'queued' && data.history_id) {
+                                        pollStatus(data.history_id);
+                                    } else if (data.generated_prompt) {
+                                        rawResult = data.generated_prompt;
+                                        el('lf-assist-result-box').innerHTML = renderMd(rawResult);
+                                        setState('result');
+                                    } else {
+                                        throw new Error('Resposta inesperada da API');
+                                    }
+                                } catch (e) {
+                                    setState('placeholder');
+                                    showError(e.message);
+                                }
+                            },
+
+                            copy: async function () {
+                                if (!rawResult) return;
+
+                                var btn = el('lf-assist-copy-btn');
+                                var originalText = btn.innerHTML;
+
+                                try {
+                                    if (navigator.clipboard && window.isSecureContext) {
+                                        await navigator.clipboard.writeText(rawResult);
+                                    } else {
+                                        // Fallback seguro para non-HTTPS (localhost/.test)
+                                        var ta = document.createElement('textarea');
+                                        ta.value = rawResult;
+                                        ta.style.position = 'fixed';
+                                        ta.style.opacity = '0';
+                                        document.body.appendChild(ta);
+                                        ta.select();
+                                        document.execCommand('copy');
+                                        document.body.removeChild(ta);
+                                    }
+
+                                    btn.innerHTML = '✅ Copiado!';
+                                } catch (e) {
+                                    console.error('Erro ao copiar:', e);
+                                    btn.innerHTML = '❌ Erro';
+                                }
+
+                                setTimeout(function () {
+                                    if (btn) btn.innerHTML = originalText;
+                                }, 2000);
+                            }
+                        };
+
+                    })();
+                </script>
+            @endpush
+
 </x-admin::layouts>
