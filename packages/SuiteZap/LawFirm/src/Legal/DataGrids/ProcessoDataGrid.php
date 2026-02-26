@@ -15,11 +15,18 @@ class ProcessoDataGrid extends DataGrid
     protected $primaryColumn = 'id';
 
     /**
+     * Default sort column.
+     *
+     * @var string
+     */
+    protected $sortBy = 'processos.data_audiencia';
+
+    /**
      * Default sort order.
      *
      * @var string
      */
-    protected $sortOrder = 'asc'; // Changed to align with precedence requirement
+    protected $sortOrder = 'asc';
 
     /**
      * Prepare query builder.
@@ -62,8 +69,6 @@ class ProcessoDataGrid extends DataGrid
         $queryBuilder->orderByRaw('CASE WHEN processos.data_audiencia IS NULL THEN 1 ELSE 0 END, processos.data_audiencia ASC');
 
         $this->setQueryBuilder($queryBuilder);
-
-        return $queryBuilder;
     }
 
     /**

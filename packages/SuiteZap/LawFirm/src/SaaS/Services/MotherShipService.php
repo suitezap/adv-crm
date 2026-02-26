@@ -4,10 +4,12 @@ namespace SuiteZap\LawFirm\SaaS\Services;
 
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use SuiteZap\LawFirm\SaaS\Models\InfrastructureNode;
+use SuiteZap\LawFirm\SaaS\Models\Tenant;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 use Webkul\User\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class MotherShipService
 {
@@ -26,26 +28,22 @@ class MotherShipService
     {
         $tenantId = self::getTenantId();
 
-        // DEBUG: Verificar ID
         if (!$tenantId) {
-            Log::error('SAAS DEBUG: TENANT_ID está vazio ou nulo no .env');
+            Log::warning('SAAS: TENANT_ID não configurado no .env');
             return null;
         }
 
-        // Tenta buscar (Cache removido temporariamente para teste)
-        // return Cache::remember("tenant_{$tenantId}_subscription", 60, function () use ($tenantId) {
-        $sub = Subscription::on('mothership')
-            ->where('tenant_id', $tenantId)
-            ->first();
+        return Cache::remember("tenant_{$tenantId}_subscription", 60, function () use ($tenantId) {
+            $sub = Subscription::on('mothership')
+                ->where('tenant_id', $tenantId)
+                ->first();
 
-        if (!$sub) {
-            Log::error("SAAS DEBUG: Nenhuma assinatura encontrada no banco mothership para o ID: {$tenantId}");
-        } else {
-            Log::info("SAAS DEBUG: Assinatura encontrada. Max Users: {$sub->max_users}");
-        }
+            if (!$sub) {
+                Log::error("SAAS: Nenhuma assinatura encontrada para tenant: {$tenantId}");
+            }
 
-        return $sub;
-        // });
+            return $sub;
+        });
     }
 
     /**
@@ -53,25 +51,17 @@ class MotherShipService
      */
     public static function canCreateUser(): bool
     {
-        Log::info("SAAS DEBUG: Iniciando verificação de criação de usuário...");
-
         $subscription = self::getCurrentSubscription();
 
         if (!$subscription) {
-            Log::error("SAAS DEBUG: Bloqueio de Segurança - Assinatura não localizada.");
+            Log::warning('SAAS: Bloqueio de criação de usuário — assinatura não localizada.');
             return false;
         }
 
-        // CORREÇÃO: Usar Model User e contar apenas ativos
         $currentCount = \Webkul\User\Models\User::where('status', 1)->count();
         $limit = $subscription->max_users;
 
-        Log::info("SAAS DEBUG: Contagem Admins Ativos: {$currentCount} | Limite: {$limit}");
-
-        if ($currentCount >= $limit) {
-            return false;
-        }
-        return true;
+        return $currentCount < $limit;
     }
 
     /**
@@ -234,3 +224,4 @@ class MotherShipService
         });
     }
 }
+

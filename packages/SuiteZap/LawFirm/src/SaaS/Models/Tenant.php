@@ -3,9 +3,9 @@
 namespace SuiteZap\LawFirm\SaaS\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
 class Tenant extends Model
 {
+
     protected $connection = 'mothership';
     protected $table = 'tenants';
 
@@ -34,5 +34,15 @@ class Tenant extends Model
     public function evolutionNode()
     {
         return $this->belongsTo(InfrastructureNode::class, 'evolution_node_id');
+    }
+
+    public function storageNode()
+    {
+        return $this->belongsTo(InfrastructureNode::class, 'storage_node_id');
+    }
+
+    public function n8nNode()
+    {
+        return $this->belongsTo(InfrastructureNode::class, 'n8n_node_id');
     }
 }

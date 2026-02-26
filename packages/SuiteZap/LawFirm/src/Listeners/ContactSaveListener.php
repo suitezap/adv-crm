@@ -2,8 +2,8 @@
 
 namespace SuiteZap\LawFirm\Listeners;
 
-use SuiteZap\LawFirm\Models\LawPersonDetail;
-use SuiteZap\LawFirm\Models\LawOrganizationDetail;
+use SuiteZap\LawFirm\Legal\Models\LawPersonDetail;
+use SuiteZap\LawFirm\Legal\Models\LawOrganizationDetail;
 use Illuminate\Support\Facades\Log;
 
 class ContactSaveListener

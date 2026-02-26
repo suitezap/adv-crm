@@ -338,7 +338,7 @@
 
                 // Find external inputs (notas and prazos)
                 const containerNotas = document.getElementById('container-notas');
-                const tbodyPrazos = document.getElementById('tbody-prazos');
+                const tbodyPrazos = document.getElementById('container-prazos');
 
                 // Append Notas
                 if (containerNotas) {

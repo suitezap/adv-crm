@@ -65,13 +65,14 @@ PROMPT;
             [
                 'tenant_id' => null,
                 'category' => 'pecas',
+                'area' => 'Trabalhista',
                 'title' => 'Transformador de Relato',
                 'description' => 'Transforma relatos informais de clientes em tópicos formais para Petição Inicial Trabalhista.',
                 'icon' => '📝',
                 'prompt_structure' => $promptStructure,
                 'variables' => $variables,
-                'n8n_webhook_url' => 'lawfirm-transformador-relato',
-                'required_module' => null,
+                'n8n_webhook_url' => 'ai-transformador-relato',
+                'required_module' => 'IA-Trabalhista',
                 'is_active' => true,
             ]
         );

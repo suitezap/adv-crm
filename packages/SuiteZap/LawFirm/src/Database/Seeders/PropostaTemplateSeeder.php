@@ -66,6 +66,7 @@ PROMPT;
             [
                 'tenant_id' => null,
                 'category' => 'leads',
+                'area' => 'Geral',
                 'title' => 'Sugestão de Proposta',
                 'description' => 'Elaboração de proposta de honorários com base na análise técnica do caso.',
                 'icon' => '📄',

@@ -44,12 +44,13 @@ Petição Inicial:
             [
                 'tenant_id' => null,
                 'category' => 'pecas',
+                'area' => 'Geral',
                 'title' => 'Advogado do Diabo',
                 'description' => 'Simula a contestação da parte contrária apontando brechas, prescrição e fraqueza de provas na sua petição.',
                 'icon' => '😈',
                 'prompt_structure' => $promptStructure,
                 'variables' => $variables,
-                'n8n_webhook_url' => 'lawfirm-advogado-diabo',
+                'n8n_webhook_url' => 'ai-advogado-diabo',
                 'required_module' => null,
                 'is_active' => true,
             ]

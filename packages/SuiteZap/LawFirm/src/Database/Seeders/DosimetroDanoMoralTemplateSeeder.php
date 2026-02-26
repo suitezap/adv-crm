@@ -53,13 +53,14 @@ class DosimetroDanoMoralTemplateSeeder extends Seeder
             [
                 'tenant_id' => null,
                 'category' => 'processual',
+                'area' => 'Cível',
                 'title' => 'Dosímetro de Dano Moral',
                 'description' => 'Aplica Método Bifásico (STJ) na extensão do dano e sugere faixas de ganho (mínimo, médio e ótimo).',
                 'icon' => '⚖️',
                 'prompt_structure' => $promptStructure,
                 'variables' => $variables,
-                'n8n_webhook_url' => 'lawfirm-dosimetro-dano-moral',
-                'required_module' => null,
+                'n8n_webhook_url' => 'ai-dosimetro-dano-moral',
+                'required_module' => 'IA-Civil',
                 'is_active' => true,
             ]
         );

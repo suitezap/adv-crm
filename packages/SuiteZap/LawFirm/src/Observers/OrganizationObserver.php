@@ -3,7 +3,7 @@
 namespace SuiteZap\LawFirm\Observers;
 
 use Illuminate\Support\Facades\Log;
-use SuiteZap\LawFirm\Models\LawOrganizationDetail;
+use SuiteZap\LawFirm\Legal\Models\LawOrganizationDetail;
 
 class OrganizationObserver
 {

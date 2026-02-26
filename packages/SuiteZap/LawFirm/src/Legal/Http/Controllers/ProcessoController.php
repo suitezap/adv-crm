@@ -10,9 +10,6 @@ use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Repositories\LeadRepository;
-
-use SuiteZap\LawFirm\Rules\ValidarCNJ;
-use SuiteZap\LawFirm\Rules\ValidarCpfCnpj;
 use SuiteZap\LawFirm\GED\Services\DocumentService;
 use SuiteZap\LawFirm\Legal\Services\DeadlineService;
 use SuiteZap\LawFirm\Legal\Services\ProcessoNotaService;
@@ -23,7 +20,7 @@ class ProcessoController extends Controller
     /**
      * ProcessoRepository object
      *
-     * @var \SuiteZap\LawFirm\Repositories\ProcessoRepository
+     * @var \SuiteZap\LawFirm\Legal\Repositories\ProcessoRepository
      */
     protected $processoRepository;
 
@@ -173,95 +170,21 @@ class ProcessoController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function store()
+    public function store(\SuiteZap\LawFirm\Legal\Http\Requests\StoreProcessoRequest $request)
     {
         // DEBUG: Log uploaded files details before validation
-        if (request()->hasFile('anexos')) {
-            foreach (request()->file('anexos') as $file) {
+        if ($request->hasFile('anexos')) {
+            foreach ($request->file('anexos') as $file) {
                 \Log::debug("STORE UPLOAD DEBUG: Name={$file->getClientOriginalName()} | Ext={$file->getClientOriginalExtension()} | MimeType={$file->getMimeType()} | GuessedExt={$file->guessExtension()} | Size={$file->getSize()}");
             }
         }
 
-        $validator = \Illuminate\Support\Facades\Validator::make(request()->all(), [
-            'titulo' => 'required|string|max:255',
-            'numero_cnj' => ['nullable', 'string', 'unique:processos,numero_cnj', new ValidarCNJ],
-            'protocolo_distribuicao' => 'nullable|string|max:255',
-            'status' => 'required|string|max:255',
-            'person_id' => 'required|exists:persons,id',
-            'lead_id' => 'nullable|exists:leads,id',
-            'tribunal' => 'nullable|string|max:255',
-            'comarca' => 'nullable|string|max:255',
-            'vara' => 'nullable|string|max:255',
-            'juiz_atual' => 'nullable|string|max:255',
-            'link_acesso' => 'nullable|string|max:500',
-            'fase_processual' => 'nullable|string|max:255',
-            'parte_contraria' => 'nullable|string|max:255', // Legacy field, keeping for now or replacing usage
-            'opposing_party_name' => 'nullable|string|max:255',
-            'opposing_party_type' => 'nullable|in:PF,PJ',
-            'opposing_party_document' => [
-                'nullable',
-                'string',
-                'max:20',
-                function ($attribute, $value, $fail) {
-                    $type = request('opposing_party_type');
-                    if ($type === 'PF') {
-                        $rule = new \SuiteZap\LawFirm\Rules\Cpf;
-                        if (!$rule->passes($attribute, $value)) {
-                            $fail('O CPF da parte contrária é inválido.');
-                        }
-                    } elseif ($type === 'PJ') {
-                        $rule = new \SuiteZap\LawFirm\Rules\Cnpj;
-                        if (!$rule->passes($attribute, $value)) {
-                            $fail('O CNPJ da parte contrária é inválido.');
-                        }
-                    }
-                }
-            ],
-            'advogado_parte_contraria' => 'nullable|string|max:255',
-            'area_direito' => 'nullable|string|max:255',
-            'probabilidade_exito' => 'nullable|string|max:255',
-            'data_distribuicao' => 'nullable|date',
-            'data_audiencia' => 'nullable|date',
-            'valor_causa' => 'nullable|string|max:255',
-            'descricao' => 'nullable|string',
-            'tipo_parte' => 'nullable|in:autor,reu',
-            'tipo_pessoa' => 'nullable|in:Física,Jurídica',
-            'cpf_cnpj' => ['nullable', 'string', 'max:20', new ValidarCpfCnpj],
-            'advogado_oab' => 'nullable|string|max:20',
-            'whatsapp_advogado_contrario' => ['nullable', 'string', 'max:20', 'regex:/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/'],
-            'email_advogado_contrario' => 'nullable|email:rfc,dns|max:255',
-            'subarea_direito' => 'nullable|string|max:255',
-            'user_id' => 'nullable|exists:users,id',
-            'prazos.*.titulo' => 'required|string|max:255',
-            'prazos.*.data_vencimento' => 'required|date',
-            'prazos.*.status' => 'required|in:pendente,concluido',
-            'prazos.*.descricao' => 'nullable|string',
-            // Financials are now handled via AJAX in a separate component
-            // 'financeiros.*.tipo' => 'required|in:receita,despesa',
-            // ...
-            // EXPANDED MIMES LIST: Added log, md, xml, odt, ods
-            'anexos.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,txt,csv,xls,xlsx,rtf,log,md,xml,odt,ods|max:20480',
-        ], [
-            'whatsapp_advogado_contrario.regex' => 'O formato do WhatsApp é inválido. Use: (99) 99999-9999.',
-            'prazos.*.titulo.required' => 'O título do prazo é obrigatório.',
-            'prazos.*.data_vencimento.required' => 'A data de vencimento do prazo é obrigatória.',
-            'anexos.*.mimes' => 'Tipo de arquivo não permitido. Aceitos: PDF, Imagens, Office, Texto (txt, log, md, csv).',
-            'anexos.*.max' => 'O tamanho máximo do arquivo é 20MB.',
-        ]);
+        $data = $request->validated();
 
-        if ($validator->fails()) {
-            \Log::warning("ProcessoController::store Validation Failed: " . json_encode($validator->errors()->toArray()));
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        $data = request()->all();
         $data['person_id'] = !empty($data['person_id']) ? $data['person_id'] : null;
         $data['lead_id'] = !empty($data['lead_id']) ? $data['lead_id'] : null;
         $data['user_id'] = !empty($data['user_id']) ? $data['user_id'] : null;
+
 
         Event::dispatch('lawfirm.processo.create.before');
 
@@ -287,9 +210,6 @@ class ProcessoController extends Controller
         if (request()->hasFile('anexos') || request()->hasFile('anexo')) {
             $this->documentService->processUploads($processo, request());
         }
-
-        $this->logProcessHistory($processo, 'Criado');
-        $this->ensureCalendarEvent($processo);
 
         Event::dispatch('lawfirm.processo.create.after', $processo);
 
@@ -352,92 +272,17 @@ class ProcessoController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update($id)
+    public function update(\SuiteZap\LawFirm\Legal\Http\Requests\UpdateProcessoRequest $request, $id)
     {
         // DEBUG: Log uploaded files details before validation
-        if (request()->hasFile('anexos')) {
-            foreach (request()->file('anexos') as $file) {
+        if ($request->hasFile('anexos')) {
+            foreach ($request->file('anexos') as $file) {
                 \Log::debug("UPLOAD DEBUG: Name={$file->getClientOriginalName()} | Ext={$file->getClientOriginalExtension()} | MimeType={$file->getMimeType()} | GuessedExt={$file->guessExtension()} | Size={$file->getSize()}");
             }
         }
 
-        $validator = \Illuminate\Support\Facades\Validator::make(request()->all(), [
-            'titulo' => 'required|string|max:255',
-            'numero_cnj' => ['nullable', 'string', 'unique:processos,numero_cnj,' . $id, new ValidarCNJ],
-            'status' => 'required|string|max:255',
-            'person_id' => 'required|exists:persons,id',
-            'lead_id' => 'nullable|exists:leads,id',
-            'tribunal' => 'nullable|string|max:255',
-            'comarca' => 'nullable|string|max:255',
-            'vara' => 'nullable|string|max:255',
-            'link_acesso' => 'nullable|string|max:500',
-            'fase_processual' => 'nullable|string|max:255',
-            'parte_contraria' => 'nullable|string|max:255',
-            'opposing_party_name' => 'nullable|string|max:255',
-            'opposing_party_type' => 'nullable|in:PF,PJ',
-            'opposing_party_document' => [
-                'nullable',
-                'string',
-                'max:20',
-                function ($attribute, $value, $fail) {
-                    $type = request('opposing_party_type');
-                    if ($type === 'PF') {
-                        $rule = new \SuiteZap\LawFirm\Rules\Cpf;
-                        if (!$rule->passes($attribute, $value)) {
-                            $fail('O CPF da parte contrária é inválido.');
-                        }
-                    } elseif ($type === 'PJ') {
-                        $rule = new \SuiteZap\LawFirm\Rules\Cnpj;
-                        if (!$rule->passes($attribute, $value)) {
-                            $fail('O CNPJ da parte contrária é inválido.');
-                        }
-                    }
-                }
-            ],
-            'advogado_parte_contraria' => 'nullable|string|max:255',
-            'area_direito' => 'nullable|string|max:255',
-            'probabilidade_exito' => 'nullable|string|max:255',
-            'data_distribuicao' => 'nullable|date',
-            'data_audiencia' => 'nullable|date',
-            'valor_causa' => 'nullable|string|max:255',
-            'descricao' => 'nullable|string',
-            'tipo_parte' => 'nullable|in:autor,reu',
-            'tipo_pessoa' => 'nullable|in:Física,Jurídica',
-            'cpf_cnpj' => ['nullable', 'string', 'max:20', new ValidarCpfCnpj],
-            'advogado_oab' => 'nullable|string|max:20',
-            'whatsapp_advogado_contrario' => ['nullable', 'string', 'max:20', 'regex:/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/'],
-            'email_advogado_contrario' => 'nullable|email:rfc,dns|max:255',
-            'subarea_direito' => 'nullable|string|max:255',
-            'user_id' => 'nullable|exists:users,id',
-            'prazos.*.titulo' => 'required|string|max:255',
-            'prazos.*.data_vencimento' => 'required|date',
-            'prazos.*.status' => 'required|in:pendente,concluido',
-            'prazos.*.descricao' => 'nullable|string',
-            // Financials are now handled via AJAX in a separate component
-            // 'financeiros.*.tipo' => 'required|in:receita,despesa',
-            // ...
-            // EXPANDED MIMES LIST: Added log, md, xml, odt, ods
-            'anexos.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,txt,csv,xls,xlsx,rtf,log,md,xml,odt,ods|max:20480',
-        ], [
-            'whatsapp_advogado_contrario.regex' => 'O formato do WhatsApp é inválido. Use: (99) 99999-9999.',
-            'prazos.*.titulo.required' => 'O título do prazo é obrigatório.',
-            'prazos.*.data_vencimento.required' => 'A data de vencimento do prazo é obrigatória.',
-            'anexos.*.mimes' => 'Tipo de arquivo não permitido. Aceitos: PDF, Imagens, Office, Texto (txt, log, md, csv).',
-            'anexos.*.max' => 'O tamanho máximo do arquivo é 20MB.',
-        ]);
-        \Log::info("ProcessoController::update Payload Dump: " . json_encode(request()->all()));
+        $data = $request->validated();
 
-        if ($validator->fails()) {
-            // Log validation errors for debugging
-            \Log::warning("ProcessoController::update Validation Failed: " . json_encode($validator->errors()->toArray()));
-
-            // Redirect back with errors
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $data = request()->all();
         $data['person_id'] = !empty($data['person_id']) ? $data['person_id'] : null;
         $data['lead_id'] = !empty($data['lead_id']) ? $data['lead_id'] : null;
         $data['user_id'] = !empty($data['user_id']) ? $data['user_id'] : null;
@@ -446,31 +291,20 @@ class ProcessoController extends Controller
 
         $processo = $this->processoRepository->update($data, $id);
 
-        // 1. Sincronizar Financeiro
-        // 1. Sincronizar Financeiro (Handled by isolated component via AJAX)
-        // if (request()->has('financials')) {
-        //     $this->financialService->syncFinancials($processo, request('financials'));
-        // } elseif (request()->has('financeiros')) {
-        //     $this->financialService->syncFinancials($processo, request('financeiros'));
-        // }
-
         // 2. Processar Uploads
-        if (request()->hasFile('anexos') || request()->hasFile('anexo')) {
+        if ($request->hasFile('anexos') || $request->hasFile('anexo')) {
             $this->documentService->processUploads($processo, request());
         }
 
         // 3. Sincronizar Prazos
-        if (request()->has('prazos')) {
-            $this->deadlineService->syncDeadlines($processo, request('prazos'));
+        if ($request->has('prazos')) {
+            $this->deadlineService->syncDeadlines($processo, $request->input('prazos'));
         }
 
         // 4. Sincronizar Notas
-        if (request()->has('notas')) {
-            $this->processoNotaService->syncNotas($processo, request('notas'));
+        if ($request->has('notas')) {
+            $this->processoNotaService->syncNotas($processo, $request->input('notas'));
         }
-
-        $this->logProcessHistory($processo, 'Atualizado');
-        $this->ensureCalendarEvent($processo);
 
         Event::dispatch('lawfirm.processo.update.after', $processo);
 
@@ -492,11 +326,7 @@ class ProcessoController extends Controller
         try {
             Event::dispatch('lawfirm.processo.delete.before', $id);
 
-            // Fetch process before deleting to clean up events
-            $processo = $this->processoRepository->find($id);
-            if ($processo) {
-                $this->forceCleanupCalendarEvent($processo);
-            }
+            // Observers tratam da exclusão de events
 
             $this->processoRepository->delete($id);
 
@@ -534,8 +364,7 @@ class ProcessoController extends Controller
             foreach ($processos as $processo) {
                 Event::dispatch('lawfirm.processo.delete.before', $processo->id);
 
-                // Clean up calendar events
-                $this->forceCleanupCalendarEvent($processo);
+                // Observers do limparem a activity correspondente agora
 
                 $this->processoRepository->delete($processo->id);
 
@@ -551,107 +380,6 @@ class ProcessoController extends Controller
             return response()->json([
                 'message' => trans('lawfirm::app.processos.mass-delete.failed'),
             ], 500);
-        }
-    }
-
-
-
-    /**
-     * Ensure calendar event logic: Create, Update OR Delete based on state.
-     * Uses [REF:PROC_ID:{id}] tag to strictly identify the event.
-     *
-     * @param mixed $processo
-     * @return void
-     */
-    private function ensureCalendarEvent($processo)
-    {
-        $userId = auth()->guard('user')->id();
-        $tag = "[REF:PROC_ID:{$processo->id}]";
-
-        // 1. Find existing activity by TAG
-        // We filter by lightweight attributes first: meeting + is_done=0 + user
-        $activities = $this->activityRepository->findWhere([
-            'type' => 'meeting',
-            'is_done' => 0,
-            'user_id' => $userId
-        ]);
-
-        // Filter collection to find the specific tag in comment
-        $existingActivity = $activities->first(function ($activity) use ($tag) {
-            return str_contains($activity->comment, $tag);
-        });
-
-        // 2. Determine Action: Cleanup OR Upsert
-        $isActive = strtolower(trim($processo->status)) === 'ativo';
-        $hasDate = !empty($processo->data_audiencia);
-
-        if (!$isActive || !$hasDate) {
-            // Case A: Cleanup (Not active OR no date) -> Delete if exists
-            if ($existingActivity) {
-                $this->activityRepository->delete($existingActivity->id);
-            }
-            return;
-        }
-
-        // Case B: Upsert (Active AND has date)
-        $scheduledFrom = Carbon::parse($processo->data_audiencia);
-        $scheduledTo = $scheduledFrom->copy()->addHour();
-        $title = 'Audiência: ' . $processo->titulo;
-        $comment = "Audiência gerada automaticamente pelo Processo Nº {$processo->numero_cnj}. {$tag}";
-
-        $data = [
-            'type' => 'meeting',
-            'title' => $title,
-            'comment' => $comment,
-            'schedule_from' => $scheduledFrom,
-            'schedule_to' => $scheduledTo,
-            'is_done' => 0,
-            'user_id' => $userId,
-            'participants' => [
-                'users' => [$userId],
-            ],
-        ];
-
-        if ($processo->person_id) {
-            $data['participants']['persons'] = [$processo->person_id];
-        }
-
-        if ($processo->lead_id) {
-            $data['lead_id'] = $processo->lead_id;
-        }
-
-        if ($existingActivity) {
-            // Update existing
-            $this->activityRepository->update($data, $existingActivity->id);
-        } else {
-            // Create new
-            $this->activityRepository->create($data);
-        }
-    }
-
-    /**
-     * Helper to force cleanup on destroy
-     *
-     * @param mixed $processo
-     * @return void
-     */
-    private function forceCleanupCalendarEvent($processo)
-    {
-        $userId = auth()->guard('user')->id();
-        $tag = "[REF:PROC_ID:{$processo->id}]";
-
-        $activities = $this->activityRepository->findWhere([
-            'type' => 'meeting',
-            'is_done' => 0,
-            'user_id' => $userId
-        ]);
-
-        $existingActivity = $activities->first(function ($activity) use ($tag) {
-            return str_contains($activity->comment, $tag);
-        });
-
-        if ($existingActivity) {
-            $this->activityRepository->delete($existingActivity->id);
         }
     }
 
@@ -685,33 +413,5 @@ class ProcessoController extends Controller
         })->paginate(10);
 
         return response()->json($results);
-    }
-
-    /**
-     * Log process history as a note.
-     *
-     * @param mixed $processo
-     * @param string $acao
-     * @return void
-     */
-    private function logProcessHistory($processo, $acao)
-    {
-        $now = Carbon::now();
-
-        $data = [
-            'type' => 'note',
-            'title' => "Histórico ($acao)",
-            'comment' => "Histórico ($acao): Processo atualizado. Status: " . $processo->status,
-            'schedule_from' => $now,
-            'schedule_to' => $now,
-            'is_done' => 1,
-            'user_id' => auth()->guard('user')->id(),
-        ];
-
-        if ($processo->lead_id) {
-            $data['lead_id'] = $processo->lead_id;
-        }
-
-        $this->activityRepository->create($data);
     }
 }

@@ -44,13 +44,14 @@ Relato do cliente:
             [
                 'tenant_id' => null,
                 'category' => 'pecas',
+                'area' => 'Família',
                 'title' => 'Filtro de Drama',
                 'description' => 'Estrutura relatos emocionais longos em uma linha do tempo objetiva de fatos jurídicos.',
                 'icon' => '🎭',
                 'prompt_structure' => $promptStructure,
                 'variables' => $variables,
-                'n8n_webhook_url' => 'lawfirm-filtro-drama',
-                'required_module' => null,
+                'n8n_webhook_url' => 'ai-filtro-drama',
+                'required_module' => 'IA-Familia',
                 'is_active' => true,
             ]
         );

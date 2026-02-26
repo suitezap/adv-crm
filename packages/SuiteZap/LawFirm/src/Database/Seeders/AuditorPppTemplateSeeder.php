@@ -52,13 +52,14 @@ class AuditorPppTemplateSeeder extends Seeder
             [
                 'tenant_id' => null,
                 'category' => 'processual',
+                'area' => 'Previdenciário',
                 'title' => 'Auditor de PPP',
                 'description' => 'Cruza dados do Perfil Profissiográfico Previdenciário com a legislação da época para verificar direito a tempo especial.',
                 'icon' => '👷',
                 'prompt_structure' => $promptStructure,
                 'variables' => $variables,
-                'n8n_webhook_url' => 'lawfirm-auditor-ppp',
-                'required_module' => null,
+                'n8n_webhook_url' => 'ai-auditor-ppp',
+                'required_module' => 'IA-Previdenciario',
                 'is_active' => true,
             ]
         );

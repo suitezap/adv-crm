@@ -22,7 +22,7 @@
 
                 <!-- Right: Filters -->
                 <div class="flex flex-col md:flex-row gap-3 items-end md:items-center">
-                    
+
                     @php
                         $user = auth()->guard('user')->user();
                         $isGlobal = $user->view_permission === 'global';
@@ -31,7 +31,7 @@
                     @if($isGlobal)
                         <form id="filter-form" action="" method="GET" class="flex gap-2">
                             <!-- User Filter -->
-                            <select name="responsible_id" onchange="this.form.submit()" 
+                            <select name="responsible_id" onchange="this.form.submit()"
                                 class="rounded-lg border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500 shadow-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 py-2">
                                 <option value="">Todos os Advogados</option>
                                 @foreach($users as $u)
@@ -40,13 +40,14 @@
                                     </option>
                                 @endforeach
                             </select>
-                            
+
                             <!-- Date Filters would go here seamlessly -->
                         </form>
                     @else
                         <!-- Individual View Indicator -->
-                        <div class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium border border-gray-200">
-                             <span class="icon-user text-gray-400 mr-1"></span> {{ $user->name }}
+                        <div
+                            class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium border border-gray-200">
+                            <span class="icon-user text-gray-400 mr-1"></span> {{ $user->name }}
                         </div>
                     @endif
                 </div>
@@ -167,11 +168,13 @@
 
                 <!-- 31-60 -->
                 <div
-                    class="bg-white p-5 rounded-xl border border-gray-200 flex flex-row items-center justify-between h-24 dark:bg-gray-800 dark:border-gray-700">
+                    style="background-color: #fefce8; border-color: #fef08a;"
+                    class="p-5 rounded-xl border flex flex-row items-center justify-between h-24">
                     <span
-                        class="text-[10px] font-bold text-gray-600 uppercase tracking-widest bg-gray-100 px-2 py-0.5 rounded-full">31-60
+                        style="background-color: #fef08a; color: #a16207;"
+                        class="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">31-60
                         DIAS</span>
-                    <span class="text-xl font-extrabold text-gray-800 dark:text-white">
+                    <span style="color: #ca8a04;" class="text-xl font-extrabold">
                         R$ {{ number_format($aging['31_60'] ?? 0, 2, ',', '.') }}
                     </span>
                 </div>
@@ -219,75 +222,78 @@
                 document.addEventListener("DOMContentLoaded", function () {
                     const style = document.createElement('style');
                     style.innerHTML = `
-                                        #main-kpi-grid {
-                                            display: grid !important;
-                                            gap: 1rem !important;
-                                            grid-template-columns: 1fr !important;
-                                        }
-                                        @media (min-width: 768px) {
-                                            #main-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
-                                        }
-                                        @media (min-width: 1200px) {
-                                            #main-kpi-grid { grid-template-columns: repeat(5, 1fr) !important; }
-                                        }
+                                            #main-kpi-grid {
+                                                display: grid !important;
+                                                gap: 1rem !important;
+                                                grid-template-columns: 1fr !important;
+                                            }
+                                            @media (min-width: 768px) {
+                                                #main-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+                                            }
+                                            @media (min-width: 1200px) {
+                                                #main-kpi-grid { grid-template-columns: repeat(5, 1fr) !important; }
+                                            }
 
-                                        #performance-grid {
-                                            display: grid !important;
-                                            gap: 1rem !important;
-                                            grid-template-columns: 1fr !important;
-                                        }
-                                        @media (min-width: 1024px) {
-                                            #performance-grid { grid-template-columns: 1fr 1.5fr !important; }
-                                        }
+                                            #performance-grid {
+                                                display: grid !important;
+                                                gap: 1rem !important;
+                                                grid-template-columns: 1fr !important;
+                                            }
+                                            @media (min-width: 1024px) {
+                                                #performance-grid { grid-template-columns: 1fr 1.5fr !important; }
+                                            }
 
-                                        #aging-grid {
-                                            display: grid !important;
-                                            gap: 1rem !important;
-                                            grid-template-columns: 1fr !important;
-                                        }
-                                        @media (min-width: 768px) {
-                                            #aging-grid { grid-template-columns: repeat(2, 1fr) !important; }
-                                        }
-                                        @media (min-width: 1200px) {
-                                            #aging-grid { grid-template-columns: repeat(4, 1fr) !important; }
-                                        }
-                                    `;
+                                            #aging-grid {
+                                                display: grid !important;
+                                                gap: 1rem !important;
+                                                grid-template-columns: 1fr !important;
+                                            }
+                                            @media (min-width: 768px) {
+                                                #aging-grid { grid-template-columns: repeat(2, 1fr) !important; }
+                                            }
+                                            @media (min-width: 1200px) {
+                                                #aging-grid { grid-template-columns: repeat(4, 1fr) !important; }
+                                            }
+                                        `;
                     document.head.appendChild(style);
                 });
             </script>
 
             <!-- Quick Pay Modal (Alpine.js Component) -->
-            <div x-data="quickPayModal()" 
-                 @open-quick-pay.window="openModal($event.detail.id)"
-                 x-show="open" 
-                 x-cloak
-                 class="fixed inset-0 z-50 overflow-y-auto">
-                
+            <div x-data="quickPayModal()" @open-quick-pay.window="openModal($event.detail.id)" x-show="open" x-cloak
+                class="fixed inset-0 z-50 overflow-y-auto">
+
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="open = false"></div>
 
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                    <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg dark:bg-gray-800">
-                        
+                    <div
+                        class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg dark:bg-gray-800">
+
                         <form @submit.prevent="submitQuickPay">
                             <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 dark:bg-gray-900">
                                 <div class="sm:flex sm:items-start">
-                                    <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                                    <div
+                                        class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
                                         <span class="icon-check text-green-600 text-lg"></span>
                                     </div>
                                     <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                                        <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">Confirmar Recebimento</h3>
+                                        <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
+                                            Confirmar Recebimento</h3>
                                         <div class="mt-4 flex flex-col gap-4">
-                                            
+
                                             <!-- Data Pagamento -->
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data do Pagamento</label>
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data
+                                                    do Pagamento</label>
                                                 <input type="date" x-model="paymentDate" required
                                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white">
                                             </div>
 
                                             <!-- Método Pagamento -->
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Método</label>
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Método</label>
                                                 <select x-model="paymentMethod" required
                                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white">
                                                     <option value="pix">Pix</option>
@@ -332,44 +338,44 @@
                         loading: false,
                         paymentDate: '{{ date("Y-m-d") }}',
                         paymentMethod: 'pix',
-                        
+
                         openModal(id) {
                             this.id = id;
                             this.open = true;
                             this.loading = false;
                         },
-                        
+
                         async submitQuickPay() {
                             if (this.loading) return; // Prevent double-submit
                             this.loading = true;
-                            
+
                             try {
                                 const formData = new FormData();
                                 formData.append('payment_date', this.paymentDate);
                                 formData.append('payment_method', this.paymentMethod);
-                                
+
                                 const response = await fetch("{{ route('admin.lawfirm.financial.quick_pay', '') }}/" + this.id, {
                                     method: 'POST',
                                     headers: {
-                                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value 
-                                            || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') 
+                                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value
+                                            || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
                                             || '',
                                         'Accept': 'application/json',
                                     },
                                     body: formData
                                 });
-                                
+
                                 const data = await response.json();
-                                
+
                                 this.loading = false;
                                 this.open = false;
-                                
+
                                 // Show success message
                                 alert(data.message || 'Baixa realizada com sucesso!');
-                                
+
                                 // Reload page to refresh grid
                                 location.reload();
-                                
+
                             } catch (error) {
                                 console.error('Error:', error);
                                 this.loading = false;

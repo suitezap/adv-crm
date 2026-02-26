@@ -32,7 +32,7 @@ class UserObserver
             // Usa ValidationException para retornar ao formulário com erro amigável
             // em vez de gerar uma página de erro 500
             throw ValidationException::withMessages([
-                'email' => ["⛔ BLOQUEIO SAAS: Seu plano permite apenas {$max} usuários ativos. Faça upgrade para adicionar mais."]
+                'email' => ["⛔ ATENÇÃO: Seu plano permite apenas {$max} usuários ativos. Faça upgrade para adicionar mais."]
             ]);
         }
     }

@@ -307,7 +307,7 @@
                     if (form.dataset.appended === 'true') return;
 
                     const containerNotas = document.getElementById('container-notas');
-                    const tbodyPrazos = document.getElementById('tbody-prazos');
+                    const tbodyPrazos = document.getElementById('container-prazos');
 
                     if (containerNotas) {
                         const notasInputs = containerNotas.querySelectorAll('input[name^="notas"], textarea[name^="notas"], select[name^="notas"]');

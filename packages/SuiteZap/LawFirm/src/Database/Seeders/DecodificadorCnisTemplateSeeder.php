@@ -35,13 +35,14 @@ class DecodificadorCnisTemplateSeeder extends Seeder
             [
                 'tenant_id' => null,
                 'category' => 'processual',
+                'area' => 'Previdenciário',
                 'title' => 'Decodificador de CNIS',
                 'description' => 'Identifica pendências no CNIS, explica os indicadores e orienta como saná-los antes do protocolo.',
                 'icon' => '🔍',
                 'prompt_structure' => $promptStructure,
                 'variables' => $variables,
-                'n8n_webhook_url' => 'lawfirm-decodificador-cnis',
-                'required_module' => null,
+                'n8n_webhook_url' => 'ai-decodificador-cnis',
+                'required_module' => 'IA-Previdenciario',
                 'is_active' => true,
             ]
         );

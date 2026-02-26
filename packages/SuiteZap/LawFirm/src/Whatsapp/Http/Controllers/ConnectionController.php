@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Http\Request;
 use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\Services\Whatsapp\EvolutionService;
+use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 
 class ConnectionController extends Controller
 {
@@ -75,7 +76,12 @@ class ConnectionController extends Controller
             }
         }
 
-        return view('lawfirm::admin.whatsapp.index', compact('status', 'profile', 'instanceName'));
+        // Buscar o assistente de triagem WhatsApp para exibir na view
+        $whatsappAssistant = AssistantTemplate::where('slug', 'triagem-whatsapp')
+            ->where('is_active', true)
+            ->first();
+
+        return view('lawfirm::admin.whatsapp.index', compact('status', 'profile', 'instanceName', 'whatsappAssistant'));
     }
 
     /**

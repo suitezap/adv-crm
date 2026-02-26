@@ -1,8 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use SuiteZap\LawFirm\Http\Controllers\Api\ProcessApiController;
-use SuiteZap\LawFirm\Http\Controllers\Api\DeadlineApiController;
+use SuiteZap\LawFirm\Legal\Http\Controllers\Api\ProcessApiController;
+use SuiteZap\LawFirm\Legal\Http\Controllers\Api\DeadlineApiController;
+use SuiteZap\LawFirm\GED\Http\Controllers\Api\DocumentChecklistApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,9 +46,9 @@ Route::group(['prefix' => 'api/lawfirm', 'middleware' => ['api', 'auth:sanctum']
     // ===========================================
     // Document Checklist API
     // ===========================================
-    Route::get('documents/{processId}', [SuiteZap\LawFirm\Http\Controllers\Api\DocumentChecklistApiController::class, 'index']);
-    Route::put('documents/{id}', [SuiteZap\LawFirm\Http\Controllers\Api\DocumentChecklistApiController::class, 'update']);
-    Route::post('documents/{id}/upload', [SuiteZap\LawFirm\Http\Controllers\Api\DocumentChecklistApiController::class, 'uploadFile']);
+    Route::get('documents/{processId}', [DocumentChecklistApiController::class, 'index']);
+    Route::put('documents/{id}', [DocumentChecklistApiController::class, 'update']);
+    Route::post('documents/{id}/upload', [DocumentChecklistApiController::class, 'uploadFile']);
 
 });
 
@@ -55,5 +56,5 @@ Route::group(['prefix' => 'api/lawfirm', 'middleware' => ['api', 'auth:sanctum']
 // SaaS Webhooks (Secured by Token, not User)
 // ===========================================
 Route::group(['prefix' => 'api/lawfirm/saas', 'middleware' => ['api']], function () {
-    Route::post('webhook', [\SuiteZap\LawFirm\Http\Controllers\Api\SaasWebhookController::class, 'updateSubscription']);
+    Route::post('webhook', [\SuiteZap\LawFirm\SaaS\Http\Controllers\Api\SaasWebhookController::class, 'updateSubscription']);
 });

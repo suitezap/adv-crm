@@ -53,6 +53,10 @@ Route::prefix('assistants')->controller(\SuiteZap\LawFirm\AI\Http\Controllers\Ad
 });
 
 // -----------------------------------------------
+// AI Assistants
+// -----------------------------------------------
+
+// -----------------------------------------------
 // Diagnóstico S3/MinIO
 // -----------------------------------------------
 Route::get('debug/test-s3', function () {

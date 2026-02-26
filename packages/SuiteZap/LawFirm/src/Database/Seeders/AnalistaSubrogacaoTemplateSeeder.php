@@ -60,13 +60,14 @@ class AnalistaSubrogacaoTemplateSeeder extends Seeder
             [
                 'tenant_id' => null,
                 'category' => 'processual',
+                'area' => 'Família',
                 'title' => 'Analista de Sub-rogação',
                 'description' => 'Analisa à luz do Código Civil, de acordo com o regime, se um bem é partilhável (meação) ou particular (sub-rogação).',
                 'icon' => '🧮',
                 'prompt_structure' => $promptStructure,
                 'variables' => $variables,
-                'n8n_webhook_url' => 'lawfirm-analista-subrogacao',
-                'required_module' => null,
+                'n8n_webhook_url' => 'ai-analista-subrogacao',
+                'required_module' => 'IA-Familia',
                 'is_active' => true,
             ]
         );

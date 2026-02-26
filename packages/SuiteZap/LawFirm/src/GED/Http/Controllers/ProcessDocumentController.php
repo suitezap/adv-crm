@@ -11,7 +11,7 @@ use SuiteZap\LawFirm\GED\Services\DocumentService;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\GED\Models\ProcessDocument;
 use SuiteZap\LawFirm\Legal\Models\ChecklistTemplate;
-use SuiteZap\LawFirm\Models\LawPersonDetail;
+use SuiteZap\LawFirm\Legal\Models\LawPersonDetail;
 
 class ProcessDocumentController extends Controller
 {

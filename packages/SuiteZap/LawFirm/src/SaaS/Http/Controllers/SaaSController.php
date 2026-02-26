@@ -42,14 +42,22 @@ class SaaSController extends Controller
             $progressDate = ($daysPassed / $totalDays) * 100;
         }
 
-        // 4. Busca Assistentes de IA disponíveis para o Tenant
+        // 4. Busca Assistentes de IA disponíveis para o Tenant e a classificação do Tenant
         $availableAssistants = collect();
+        $tenantClassification = 'Padrão';
+
         if ($subscription) {
             $tenantId = MotherShipService::getTenantId();
             $activeModules = $subscription->active_modules ?? [];
 
             if ($tenantId) {
                 $availableAssistants = MotherShipService::getAvailableAssistants($tenantId, $activeModules);
+
+                // Busca as configurações do Tenant para pegar a classificação
+                $tenantConfig = MotherShipService::getTenantConfig();
+                if ($tenantConfig && !empty($tenantConfig->classification)) {
+                    $tenantClassification = $tenantConfig->classification;
+                }
             }
         }
 
@@ -59,7 +67,8 @@ class SaaSController extends Controller
             'storageUsedBytes',
             'daysLeft',
             'progressDate',
-            'availableAssistants'
+            'availableAssistants',
+            'tenantClassification'
         ));
     }
 

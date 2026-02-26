@@ -3,7 +3,7 @@
 namespace SuiteZap\LawFirm\Observers;
 
 use Illuminate\Support\Facades\Log;
-use SuiteZap\LawFirm\Models\LawPersonDetail;
+use SuiteZap\LawFirm\Legal\Models\LawPersonDetail;
 
 class PersonObserver
 {

@@ -11,10 +11,10 @@
         @push('styles')
             <style>
                 /* ============================================================
-                                                   ASSISTANTS PAGE — Krayin-native styles
-                                                   Grid:  2 cards per row  (max-md: 1 col)
-                                                   Modal: Same lf-modal-* vocabulary as lead-tools-panel
-                                                ============================================================ */
+                                                                   ASSISTANTS PAGE — Krayin-native styles
+                                                                   Grid:  2 cards per row  (max-md: 1 col)
+                                                                   Modal: Same lf-modal-* vocabulary as lead-tools-panel
+                                                                ============================================================ */
 
                 /* ── Native CSS grid (same max-* convention as Krayin) ─── */
                 .lf-assist-grid {
@@ -66,6 +66,61 @@
                     background: #7c3aed;
                     flex-shrink: 0;
                     display: block;
+                }
+
+                /* ── Area Filter Bar ─────────────────────────────────────── */
+                .lf-area-filter-bar {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    flex-wrap: wrap;
+                }
+
+                .lf-area-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.3rem;
+                    padding: 0.3rem 0.85rem;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    border-radius: 9999px;
+                    border: 1.5px solid #e5e7eb;
+                    background: #fff;
+                    color: #6b7280;
+                    cursor: pointer;
+                    transition: all 0.15s;
+                    white-space: nowrap;
+                }
+
+                .lf-area-btn:hover {
+                    border-color: #7c3aed;
+                    color: #7c3aed;
+                    background: #f5f3ff;
+                }
+
+                .lf-area-btn.active {
+                    background: linear-gradient(135deg, #7c3aed, #9d4edd);
+                    border-color: transparent;
+                    color: #fff;
+                    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+                }
+
+                .dark .lf-area-btn {
+                    background: #1f2937;
+                    border-color: #374151;
+                    color: #9ca3af;
+                }
+
+                .dark .lf-area-btn:hover {
+                    border-color: #7c3aed;
+                    color: #a78bfa;
+                    background: rgba(124, 58, 237, 0.12);
+                }
+
+                .dark .lf-area-btn.active {
+                    background: linear-gradient(135deg, #7c3aed, #9d4edd);
+                    color: #fff;
+                    border-color: transparent;
                 }
 
                 /* ── Overlay ─────────────────────────────────────────────── */
@@ -500,23 +555,39 @@
                 <span id="lf-page-tenant-id" class="hidden">{{ $tenantId }}</span>
             </div>
 
+            {{-- ── AREA FILTER BAR (filtra por required_module = IA-*) ── --}}
+            @if($areas->isNotEmpty())
+                <div class="rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">⚖️ Filtrar
+                            por Área:</span>
+                        <div class="lf-area-filter-bar">
+                            <button type="button" class="lf-area-btn active"
+                                onclick="window.lfFilterByArea('todas', this)">Todas</button>
+                            @foreach($areas as $modKey)
+                                {{-- Mostra 'IA-Trabalhista' como 'Trabalhista' --}}
+                                @php $label = Str::after($modKey, 'IA-'); @endphp
+                                <button type="button" class="lf-area-btn" data-module="{{ $modKey }}"
+                                    onclick="window.lfFilterByArea('{{ $modKey }}', this)">{{ $label }}</button>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             {{-- ── CARDS GRID ───────────────────────────────────── --}}
             @forelse($templates->groupBy('category') as $category => $categoryTemplates)
 
                 {{-- Category wrapper --}}
-                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div
+                    class="lf-category-section rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                     <div class="lf-cat-label">{{ $category ?: 'Geral' }}</div>
 
                     <div class="lf-assist-grid">
                         @foreach($categoryTemplates as $template)
-                            <div
+                            <div data-module="{{ $template->required_module ?? '' }}"
                                 class="lf-assist-card flex flex-col justify-between rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                                 <div>
-                                    {{-- Category badge --}}
-                                    <span
-                                        class="mb-3 inline-flex items-center rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-900/20 dark:text-violet-300">
-                                        &#9679; {{ ucfirst($template->category) }}
-                                    </span>
 
                                     {{-- Title --}}
                                     <h3 class="mb-1 text-base font-bold text-gray-800 dark:text-white">
@@ -541,13 +612,14 @@
 
                                 {{-- Action button --}}
                                 <div class="mt-4 border-t border-gray-100 pt-3 dark:border-gray-800">
-                                    <button type="button" class="lf-btn-primary" onclick="window.lfAssistants.open(
-                                                                                                                        {{ $template->id }},
-                                                                                                                        '{{ addslashes($template->title) }}',
-                                                                                                                        '{{ $template->slug }}',
-                                                                                                                        {{ json_encode($template->prompt_structure) }},
-                                                                                                                        {{ $template->n8n_webhook_url ? 'true' : 'false' }}
-                                                                                                                    )">
+                                    <button type="button" class="lf-btn-primary"
+                                        onclick="window.lfAssistants.open(
+                                                                                                                                                        {{ $template->id }},
+                                                                                                                                                        '{{ addslashes($template->title) }}',
+                                                                                                                                                        '{{ $template->slug }}',
+                                                                                                                                                        {{ json_encode($template->prompt_structure) }},
+                                                                                                                                                        {{ $template->n8n_webhook_url ? 'true' : 'false' }}
+                                                                                                                                                    )">
                                         ✨ Usar Assistente
                                     </button>
                                 </div>
@@ -738,6 +810,24 @@
                             }, 2000);
                         }
 
+                        /* ── Field Validation ─────────────────────── */
+                        function validateFirstField() {
+                            var container = el('lf-assist-dynamic-inputs');
+                            if (!container) return true;
+                            // Pega o primeiro input/textarea que NÃO seja hidden
+                            var first = container.querySelector('input:not([type="hidden"]), textarea');
+                            if (!first) return true; // sem campos = aceita
+                            var val = first.value.trim();
+                            if (val === '') {
+                                first.focus();
+                                first.style.borderColor = '#ef4444';
+                                setTimeout(function () { first.style.borderColor = ''; }, 2500);
+                                showError('Preencha pelo menos o primeiro campo antes de continuar.');
+                                return false;
+                            }
+                            return true;
+                        }
+
                         /* ── Public API ──────────────────────────── */
                         window.lfAssistants = {
 
@@ -804,6 +894,7 @@
                             },
 
                             generate: async function () {
+                                if (!validateFirstField()) return;
                                 hideError();
                                 setState('loading');
                                 try {
@@ -825,6 +916,7 @@
                             },
 
                             execute: async function () {
+                                if (!validateFirstField()) return;
                                 hideError();
                                 setState('loading');
                                 try {
@@ -882,6 +974,32 @@
                                     if (btn) btn.innerHTML = originalText;
                                 }, 2000);
                             }
+                        };
+
+                        /* ── Area Filter ─────────────────────────────────── */
+                        window.lfFilterByArea = function (area, btn) {
+                            // Update active button state
+                            document.querySelectorAll('.lf-area-btn').forEach(function (b) {
+                                b.classList.remove('active');
+                            });
+                            if (btn) btn.classList.add('active');
+
+                            var sections = document.querySelectorAll('.lf-category-section');
+                            sections.forEach(function (section) {
+                                var cards = section.querySelectorAll('[data-module]');
+                                var visibleCount = 0;
+
+                                cards.forEach(function (card) {
+                                    var cardModule = card.dataset.module || '';
+                                    // Mostra se: filtro = 'todas', OU o módulo bate exatamente
+                                    var matches = area === 'todas' || cardModule === area;
+                                    card.style.display = matches ? '' : 'none';
+                                    if (matches) visibleCount++;
+                                });
+
+                                // Hide entire category section if no cards visible
+                                section.style.display = visibleCount === 0 ? 'none' : '';
+                            });
                         };
 
                     })();

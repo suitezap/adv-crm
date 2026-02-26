@@ -46,13 +46,14 @@ class ArquitetoConvivenciaTemplateSeeder extends Seeder
             [
                 'tenant_id' => null,
                 'category' => 'pecas',
+                'area' => 'Família',
                 'title' => 'Arquiteto de Convivência',
                 'description' => 'Redige cláusulas detalhadas de visitas (plano parental) prevendo exceções e regras claras para evitar conflitos.',
                 'icon' => '🤝',
                 'prompt_structure' => $promptStructure,
                 'variables' => $variables,
-                'n8n_webhook_url' => 'lawfirm-arquiteto-convivencia',
-                'required_module' => null,
+                'n8n_webhook_url' => 'ai-arquiteto-convivencia',
+                'required_module' => 'IA-Familia',
                 'is_active' => true,
             ]
         );

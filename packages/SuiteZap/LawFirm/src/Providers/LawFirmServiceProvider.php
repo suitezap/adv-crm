@@ -34,6 +34,14 @@ class LawFirmServiceProvider extends ServiceProvider
             // O sistema usará o bucket padrão do .env como fallback
             Log::error('SAAS ERROR: Falha ao configurar storage dinâmico: ' . $e->getMessage());
         }
+
+        // ====================================================================
+        // VERIFICAÇÃO DE ASSINATURA SAAS
+        // ====================================================================
+        /** @var \Illuminate\Routing\Router $router */
+        $router = $this->app['router'];
+        $router->pushMiddlewareToGroup('web', \SuiteZap\LawFirm\Http\Middleware\CheckSubscriptionStatus::class);
+
         // ====================================================================
         // 1. CARREGAR ROTAS
         // ====================================================================
@@ -99,6 +107,16 @@ class LawFirmServiceProvider extends ServiceProvider
 
         // PrazoCreated -> WhatsApp notification
         Event::listen(PrazoCreated::class, SendPrazoWhatsapp::class);
+
+        // ====================================================================
+        // BANNER DE ASSINATURA (aviso de vencimento no topo de todas as telas)
+        // Usa o hook admin.layout.content.before para injetar o banner global
+        // ====================================================================
+        Event::listen('admin.layout.content.before', function ($viewRenderEventManager) {
+            if (auth()->guard('user')->check()) {
+                $viewRenderEventManager->addTemplate('lawfirm::admin.layouts.subscription-warning');
+            }
+        });
 
         // ====================================================================
         // 7. VIEW COMPOSERS
@@ -240,7 +258,7 @@ class LawFirmServiceProvider extends ServiceProvider
                 if (!isset($data['type']))
                     $data['type'] = 'PF';
 
-                \SuiteZap\LawFirm\Models\LawPersonDetail::updateOrCreate(['person_id' => $person->id], $data);
+                \SuiteZap\LawFirm\Legal\Models\LawPersonDetail::updateOrCreate(['person_id' => $person->id], $data);
             }
         });
 
@@ -249,7 +267,7 @@ class LawFirmServiceProvider extends ServiceProvider
                 $data = request('law_details');
                 $data['person_id'] = $person->id;
 
-                \SuiteZap\LawFirm\Models\LawPersonDetail::updateOrCreate(['person_id' => $person->id], $data);
+                \SuiteZap\LawFirm\Legal\Models\LawPersonDetail::updateOrCreate(['person_id' => $person->id], $data);
             }
         });
 
@@ -283,7 +301,7 @@ class LawFirmServiceProvider extends ServiceProvider
             if (request()->has('law_org_details')) {
                 $data = request('law_org_details');
                 $data['organization_id'] = $organization->id;
-                \SuiteZap\LawFirm\Models\LawOrganizationDetail::updateOrCreate(['organization_id' => $organization->id], $data);
+                \SuiteZap\LawFirm\Legal\Models\LawOrganizationDetail::updateOrCreate(['organization_id' => $organization->id], $data);
             }
         });
 
@@ -291,7 +309,7 @@ class LawFirmServiceProvider extends ServiceProvider
             if (request()->has('law_org_details')) {
                 $data = request('law_org_details');
                 $data['organization_id'] = $organization->id;
-                \SuiteZap\LawFirm\Models\LawOrganizationDetail::updateOrCreate(['organization_id' => $organization->id], $data);
+                \SuiteZap\LawFirm\Legal\Models\LawOrganizationDetail::updateOrCreate(['organization_id' => $organization->id], $data);
             }
         });
 

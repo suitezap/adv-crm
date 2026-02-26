@@ -35,6 +35,7 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
         'tenant_id',
         'slug',
         'category',
+        'area',
         'title',
         'description',
         'icon',

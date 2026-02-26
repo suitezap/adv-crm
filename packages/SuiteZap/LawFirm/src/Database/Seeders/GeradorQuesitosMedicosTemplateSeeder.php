@@ -46,13 +46,14 @@ class GeradorQuesitosMedicosTemplateSeeder extends Seeder
             [
                 'tenant_id' => null,
                 'category' => 'pecas',
+                'area' => 'Previdenciário',
                 'title' => 'Gerador de Quesitos Médicos',
                 'description' => 'Gera requisitos técnicos para perícia médica evidenciando incapacidade para o trabalho.',
                 'icon' => '🩺',
                 'prompt_structure' => $promptStructure,
                 'variables' => $variables,
-                'n8n_webhook_url' => 'lawfirm-gerador-quesitos-medicos',
-                'required_module' => null,
+                'n8n_webhook_url' => 'ai-gerador-quesitos-medicos',
+                'required_module' => 'IA-Previdenciario',
                 'is_active' => true,
             ]
         );

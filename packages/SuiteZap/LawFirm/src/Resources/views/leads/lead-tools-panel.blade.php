@@ -5,8 +5,6 @@
 @php
     $tenantId = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantId();
     $leadId = $lead->id;
-    $leadTitle = addslashes($lead->title ?? '');
-    $leadDescription = addslashes(str_replace(["\r", "\n"], ' ', $lead->description ?? 'Sem descrição.'));
 
     // Load templates from DB for dynamic labels
     $toolTemplates = \SuiteZap\LawFirm\AI\Models\AssistantTemplate::whereIn('slug', [
@@ -92,8 +90,9 @@
 
                     {{-- Action button --}}
                     <div class="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
-                        <button type="button"
-                            onclick="window.lfToolsPanel.open('{{ $tool['slug'] }}', '{{ addslashes($btnTitle) }}', {{ $stageId }})"
+                        <button type="button" data-slug="{{ $tool['slug'] }}" data-title="{{ $btnTitle }}"
+                            data-stage="{{ $stageId }}"
+                            onclick="window.lfToolsPanel.open(this.dataset.slug, this.dataset.title, this.dataset.stage)"
                             class="lf-btn-primary">
                             ✨ Usar Assistente
                         </button>
@@ -202,8 +201,8 @@
 @push('styles')
     <style>
         /* ============================================================
-                                                   LF TOOLS MODAL — Matches Krayin AI Assistant System Styles
-                                                   ============================================================ */
+                                                               LF TOOLS MODAL — Matches Krayin AI Assistant System Styles
+                                                               ============================================================ */
 
         /* Compact button — matches /admin/juridico/assistants style */
         .lf-btn-primary {
@@ -686,11 +685,11 @@
         (function () {
             'use strict';
 
-            var LEAD_TITLE = '{{ $leadTitle }}';
-            var LEAD_DESC = '{{ $leadDescription }}';
-            var TENANT_ID = '{{ $tenantId }}';
-            var LEAD_ID = '{{ $leadId }}';
-            var CSRF_TOKEN = '{{ csrf_token() }}';
+            var LEAD_TITLE = @json($lead->title ?? '');
+            var LEAD_DESC = @json($lead->description ?? 'Sem descrição.');
+            var TENANT_ID = @json($tenantId);
+            var LEAD_ID = @json($leadId);
+            var CSRF_TOKEN = @json(csrf_token());
 
             var ROUTES = {
                 generate: "{{ route('lawfirm.assistants.generate', '__SLUG__') }}",
@@ -764,242 +763,254 @@
                 resultContent = document.getElementById('lf-result-content');
                 resultActions = document.getElementById('lf-result-actions');
                 btnGenerate = document.getElementById('lf-btn-generate');
+                 btnExecute = document.getElementById('lf-btn-execute');
+                    genText = document.getElementById('lf-gen-text');
+                    genLoading = document.getElementById('lf-gen-loading');
+                    execText = document.getElementById('lf-exec-text');
+                    execLoading = document.getElementById('lf-exec-loading');
 
-                function showModal() { if (modal) modal.style.display = ''; }
-                function hideModal() { if (modal) modal.style.display = 'none'; }
+                    function showModal() { if (modal) modal.style.display = ''; }
+                    function hideModal() { if (modal) modal.style.display = 'none'; }
 
-                function showState(state) {
-                    resultPlaceholder.style.display = state === 'placeholder' ? '' : 'none';
-                    resultLoading.style.display = state === 'loading' ? '' : 'none';
-                    resultContent.style.display = state === 'result' ? '' : 'none';
-                    resultActions.style.display = state === 'result' ? '' : 'none';
+                    function showState(state) {
+                        resultPlaceholder.style.display = state === 'placeholder' ? '' : 'none';
+                        resultLoading.style.display = state === 'loading' ? '' : 'none';
+                        resultContent.style.display = state === 'result' ? '' : 'none';
+                        resultActions.style.display = state === 'result' ? '' : 'none';
 
-                    // Buttons
-                    btnGenerate.disabled = state === 'loading';
-                    btnExecute.disabled = state === 'loading';
-                    genText.style.display = state === 'loading' ? 'none' : '';
-                    genLoading.style.display = state === 'loading' ? '' : 'none';
-                    execText.style.display = state === 'loading' ? 'none' : '';
-                    execLoading.style.display = state === 'loading' ? '' : 'none';
-                }
-
-                function renderMd(text) {
-                    if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
-                        try { return marked.parse(text); } catch (e) { return text; }
+                        // Buttons
+                        btnGenerate.disabled = state === 'loading';
+                        btnExecute.disabled = state === 'loading';
+                        genText.style.display = state === 'loading' ? 'none' : '';
+                        genLoading.style.display = state === 'loading' ? '' : 'none';
+                        execText.style.display = state === 'loading' ? 'none' : '';
+                        execLoading.style.display = state === 'loading' ? '' : 'none';
                     }
-                    return text.replace(/\n/g, '<br>');
-                }
 
-                window.lfToolsPanel = {
-                    open: function (slug, title, stageId) {
-                        activeSlug = slug;
-                        activeStageId = stageId || null;
-                        rawResult = '';
-                        modalTitle.textContent = '🤖 ' + title;
-                        formTitle.value = LEAD_TITLE;
-                        formDesc.value = LEAD_DESC;
-                        formTenant.value = TENANT_ID;
-                        formObservacoes.value = '';
-                        resultContent.innerHTML = '';
-                        showState('placeholder');
-                        showModal();
-                        console.log('LF Tools Panel: opened slug=' + slug + ' stageId=' + stageId);
-                    },
+                    function renderMd(text) {
+                        if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+                            try { return marked.parse(text); } catch (e) { return text; }
+                        }
+                        return text.replace(/\n/g, '<br>');
+                    }
 
-                    close: function () {
-                        hideModal();
-                    },
+                    window.lfToolsPanel = {
+                        open: function (slug, title, stageId) {
+                            activeSlug = slug;
+                            activeStageId = (stageId && stageId !== 'null' && stageId !== '') ? stageId : null;
+                            rawResult = '';
+                            modalTitle.textContent = '🤖 ' + title;
+                            formTitle.value = LEAD_TITLE;
+                            formDesc.value = LEAD_DESC;
+                            formTenant.value = TENANT_ID;
+                            formObservacoes.value = '';
+                            resultContent.innerHTML = '';
+                            showState('placeholder');
+                            showModal();
+                            console.log('LF Tools Panel: opened slug=' + slug + ' stageId=' + stageId);
+                        },
 
-                    generate: async function () {
-                        showState('loading');
-                        try {
-                            var url = ROUTES.generate.replace('__SLUG__', activeSlug);
-                            var res = await fetch(url, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': CSRF_TOKEN
-                                },
-                                body: JSON.stringify({
-                                    title: formTitle.value,
-                                    description: formDesc.value,
-                                    observacoes: formObservacoes.value,
-                                    tenant_id: TENANT_ID
-                                })
-                            });
-                            var data = await res.json();
-                            if (data.generated_prompt) {
-                                rawResult = data.generated_prompt;
-                                resultContent.innerHTML = renderMd(rawResult);
-                                showState('result');
-                            } else {
-                                alert('Erro: ' + JSON.stringify(data));
+                        close: function () {
+                            hideModal();
+                        },
+
+                        generate: async function () {
+                            showState('loading');
+                            try {
+                                var url = ROUTES.generate.replace('__SLUG__', activeSlug);
+                                var res = await fetch(url, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': CSRF_TOKEN
+                                    },
+                                    body: JSON.stringify({
+                                        title: formTitle.value,
+                                        description: formDesc.value,
+                                        observacoes: formObservacoes.value,
+                                        tenant_id: TENANT_ID
+                                    })
+                                });
+                                var data = await res.json();
+                                if (data.generated_prompt) {
+                                    rawResult = data.generated_prompt;
+                                    resultContent.innerHTML = renderMd(rawResult);
+                                    showState('result');
+                                } else {
+                                    alert('Erro: ' + JSON.stringify(data));
+                                    showState('placeholder');
+                                }
+                            } catch (e) {
+                                alert('Erro: ' + e.message);
                                 showState('placeholder');
                             }
-                        } catch (e) {
-                            alert('Erro: ' + e.message);
-                            showState('placeholder');
-                        }
-                    },
+                        },
 
-                    execute: async function () {
-                        showState('loading');
-                        try {
-                            var url = ROUTES.execute.replace('__SLUG__', activeSlug);
-                            var res = await fetch(url, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': CSRF_TOKEN
-                                },
-                                body: JSON.stringify({
-                                    title: formTitle.value,
-                                    description: formDesc.value,
-                                    observacoes: formObservacoes.value,
-                                    tenant_id: TENANT_ID
-                                })
-                            });
+                        execute: async function () {
+                            showState('loading');
+                            try {
+                                var url = ROUTES.execute.replace('__SLUG__', activeSlug);
+                                var res = await fetch(url, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': CSRF_TOKEN
+                                    },
+                                    body: JSON.stringify({
+                                        title: formTitle.value,
+                                        description: formDesc.value,
+                                        observacoes: formObservacoes.value,
+                                        tenant_id: TENANT_ID
+                                    })
+                                });
 
-                            if (!res.ok) {
-                                var err = await res.json();
-                                throw new Error(err.error || 'Erro na execução');
+                                if (!res.ok) {
+                                    var err = await res.json();
+                                    throw new Error(err.error || 'Erro na execução');
+                                }
+
+                                var data = await res.json();
+                                console.log('LF Tools Panel: execute response', data);
+
+                                // Update pipeline stage if configured
+                                if (activeStageId) {
+                                    updatePipelineStage(activeStageId);
+                                }
+
+                                if (data.status === 'queued' && data.history_id) {
+                                    pollStatus(data.history_id);
+                                } else {
+                                    throw new Error('Resposta inesperada');
+                                }
+                            } catch (e) {
+                                alert('Erro: ' + e.message);
+                                showState('placeholder');
                             }
+                        },
 
-                            var data = await res.json();
-                            console.log('LF Tools Panel: execute response', data);
+                        copy: function () {
+                            var copyBtn = document.getElementById('lf-copy-btn');
+                            try {
+                                // Fallback for HTTP: use a temporary textarea + execCommand
+                                var ta = document.createElement('textarea');
+                                ta.value = rawResult;
+                                ta.style.position = 'fixed';
+                                ta.style.left = '-9999px';
+                                document.body.appendChild(ta);
+                                ta.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(ta);
 
-                            // Update pipeline stage if configured
-                            if (activeStageId) {
-                                updatePipelineStage(activeStageId);
+                                copyBtn.textContent = '✅ Copiado!';
+                                setTimeout(function () { copyBtn.textContent = '📋 Copiar'; }, 1500);
+                            } catch (e) {
+                                console.error('Copy failed:', e);
+                                alert('Não foi possível copiar. Use Ctrl+C manualmente.');
                             }
+                        },
 
-                            if (data.status === 'queued' && data.history_id) {
-                                pollStatus(data.history_id);
-                            } else {
-                                throw new Error('Resposta inesperada');
-                            }
-                        } catch (e) {
-                            alert('Erro: ' + e.message);
-                            showState('placeholder');
-                        }
-                    },
+                        saveAsNote: async function (btn) {
+                            if (!rawResult) return;
+                            btn.disabled = true;
+                            btn.innerHTML = '⏳ Salvando...';
 
-                    copy: function () {
-                        var copyBtn = document.getElementById('lf-copy-btn');
-                        try {
-                            // Fallback for HTTP: use a temporary textarea + execCommand
-                            var ta = document.createElement('textarea');
-                            ta.value = rawResult;
-                            ta.style.position = 'fixed';
-                            ta.style.left = '-9999px';
-                            document.body.appendChild(ta);
-                            ta.select();
-                            document.execCommand('copy');
-                            document.body.removeChild(ta);
+                            try {
+                                var formData = new FormData();
+                                formData.append('_token', CSRF_TOKEN);
+                                formData.append('type', 'note');
+                                formData.append('comment', rawResult);
+                                formData.append('lead_id', LEAD_ID);
 
-                            copyBtn.textContent = '✅ Copiado!';
-                            setTimeout(function () { copyBtn.textContent = '📋 Copiar'; }, 1500);
-                        } catch (e) {
-                            console.error('Copy failed:', e);
-                            alert('Não foi possível copiar. Use Ctrl+C manualmente.');
-                        }
-                    },
+                                var res = await fetch(ROUTES.saveNote, {
+                                    method: 'POST',
+                                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                    body: formData
+                                });
 
-                    saveAsNote: async function (btn) {
-                        if (!rawResult) return;
-                        btn.disabled = true;
-                        btn.innerHTML = '⏳ Salvando...';
+                                if (!res.ok) throw new Error('Erro ao salvar nota');
 
-                        try {
-                            var formData = new FormData();
-                            formData.append('_token', CSRF_TOKEN);
-                            formData.append('type', 'note');
-                            formData.append('comment', rawResult);
-                            formData.append('lead_id', LEAD_ID);
+                                var data = await res.json();
+                                btn.innerHTML = '✅ Nota Salva!';
+                                console.log('LF Tools Panel: note saved', data);
 
-                            var res = await fetch(ROUTES.saveNote, {
-                                method: 'POST',
-                                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                                body: formData
-                            });
+                                setTimeout(function () {
+                                    btn.innerHTML = '<span class="icon-note"></span> Salvar como Nota';
+                                    btn.disabled = false;
+                                }, 2000);
 
-                            if (!res.ok) throw new Error('Erro ao salvar nota');
-
-                            var data = await res.json();
-                            btn.innerHTML = '✅ Nota Salva!';
-                            console.log('LF Tools Panel: note saved', data);
-
-                            setTimeout(function () {
+                            } catch (e) {
+                                alert('Erro ao salvar nota: ' + e.message);
                                 btn.innerHTML = '<span class="icon-note"></span> Salvar como Nota';
                                 btn.disabled = false;
-                            }, 2000);
-
-                        } catch (e) {
-                            alert('Erro ao salvar nota: ' + e.message);
-                            btn.innerHTML = '<span class="icon-note"></span> Salvar como Nota';
-                            btn.disabled = false;
+                            }
                         }
+                    };
+
+                    // Update lead pipeline stage (fire-and-forget)
+                    function updatePipelineStage(stageId) {
+                        var formData = new FormData();
+                        formData.append('_method', 'PUT');
+                        formData.append('_token', CSRF_TOKEN); // Alternativa robusta
+                        formData.append('lead_pipeline_stage_id', stageId);
+
+                        fetch(ROUTES.stageUpdate, {
+                            method: 'POST', // Mudado de PUT para POST (Spoofing)
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': CSRF_TOKEN
+                            },
+                            body: formData
+
+                        }).then(function (res) {
+                            if (res.ok) {
+                                console.log('LF Tools Panel: pipeline stage updated to ' + stageId);
+                            } else {
+                                console.warn('LF Tools Panel: failed to update stage', res.status);
+                            }
+                        }).catch(function (e) {
+                            console.warn('LF Tools Panel: stage update error', e);
+                        });
                     }
-                };
 
-                // Update lead pipeline stage (fire-and-forget)
-                function updatePipelineStage(stageId) {
-                    fetch(ROUTES.stageUpdate, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': CSRF_TOKEN
-                        },
-                        body: JSON.stringify({ lead_pipeline_stage_id: stageId })
-                    }).then(function (res) {
-                        if (res.ok) {
-                            console.log('LF Tools Panel: pipeline stage updated to ' + stageId);
-                        } else {
-                            console.warn('LF Tools Panel: failed to update stage', res.status);
-                        }
-                    }).catch(function (e) {
-                        console.warn('LF Tools Panel: stage update error', e);
-                    });
-                }
+                    function pollStatus(historyId) {
+                        var attempts = 0;
+                        var maxAttempts = 60;
+                        var interval = setInterval(async function () {
+                            attempts++;
+                            try {
+                                var url = ROUTES.status.replace('__ID__', historyId);
+                                var res = await fetch(url);
+                                var data = await res.json();
 
-                function pollStatus(historyId) {
-                    var attempts = 0;
-                    var maxAttempts = 60;
-                    var interval = setInterval(async function () {
-                        attempts++;
-                        try {
-                            var url = ROUTES.status.replace('__ID__', historyId);
-                            var res = await fetch(url);
-                            var data = await res.json();
+                                console.log('Poll Status:', data.status, 'Attempt:', attempts);
 
-                            console.log('Poll Status:', data.status, 'Attempt:', attempts);
-
-                            if (data.status === 'completed') {
-                                clearInterval(interval);
-                                rawResult = data.generated_content;
-                                resultContent.innerHTML = renderMd(rawResult);
-                                showState('result');
-                            } else if (data.status === 'failed') {
-                                clearInterval(interval);
-                                alert('Erro: ' + (data.error_message || 'Falha desconhecida'));
-                                showState('placeholder');
-                            } else if (attempts >= maxAttempts) {
-                                clearInterval(interval);
-                                alert('Tempo limite excedido.');
-                                showState('placeholder');
+                                if (data.status === 'completed') {
+                                    clearInterval(interval);
+                                    rawResult = data.generated_content;
+                                    resultContent.innerHTML = renderMd(rawResult);
+                                    showState('result');
+                                } else if (data.status === 'failed') {
+                                    clearInterval(interval);
+                                    alert('Erro: ' + (data.error_message || 'Falha desconhecida'));
+                                    showState('placeholder');
+                                } else if (attempts >= maxAttempts) {
+                                    clearInterval(interval);
+                                    alert('Tempo limite excedido.');
+                                    showState('placeholder');
+                                }
+                            } catch (e) {
+                                if (attempts >= maxAttempts) {
+                                    clearInterval(interval);
+                                    showState('placeholder');
+                                }
                             }
-                        } catch (e) {
-                            if (attempts >= maxAttempts) {
-                                clearInterval(interval);
-                                showState('placeholder');
-                            }
-                        }
-                    }, 2000);
-                }
+                        }, 2000);
+                    }
+
+                }); // Fim do DOMContentLoaded listener
 
             })();
-    </script>
+        </script>
 @endpush

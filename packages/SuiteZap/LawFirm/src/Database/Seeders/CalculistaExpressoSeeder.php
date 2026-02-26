@@ -39,7 +39,7 @@ class CalculistaExpressoSeeder extends Seeder
                 ],
                 ['key' => 'extras', 'label' => 'Informações Extras', 'type' => 'textarea', 'placeholder' => 'Ex: Fazia 2 horas extras por dia, Não recebia periculosidade'],
             ]),
-            'n8n_webhook_url' => 'lawfirm/calculista-expresso',
+            'n8n_webhook_url' => 'ai-calculista-expresso',
             'required_module' => 'lawfirm_process', // Assuming it's related to processes
             'is_active' => true,
             'created_at' => now(),

@@ -67,6 +67,7 @@ PROMPT;
             [
                 'tenant_id' => null,
                 'category' => 'leads',
+                'area' => 'Geral',
                 'title' => 'Análise de Viabilidade',
                 'description' => 'Avaliação técnica do caso com fundamento jurídico, riscos e recomendação estratégica.',
                 'icon' => '🧠',

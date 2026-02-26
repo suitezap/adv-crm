@@ -99,6 +99,18 @@
             background: #7c3aed;
             display: block;
         }
+
+        /* Expiration warning banner */
+        .lf-warning-banner {
+            background-color: #fffbc8 !important; /* Yellow pastel */
+            border-color: #fde047 !important;
+            color: #a16207 !important;
+        }
+        .dark .lf-warning-banner {
+            background-color: rgba(253, 224, 71, 0.15) !important;
+            border-color: rgba(253, 224, 71, 0.3) !important;
+            color: #fde047 !important;
+        }
     </style>
     @endpush
 
@@ -164,6 +176,32 @@
                 else                                  $storageFmt = round($storageBytes / 1024 / 1024 / 1024, 2) . ' GB';
             @endphp
 
+            {{-- ── AVISOS DE ASSINATURA ────────────────────── --}}
+            @if(session('error'))
+                <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 flex items-center gap-3">
+                    <span class="icon-warning text-xl"></span>
+                    <div>
+                        <strong>Acesso Restrito:</strong> {{ session('error') }}
+                    </div>
+                </div>
+            @endif
+
+            @if($subscription->status === 'inactive' || ($expiresAt && now()->greaterThanOrEqualTo($expiresAt)))
+                <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400 flex items-center gap-3">
+                    <span class="icon-warning text-xl"></span>
+                    <div>
+                        <strong>Assinatura Inativa/Expirada:</strong> O acesso aos recursos do sistema foi bloqueado. Por favor, regularize sua assinatura.
+                    </div>
+                </div>
+            @elseif($daysLeft !== null && $daysLeft <= 7)
+                <div class="lf-warning-banner rounded-lg border p-4 flex items-center gap-3">
+                    <span class="icon-info text-xl"></span>
+                    <div>
+                        <strong>Aviso de Vencimento:</strong> Sua assinatura vence em {{ $daysLeft }} dia(s) ({{ $expiresAt->format('d/m/Y') }}).
+                    </div>
+                </div>
+            @endif
+
             {{-- ── TOP METRIC CARDS (Krayin grid pattern) ─── --}}
             {{-- Krayin uses: grid grid-cols-N gap-4 max-md:grid-cols-M max-sm:grid-cols-1 --}}
             <div class="grid grid-cols-3 gap-4 max-md:grid-cols-2 max-sm:grid-cols-1">
@@ -178,7 +216,7 @@
                     <div class="flex flex-col gap-3 text-sm">
                         <div class="flex items-center justify-between">
                             <span class="text-gray-500 dark:text-gray-400">Plano</span>
-                            <span class="font-semibold text-gray-900 dark:text-white">LawFirm Pro</span>
+                            <span class="font-semibold text-gray-900 dark:text-white">{{ $tenantClassification ?? 'LawFirm Pro' }}</span>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-gray-500 dark:text-gray-400">Usuários</span>

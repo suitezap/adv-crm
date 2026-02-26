@@ -50,13 +50,14 @@ Contrato:
             [
                 'tenant_id' => null,
                 'category' => 'contratos',
+                'area' => 'Contratos',
                 'title' => 'Caçador de Cláusulas Leoninas',
                 'description' => 'Varre minutas de contratos complexos em busca de cláusulas abusivas, multas desproporcionais e ausência de garantias.',
                 'icon' => '🔎',
                 'prompt_structure' => $promptStructure,
                 'variables' => $variables,
-                'n8n_webhook_url' => 'lawfirm-cacador-clausulas',
-                'required_module' => null,
+                'n8n_webhook_url' => 'ai-cacador-clausulas',
+                'required_module' => 'IA-Contratos',
                 'is_active' => true,
             ]
         );

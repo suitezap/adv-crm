@@ -67,6 +67,7 @@ PROMPT;
             [
                 'tenant_id' => null,
                 'category' => 'leads',
+                'area' => 'Geral',
                 'title' => 'Negociação & Conversão',
                 'description' => 'Roteiro estratégico de conversa para conversão do Lead em cliente.',
                 'icon' => '💬',

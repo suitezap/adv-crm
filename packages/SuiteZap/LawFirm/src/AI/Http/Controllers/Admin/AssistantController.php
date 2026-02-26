@@ -46,7 +46,15 @@ class AssistantController extends Controller
             ->orderBy('title')
             ->get();
 
-        return view('lawfirm::admin.assistants.index', compact('templates', 'tenantId'));
+        // 3. Extrair módulos de área únicos (IA-Trabalhista, IA-Civil, etc.) para o filtro
+        $areas = $templates
+            ->pluck('required_module')
+            ->filter(fn($m) => $m && str_starts_with((string) $m, 'IA-'))
+            ->unique()
+            ->sort()
+            ->values();
+
+        return view('lawfirm::admin.assistants.index', compact('templates', 'tenantId', 'areas'));
     }
 
     /**
