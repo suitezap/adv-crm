@@ -1,4 +1,4 @@
-# 🏛 LawFirm CRM - Documento de Arquitetura (v2.0 - DDD & SaaS)
+# 🏛 LawFirm CRM - Documento de Arquitetura (v3.12 - DDD & SaaS)
 
 ## 1. Visão Geral
 Este projeto segue a arquitetura **Domain-Driven Design (DDD)** adaptada para **SaaS Multi-Tenant**.
@@ -15,6 +15,7 @@ O código é estritamente separado por responsabilidade.
 | **GED** | `SuiteZap\LawFirm\GED` | Gestão de Arquivos, Anexos e Checklists. | `ProcessDocument`, `Anexo` |
 | **SaaS** | `SuiteZap\LawFirm\SaaS` | Infraestrutura Multi-tenant. | `Tenant`, `Subscription`, `InfrastructureNode` |
 | **AI** | `SuiteZap\LawFirm\AI` | Assistentes e Automação. | `AiExecution`, `AssistantTemplate`, `AssistantHistory` |
+| **Escavador** | `SuiteZap\LawFirm\Escavador` | Integração com a API do Escavador (v1/v2). |  `EscavadorRequest` |
 
 ## 3. Regras de Ouro (Development Standards)
 
@@ -50,6 +51,7 @@ src/
 *   **Mudanças:**
     *   **Removido:** `src/Http/Controllers/LegalDocumentController.php` (Raiz).
     *   **Atualizado:** `src/GED/Http/Controllers/ProcessDocumentController.php` absorveu a geração de PDFs (Procuração/Contratos).
+
 ### 4.2 SaaS Refactoring (v2.1)
 *   **Decisão:** Mover controllers soltos de SaaS para o namespace correto.
 *   **Mudanças:**
@@ -100,9 +102,118 @@ src/
     *   **Namespaces:** Atualizados de `SuiteZap\LawFirm\Models` para `SuiteZap\LawFirm\AI\Models`.
     *   **Limpeza:** Removida dependência de models na raiz.
 
-## 5. Auditoria Estrutural e Mapa de Dívida Técnica (v3.1)
+### 4.9 Automação de Leads e Pipeline (v3.5)
+*   **Decisão:** Automatizar a transição de Lead para Processo e ocultar ferramentas de qualificação em Leads finalizados.
+*   **Implementação:**
+    *   **Listener:** `LeadWonListener` (escopo: `lead.update.after`). Detecta mudança para estágio **WON** e cria `Processo` automaticamente (copiando título, valor, cliente e vínculo).
+    *   **UI Dinâmica:** `lead-tools-panel.blade.php` agora verifica o estágio do Lead (`$lead->stage->code`). Se **WON/LOST**, oculta ferramentas e exibe mensagem de status.
+    *   **Auto-Reload:** Script `MutationObserver` injetado no blade detecta mudança visual de estágio (classes CSS do Krayin) e recarrega a página automaticamente para aplicar a lógica PHP de ocultação.
 
-Realizada em 16/02/2026. O projeto atingiu um nível maduro de separação de domínios, mas ainda resistem "bolsões" de código legado.
+### 4.10 Evolução do Assistente de IA e Controle de Saldo (v3.6)
+*   **Decisão:** Centralizar os templates de IA no banco de dados "Mothership" (Master) para distribuição multi-tenant dinâmica e implementar controle financeiro baseado em custo de tokens (OpenAI/Anthropic). A identificação dos templates no código passa a utilizar um campo `slug` (ex: `pre_triagem`), eliminando hardcodes de IDs.
+*   **Mudanças:**
+    *   **Seeders Especializados (Mothership):** Diversos templates foram componentizados em seeders individuais (`PropostaTemplateSeeder`, `ChecklistTemplateSeeder`, `PreTriagemTemplateSeeder`, `ArquitetoConvivenciaTemplateSeeder`, etc.) para popular o banco de dados centralizado com os prompts e variáveis do "Roadmap Jurídico".
+    *   **Controle de Saldo:** Refatorada a lógica de assinatura para lidar e exibir o saldo de uso de IA calculado em Reais (BRL), integrado à interface do SaaS (`subscription/index.blade.php`).
+    *   **Validação de Uso:** Implementada uma camada de proteção (Blocker) na execução de assistentes, garantindo que o acionamento de IA ocorra somente se o Tenant possuir saldo positivo (`ai_tokens_balance`).
+    *   **Histórico de IA:** Implementado `AssistantHistoryDataGrid` para acompanhamento de execuções passadas.
+    *   **Modais Dinâmicos (UI):** O Componente visual dos Assistentes foi reconstruído em Alpine.js/Blade para renderização dinâmica de inputs baseada em um esquema JSON (`variables` vindas do template no Mothership) em vez de formulários hardcoded.
+
+### 4.11 Histórico e Execução de IA (v3.7)
+*   **Decisão:** Registrar e expor toda interação do usuário com os assistentes de IA (via Prompt Local ou N8N) em um Datagrid administrativo, armazenando os dados no banco do Tenant, mas referenciando os templates no Mothership.
+*   **Mudanças:**
+    *   **Criado:** `AssistantHistoryController` e `AssistantHistoryDataGrid`.
+    *   **DataGrid Cross-DB:** O datagrid de histórico mapeia o `template_id` (Tenant) para o `title` (Mothership) via Eloquent Closures para evitar problemas de segurança/permissão com JOINs cross-database SQL direto.
+    *   **Views Dinâmicas:** Adicionadas views para `index` e `show`, aplicando um parse Markdown isolado via Vanilla JS (`marked.js`) para formatar seguramente o conteúdo gerado pela IA.
+
+### 4.12 Identificação de Tenant em Execuções Remotas de IA (v3.8)
+*   **Decisão:** Garantir que o `tenant_id` seja injetado exaustivamente e de forma segura (Server-Side via `MotherShipService::getTenantId()`) no *payload* de *todas* as requisições enviadas ao N8N Webhook, prevenindo falsificação pelo frontend e permitindo a identificação exata do cliente no n8n.
+*   **Mudanças:**
+    *   **Injeção Síncrona:** Atualizado `AssistantController::executeRemote` para mesclar o `tenant_id` no pacote de payload raiz.
+    *   **Injeção Assíncrona:** Atualizado o Job `ProcessAiAssistant` para incluir `tenant_id` no payload de requisições enviadas pelas filas (Workers).
+
+### 4.13 Especialização e Validação de IA (v3.8)
+*   **Decisão:** Melhorar a organização visual, categorização e segurança no acionamento dos assistentes pela interface do CRM.
+*   **Mudanças:**
+    *   **Classificação por Área:** Introduzida a coluna `area` (ex: Família, Trabalhista, Contratos, etc.) nos templates Mothership, separando logicamente as IAs (Seeders atualizados e webhook namespadrones com prefixo `ai-`).
+    *   **Filtros de Interface:** A UI de Assistentes (`index.blade.php`) foi aprimorada com uma barra de navegação interativa para filtrar templates por área de atuação usando `required_module`. Os cards são ocultados via JavaScript dinâmico (`lfFilterByArea`).
+    *   **Validação Client-Side:** Implementada lógica nativa JS (`validateFirstField()`) dentro do modal de assistentes, que obriga o usuário a preencher, pelo menos, o primeiro input variável associado ao prompt antes de tentar executar, melhorando UX e reduzindo a perda indevida de Tokens.
+
+### 4.14 Integração Escavador (v3.9)
+*   **Decisão:** Criar um domínio isolado para a integração com a API do Escavador, suportando consultas de processos (V2), jurisprudência/termos (V1) e resumo via IA, sem impactar o domínio Legal principal.
+*   **Mudanças:**
+    *   **Backend:** Criado `EscavadorController` que responde exclusivamente via AJAX/JSON.
+    *   **Service:** Implementado `EscavadorService` como Client para as APIs V1 e V2.
+    *   **Autenticação Dinâmica (Mothership):** Os tokens de acesso da API não ficam no `.env`. Eles são lidos dinamicamente da tabela `infrastructure_nodes` (Mothership DB) pesquisando pelo node chamado `"LawFimr V1 e V2"`, seguindo a filosofia multi-tenant.
+
+### 4.15 Filtragem de Módulos de IA e Cobrança (v3.10)
+*   **Decisão:** Vincular a disponibilidade dos Assistentes de IA aos módulos ativos na assinatura (`active_modules` da tabela `subscriptions` do Mothership).
+*   **Mudanças:**
+    *   **Backend (`AssistantController`):** A busca e o cache (`ai_templates`) agora consideram os módulos que o Tenant possui. Templates que exigem módulos não contratados (campo `required_module`) são filtrados da visualização e bloqueados na execução (`execute`/`process`).
+    *   **Frontend (`subscription/index.blade.php`):** O painel de assinaturas agora lista os módulos ativos dinamicamente e exibe os Assistentes de IA correspondentes, além de demonstrar o saldo de IA convertido em BRL (R$).
+
+### 4.16 SaaS Config Seeder (v3.10)
+*   **Decisão:** Padronizar os limites de cota iniciais quando um tenant é provisionado ou quando o ambiente de desenvolvimento é configurado.
+*   **Mudanças:**
+    *   Adicionado o `SaasConfigSeeder` que define valores padrão (`lawfirm.saas.storage.limit` = 4GB e `lawfirm.saas.ai.credits` = 1000) diretamente na tabela `core_config` do Krayin (banco do Tenant), caso não existam, garantindo que a aplicação sempre tenha limites-base lógicos.
+
+### 4.17 Webhooks Assíncronos Escavador V2 (v3.10)
+*   **Decisão:** Permitir a recepção de callbacks assíncronos da API V2 do Escavador de forma segura.
+*   **Mudanças:**
+    *   A rota `api/webhooks/escavador` foi adicionada às exceções do middleware `VerifyCsrfToken` para receber POST requests externos do Escavador relativos à conclusão de processamentos assíncronos (como resumos gerados por IA).
+
+### 4.18 Integração WhatsApp Financeiro (v3.10)
+*   **Decisão:** Centralizar e automatizar o envio de cobranças via WhatsApp diretamente do módulo financeiro, reutilizando o provedor corporativo (Evolution API) que atende ao Tenant.
+*   **Mudanças:**
+    *   **Backend (`FinancialController@sendWhatsappBilling`):** Implementada a geração dinâmica de mensagens de cobrança usando templates customizáveis do `core_config` e substituição de tags (`{cliente_nome}`, `{valor}`, etc.).
+    *   **Service (`EvolutionService` \& `MotherShipService`):** O controller adquire a instância correta do WhatsApp buscando o plano do Tenant no banco Mothership (`MotherShipService::getEvolutionConfig()`), mantendo a arquitetura hermética e evadindo a dependência manual do `.env` por cliente.
+
+### 4.19 Precificação Dinâmica Multi-Tenant do Escavador (v3.10)
+*   **Decisão:** Centralizar a tabela de preços de revenda das consultas do Escavador (Busca, Capa, Resumo IA) no banco central (Mothership), permitindo que a administração altere os valores repassados aos Tenants.
+*   **Mudanças:**
+    *   **Tabela de Preços Granular:** 30+ chaves do tipo `escavador_price_{endpoint}` inseridas na tabela `app_config` do Mothership via `inject_massive_prices.php`.
+    *   **Backend (`MotherShipService@getEscavadorPrices`):** Implementado método que lê as chaves dinâmicas da tabela `app_config` do banco `mothership`, com um cache de 60 minutos para alta performance.
+
+### 4.20 Extrato Financeiro SaaS (Saas Transactions) (v3.10)
+*   **Decisão:** Criar um "Ledger" (livro-razão) interno no banco do Tenant para registrar minuciosamente o consumo de saldos pré-pagos (como créditos de IA e chamadas à API do Escavador).
+*   **Mudanças:**
+    *   **Tabela `saas_transactions`:** Criada via migration no banco da aplicação (Tenant) contendo tipo (crédito/débito), valor, saldo após, e relacionamento morfopolítico.
+    *   **Visualização (`SaasTransactionController` & `SaasTransactionsDataGrid`):** Implementada a interface administrativa.
+
+### 4.21 Rastreamento de Requisições Assíncronas — EscavadorRequest (v3.11)
+*   **Decisão:** Persistir cada chamada à API do Escavador no banco do Tenant como um "ticket" rastreável.
+*   **Mudanças:**
+    *   **Model `EscavadorRequest`** (`Escavador/Models/EscavadorRequest.php`): Criado para mapear a tabela `escavador_requests`. Registra status pendentes, finalizados e custos (`cost`).
+
+### 4.22 Painel de Histórico do Assistente Jurídico (v3.11)
+*   **Decisão:** Dar visibilidade ao usuário sobre cada consulta realizada via Escavador, incluindo status, custo e processo vinculado.
+*   **Mudanças:**
+    *   **`EscavadorHistoryController` & `EscavadorHistoryDataGrid`**: Controllers skinny + Datagrid via AJAX. Renderizam os 20 endpoints customizados formatando custo final e vinculação de Processos CNJ.
+
+### 4.23 Webhook Receptor com Estorno Automático de Saldo (v3.11)
+*   **Decisão:** Garantir idempotência nos callbacks assíncronos do Escavador V2 e proteger o tenant de débitos indevidos em caso de falha do processamento externo.
+*   **Mudanças:**
+    *   **`WebhookController@handle`**: Rota pública POST (isenta CSRF). Estorna o valor em caso de erro na geração e previne loops de status já processados.
+
+### 4.24 Expansão de Preços do Escavador — Migration Complementar (v3.11)
+*   **Decisão:** Complementar a tabela de precificação dinâmica com 7 novos endpoints não cobertos.
+
+### 4.25 Controle Analítico de Custo e Preços Globais (Mothership Panel v3.12)
+*   **Decisão:** Centralizar de forma visual e administrativa os componentes de negócio antes regidos por *seeders/tinkers*, tornando o SaaS perfeitamente escalável e gerenciável a quente pela camada global (Mothership Panel Nativo PHP).
+*   **Mudanças:**
+    *   **Configuração Zero .env Re-estruturada (`pages/config.php`):** Variáveis essENCIAIS (api_secret, webhooks) alteradas diretamente pela interface visual, alimentando a tabela `app_config` do Mothership e refletindo no ecossistema instantaneamente.
+    *   **Dashboard Massivo Escavador (`pages/escavador.php`):** Gestão das 37 variáveis de preço de endpoints (V1 e V2) por meio de um editor numérico simultâneo.
+    *   **Modificadores Avançados (APIs Core):** Requisições API com ações complexas: `mass_update` com suporte a ajustes lineares/percentuais dinâmicos da tarifa repassada por requisição ao Tenant.
+
+### 4.26 Monitoramentos (Robôs) do Escavador e Alertas de WhatsApp (v3.13)
+*   **Decisão:** Criar um painel de "Robôs" dentro da aba do Escavador permitindo a visibilidade completa e customização de monitoramentos assíncronos. Além de integrar o recebimento de atualizações (via Callback) automaticamente como mensagens para o número de WhatsApp do escritório.
+*   **Mudanças:**
+    *   **Model `EscavadorMonitoramento`**: Mapeia a tabela `escavador_monitoramentos`, guardando referências ao Tenant, identificador externo no Escavador e controle dinâmico (opt-in) pelo campo boolean `notify_whatsapp`.
+    *   **Integração no Webhook** (`WebhookController`): A controller passa a reconhecer payloads de push que indicam alterações em monitoramentos (como novas movimentações). Se ativo, delega para `EvolutionService` realizar o dispatch da mensagem baseada num Custom Template.
+    *   **Template Dinâmico**: A notificação é moldada por um texto padrão inserido nativamente em `Config/system.php` sob o namespace `escavador_monitoramento_update`.
+
+## 5. Auditoria Estrutural e Mapa de Dívida Técnica (v3.13)
+
+O projeto atingiu um nível maduro de separação de domínios. Todos os controllers órfãos e arquivos residuais que inflavam artificialmente a raiz foram migrados para dentro de seus devidos *Bounded Contexts*.
 
 ### 5.1 Diagrama de Classes (Situação Atual)
 
@@ -130,6 +241,8 @@ classDiagram
         class AssistantTemplate
         class AssistantHistory
         class AssistantController_Admin
+        class AssistantHistoryController_Admin
+        class AssistantHistoryDataGrid
         class ProcessAiAssistant_Job
     }
 
@@ -144,11 +257,19 @@ classDiagram
         class ConnectionController
     }
 
-    %% --- DÍVIDA TÉCNICA (LOOSE CODE) ---
-    %% (Reduzida Drasticamente em v3.1)
-    namespace Legacy_Loose_Code {
-        class Root_Models_AuditLog
-        class Root_Models_HumanDecision
+    namespace Escavador_Domain {
+        class EscavadorController
+        class EscavadorService
+        class EscavadorRequest
+        class EscavadorMonitoramento
+        class EscavadorHistoryController_Admin
+        class EscavadorMonitoramentoController_Admin
+    }
+    
+    namespace SaaS_Domain {
+        class SaasTransactionController
+        class SaasTransactionsDataGrid
+        class MotherShipService
     }
 
     %% Relações
@@ -156,6 +277,12 @@ classDiagram
     Legal_Domain ..> Financial_Domain : Utiliza (via Ajax)
     ProcessoController --> MotherShipService : Verifica Tenant
     AssistantController_Admin --> ProcessAiAssistant_Job : Despacha
+    EscavadorController --> EscavadorService : Delega
+    EscavadorService --> MotherShipService : Lê `infrastructure_nodes` e Preços (app_config)
+    EscavadorMonitoramentoController_Admin --> EscavadorMonitoramento : Altera config (notify_whatsapp)
+    Financial_Domain ..> Whatsapp_Domain : Notificações de Cobrança
+    Escavador_Domain ..> Whatsapp_Domain : Alertas Webhook (Callback)
+    SaasTransactionController --> MotherShipService : Billing & Ledger
 
     style Legal_Domain fill:#2a9d8f,color:#fff
     style Financial_Domain fill:#2a9d8f,color:#fff
@@ -163,55 +290,28 @@ classDiagram
     style GED_Domain fill:#2a9d8f,color:#fff
     style SaaS_Domain fill:#264653,color:#fff
     style Whatsapp_Domain fill:#2a9d8f,color:#fff
-    style Legacy_Loose_Code fill:#e76f51,color:#fff,stroke-dasharray: 5 5
+    style Escavador_Domain fill:#e9c46a,color:#000
 ```
 
 ### 5.2 Pontos de Atenção (Technical Debt)
 
-**✅ Resolvidos (v3.1):**
-*   ~~`src/Http/Controllers/AssistantController.php`~~: Removido.
-*   ~~`src/Http/Controllers/Api/*`~~: Movidos para `Legal` e `GED`.
-*   ~~`src/Http/Controllers/Admin/Whatsapp`~~: Criado domínio `Whatsapp`.
-*   ~~`SaasDashboardController`~~: Movido para `SaaS`.
+**✅ Resolvidos (Limpeza v3.8 - v3.12):**
+*   `src/Models/*`: Removidos models duplicados e realocados outros.
+*   `src/Listeners/` & `src/Observers/`: Arquivos órfãos movidos para domínios.
+*   `src/Services/N8nService.php`: Movido para `AI`.
+*   Unificação de Histórico do *Escavador* e precificação reestruturada centralmente, garantindo isolamento entre negócio principal e consumos externos.
 
-**🟠 Pendentes (Média Prioridade):**
-*   `src/Models/*`: Models soltos na raiz (`AuditLog`, `HumanDecision`) ainda precisam de destino.
+**🟢 Status Atual:** A pasta `src/` raiz não contém mais classes de negócio soltas (Models, Controllers, Services, Observers). Todos os arquivos estão estritamente dentro de seus Bounded Contexts.
 
-### 5.3 Histórico de Refatoração Estrutural (v3.1)
-*   **Data:** 16/02/2026
-*   **Ação:** "The Great Migration" - Eliminação de controllers órfãos na raiz.
-*   **Resultado:** A pasta `src/Http/Controllers` agora contém apenas o `Controller.php` base. Todo o resto reside em seus respectivos domínios.
-
-### 5.4 Refatoração da Aba de Documentos (v3.2)
-*   **Decisão:** Adotar o "Financial Tab Pattern" para gestão de documentos.
-*   **Mudanças:**
-    *   **Frontend:** `documents.blade.php` reescrito com Vanilla JS + Tailwind CSS.
-    *   **Backend:** `ProcessDocumentController` expandido para gerenciar uploads (`store`), deleção de anexos (`destroy`) e deleção de checklists (`destroyChecklistItem`).
-    *   **Rota:** Adicionada `documentos/store` e corrigida `documentos/delete`.
-
-### 5.5 Melhorias na Gestão Financeira (v3.3)
-*   **Novas Funcionalidades:**
-    *   **Parcelamento:** Adicionada lógica de geração automática de lançamentos parcelados (Recorrência/Parcelamento) no `FinancialService`.
-    *   **Responsividade:** Implementado "Card View" via CSS (`@media`) para tabelas em dispositivos móveis, eliminando scroll horizontal.
-*   **Refinamentos UI/UX:**
-    *   **Header Flexível:** Uso de `flex-wrap` para adaptação natural de títulos e botões.
-    *   **Prepend Rows:** Novos lançamentos são inseridos no topo da lista para feedback imediato.
-    *   **Mobile Actions:** Botões simplificados (ícones) para economizar espaço em telas pequenas.
-
-### 5.6 Graceful Redirects — URLs Malformadas (v3.4)
-*   **Problema:** Acessar `/admin/leads/view` ou `/admin/leads/edit` sem o parâmetro `{id}` causava erro `405 Method Not Allowed`.
-*   **Solução:** Adicionadas rotas de fallback no `routes.php` do LawFirm (sem modificar o core do Krayin) que redirecionam para `admin.leads.index`.
-*   **Padrão:** Para qualquer rota Krayin que exija `{id}`, registrar um `Route::get` sem parâmetro que redireciona para a listagem correspondente.
-
-## 6. Padrões de Frontend (UI/UX - v3.2)
+## 6. Padrões de Frontend (UI/UX)
 
 ### 6.1 Conflito Vue.js vs Alpine.js
 O Krayin (Core) utiliza uma instância global do Vue.js que processa todo o DOM. Isso causa conflitos fatais ao tentar usar Alpine.js dentro de views Blade (`.blade.php`), pois o Vue remove as tags `<template>` e diretivas antes que o Alpine possa processá-las.
 
 **Solução Padrão (The "Financial Tab" Pattern):**
-Para componentes complexos dentro do Admin (ex: Gestão Financeira, Checklists):
+Para componentes complexos dentro do Admin (ex: Gestão Financeira, Checklists, Painel de Ferramentas de Lead):
 1.  **Server-Side Rendering:** Use Blade (`@foreach`) para renderizar o estado inicial.
-2.  **Interatividade:** Use **Vanilla JavaScript** com Event Delegation.
+2.  **Interatividade:** Use **Vanilla JavaScript** com Event Delegation ou `MutationObserver` para reagir a mudanças no DOM do Vue.
 3.  **Estado:** Armazene estado simples em variáveis globais ou `dataset` attributes.
 4.  **Avoid:** Não use Alpine.js (`x-data`, `x-for`) nem componentes Vue misturados nessas views, a menos que sejam componentes Vue registrados globalmente no Krayin.
 
@@ -225,3 +325,23 @@ Devido ao wrapper `$.extend.bindToFetch` do Krayin e à re-renderização do DOM
 *   **Tailwind CSS:** Padrão para novos componentes.
 *   **Bootstrap:** Legado (evitar em novos desenvolvimentos).
 *   **Ícones:** Usar classes de ícone do Krayin (`icon-save`, `icon-plus`) ou SVGs inline para consistência.
+
+### 6.4 Formulários Complexos e Abas Externas (External Tabs Pattern)
+Em formulários extensos como a criação e edição de **Processos**, separar a UI em abas (ex: Prazos, Notas, Financeiro, Documentos) resulta em inputs HTML que ficam de fora da tag `<form>` principal, não sendo enviados no submit nativo.
+
+**Solução Padrão (The "Append External Tabs" Pattern):**
+1.  **Interceptação do Submit:** O formulário principal (`<x-admin::form>`) dispara um evento no submit via `onsubmit="window.appendExternalTabs(event, this)"`.
+2.  **Clonagem de Inputs:** A função JavaScript `window.appendExternalTabs` localiza os inputs dentro das `divs` e `tables` externas (ex: `#container-notas`, `#tbody-prazos`).
+3.  **Injeção Dinâmica:** Os inputs são clonados (como `hidden`) usando `cloneNode(true)`, seus valores são copiados (para garantir persistência de selects/textareas dinâmicos) e então anexados ao `<form>` principal.
+4.  **Prevenção de Duplicidade:** Um flag (`dataset.appended = 'true'`) é usado para evitar conexões repetidas caso ocorra um duplo clique.
+*   **Vantagem:** Permite manter a organização visual em abas limpas e isoladas, sem quebrar o fluxo de salvamento nativo e automático do Krayin CRM.
+
+### 6.5 Sub-formulários via AJAX (Non-Nested Forms Pattern)
+O HTML5 proíbe estritamente a existência de tags `<form>` aninhadas. Em contextos onde uma view inteira já está delimitada por um `<form>` principal (como na Edição de Processos), tentar criar um formulário secundário (ex: para upload síncrono de documentos) causará quebras no DOM.
+
+**Solução Padrão (AJAX + FormData):**
+Componentes complexos como `documents.blade.php` devem ser arquitetados **sem tags `<form>` próprias**:
+1.  **Inputs Soltos:** Os `<input type="file">` e selects são renderizados livremente no HTML.
+2.  **JavaScript e FormData:** Botões de ação (`onclick`) disparam funções (ex: `window.lfDocsUploadFiles()`) que coletam os dados dos inputs em memória via API `FormData`.
+3.  **Segurança (CSRF):** O token CSRF deve ser lido dinamicamente da meta tag (ex: `window.lfDocsGetCsrfToken()`) e injetado nos *headers* da requisição (`X-CSRF-TOKEN`).
+4.  **XMLHttpRequest/Fetch:** A submissão ocorre de forma totalmente assíncrona. Em caso de sucesso (status 200), realiza-se um `window.location.reload()` ou uma atualização controlada do DOM para exibir os novos registros.
