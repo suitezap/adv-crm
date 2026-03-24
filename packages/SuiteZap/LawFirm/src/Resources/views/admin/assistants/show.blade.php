@@ -232,8 +232,11 @@
                             </button>
                         </div>
 
-                        <div id="result-placeholder" class="text-center py-12 text-gray-400">
-                            <p>Preencha o formulário e clique em "Gerar Prompt".</p>
+                        <div id="result-placeholder"
+                            style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 220px; text-align: center; color: #9ca3af; font-size: .85rem; gap: 8px;">
+                            <span style="font-size: 2.5rem; opacity: .5;">⚖️</span>
+                            <span>Preencha os campos e clique em <strong>"Gerar Prompt"</strong> ou <strong>"Executar
+                                    com IA"</strong></span>
                         </div>
 
                         <div id="loading-indicator"

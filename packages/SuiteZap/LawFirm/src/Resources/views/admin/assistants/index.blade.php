@@ -11,10 +11,10 @@
         @push('styles')
             <style>
                 /* ============================================================
-                                                                   ASSISTANTS PAGE — Krayin-native styles
-                                                                   Grid:  2 cards per row  (max-md: 1 col)
-                                                                   Modal: Same lf-modal-* vocabulary as lead-tools-panel
-                                                                ============================================================ */
+                                                                                   ASSISTANTS PAGE — Krayin-native styles
+                                                                                   Grid:  2 cards per row  (max-md: 1 col)
+                                                                                   Modal: Same lf-modal-* vocabulary as lead-tools-panel
+                                                                                ============================================================ */
 
                 /* ── Native CSS grid (same max-* convention as Krayin) ─── */
                 .lf-assist-grid {
@@ -31,12 +31,70 @@
 
                 /* ── Card hover ────────────────────────────────────────── */
                 .lf-assist-card {
-                    transition: border-color 0.15s, box-shadow 0.15s;
+                    position: relative;
+                    overflow: hidden;
+                    transition: border-color 0.15s, box-shadow 0.15s, transform 0.18s;
+                }
+
+                .lf-assist-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 3px;
+                    background: linear-gradient(90deg, #7c3aed, #9d4edd);
+                    opacity: 1;
+                    transition: height .18s;
                 }
 
                 .lf-assist-card:hover {
                     border-color: #c4b5fd !important;
-                    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.10);
+                    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.12);
+                    transform: translateY(-2px);
+                }
+
+                .lf-assist-card:hover::before {
+                    height: 4px;
+                }
+
+                .dark .lf-assist-card:hover {
+                    border-color: #7c3aed !important;
+                    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.18);
+                }
+
+                .lf-assist-card-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 0.75rem;
+                }
+
+                .lf-assist-card-icon {
+                    width: 38px;
+                    height: 38px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 8px;
+                    font-size: 1.25rem;
+                    background: linear-gradient(135deg, rgba(124, 58, 237, .1), rgba(157, 78, 221, .1));
+                    flex-shrink: 0;
+                }
+
+                .dark .lf-assist-card-icon {
+                    background: linear-gradient(135deg, rgba(124, 58, 237, .2), rgba(157, 78, 221, .2));
+                }
+
+                .lf-assist-card-title {
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: #1f2937;
+                    margin: 0;
+                }
+
+                .dark .lf-assist-card-title {
+                    color: #f3f4f6;
                 }
 
                 /* ── Category label ─────────────────────────────────────── */
@@ -590,9 +648,10 @@
                                 <div>
 
                                     {{-- Title --}}
-                                    <h3 class="mb-1 text-base font-bold text-gray-800 dark:text-white">
-                                        {{ $template->icon ?? '🤖' }} {{ $template->title }}
-                                    </h3>
+                                    <div class="lf-assist-card-header">
+                                        <div class="lf-assist-card-icon">{{ $template->icon ?? '🤖' }}</div>
+                                        <div class="lf-assist-card-title">{{ $template->title }}</div>
+                                    </div>
 
                                     {{-- Description --}}
                                     <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -614,12 +673,12 @@
                                 <div class="mt-4 border-t border-gray-100 pt-3 dark:border-gray-800">
                                     <button type="button" class="lf-btn-primary"
                                         onclick="window.lfAssistants.open(
-                                                                                                                                                        {{ $template->id }},
-                                                                                                                                                        '{{ addslashes($template->title) }}',
-                                                                                                                                                        '{{ $template->slug }}',
-                                                                                                                                                        {{ json_encode($template->prompt_structure) }},
-                                                                                                                                                        {{ $template->n8n_webhook_url ? 'true' : 'false' }}
-                                                                                                                                                    )">
+                                                                                                                                                                                        {{ $template->id }},
+                                                                                                                                                                                        '{{ addslashes($template->title) }}',
+                                                                                                                                                                                        '{{ $template->slug }}',
+                                                                                                                                                                                        {{ json_encode($template->prompt_structure) }},
+                                                                                                                                                                                        {{ $template->n8n_webhook_url ? 'true' : 'false' }}
+                                                                                                                                                                                    )">
                                         ✨ Usar Assistente
                                     </button>
                                 </div>
@@ -685,9 +744,11 @@
                                 </button>
                             </div>
                             <div class="lf-result-body">
-                                <div id="lf-assist-placeholder" class="lf-result-placeholder">
-                                    Preencha os campos e clique em <strong>"Gerar Prompt"</strong> ou <strong>"Executar
-                                        com IA"</strong>.
+                                <div id="lf-assist-placeholder" class="lf-result-placeholder"
+                                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 220px; text-align: center; color: #9ca3af; font-size: .85rem; gap: 8px;">
+                                    <span style="font-size: 2.5rem; opacity: .5;">⚖️</span>
+                                    <span>Preencha os campos e clique em <strong>"Gerar Prompt"</strong> ou
+                                        <strong>"Executar com IA"</strong></span>
                                 </div>
                                 <div id="lf-assist-loading" class="lf-result-loading">
                                     <div class="lf-spinner"></div>

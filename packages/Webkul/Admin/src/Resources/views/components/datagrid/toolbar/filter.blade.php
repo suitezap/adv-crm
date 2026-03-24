@@ -1,19 +1,10 @@
-<v-datagrid-filter
-    :src="src"
-    :is-loading="isLoading"
-    :available="available"
-    :applied="applied"
-    @applyFilters="filter"
-    @applySavedFilter="applySavedFilter"
->
+<v-datagrid-filter :src="src" :is-loading="isLoading" :available="available" :applied="applied" @applyFilters="filter"
+    @applySavedFilter="applySavedFilter">
     {{ $slot }}
 </v-datagrid-filter>
 
 @pushOnce('scripts')
-    <script
-        type="text/x-template"
-        id="v-datagrid-filter-template"
-    >
+<script type="text/x-template" id="v-datagrid-filter-template">
         <slot
             name="filter"
             :available="available"
@@ -903,510 +894,518 @@
         </slot>
     </script>
 
-    <script type="module">
-        app.component('v-datagrid-filter', {
-            template: '#v-datagrid-filter-template',
+<script type="module">
+    app.component('v-datagrid-filter', {
+        template: '#v-datagrid-filter-template',
 
-            props: ['isLoading', 'available', 'applied', 'src'],
+        props: ['isLoading', 'available', 'applied', 'src'],
 
-            emits: ['applyFilters', 'applySavedFilter'],
+        emits: ['applyFilters', 'applySavedFilter'],
 
-            data() {
-                return {
-                    savedFilters: {
-                        available: [],
+        data() {
+            return {
+                savedFilters: {
+                    available: [],
 
-                        applied: null,
+                    applied: null,
 
-                        params: {
-                            filters: {
-                                columns: [],
-                            },
+                    params: {
+                        filters: {
+                            columns: [],
                         },
                     },
+                },
 
-                    filters: {
-                        columns: [],
-                    },
+                filters: {
+                    columns: [],
+                },
 
-                    isShowSavedFilters: false,
+                isShowSavedFilters: false,
 
-                    isFilterDirty: false,
-                };
+                isFilterDirty: false,
+            };
+        },
+
+        mounted() {
+            this.filters.columns = this.getAppliedColumns();
+
+            this.savedFilters.params.filters.columns = JSON.parse(JSON.stringify(this.filters.columns));
+
+            this.getSavedFilters();
+        },
+
+        computed: {
+            getAppliedSavedFilter() {
+                return this.savedFilters.available.find((filter) => filter.id == this.applied.savedFilterId);
+            },
+        },
+
+        methods: {
+            /**
+             * Has any column.
+             *
+             * @returns {boolean}
+             */
+            hasAnyColumn() {
+                return filters.columns.length;
             },
 
-            mounted() {
-                this.filters.columns = this.getAppliedColumns();
+            /**
+             * Get applied columns.
+             *
+             * @returns {object}
+             */
+            getAppliedColumns() {
+                return this.applied.filters.columns.filter((column) => column.index !== 'all');
+            },
 
+            /**
+             * Has any applied column.
+             *
+             * @returns {boolean}
+             */
+            hasAnyAppliedColumn() {
+                return this.getAppliedColumns().length > 0;
+            },
+
+            /**
+             * Go back to filters.
+             *
+             * @returns {void}
+             */
+            backToFilters() {
                 this.savedFilters.params.filters.columns = JSON.parse(JSON.stringify(this.filters.columns));
 
-                this.getSavedFilters();
+                this.isShowSavedFilters = !this.isShowSavedFilters;
             },
 
-            computed: {
-                getAppliedSavedFilter() {
-                    return this.savedFilters.available.find((filter) => filter.id == this.applied.savedFilterId);
-                },
+            /**
+             * Applies the saved filter.
+             *
+             * @param {Object} filter - The filter to be applied.
+             */
+            applySavedFilter(filter) {
+                this.$emit('applySavedFilter', filter);
             },
 
-            methods: {
-                /**
-                 * Has any column.
-                 *
-                 * @returns {boolean}
-                 */
-                hasAnyColumn() {
-                    return filters.columns.length;
-                },
+            /**
+             * Remove all applied filters.
+             *
+             * @returns {void}
+             */
+            removeAllAppliedFilters() {
+                this.filters = {
+                    columns: [],
+                };
 
-                /**
-                 * Get applied columns.
-                 *
-                 * @returns {object}
-                 */
-                getAppliedColumns() {
-                    return this.applied.filters.columns.filter((column) => column.index !== 'all');
-                },
+                this.isFilterDirty = true;
+            },
 
-                /**
-                 * Has any applied column.
-                 *
-                 * @returns {boolean}
-                 */
-                hasAnyAppliedColumn() {
-                    return this.getAppliedColumns().length > 0;
-                },
+            /**
+             * Remove filter option from save filters screen.
+             *
+             * @returns {void}
+             */
+            removeSavedFilterColumnValue(column, value) {
+                if (column.allow_multiple_values) {
+                    column.value = column.value.filter((columnValue) => columnValue !== value);
+                } else {
+                    column.value = '';
+                }
+            },
 
-                /**
-                 * Go back to filters.
-                 *
-                 * @returns {void}
-                 */
-                backToFilters() {
-                    this.savedFilters.params.filters.columns = JSON.parse(JSON.stringify(this.filters.columns));
+            handleSaveFilterForm() {
+                const saveFilterForm = document.getElementById('save-filter');
 
-                    this.isShowSavedFilters = ! this.isShowSavedFilters;
-                },
+                if (saveFilterForm) {
+                    saveFilterForm.click();
+                }
+            },
 
-                /**
-                 * Applies the saved filter.
-                 *
-                 * @param {Object} filter - The filter to be applied.
-                 */
-                applySavedFilter(filter) {
-                    this.$emit('applySavedFilter', filter);
-                },
+            /**
+             * Save filters to the database.
+             *
+             * @returns {void}
+             */
+            createOrUpdateFilter(params, { setErrors }) {
+                let applied = JSON.parse(JSON.stringify(this.applied));
 
-                /**
-                 * Remove all applied filters.
-                 *
-                 * @returns {void}
-                 */
-                removeAllAppliedFilters() {
-                    this.filters = {
-                        columns: [],
-                    };
+                applied.filters.columns = this.savedFilters.params.filters.columns.filter((column) => this.hasAnyValue(column));
 
-                    this.isFilterDirty = true;
-                },
+                if (params.id) {
+                    params._method = 'PUT';
+                }
 
-                /**
-                 * Remove filter option from save filters screen.
-                 *
-                 * @returns {void}
-                 */
-                removeSavedFilterColumnValue(column, value) {
-                    if (column.allow_multiple_values) {
-                        column.value = column.value.filter((columnValue) => columnValue !== value);
-                    } else {
-                        column.value = '';
-                    }
-                },
+                this.$axios.post(params.id ? `{{ route('admin.datagrid.saved_filters.update', '') }}/${params.id}` : "{{ route('admin.datagrid.saved_filters.store') }}", {
+                    src: this.src,
+                    applied,
+                    ...params,
+                })
+                    .then(response => {
+                        if (!params.id) {
+                            this.savedFilters.available.push(response.data.data);
+                        } else {
+                            this.savedFilters.available = this.savedFilters.available.map((filter) => {
+                                if (filter.id == response.data.data.id) {
+                                    return response.data.data;
+                                }
 
-                handleSaveFilterForm() {
-                    const saveFilterForm = document.getElementById('save-filter');
+                                return filter;
+                            });
+                        }
 
-                    if (saveFilterForm) {
-                        saveFilterForm.click();
-                    }
-                },
+                        this.savedFilters.name = '';
 
-                /**
-                 * Save filters to the database.
-                 *
-                 * @returns {void}
-                 */
-                createOrUpdateFilter(params, { setErrors }) {
-                    let applied = JSON.parse(JSON.stringify(this.applied));
+                        this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
 
-                    applied.filters.columns = this.savedFilters.params.filters.columns.filter((column) => this.hasAnyValue(column));
-
-                    if (params.id) {
-                        params._method = 'PUT';
-                    }
-
-                    this.$axios.post(params.id ? `{{ route('admin.datagrid.saved_filters.update', '') }}/${params.id}` : "{{ route('admin.datagrid.saved_filters.store') }}", {
-                        src: this.src,
-                        applied,
-                        ...params,
+                        this.isShowSavedFilters = false;
                     })
-                        .then(response => {
-                            if (! params.id) {
-                                this.savedFilters.available.push(response.data.data);
-                            } else {
-                                this.savedFilters.available = this.savedFilters.available.map((filter) => {
-                                    if (filter.id == response.data.data.id) {
-                                        return response.data.data;
-                                    }
-
-                                    return filter;
-                                });
-                            }
-
-                            this.savedFilters.name = '';
-
-                            this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-
-                            this.isShowSavedFilters = false;
-                        })
-                        .catch(error => {
-                            if (error.response.status == 422) {
-                                setErrors(error.response.data.errors);
-                            } else {
-                                this.$emitter.emit('add-flash', { type: 'error',  message: response.data.message });
-                            }
-                        });
-                },
-
-                /**
-                 * Retrieves the saved filters.
-                 *
-                 * @returns {void}
-                 */
-                getSavedFilters() {
-                    this.$axios
-                        .get('{{ route('admin.datagrid.saved_filters.index') }}', {
-                            params: { src: this.src }
-                        })
-                        .then(response => {
-                            this.savedFilters.available = response.data.data ?? [];
-                        })
-                        .catch(error => {});
-                },
-
-                /**
-                 * Delete the saved filter.
-                 *
-                 * @returns {void}
-                 */
-                deleteSavedFilter(filter) {
-                    this.$emitter.emit('open-confirm-modal', {
-                        agree: () => {
-                            this.$axios.delete(`{{ route('admin.datagrid.saved_filters.destroy', '') }}/${filter.id}`)
-                                .then(response => {
-                                    this.applySavedFilter(null);
-
-                                    this.savedFilters.available = this.savedFilters.available.filter((savedFilter) => savedFilter.id !== filter.id);
-
-                                    this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-                                })
-                                .catch(error => {
-                                    this.$emitter.emit('add-flash', { type: 'error', message: response.data.message });
-                                });
+                    .catch(error => {
+                        if (error.response.status == 422) {
+                            setErrors(error.response.data.errors);
+                        } else {
+                            this.$emitter.emit('add-flash', { type: 'error', message: response.data.message });
                         }
                     });
-                },
+            },
 
-                /**
-                 * Apply all added filters.
-                 *
-                 * @returns {void}
-                 */
-                applyFilters() {
-                    this.$emit('applyFilters', this.filters);
+            /**
+             * Retrieves the saved filters.
+             *
+             * @returns {void}
+             */
+            getSavedFilters() {
+                this.$axios
+                    .get('{{ route('admin.datagrid.saved_filters.index') }}', {
+                        params: { src: this.src }
+                    })
+                    .then(response => {
+                        this.savedFilters.available = response.data.data ?? [];
+                    })
+                    .catch(error => { });
+            },
 
-                    this.$refs.filterDrawer.close();
-                },
+            /**
+             * Delete the saved filter.
+             *
+             * @returns {void}
+             */
+            deleteSavedFilter(filter) {
+                this.$emitter.emit('open-confirm-modal', {
+                    agree: () => {
+                        this.$axios.delete(`{{ route('admin.datagrid.saved_filters.destroy', '') }}/${filter.id}`)
+                            .then(response => {
+                                this.applySavedFilter(null);
 
-                /**
-                 * Add filter.
-                 *
-                 * @param {Event} $event
-                 * @param {object} column
-                 * @param {object} additional
-                 * @returns {void}
-                 */
-                addFilter($event, column = null, additional = {}) {
-                    let quickFilter = additional?.quickFilter;
+                                this.savedFilters.available = this.savedFilters.available.filter((savedFilter) => savedFilter.id !== filter.id);
 
-                    if (quickFilter?.isActive) {
-                        let options = quickFilter.selectedFilter;
-
-                        switch (column.type) {
-                            case 'date':
-                            case 'datetime':
-                                this.applyColumnValues(column, options.name);
-
-                                break;
-
-                            default:
-                                break;
-                        }
-                    } else {
-                        /**
-                         * Here, either a real event will come or a string value. If a string value is present, then
-                         * we create a similar event-like structure to avoid any breakage and make it easy to use.
-                         */
-                        if ($event?.target?.value === undefined) {
-                            $event = {
-                                target: {
-                                    value: $event,
-                                }
-                            };
-                        }
-
-                        this.applyColumnValues(column, $event.target.value, additional);
-
-                        if (column) {
-                            $event.target.value = '';
-                        }
+                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                            })
+                            .catch(error => {
+                                this.$emitter.emit('add-flash', { type: 'error', message: response.data.message });
+                            });
                     }
-                },
+                });
+            },
 
-                /**
-                 * Apply column values.
-                 *
-                 * @param {object} column
-                 * @param {string} requestedValue
-                 * @param {object} additional
-                 * @returns {void}
-                 */
-                applyColumnValues(column, requestedValue, additional = {}) {
-                    let appliedColumn = this.findAppliedColumn(column?.index);
+            /**
+             * Apply all added filters.
+             *
+             * @returns {void}
+             */
+            applyFilters() {
+                this.$emit('applyFilters', this.filters);
 
-                    if (
-                        requestedValue === undefined ||
-                        requestedValue === '' ||
-                        (appliedColumn?.allow_multiple_values && appliedColumn?.value.includes(requestedValue)) ||
-                        (! appliedColumn?.allow_multiple_values && appliedColumn?.value === requestedValue)
-                    ) {
-                        return;
-                    }
+                this.$refs.filterDrawer.close();
+            },
+
+            /**
+             * Add filter.
+             *
+             * @param {Event} $event
+             * @param {object} column
+             * @param {object} additional
+             * @returns {void}
+             */
+            addFilter($event, column = null, additional = {}) {
+                let quickFilter = additional?.quickFilter;
+
+                if (quickFilter?.isActive) {
+                    let options = quickFilter.selectedFilter;
 
                     switch (column.type) {
                         case 'date':
                         case 'datetime':
-                            let { range } = additional;
-
-                            if (appliedColumn) {
-                                if (range) {
-                                    let appliedRanges = ['', ''];
-
-                                    if (typeof appliedColumn.value !== 'string') {
-                                        appliedRanges = appliedColumn.value[0];
-                                    }
-
-                                    if (range.name == 'from') {
-                                        appliedRanges[0] = requestedValue;
-                                    }
-
-                                    if (range.name == 'to') {
-                                        appliedRanges[1] = requestedValue;
-                                    }
-
-                                    appliedColumn.value = [appliedRanges];
-                                } else {
-                                    appliedColumn.value = requestedValue;
-                                }
-                            } else {
-                                if (range) {
-                                    let appliedRanges = ['', ''];
-
-                                    if (range.name == 'from') {
-                                        appliedRanges[0] = requestedValue;
-                                    }
-
-                                    if (range.name == 'to') {
-                                        appliedRanges[1] = requestedValue;
-                                    }
-
-                                    this.filters.columns.push({
-                                        index: column.index,
-                                        label: column.label,
-                                        type: column.type,
-                                        value: [appliedRanges]
-                                    });
-                                } else {
-                                    this.filters.columns.push({
-                                        index: column.index,
-                                        label: column.label,
-                                        type: column.type,
-                                        value: requestedValue
-                                    });
-                                }
-                            }
+                            this.applyColumnValues(column, options.name);
 
                             break;
 
                         default:
-                            if (appliedColumn) {
-                                if (appliedColumn.allow_multiple_values) {
-                                    appliedColumn.value.push(requestedValue);
-                                } else {
-                                    appliedColumn.value = requestedValue;
+                            break;
+                    }
+                } else {
+                    /**
+                     * Here, either a real event will come or a string value. If a string value is present, then
+                     * we create a similar event-like structure to avoid any breakage and make it easy to use.
+                     */
+                    if ($event?.target?.value === undefined) {
+                        $event = {
+                            target: {
+                                value: $event,
+                            }
+                        };
+                    }
+
+                    this.applyColumnValues(column, $event.target.value, additional);
+
+                    if (column) {
+                        $event.target.value = '';
+                    }
+                }
+            },
+
+            /**
+             * Apply column values.
+             *
+             * @param {object} column
+             * @param {string} requestedValue
+             * @param {object} additional
+             * @returns {void}
+             */
+            applyColumnValues(column, requestedValue, additional = {}) {
+                let appliedColumn = this.findAppliedColumn(column?.index);
+
+                if (
+                    requestedValue === undefined ||
+                    requestedValue === '' ||
+                    (appliedColumn?.allow_multiple_values && appliedColumn?.value.includes(requestedValue)) ||
+                    (!appliedColumn?.allow_multiple_values && appliedColumn?.value === requestedValue)
+                ) {
+                    return;
+                }
+
+                switch (column.type) {
+                    case 'date':
+                    case 'datetime':
+                        let { range } = additional;
+
+                        if (appliedColumn) {
+                            if (range) {
+                                let appliedRanges = ['', ''];
+
+                                if (typeof appliedColumn.value !== 'string') {
+                                    appliedRanges = appliedColumn.value[0];
                                 }
+
+                                if (range.name == 'from') {
+                                    appliedRanges[0] = requestedValue;
+                                }
+
+                                if (range.name == 'to') {
+                                    appliedRanges[1] = requestedValue;
+                                }
+
+                                appliedColumn.value = [appliedRanges];
+                            } else {
+                                appliedColumn.value = requestedValue;
+                            }
+                        } else {
+                            if (range) {
+                                let appliedRanges = ['', ''];
+
+                                if (range.name == 'from') {
+                                    appliedRanges[0] = requestedValue;
+                                }
+
+                                if (range.name == 'to') {
+                                    appliedRanges[1] = requestedValue;
+                                }
+
+                                this.filters.columns.push({
+                                    index: column.index,
+                                    label: column.label,
+                                    type: column.type,
+                                    value: [appliedRanges]
+                                });
                             } else {
                                 this.filters.columns.push({
                                     index: column.index,
                                     label: column.label,
                                     type: column.type,
-                                    value: column.allow_multiple_values ? [requestedValue] : requestedValue,
-                                    allow_multiple_values: column.allow_multiple_values,
+                                    value: requestedValue
                                 });
                             }
-
-                            break;
-                    }
-
-                    this.isFilterDirty = true;
-                },
-
-                /**
-                 * Get formatted dates.
-                 *
-                 * @param {object} appliedColumn
-                 * @returns {string}
-                 */
-                getFormattedDates(appliedColumn)
-                {
-                    if (! appliedColumn) {
-                        return '';
-                    }
-
-                    if (typeof appliedColumn.value === 'string') {
-                        const availableColumn = this.available.columns.find(column => column.index === appliedColumn.index);
-
-                        if (availableColumn.filterable_type === 'date_range' || availableColumn.filterable_type === 'datetime_range') {
-                            const option = availableColumn.filterable_options.find(option => option.name === appliedColumn.value);
-
-                            return option.label;
                         }
 
+                        break;
+
+                    default:
+                        if (appliedColumn) {
+                            if (appliedColumn.allow_multiple_values) {
+                                appliedColumn.value.push(requestedValue);
+                            } else {
+                                appliedColumn.value = requestedValue;
+                            }
+                        } else {
+                            this.filters.columns.push({
+                                index: column.index,
+                                label: column.label,
+                                type: column.type,
+                                value: column.allow_multiple_values ? [requestedValue] : requestedValue,
+                                allow_multiple_values: column.allow_multiple_values,
+                            });
+                        }
+
+                        break;
+                }
+
+                this.isFilterDirty = true;
+            },
+
+            /**
+             * Get formatted dates.
+             *
+             * @param {object} appliedColumn
+             * @returns {string}
+             */
+            getFormattedDates(appliedColumn) {
+                if (!appliedColumn) {
+                    return '';
+                }
+
+                if (typeof appliedColumn.value === 'string') {
+                    const availableColumn = this.available.columns.find(column => column.index === appliedColumn.index);
+
+                    // Guard: available.columns may be empty during a sort/filter AJAX reload
+                    if (!availableColumn) {
                         return appliedColumn.value;
                     }
 
-                    if (! appliedColumn.value.length) {
-                        return '';
+                    if (availableColumn.filterable_type === 'date_range' || availableColumn.filterable_type === 'datetime_range') {
+                        const option = availableColumn.filterable_options.find(option => option.name === appliedColumn.value);
+
+                        return option?.label ?? appliedColumn.value;
                     }
 
-                    return appliedColumn.value[0].join(' to ');
-                },
+                    return appliedColumn.value;
+                }
 
-                /**
-                 * Check if any values are applied for the specified column.
-                 *
-                 * @param {object} column
-                 * @returns {boolean}
-                 */
-                hasAnyValue(column) {
-                    if (column.allow_multiple_values) {
-                        return column.value.length > 0;
-                    }
+                if (!appliedColumn.value || !appliedColumn.value.length) {
+                    return '';
+                }
 
-                    return column.value !== '';
-                },
+                // Guard: value[0] must be an array with a .join() method
+                const rangeValue = appliedColumn.value[0];
 
-                /**
-                 * Find applied column.
-                 *
-                 * @param {string} columnIndex
-                 * @returns {object}
-                 */
-                findAppliedColumn(columnIndex) {
-                    return this.filters.columns.find(column => column.index === columnIndex);
-                },
+                if (!Array.isArray(rangeValue)) {
+                    return typeof rangeValue === 'string' ? rangeValue : '';
+                }
 
-                /**
-                 * Check if any values are applied for the specified column.
-                 *
-                 * @param {string} columnIndex
-                 * @returns {boolean}
-                 */
-                hasAnyAppliedColumnValues(columnIndex) {
-                    let appliedColumn = this.findAppliedColumn(columnIndex);
-
-                    if (! appliedColumn) {
-                        return false;
-                    }
-
-                    return this.hasAnyValue(appliedColumn);
-                },
-
-                /**
-                 * Get applied values for the specified column.
-                 *
-                 * @param {string} columnIndex
-                 * @returns {Array}
-                 */
-                getAppliedColumnValues(columnIndex) {
-                    const appliedColumn = this.findAppliedColumn(columnIndex);
-
-                    if (appliedColumn?.allow_multiple_values) {
-                        return appliedColumn?.value ?? [];
-                    }
-
-                    return appliedColumn?.value ?? '';
-                },
-
-                /**
-                 * Remove a specific value from the applied values of the specified column.
-                 *
-                 * @param {string} columnIndex
-                 * @param {any} appliedColumnValue
-                 * @returns {void}
-                 */
-                removeAppliedColumnValue(columnIndex, appliedColumnValue) {
-                    let appliedColumn = this.findAppliedColumn(columnIndex);
-
-                    if (appliedColumn?.type === 'date' || appliedColumn?.type === 'datetime') {
-                        appliedColumn.value = [];
-                    } else {
-                        if (appliedColumn.allow_multiple_values) {
-                            appliedColumn.value = appliedColumn?.value.filter(value => value !== appliedColumnValue);
-                        } else {
-                            appliedColumn.value = '';
-                        }
-                    }
-
-                    /**
-                     * Clean up is done here. If there are no applied values present, there is no point in including the applied column as well.
-                     */
-                    if (! appliedColumn.value.length) {
-                        this.filters.columns = this.filters.columns.filter(column => column.index !== columnIndex);
-                    }
-
-                    this.isFilterDirty = true;
-                },
-
-                /**
-                 * Remove all values from the applied values of the specified column.
-                 *
-                 * @param {string} columnIndex
-                 * @returns {void}
-                 */
-                removeAppliedColumnAllValues(columnIndex) {
-                    this.filters.columns = this.filters.columns.filter(column => column.index !== columnIndex);
-
-                    this.isFilterDirty = true;
-                },
+                return rangeValue.join(' to ');
             },
-        });
-    </script>
 
-    <script 
-        type="text/x-template"
-        id="v-datagrid-searchable-dropdown-template"
-    >
+            /**
+             * Check if any values are applied for the specified column.
+             *
+             * @param {object} column
+             * @returns {boolean}
+             */
+            hasAnyValue(column) {
+                if (column.allow_multiple_values) {
+                    return column.value.length > 0;
+                }
+
+                return column.value !== '';
+            },
+
+            /**
+             * Find applied column.
+             *
+             * @param {string} columnIndex
+             * @returns {object}
+             */
+            findAppliedColumn(columnIndex) {
+                return this.filters.columns.find(column => column.index === columnIndex);
+            },
+
+            /**
+             * Check if any values are applied for the specified column.
+             *
+             * @param {string} columnIndex
+             * @returns {boolean}
+             */
+            hasAnyAppliedColumnValues(columnIndex) {
+                let appliedColumn = this.findAppliedColumn(columnIndex);
+
+                if (!appliedColumn) {
+                    return false;
+                }
+
+                return this.hasAnyValue(appliedColumn);
+            },
+
+            /**
+             * Get applied values for the specified column.
+             *
+             * @param {string} columnIndex
+             * @returns {Array}
+             */
+            getAppliedColumnValues(columnIndex) {
+                const appliedColumn = this.findAppliedColumn(columnIndex);
+
+                if (appliedColumn?.allow_multiple_values) {
+                    return appliedColumn?.value ?? [];
+                }
+
+                return appliedColumn?.value ?? '';
+            },
+
+            /**
+             * Remove a specific value from the applied values of the specified column.
+             *
+             * @param {string} columnIndex
+             * @param {any} appliedColumnValue
+             * @returns {void}
+             */
+            removeAppliedColumnValue(columnIndex, appliedColumnValue) {
+                let appliedColumn = this.findAppliedColumn(columnIndex);
+
+                if (appliedColumn?.type === 'date' || appliedColumn?.type === 'datetime') {
+                    appliedColumn.value = [];
+                } else {
+                    if (appliedColumn.allow_multiple_values) {
+                        appliedColumn.value = appliedColumn?.value.filter(value => value !== appliedColumnValue);
+                    } else {
+                        appliedColumn.value = '';
+                    }
+                }
+
+                /**
+                 * Clean up is done here. If there are no applied values present, there is no point in including the applied column as well.
+                 */
+                if (!appliedColumn.value.length) {
+                    this.filters.columns = this.filters.columns.filter(column => column.index !== columnIndex);
+                }
+
+                this.isFilterDirty = true;
+            },
+
+            /**
+             * Remove all values from the applied values of the specified column.
+             *
+             * @param {string} columnIndex
+             * @returns {void}
+             */
+            removeAppliedColumnAllValues(columnIndex) {
+                this.filters.columns = this.filters.columns.filter(column => column.index !== columnIndex);
+
+                this.isFilterDirty = true;
+            },
+        },
+    });
+</script>
+
+<script type="text/x-template" id="v-datagrid-searchable-dropdown-template">
         <x-admin::dropdown ::close-on-click="false">
             <!-- Dropdown Toggler -->
             <x-slot:toggle>
@@ -1472,59 +1471,59 @@
         </x-admin::dropdown>
     </script>
 
-    <script type="module">
-        app.component('v-datagrid-searchable-dropdown', {
-            template: '#v-datagrid-searchable-dropdown-template',
+<script type="module">
+    app.component('v-datagrid-searchable-dropdown', {
+        template: '#v-datagrid-searchable-dropdown-template',
 
-            props: ['datagridId', 'column'],
+        props: ['datagridId', 'column'],
 
-            data() {
-                return {
-                    isMinimumCharacters: false,
+        data() {
+            return {
+                isMinimumCharacters: false,
 
-                    searchedOptions: [],
+                searchedOptions: [],
+            };
+        },
+
+        methods: {
+            lookUp($event) {
+                let params = {
+                    datagrid_id: this.datagridId,
+                    column: this.column.index,
+                    search: $event.target.value,
                 };
-            },
 
-            methods: {
-                lookUp($event) {
-                    let params = {
-                        datagrid_id: this.datagridId,
-                        column: this.column.index,
-                        search: $event.target.value,
-                    };
-
-                    if (! (params['search'].length > 1)) {
-                        this.searchedOptions = [];
-
-                        this.isMinimumCharacters = false;
-
-                        return;
-                    }
-
-                    this.$axios
-                        .get('{{ route('admin.datagrid.look_up') }}', {
-                            params
-                        })
-                        .then(({
-                            data
-                        }) => {
-                            this.isMinimumCharacters = true;
-
-                            this.searchedOptions = data;
-                        });
-                },
-
-                selectOption(option) {
+                if (!(params['search'].length > 1)) {
                     this.searchedOptions = [];
 
-                    this.$emit('select-option', {
-                        target: {
-                            value: option.value
-                        }
+                    this.isMinimumCharacters = false;
+
+                    return;
+                }
+
+                this.$axios
+                    .get('{{ route('admin.datagrid.look_up') }}', {
+                        params
+                    })
+                    .then(({
+                        data
+                    }) => {
+                        this.isMinimumCharacters = true;
+
+                        this.searchedOptions = data;
                     });
-                },
-            }
-        });
-    </script>
+            },
+
+            selectOption(option) {
+                this.searchedOptions = [];
+
+                this.$emit('select-option', {
+                    target: {
+                        value: option.value
+                    }
+                });
+            },
+        }
+    });
+</script>
 @endpushOnce

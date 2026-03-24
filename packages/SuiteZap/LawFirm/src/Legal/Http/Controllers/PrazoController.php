@@ -10,7 +10,7 @@ use SuiteZap\LawFirm\Events\PrazoCreated;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
-use SuiteZap\LawFirm\Services\Whatsapp\EvolutionService;
+use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
 
 class PrazoController extends Controller
 {

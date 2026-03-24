@@ -56,3 +56,9 @@ Breadcrumbs::for('lawfirm.assistants.show', function (BreadcrumbTrail $trail) {
     $trail->parent('lawfirm.assistants.index');
     $trail->push('Executar Assistente');
 });
+
+// Dashboard > Assistente Jurídico (Escavador)
+Breadcrumbs::for('lawfirm.escavador.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Assistente Jurídico', route('lawfirm.escavador.index'));
+});

@@ -3,12 +3,13 @@
 namespace SuiteZap\LawFirm\AI\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 use SuiteZap\LawFirm\AI\Models\AssistantHistory;
-use SuiteZap\LawFirm\Services\N8nService;
+use SuiteZap\LawFirm\AI\Services\N8nService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\AI\Jobs\ProcessAiAssistant;
 use Webkul\Lead\Models\Lead;
@@ -34,17 +35,27 @@ class AssistantController extends Controller
         // Se não tiver assinatura, assume array vazio (só verá os gratuitos)
         $allowedModules = $subscription ? ($subscription->active_modules ?? []) : [];
 
-        // 2. Filtrar Templates (usa scope MotherShip)
-        $templates = AssistantTemplate::forTenant()
-            ->where('is_active', true)
-            ->where(function ($query) use ($allowedModules) {
-                // Mostra se o módulo for NULL (Público) OU se estiver na lista permitida
-                $query->whereNull('required_module')
-                    ->orWhereIn('required_module', $allowedModules);
-            })
-            ->orderBy('category')
-            ->orderBy('title')
-            ->get();
+        // 2. Cache de Templates com invalidação automática via versão global.
+        //    Quando um template é publicado/atualizado via MothershipTemplateController::upsert(),
+        //    a `ai_templates_cache_version` é incrementada, tornando esta key obsoleta.
+        //    Na próxima visita, o cache é reconstruído com os dados novos do Mothership.
+        $cacheVersion = (int) Cache::get('ai_templates_cache_version', 1);
+        $cacheKey = 'ai_templates:' . $tenantId . ':' . md5(implode(',', $allowedModules)) . ':v' . $cacheVersion;
+
+        $templates = Cache::remember($cacheKey, 3600, function () use ($allowedModules) {
+            return AssistantTemplate::forTenant()
+                ->where('is_active', true)
+                ->where(function ($query) use ($allowedModules) {
+                    // Mostra se o módulo for NULL (Público) OU se estiver na lista permitida
+                    $query->whereNull('required_module')
+                        ->orWhereIn('required_module', $allowedModules);
+                })
+                ->orderBy('category')
+                ->orderBy('title')
+                ->get()
+                ->unique('slug')  // Card tenant-específico (mesmo slug) tem prioridade sobre global
+                ->values();
+        });
 
         // 3. Extrair módulos de área únicos (IA-Trabalhista, IA-Civil, etc.) para o filtro
         $areas = $templates
@@ -79,7 +90,7 @@ class AssistantController extends Controller
         $aiBalance = $subscription ? (float) ($subscription->ai_tokens_balance ?? 0) : 0;
         if ($aiBalance <= 0) {
             return response()->json([
-                'error' => 'Saldo de IA insuficiente. Recarregue seu saldo para continuar usando os assistentes.'
+                'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.'
             ], 402);
         }
 
@@ -128,7 +139,7 @@ class AssistantController extends Controller
         $aiBalance = $subscription ? (float) ($subscription->ai_tokens_balance ?? 0) : 0;
         if ($aiBalance <= 0) {
             return response()->json([
-                'error' => 'Saldo de IA insuficiente. Recarregue seu saldo para continuar usando os assistentes.'
+                'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.'
             ], 402);
         }
 
@@ -235,6 +246,15 @@ class AssistantController extends Controller
             }
         }
 
+        // Guard: Check AI balance before allowing generation/execution
+        $subscription = MotherShipService::getCurrentSubscription();
+        $aiBalance = $subscription ? (float) ($subscription->ai_tokens_balance ?? 0) : 0;
+        if ($aiBalance <= 0) {
+            return response()->json([
+                'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.'
+            ], 402);
+        }
+
         $data = $validated['data'] ?? [];
         $action = $validated['action'];
 
@@ -266,6 +286,15 @@ class AssistantController extends Controller
         // 1. Carregar Lead e Template
         $lead = Lead::findOrFail($leadId);
         $template = AssistantTemplate::where('slug', 'pre-triagem-lead')->firstOrFail();
+
+        // Guard: Check AI balance before allowing generation/execution
+        $subscription = MotherShipService::getCurrentSubscription();
+        $aiBalance = $subscription ? (float) ($subscription->ai_tokens_balance ?? 0) : 0;
+        if ($aiBalance <= 0) {
+            return response()->json([
+                'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.'
+            ], 402);
+        }
 
         // 2. Validar Ação
         $action = $request->input('action', 'preview'); // preview | execute

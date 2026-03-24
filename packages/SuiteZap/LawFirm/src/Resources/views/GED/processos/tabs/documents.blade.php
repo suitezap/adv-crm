@@ -377,15 +377,15 @@
                         const li = document.createElement('li');
                         li.className = 'flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-100 dark:border-gray-700';
                         li.innerHTML = `
-                            <div class="flex items-center gap-2 overflow-hidden flex-1">
-                                <i class="icon-file text-blue-500"></i>
-                                <span class="text-sm text-gray-700 dark:text-gray-300 truncate">${file.name}</span>
-                                <span class="text-xs text-gray-500">(${window.lfDocsFormatSize(file.size)})</span>
-                            </div>
-                            <button type="button" onclick="window.lfDocsRemoveFile(${index})" class="text-red-500 hover:text-red-700 p-1">
-                                <i class="icon-delete"></i>
-                            </button>
-                        `;
+                                <div class="flex items-center gap-2 overflow-hidden flex-1">
+                                    <i class="icon-file text-blue-500"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300 truncate">${file.name}</span>
+                                    <span class="text-xs text-gray-500">(${window.lfDocsFormatSize(file.size)})</span>
+                                </div>
+                                <button type="button" onclick="window.lfDocsRemoveFile(${index})" class="text-red-500 hover:text-red-700 p-1">
+                                    <i class="icon-delete"></i>
+                                </button>
+                            `;
                         previewList.appendChild(li);
                     });
                 } else {
@@ -550,23 +550,29 @@
 
         window.lfDocsUpdateStatus = function (id, status) {
             const token = window.lfDocsGetCsrfToken();
-            const baseUrl = "{{ route('lawfirm.documents.update', ['id' => 0]) }}";
-            const finalUrl = baseUrl.replace('/0', '/' + id);
+            // Use __REPLACE_ID__ sentinel instead of '0' to avoid accidental replacements in URLs
+            const baseUrl = "{{ route('lawfirm.documents.update', ['id' => '__REPLACE_ID__']) }}";
+            const finalUrl = baseUrl.replace('__REPLACE_ID__', encodeURIComponent(id));
 
             const xhr = new XMLHttpRequest();
             xhr.open('PUT', finalUrl, true);
 
             xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('Accept', 'application/json');
             xhr.setRequestHeader('X-CSRF-TOKEN', token);
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
             xhr.onload = function () {
                 if (xhr.status >= 200 && xhr.status < 300) {
-                    console.log('Status atualizado');
-                    window.location.reload();
+                    // Update the badge in the row visually without a full reload
+                    console.log('Status atualizado com sucesso.');
                 } else {
-                    alert('Erro ao atualizar status');
+                    alert('Erro ao atualizar status (HTTP ' + xhr.status + ')');
                 }
+            };
+
+            xhr.onerror = function () {
+                alert('Erro de rede ao atualizar status.');
             };
 
             xhr.send(JSON.stringify({ status: status }));

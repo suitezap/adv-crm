@@ -273,7 +273,7 @@
                 {{-- CARD 3: INTELIGÊNCIA ARTIFICIAL --}}
                 <div class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
                     <div class="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-300">
-                        <span class="icon-star text-base"></span>
+                        <span class="icon-settings-sources text-base"></span>
                         Inteligência Artificial
                     </div>
 
@@ -299,12 +299,121 @@
                     <div class="flex items-center justify-between text-sm border-t border-gray-100 dark:border-gray-800 pt-2">
                         <span class="text-gray-500 dark:text-gray-400">Modalidade</span>
                         <span class="font-semibold capitalize text-gray-900 dark:text-white">
-                            {{ $subscription->ai_modality ?? 'prepaid' }}
+                            {{ ($subscription->ai_modality ?? 'prepaid') === 'prepaid' ? 'Pré-pago' : ucfirst($subscription->ai_modality) }}
                         </span>
+
                     </div>
                 </div>
 
             </div>{{-- /grid --}}
+
+            {{-- ── CARDS DE UPGRADE / COMPRA DE CRÉDITOS ─────────────────────── --}}
+            <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 mb-4">
+                <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4 dark:border-gray-800">
+                    <div class="flex items-center gap-2 text-base font-bold text-gray-800 dark:text-gray-200">
+                        <span class="icon-cart text-xl"></span>
+                        Upgrade & Créditos (Integração Asaas)
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                    {{-- Plano PRO --}}
+                    <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 lf-assistant-card">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-bold dark:text-white">Plano PRO Anual</h3>
+                            <span class="rounded bg-violet-100 px-2 py-1 text-xs font-bold text-violet-800">R$ 500,00</span>
+                        </div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Tenha acesso a todos os módulos, integrações premium e suporte estendido.</p>
+                        <button onclick="window.asaasCheckoutPlan('pro_anual', 500.00, 'Plano PRO Anual')" class="mt-auto rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition">
+                            Atualizar Assinatura
+                        </button>
+                    </div>
+
+                    {{-- Créditos de IA --}}
+                    <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 lf-assistant-card">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-bold dark:text-white">Créditos de IA</h3>
+                            <span class="rounded bg-blue-100 px-2 py-1 text-xs font-bold text-blue-800">Avulso</span>
+                        </div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Recarregue instantaneamente a cota de uso dos nossos assistentes especializados.</p>
+                        
+                        <div class="mt-auto flex flex-col gap-2">
+                            <button onclick="window.openPaymentModal(500, 5.00)" class="flex justify-between items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400">
+                                <span>Pacote Básico</span>
+                                <span class="font-bold">R$ 5,00</span>
+                            </button>
+                            <button onclick="window.openPaymentModal(1500, 10.00)" class="flex justify-between items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400">
+                                <span>Pacote Intermediário</span>
+                                <span class="font-bold">R$ 10,00</span>
+                            </button>
+                            <button onclick="window.openPaymentModal(2500, 15.00)" class="flex justify-between items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition">
+                                <span>Pacote Avançado</span>
+                                <span class="font-bold">R$ 15,00</span>
+                            </button>
+                        </div>
+                        
+                        {{-- Valor Personalizado --}}
+                        <div class="mt-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+                            <label class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 block">Outro Valor (R$)</label>
+                            <div class="flex gap-2 items-center">
+                                <div class="relative flex-1">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">R$</span>
+                                    <input type="number" id="customCreditInput" min="5" step="1" value="20" class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:border-brandColor focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 transition-all">
+                                </div>
+                                <button onclick="window.openCustomPaymentModal()" class="rounded-lg bg-gray-800 px-4 py-2 text-sm font-bold text-white hover:bg-gray-900 transition dark:bg-gray-700 dark:hover:bg-gray-600">
+                                    Gerar
+                                </button>
+                            </div>
+                            <p class="text-[10.5px] text-gray-400 mt-1.5 dark:text-gray-500"><i class="icon-info"></i> Taxa: R$ 1,00 = 100 Créditos de IA</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Estilos Pastéis Personalizados Independentes do Tailwind JIT --}}
+            <style>
+                .btn-pastel-pix { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+                .btn-pastel-pix:hover { background-color: #dcfce7; }
+                .dark .btn-pastel-pix { background-color: rgba(22, 101, 52, 0.25); color: #86efac; border-color: #14532d; }
+                .dark .btn-pastel-pix:hover { background-color: rgba(22, 101, 52, 0.45); }
+
+                .btn-pastel-card { background-color: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+                .btn-pastel-card:hover { background-color: #dbeafe; }
+                .dark .btn-pastel-card { background-color: rgba(30, 64, 175, 0.25); color: #93c5fd; border-color: #1e3a8a; }
+                .dark .btn-pastel-card:hover { background-color: rgba(30, 64, 175, 0.45); }
+                
+                .btn-pastel-card-inst { background-color: #f5f3ff; color: #3730a3; border: 1px solid #ddd6fe; }
+                .btn-pastel-card-inst:hover { background-color: #ede9fe; }
+                .dark .btn-pastel-card-inst { background-color: rgba(49, 46, 129, 0.4); color: #a78bfa; border-color: #312e81; }
+                .dark .btn-pastel-card-inst:hover { background-color: rgba(49, 46, 129, 0.6); }
+            </style>
+
+            {{-- Modal de Escolha de Pagamento (Compacto) --}}
+            <div id="paymentModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                <div class="w-full max-w-xs rounded-xl bg-white p-5 shadow-xl dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Forma de Pagamento</h3>
+                        <button onclick="window.closePaymentModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl leading-none transition-colors">&times;</button>
+                    </div>
+                    
+                    <div class="mb-5 rounded-lg bg-gray-50 border border-gray-100 p-3 dark:bg-gray-800 dark:border-gray-700 flex justify-between items-center">
+                        <span class="text-sm text-gray-600 dark:text-gray-300" id="modalCreditsText"></span>
+                        <span class="text-base font-bold text-gray-900 dark:text-white" id="modalPriceText"></span>
+                    </div>
+                    
+                    <div class="flex flex-col gap-3">
+                        <button id="btnPayPix" onclick="window.asaasCheckoutCredits('PIX')" class="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all btn-pastel-pix">
+                            <i class="icon-pix text-lg"></i> Pagar com PIX
+                        </button>
+                        <button id="btnPayCard" onclick="window.asaasCheckoutCredits('CREDIT_CARD')" class="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all btn-pastel-card">
+                            <i class="icon-credit-card text-lg"></i> Cartão de Crédito
+                        </button>
+                        <button id="btnPayCardInst" onclick="window.asaasCheckoutCredits('CREDIT_CARD_INSTALLMENT')" class="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all btn-pastel-card-inst">
+                            <i class="icon-credit-card text-lg"></i> Cartão de Crédito Parcelado
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             {{-- ── MÓDULOS ATIVOS ────────────────────────── --}}
             <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -399,7 +508,135 @@
                 @endif
             </div>
 
+            </div>
+
         @endif
     </div>
+
+    @push('scripts')
+    <script>
+        /**
+         * Asaas Checkout — Vanilla JS (Sem Vue)
+         */
+
+        // CSRF token embutido pelo Blade — mais confiável que leitura de cookie
+        var _csrfToken = '{{ csrf_token() }}';
+
+        window.asaasCheckoutPlan = function(planId, price, planName) {
+            var btn = event.currentTarget;
+            var originalText = btn.innerText;
+            btn.innerText = 'Processando...';
+            btn.disabled = true;
+
+            fetch('{{ route("admin.lawfirm.saas.checkout.plan") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': _csrfToken
+                },
+                body: JSON.stringify({
+                    plan_id: planId,
+                    price: price,
+                    plan_name: planName || 'Plano LawFirm CRM'
+                })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success && data.checkoutUrl) {
+                    window.location.href = data.checkoutUrl;
+                } else {
+                    alert('Erro ao gerar checkout: ' + (data.message || 'Erro desconhecido'));
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(function() {
+                alert('Falha de rede. Verifique sua conexão e tente novamente.');
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
+        };
+
+        // Variáveis de estado do modal
+        var selectedCredits = 0;
+        var selectedPrice = 0;
+
+        window.openPaymentModal = function(credits, price) {
+            selectedCredits = credits;
+            selectedPrice = price;
+            
+            document.getElementById('modalCreditsText').innerText = credits.toLocaleString('pt-BR') + ' Créditos de IA';
+            document.getElementById('modalPriceText').innerText = 'R$ ' + price.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            document.getElementById('paymentModal').classList.remove('hidden');
+        };
+
+        window.openCustomPaymentModal = function() {
+            var rawValue = document.getElementById('customCreditInput').value;
+            var price = parseFloat(rawValue);
+            if (isNaN(price) || price < 1) {
+                alert('Por favor, informe um valor válido (mínimo R$ 1,00).');
+                return;
+            }
+            var credits = Math.floor(price * 100);
+            window.openPaymentModal(credits, price);
+        };
+
+        window.closePaymentModal = function() {
+            document.getElementById('paymentModal').classList.add('hidden');
+        };
+
+        window.asaasCheckoutCredits = function(paymentMethod) {
+            var btnEvent = event.currentTarget; // btnPix ou btnCard
+            var originalText = btnEvent.innerHTML;
+            btnEvent.innerHTML = '<i class="fa fa-spinner fa-spin text-lg"></i> Processando...';
+            btnEvent.disabled = true;
+
+            // Desabilita todos os botões de pagamento
+            document.getElementById('btnPayPix').disabled = true;
+            document.getElementById('btnPayCard').disabled = true;
+            if(document.getElementById('btnPayCardInst')) {
+                document.getElementById('btnPayCardInst').disabled = true;
+            }
+
+            fetch('{{ route("admin.lawfirm.saas.checkout.credits") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': _csrfToken
+                },
+                body: JSON.stringify({
+                    credits: selectedCredits,
+                    price: selectedPrice,
+                    payment_method: paymentMethod
+                })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success && data.checkoutUrl) {
+                    window.location.href = data.checkoutUrl;
+                    alert('Erro ao gerar checkout: ' + (data.message || 'Erro desconhecido'));
+                    btnEvent.innerHTML = originalText;
+                    document.getElementById('btnPayPix').disabled = false;
+                    document.getElementById('btnPayCard').disabled = false;
+                    if(document.getElementById('btnPayCardInst')) {
+                        document.getElementById('btnPayCardInst').disabled = false;
+                    }
+                }
+            })
+            .catch(function() {
+                alert('Falha de rede. Verifique sua conexão e tente novamente.');
+                btnEvent.innerHTML = originalText;
+                document.getElementById('btnPayPix').disabled = false;
+                document.getElementById('btnPayCard').disabled = false;
+                if(document.getElementById('btnPayCardInst')) {
+                    document.getElementById('btnPayCardInst').disabled = false;
+                }
+            });
+        };
+    </script>
+    @endpush
 
 </x-admin::layouts>

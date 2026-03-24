@@ -4,10 +4,9 @@ namespace SuiteZap\LawFirm\Legal\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use SuiteZap\LawFirm\Contracts\Processo as ProcessoContract;
 use SuiteZap\LawFirm\Financial\Models\Financial;
 
-class Processo extends Model implements ProcessoContract
+class Processo extends Model
 {
     /**
      * The table associated with the model.

@@ -62,4 +62,38 @@ class SaasFileService
     {
         return $this->getDisk()->deleteDirectory($path);
     }
+
+    /**
+     * Retorna o conteúdo bruto de um arquivo do disco do Tenant.
+     * Substitui Storage::get() diretamente para manter compliance multi-tenant.
+     */
+    public function get(string $path): ?string
+    {
+        try {
+            return $this->getDisk()->get($path);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Armazena conteúdo bruto (string) em um path do disco do Tenant.
+     * Útil para PDFs gerados em memória, JSONs e outros binários.
+     */
+    public function storeRaw(string $path, string $contents): bool
+    {
+        return $this->getDisk()->put($path, $contents);
+    }
+
+    /**
+     * Retorna o MIME type de um arquivo no disco do Tenant.
+     */
+    public function mimeType(string $path): ?string
+    {
+        try {
+            return $this->getDisk()->mimeType($path) ?: null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
 }

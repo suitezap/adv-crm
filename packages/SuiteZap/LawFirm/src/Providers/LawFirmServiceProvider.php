@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use SuiteZap\LawFirm\Events\PrazoCreated;
-use SuiteZap\LawFirm\Listeners\SendPrazoWhatsapp;
+use SuiteZap\LawFirm\Whatsapp\Listeners\SendPrazoWhatsapp;
 
 class LawFirmServiceProvider extends ServiceProvider
 {
@@ -92,6 +92,8 @@ class LawFirmServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \SuiteZap\LawFirm\Console\Commands\CalculateStorageUsage::class,
+                // Gerenciamento de templates de IA no Mothership (zero-deploy sync)
+                \SuiteZap\LawFirm\Console\Commands\PublishAiTemplatesCommand::class,
             ]);
         }
 
@@ -115,6 +117,14 @@ class LawFirmServiceProvider extends ServiceProvider
         Event::listen('admin.layout.content.before', function ($viewRenderEventManager) {
             if (auth()->guard('user')->check()) {
                 $viewRenderEventManager->addTemplate('lawfirm::admin.layouts.subscription-warning');
+            }
+        });
+
+        // Injeta o script de CEP auto-fill na página de configurações do LawFirm
+        Event::listen('admin.layout.content.before', function ($viewRenderEventManager) {
+            $uri = request()->path();
+            if (str_contains($uri, 'configuration/lawfirm')) {
+                $viewRenderEventManager->addTemplate('lawfirm::SaaS.settings.cep-autofill');
             }
         });
 
@@ -150,11 +160,6 @@ class LawFirmServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // Registrar o Repository / Contract Binding
-        $this->app->bind(
-            \SuiteZap\LawFirm\Contracts\Processo::class,
-            \SuiteZap\LawFirm\Legal\Models\Processo::class
-        );
 
         // Merge Config (Menu)
         $this->mergeConfigFrom(
@@ -174,12 +179,18 @@ class LawFirmServiceProvider extends ServiceProvider
             'core_config'
         );
 
+        // Merge Config (LawFirm) - Configurações gerais do pacote (mothership_secret, etc.)
+        $this->mergeConfigFrom(
+            __DIR__ . '/../Config/lawfirm.php',
+            'lawfirm'
+        );
+
         $this->app->register(EventServiceProvider::class);
 
         // ✅ OVERRIDE: ActivityDataGrid (Defensive Coding)
         $this->app->bind(
             \Webkul\Admin\DataGrids\Activity\ActivityDataGrid::class,
-            \SuiteZap\LawFirm\DataGrids\SafeActivityDataGrid::class
+            \SuiteZap\LawFirm\Legal\DataGrids\SafeActivityDataGrid::class
         );
     }
 
@@ -190,22 +201,21 @@ class LawFirmServiceProvider extends ServiceProvider
      */
     protected function registerObservers()
     {
-        \SuiteZap\LawFirm\Legal\Models\Processo::observe(\SuiteZap\LawFirm\Observers\ProcessoObserver::class);
-        \SuiteZap\LawFirm\Legal\Models\Prazo::observe(\SuiteZap\LawFirm\Observers\PrazoObserver::class);
-        // \Webkul\Contact\Models\PersonProxy::observe(\SuiteZap\LawFirm\Observers\PersonObserver::class);
-        // \Webkul\Contact\Models\OrganizationProxy::observe(\SuiteZap\LawFirm\Observers\OrganizationObserver::class);
+        \SuiteZap\LawFirm\Legal\Models\Processo::observe(\SuiteZap\LawFirm\Legal\Observers\ProcessoObserver::class);
+        \SuiteZap\LawFirm\Legal\Models\Prazo::observe(\SuiteZap\LawFirm\Legal\Observers\PrazoObserver::class);
+
 
         // ✅ REGISTRO DO OBSERVER SAAS
         // Intercepta qualquer criação de usuário no sistema para validar limites do plano
-        \Webkul\User\Models\User::observe(\SuiteZap\LawFirm\Observers\UserObserver::class);
+        \Webkul\User\Models\User::observe(\SuiteZap\LawFirm\SaaS\Observers\UserObserver::class);
 
         // ✅ REGISTRO DO OBSERVER DE LIMPEZA S3
         // Apaga arquivos do S3/MinIO quando um Lead/Processo é excluído
-        \Webkul\Lead\Models\Lead::observe(\SuiteZap\LawFirm\Observers\LeadObserver::class);
+        \Webkul\Lead\Models\Lead::observe(\SuiteZap\LawFirm\GED\Observers\LeadObserver::class);
 
         // ✅ REGISTRO DO OBSERVER DE LIMPEZA S3 (Anexos Individuais)
         // Apaga arquivos do S3/MinIO quando um anexo individual é removido
-        \Webkul\Lead\Models\LeadAttachment::observe(\SuiteZap\LawFirm\Observers\LeadAttachmentObserver::class);
+        \Webkul\Lead\Models\LeadAttachment::observe(\SuiteZap\LawFirm\GED\Observers\LeadAttachmentObserver::class);
     }
 
     /**
@@ -218,8 +228,8 @@ class LawFirmServiceProvider extends ServiceProvider
         // ---------------------------------------------------------------------
         // Lead: Atualização pós-save
         // ---------------------------------------------------------------------
-        Event::listen('sales.lead.update.after', 'SuiteZap\\LawFirm\\Listeners\\LeadUpdatedListener@handle');
-        Event::listen('lead.update.after', \SuiteZap\LawFirm\Listeners\LeadWonListener::class);
+        Event::listen('sales.lead.update.after', 'SuiteZap\\LawFirm\\Legal\\Listeners\\LeadUpdatedListener@handle');
+        Event::listen('lead.update.after', \SuiteZap\LawFirm\Legal\Listeners\LeadWonListener::class);
 
         // ---------------------------------------------------------------------
         // CONTATOS: Persistência de Dados (Substituindo Observers)
@@ -229,7 +239,7 @@ class LawFirmServiceProvider extends ServiceProvider
         Event::listen('contacts.person.create.before', function () {
             if (request()->has('law_details')) {
                 $validator = Validator::make(request()->all(), [
-                    'law_details.cpf' => ['nullable', new \SuiteZap\LawFirm\Rules\Cpf],
+                    'law_details.cpf' => ['nullable', new \SuiteZap\LawFirm\Legal\Rules\Cpf],
                 ]);
 
                 if ($validator->fails()) {
@@ -241,7 +251,7 @@ class LawFirmServiceProvider extends ServiceProvider
         Event::listen('contacts.person.update.before', function () {
             if (request()->has('law_details')) {
                 $validator = Validator::make(request()->all(), [
-                    'law_details.cpf' => ['nullable', new \SuiteZap\LawFirm\Rules\Cpf],
+                    'law_details.cpf' => ['nullable', new \SuiteZap\LawFirm\Legal\Rules\Cpf],
                 ]);
 
                 if ($validator->fails()) {
@@ -275,7 +285,7 @@ class LawFirmServiceProvider extends ServiceProvider
         Event::listen('contacts.organization.create.before', function () {
             if (request()->has('law_org_details')) {
                 $validator = Validator::make(request()->all(), [
-                    'law_org_details.cnpj' => ['nullable', new \SuiteZap\LawFirm\Rules\Cnpj],
+                    'law_org_details.cnpj' => ['nullable', new \SuiteZap\LawFirm\Legal\Rules\Cnpj],
                 ]);
 
                 if ($validator->fails()) {
@@ -287,7 +297,7 @@ class LawFirmServiceProvider extends ServiceProvider
         Event::listen('contacts.organization.update.before', function () {
             if (request()->has('law_org_details')) {
                 $validator = Validator::make(request()->all(), [
-                    'law_org_details.cnpj' => ['nullable', new \SuiteZap\LawFirm\Rules\Cnpj],
+                    'law_org_details.cnpj' => ['nullable', new \SuiteZap\LawFirm\Legal\Rules\Cnpj],
                 ]);
 
                 if ($validator->fails()) {

@@ -167,11 +167,9 @@
                 </div>
 
                 <!-- 31-60 -->
-                <div
-                    style="background-color: #fefce8; border-color: #fef08a;"
+                <div style="background-color: #fefce8; border-color: #fef08a;"
                     class="p-5 rounded-xl border flex flex-row items-center justify-between h-24">
-                    <span
-                        style="background-color: #fef08a; color: #a16207;"
+                    <span style="background-color: #fef08a; color: #a16207;"
                         class="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">31-60
                         DIAS</span>
                     <span style="color: #ca8a04;" class="text-xl font-extrabold">
@@ -222,39 +220,39 @@
                 document.addEventListener("DOMContentLoaded", function () {
                     const style = document.createElement('style');
                     style.innerHTML = `
-                                            #main-kpi-grid {
-                                                display: grid !important;
-                                                gap: 1rem !important;
-                                                grid-template-columns: 1fr !important;
-                                            }
-                                            @media (min-width: 768px) {
-                                                #main-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
-                                            }
-                                            @media (min-width: 1200px) {
-                                                #main-kpi-grid { grid-template-columns: repeat(5, 1fr) !important; }
-                                            }
+                                                #main-kpi-grid {
+                                                    display: grid !important;
+                                                    gap: 1rem !important;
+                                                    grid-template-columns: 1fr !important;
+                                                }
+                                                @media (min-width: 768px) {
+                                                    #main-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+                                                }
+                                                @media (min-width: 1200px) {
+                                                    #main-kpi-grid { grid-template-columns: repeat(5, 1fr) !important; }
+                                                }
 
-                                            #performance-grid {
-                                                display: grid !important;
-                                                gap: 1rem !important;
-                                                grid-template-columns: 1fr !important;
-                                            }
-                                            @media (min-width: 1024px) {
-                                                #performance-grid { grid-template-columns: 1fr 1.5fr !important; }
-                                            }
+                                                #performance-grid {
+                                                    display: grid !important;
+                                                    gap: 1rem !important;
+                                                    grid-template-columns: 1fr !important;
+                                                }
+                                                @media (min-width: 1024px) {
+                                                    #performance-grid { grid-template-columns: 1fr 1.5fr !important; }
+                                                }
 
-                                            #aging-grid {
-                                                display: grid !important;
-                                                gap: 1rem !important;
-                                                grid-template-columns: 1fr !important;
-                                            }
-                                            @media (min-width: 768px) {
-                                                #aging-grid { grid-template-columns: repeat(2, 1fr) !important; }
-                                            }
-                                            @media (min-width: 1200px) {
-                                                #aging-grid { grid-template-columns: repeat(4, 1fr) !important; }
-                                            }
-                                        `;
+                                                #aging-grid {
+                                                    display: grid !important;
+                                                    gap: 1rem !important;
+                                                    grid-template-columns: 1fr !important;
+                                                }
+                                                @media (min-width: 768px) {
+                                                    #aging-grid { grid-template-columns: repeat(2, 1fr) !important; }
+                                                }
+                                                @media (min-width: 1200px) {
+                                                    #aging-grid { grid-template-columns: repeat(4, 1fr) !important; }
+                                                }
+                                            `;
                     document.head.appendChild(style);
                 });
             </script>
@@ -384,6 +382,53 @@
                         }
                     }));
                 });
+
+                // Direct WhatsApp Messaging
+                function sendWhatsappBilling(id) {
+                    if (!confirm('Deseja enviar a cobrança via WhatsApp agora?')) {
+                        return;
+                    }
+
+                    // Find the button to add a loading state (optional UX improvement)
+                    const btn = document.querySelector(`button[onclick="sendWhatsappBilling(${id})"]`);
+                    const originalHtml = btn ? btn.innerHTML : '';
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="icon-loader animate-spin"></span> ...';
+                    }
+
+                    fetch("{{ route('admin.lawfirm.financial.send_whatsapp', '') }}/" + id, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value
+                                || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                                || '',
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                        .then(({ status, body }) => {
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.innerHTML = originalHtml;
+                            }
+
+                            if (status >= 400 || !body.success) {
+                                alert(body.message || 'Erro ao enviar WhatsApp.');
+                            } else {
+                                alert(body.message || 'Mensagem enviada com sucesso!');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('WhatsApp Error:', error);
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.innerHTML = originalHtml;
+                            }
+                            alert('Erro de conexão ao tentar enviar a mensagem.');
+                        });
+                }
             </script>
         @endpush
 </x-admin::layouts>

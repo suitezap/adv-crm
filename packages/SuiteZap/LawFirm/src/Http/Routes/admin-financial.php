@@ -28,3 +28,6 @@ Route::get('/financial/receipt/{id}', [FinancialController::class, 'downloadRece
 
 Route::post('/financial/process/{id}/store', [FinancialController::class, 'storeProcessFinancials'])
     ->name('admin.lawfirm.financial.process.store');
+
+Route::post('/financial/send-whatsapp/{id}', [FinancialController::class, 'sendWhatsappBilling'])
+    ->name('admin.lawfirm.financial.send_whatsapp');

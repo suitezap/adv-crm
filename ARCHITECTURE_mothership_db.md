@@ -2,7 +2,7 @@
 
 Este documento descreve a estrutura do banco de dados externo `mothership`, responsável pelo gerenciamento Multi-Tenant da aplicação LawFirm.
 
-**Status:** Schema inferido via Engenharia Reversa do pacote `SuiteZap\LawFirm` (Fev/2026).
+**Status:** Schema inferido via Engenharia Reversa do pacote `SuiteZap\LawFirm` (Mar/2026 - v3.17 SaaS Compliance).
 
 ## Visão Geral
 
@@ -16,11 +16,22 @@ O banco de dados `mothership` é segregado do banco de dados da aplicação (`my
 ```mermaid
 erDiagram
     tenants ||--o{ subscriptions : "possui"
+    tenants ||--|| tenant_billing_infos : "fatura via"
     tenants ||--o{ lawfirm_assistant_templates : "possui (opcional)"
     tenants }|--|| infrastructure_nodes : "usa (evolution_node_id)"
     tenants }|--|| infrastructure_nodes : "usa (storage_node_id)"
     tenants }|--|| infrastructure_nodes : "usa (n8n_node_id)"
     
+    tenant_billing_infos {
+        bigint id PK
+        string tenant_id FK "Varchar(50)"
+        string name
+        string email
+        string cpf_cnpj
+        string postal_code
+        string address
+    }
+
     tenants {
         string id PK "String (ex: lawfirm_tenant_1)"
         string name
@@ -54,7 +65,7 @@ erDiagram
     infrastructure_nodes {
         bigint id PK
         string name
-        string type "n8n, evolution, minio, escavador"
+        string type "n8n, evolution, minio, escavador, asaas"
         string base_url
         string api_key
         string capacity_limit
@@ -121,6 +132,7 @@ Catálogo de recursos compartilhados (Servidores de API, Buckets S3).
     *   `evolution`: Servidores de WhatsApp API.
     *   `minio`: Buckets S3/MinIO para armazenamento de arquivos.
     *   `escavador`: Integração com API Escavador V1/V2 (Tokens via `api_key`).
+    *   `asaas`: Integração com o Gateway de Pagamentos (Tokens e ambiente lidos dinamicamente de `api_key` e `meta_data`).
 *   **Meta Data:** Armazena segredos específicos (Secret Key do S3, Region) em JSON.
 
 ### 4. Assistant Templates (`lawfirm_assistant_templates`)
@@ -136,6 +148,12 @@ Configurações globais do ecossistema SaaS. Elimina dependência de `.env` por 
 |---|---|---|
 | `api_secret` | `164b104d...` (64-char hex) | Chave compartilhada entre Mothership Panel e LawFirm CRM. Autenticação de webhooks. |
 | `crm_webhook_url` | URL do LawFirm | Endpoint chamado pelo Mothership Panel após mutações de template para invalidar cache. |
+
+### 6. Tenant Billing Infos (`tenant_billing_infos`) — *Adicionada em Mar/2026*
+Isola os dados sensíveis e de faturamento do assinante, permitindo que a camada Global emita cobranças (Asaas/Stripe) sem depender de tabelas internas do projeto `mysql` do Krayin (como `core_config`).
+*   **PK:** `id` (BigInt).
+*   **FK:** `tenant_id` aponta para `tenants.id`.
+*   **Finalidade:** Armazena CNPJ/CPF, Razão Social, Email Financeiro e Endereço Completo (CEP, Bairro, Cidade, etc.). Estes dados alimentam nativamente o payload de `customerData` ao gerar novos Checkouts no Gateway Asaas.
 | `cache_version` | Integer | Versão global de cache. Incrementada a cada publicação de template. |
 | `escavador_price_capa` | `3.00` | Capa do Processo (V2 CNJ) |
 | `escavador_price_diario` | `3.00` | PDF Diário Oficial (V2) |
@@ -190,3 +208,23 @@ Com a implementação de integração entre o módulo Escavador e a Evolution AP
 3.  **Zero .env para Integração:** O `api_secret` (autenticação entre Mothership Panel e LawFirm) é lido de `app_config`, não do `.env`. O `MothershipTemplateController` usa `DB::connection('mothership')->table('app_config')` com cache de 5 min no PHP Session.
 4.  **Invalidação de Cache:** Após qualquer mutação em `api/templates.php` (update/toggle/create), o Mothership Panel chama `POST {crm_webhook_url}` com `X-Mothership-Key`. O LawFirm incrementa `ai_templates_cache_version`, tornando obsoletas as keys `ai_templates:{tenantId}:{hash}:v{old}`.
 
+---
+
+## Interface de Armazenamento Multi-Tenant (v3.17)
+
+Todo acesso a arquivos no pacote **deve** ser feito exclusivamente via `SuiteZap\LawFirm\SaaS\Services\SaasFileService`. O disco correto (S3/MinIO do tenant) é resolvido internamente pelo `MotherShipService::configureTenantStorage()`.
+
+> [!IMPORTANT]
+> **PROIBIDO:** `Storage::put()`, `Storage::get()`, `Storage::exists()`, `Storage::mimeType()`, `Storage::makeDirectory()` em qualquer Controller, Service ou Listener fora de `SaasFileService` e `SaasStorageService`.
+
+| Método | Assinatura | Descrição |
+|---|---|---|
+| `store` | `store(UploadedFile $file, string $path): string` | Upload de arquivo via `UploadedFile` |
+| `storeRaw` | `storeRaw(string $path, string $contents): bool` | Upload de conteúdo bruto (PDF gerado, JSON, etc.) — *adicionado v3.17* |
+| `get` | `get(string $path): ?string` | Lê conteúdo bruto de arquivo — *adicionado v3.17* |
+| `exists` | `exists(string $path): bool` | Verifica existência no disco do tenant |
+| `delete` | `delete(string $path): bool` | Remove arquivo |
+| `deleteDirectory` | `deleteDirectory(string $path): bool` | Remove diretório recursivo |
+| `url` | `url(string $path): string` | URL pública/signed do arquivo |
+| `mimeType` | `mimeType(string $path): ?string` | MIME type do arquivo — *adicionado v3.17* |
+| `isAvailable` | `isAvailable(): bool` | Verifica conectividade com o disco |

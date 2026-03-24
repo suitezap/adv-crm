@@ -19,7 +19,7 @@ class ProcessoDataGrid extends DataGrid
      *
      * @var string
      */
-    protected $sortBy = 'processos.data_audiencia';
+    protected $sortColumn = 'processos.data_audiencia';
 
     /**
      * Default sort order.
@@ -65,10 +65,7 @@ class ProcessoDataGrid extends DataGrid
         $this->addFilter('data_audiencia', 'processos.data_audiencia');
         $this->addFilter('vara', 'processos.vara');
 
-        // Sort by Audience Date (Urgency), putting NULLs last
-        $queryBuilder->orderByRaw('CASE WHEN processos.data_audiencia IS NULL THEN 1 ELSE 0 END, processos.data_audiencia ASC');
-
-        $this->setQueryBuilder($queryBuilder);
+        return $queryBuilder;
     }
 
     /**
@@ -165,6 +162,26 @@ class ProcessoDataGrid extends DataGrid
                 return '<span class="px-2 py-1 rounded-full text-xs font-semibold ' . $color . '">' . $row->status . '</span>';
             }
         ]);
+    }
+
+    /**
+     * Override sort to keep NULL data_audiencia values last.
+     *
+     * @return \Illuminate\Database\Query\Builder
+     */
+    protected function processRequestedSorting($requestedSort)
+    {
+        $column = $requestedSort['column'] ?? $this->sortColumn;
+        $order = $requestedSort['order'] ?? $this->sortOrder;
+
+        // For data_audiencia, apply NULL-last ordering
+        if ($column === 'data_audiencia' || $column === 'processos.data_audiencia') {
+            return $this->queryBuilder->orderByRaw(
+                'CASE WHEN processos.data_audiencia IS NULL THEN 1 ELSE 0 END, processos.data_audiencia ' . strtoupper($order)
+            );
+        }
+
+        return $this->queryBuilder->orderBy($column, $order);
     }
 
     /**

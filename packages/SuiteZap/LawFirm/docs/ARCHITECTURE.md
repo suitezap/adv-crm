@@ -1,9 +1,10 @@
 # Arquitetura do Projeto LawFirm
 
 ## 1. Padrões de Código
-- **Repository Pattern:** Toda lógica de banco deve passar pelos Repositories em `src/Repositories`.
-- **Service Layer:** Integrações externas (ex: Evolution API) ficam em `src/Services`.
+- **Repository Pattern:** Toda lógica de banco deve passar pelos Repositories dentro do bounded context (ex: `Legal/Repositories/`).
+- **Service Layer:** Integrações externas ficam no bounded context correspondente (ex: `Whatsapp/Services/`).
 - **Uploads:** NUNCA usar nome original puro. Regra: `{ProcessID}-{Random7}_{SlugCleanName}.{ext}`.
+- **Config vs env():** Nunca usar `env()` fora de arquivos `Config/*.php`. Nos services, usar `config('lawfirm.*')`.
 
 ## 2. Estrutura de Pastas
 - `src/Resources/views/juridico`: Views do módulo.
@@ -54,7 +55,9 @@ O Krayin aplica ACL automaticamente baseado em:
 - `acl.php`: Define permissões disponíveis
 
 ### C. Escopo de Dados (DataGrids)
-Todo DataGrid **DEVE** implementar proteção de escopo no método `prepareQueryBuilder()`:
+Todo DataGrid **DEVE** implementar proteção de escopo no método `prepareQueryBuilder()`.
+
+> **Nota:** `DataGrids/SafeActivityDataGrid` permanece na raiz `src/DataGrids/` — é um override cross-cutting do Krayin, registrado via container bind, e não pertence a nenhum bounded context específico.
 
 ```php
 public function prepareQueryBuilder()
@@ -123,9 +126,9 @@ O controle de limites é híbrido:
 
 ## 6. Integração WhatsApp (Evolution API)
 - **Conexão:** O Krayin atua como cliente. O QR Code é gerado no backend e exibido via Polling no frontend.
-- **Service:** `EvolutionService` centraliza todas as chamadas HTTP.
+- **Service:** `Whatsapp/Services/EvolutionService` centraliza todas as chamadas HTTP.
 - **Controller:** `Whatsapp\ConnectionController` gerencia index, connect, status e disconnect.
-- **Variáveis de Ambiente:**
+- **Config:** Chaves em `config('lawfirm.evolution.*')` com fallback para MotherShip.
   - `EVOLUTION_API_URL`: URL base da Evolution API
   - `EVOLUTION_API_KEY`: Chave de autenticação
   - `EVOLUTION_INSTANCE_NAME`: Nome da instância do escritório
@@ -151,38 +154,48 @@ O módulo de Assistentes permite criar templates de prompts com variáveis dinâ
 N8N_WEBHOOK_BASE_URL=https://seu-n8n.com/webhook/
 ```
 
-## 8. Estrutura de Diretórios Atual (v1.6)
+## 8. Estrutura de Diretórios Atual (v2.0)
 ```
 packages/SuiteZap/LawFirm/src/
-├── Config/           # menu.php, acl.php, system.php, module.php
-├── Contracts/        # Interfaces
-├── DataGrids/        # DataGrids de Listagem (Lead, Organization, Person, SafeActivity)
+├── Config/           # menu.php, acl.php, system.php, module.php, lawfirm.php
+├── DataGrids/        # SafeActivityDataGrid (cross-cutting override do Krayin)
 ├── Database/         # Migrations + Seeders
-├── Events/           # Eventos customizados
-├── Listeners/        # ContactSaveListener, LeadUpdatedListener
-├── Models/           # Models de Domínio
-├── Observers/        # Observers de sincronização
-├── Providers/        # LawFirmServiceProvider, ModuleServiceProvider
-├── Repositories/     # Repositories globais
+├── Providers/        # LawFirmServiceProvider, EventServiceProvider, ModuleServiceProvider
 ├── Resources/        # views/, lang/, assets/
 ├── Routes/           # admin.php, api.php, breadcrumbs.php
-├── Rules/            # Validações (CPF, CNPJ, CNJ)
-├── Services/         # ChecklistTemplates, N8n, SaasQuota, SaasStorage, Whatsapp/
 │
 ├── Legal/            # Domínio Jurídico (Processos, Prazos)
+│   ├── DataGrids/    # LeadProcessos, PersonProcessos, OrganizationProcessos
+│   ├── Events/       # PrazoCreated
 │   ├── Http/Controllers/
-│   │   └── ProcessoController.php
-│   └── Resources/
+│   ├── Listeners/    # LeadUpdatedListener, LeadWonListener
+│   ├── Models/       # Processo
+│   ├── Repositories/ # ProcessoRepository
+│   ├── Resources/
+│   └── Rules/        # Cpf, Cnpj, ValidarCNJ, ValidarCpfCnpj
 │
 ├── GED/              # Gestão Eletrônica de Documentos
 │   ├── Http/Controllers/
-│   │   └── ProcessDocumentController.php
+│   ├── Observers/    # LeadObserver, LeadAttachmentObserver
 │   └── Resources/
 │
-└── Financial/        # Domínio Financeiro
+├── Financial/        # Domínio Financeiro
+│   ├── Http/Controllers/
+│   └── Services/
+│
+├── SaaS/             # Tenant Control e Infraestrutura Multi-Tenant
+│   ├── Http/
+│   ├── Observers/    # UserObserver
+│   └── Services/     # SaasFileService, SaasQuotaService, SaasStorageService, MotherShipService
+│
+├── Whatsapp/         # Integração WhatsApp (Evolution API)
+│   ├── Http/Controllers/
+│   └── Services/     # EvolutionService
+│
+└── Assistant/        # Assistentes Jurídicos IA
     ├── Http/Controllers/
-    └── Services/
-
+    ├── Models/
+    └── Services/     # N8nService
 ```
 
 ## 9. Padrões de Interface (UI/UX)

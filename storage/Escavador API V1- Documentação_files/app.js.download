@@ -1,0 +1,22 @@
+(function() {
+  let input_search = document.getElementById("input-search");
+  input_search && (input_search.placeholder = "Pesquisar");
+  const brand = $('.tocify-wrapper img');
+  brand.on('click',  () => {
+    window.location.hash = '#'
+  })
+})();
+
+(function() {
+  let selectEl = document.getElementById('select');
+
+  window.addEventListener("load", function() {
+    selectEl.value = window.location.href;
+  });
+
+  // on change of the select element, redirect to the selected page
+  selectEl.addEventListener("change", function() {
+    if (window.location.href === this.value) return;
+    location.href=this.value;
+  });
+})();

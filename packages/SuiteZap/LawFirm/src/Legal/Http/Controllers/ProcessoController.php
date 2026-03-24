@@ -124,7 +124,7 @@ class ProcessoController extends Controller
      */
     public function leadProcessos($id)
     {
-        return app(\SuiteZap\LawFirm\DataGrids\LeadProcessosDataGrid::class)->process();
+        return app(\SuiteZap\LawFirm\Legal\DataGrids\LeadProcessosDataGrid::class)->process();
     }
 
     /**
@@ -135,7 +135,7 @@ class ProcessoController extends Controller
      */
     public function personProcessos($id)
     {
-        return app(\SuiteZap\LawFirm\DataGrids\PersonProcessosDataGrid::class)->process();
+        return app(\SuiteZap\LawFirm\Legal\DataGrids\PersonProcessosDataGrid::class)->process();
     }
 
     /**
@@ -146,7 +146,7 @@ class ProcessoController extends Controller
      */
     public function organizationProcessos($id)
     {
-        return app(\SuiteZap\LawFirm\DataGrids\OrganizationProcessosDataGrid::class)->process();
+        return app(\SuiteZap\LawFirm\Legal\DataGrids\OrganizationProcessosDataGrid::class)->process();
     }
 
     /**

@@ -6,11 +6,13 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Financial\DataGrids\FinancialDataGrid;
 use SuiteZap\LawFirm\Financial\Models\Financial;
 use SuiteZap\LawFirm\Financial\Services\FinancialDashboardService;
 use SuiteZap\LawFirm\Financial\Services\FinancialService;
+use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
+use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
 
 class FinancialController extends Controller
 {
@@ -25,14 +27,21 @@ class FinancialController extends Controller
     protected $financialService;
 
     /**
+     * @var SaasFileService
+     */
+    protected $fileService;
+
+    /**
      * Create a new controller instance.
      */
     public function __construct(
         FinancialDashboardService $dashboardService,
-        FinancialService $financialService
+        FinancialService $financialService,
+        SaasFileService $fileService
     ) {
         $this->dashboardService = $dashboardService;
         $this->financialService = $financialService;
+        $this->fileService = $fileService;
     }
 
     /**
@@ -118,11 +127,14 @@ class FinancialController extends Controller
         $website = core()->getConfigData('lawfirm.settings.general.website');
 
         // 2. Tratamento da Logo para PDF - S3 Compatible (Base64 Data URI)
+        // ✅ COMPLIANCE: usa SaasFileService para garantir acesso ao bucket correto do Tenant.
         $logoBase64 = null;
-        if ($logoPath && Storage::exists($logoPath)) {
-            $logoContents = Storage::get($logoPath);
-            $mimeType = Storage::mimeType($logoPath) ?: 'image/png';
-            $logoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($logoContents);
+        if ($logoPath && $this->fileService->exists($logoPath)) {
+            $logoContents = $this->fileService->get($logoPath);
+            $mimeType = $this->fileService->mimeType($logoPath) ?? 'image/png';
+            if ($logoContents) {
+                $logoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($logoContents);
+            }
         }
 
         // 3. Envia tudo para a View
@@ -179,5 +191,54 @@ class FinancialController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    /**
+     * Sends a direct WhatsApp message to the client for billing purposes.
+     *
+     * Delegates message composition to FinancialService::prepareBillingWhatsapp()
+     * and instance resolution to MotherShipService (Zero .env compliance).
+     *
+     * @param  int  $id
+     * @param  EvolutionService  $evolutionService
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function sendWhatsappBilling($id, EvolutionService $evolutionService)
+    {
+        try {
+            $financial = Financial::with(['processo.person'])->findOrFail($id);
+
+            // Delega toda a lógica de composição para o Service (Skinny Controller)
+            $billing = $this->financialService->prepareBillingWhatsapp($financial);
+
+            // ✅ COMPLIANCE (Zero .env): lê instância EXCLUSIVAMENTE do MotherShip
+            $evolutionConfig = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
+            $instanceName = $evolutionConfig['instance'] ?? null;
+
+            if (empty($instanceName)) {
+                Log::error('Financial ZAP: Instância Evolution não configurada no MotherShip para este Tenant. Verifique infrastructure_nodes (type=evolution).');
+                return response()->json([
+                    'success'  => false,
+                    'message'  => 'WhatsApp não configurado para este escritório. Contate o suporte.'
+                ], 503);
+            }
+
+            Log::info("Financial ZAP: Sending to {$billing['phone']} via instance {$instanceName}");
+
+            $result = $evolutionService->sendMessage($instanceName, $billing['phone'], $billing['message']);
+
+            if (isset($result['error']) || (is_array($result) && isset($result['status']) && $result['status'] >= 400)) {
+                Log::error('Evolution API Error', ['result' => $result]);
+                return response()->json(['success' => false, 'message' => 'Erro da API do WhatsApp. Verifique se o aparelho está conectado.'], 500);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Cobrança enviada com sucesso!']);
+
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+        } catch (\Exception $e) {
+            Log::error('Financial ZAP Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => 'Erro interno ao processar o envio.'], 500);
+        }
     }
 }

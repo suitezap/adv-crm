@@ -3,32 +3,38 @@
 use Illuminate\Support\Facades\Route;
 use SuiteZap\LawFirm\SaaS\Http\Controllers\SaaSController;
 use SuiteZap\LawFirm\Http\Controllers\ChecklistController;
+use SuiteZap\LawFirm\SaaS\Http\Controllers\Admin\MothershipTemplateController;
 
 /*
 |--------------------------------------------------------------------------
-| SaaS, WhatsApp, Assistants & Checklist Routes
+| SaaS, Assistants & Checkout Routes
 |--------------------------------------------------------------------------
 |
-| SaaS Dashboard, WhatsApp Integration, AI Assistants, Checklist Module.
+| SaaS Dashboard, AI Assistants, Checkout, Billing & Mothership Admin.
 | Parent group: prefix 'admin/juridico', middleware ['web', 'admin_locale', 'user']
 |
+| WhatsApp routes moved to admin-whatsapp.php (domain segregation — v3.17)
+|
 */
-
-// -----------------------------------------------
-// WhatsApp Integration (Evolution API)
-// -----------------------------------------------
-Route::prefix('whatsapp')->controller(\SuiteZap\LawFirm\Whatsapp\Http\Controllers\ConnectionController::class)->group(function () {
-    Route::get('', 'index')->name('admin.lawfirm.whatsapp.index');
-    Route::post('connect', 'connect')->name('admin.lawfirm.whatsapp.connect');
-    Route::post('disconnect', 'disconnect')->name('admin.lawfirm.whatsapp.disconnect');
-    Route::get('status', 'status')->name('admin.lawfirm.whatsapp.status');
-});
 
 // -----------------------------------------------
 // SaaS Dashboard (Minha Assinatura)
 // -----------------------------------------------
 Route::get('assinatura', [SaaSController::class, 'index'])
     ->name('admin.lawfirm.saas.index');
+
+// -----------------------------------------------
+// SaaS Checkout & Billing (Asaas)
+// -----------------------------------------------
+Route::prefix('checkout')->controller(\SuiteZap\LawFirm\SaaS\Http\Controllers\SubscriptionCheckoutController::class)->group(function () {
+    Route::post('plan', 'checkoutPlan')->name('admin.lawfirm.saas.checkout.plan');
+    Route::post('credits', 'checkoutCredits')->name('admin.lawfirm.saas.checkout.credits');
+});
+
+Route::prefix('billing-info')->controller(\SuiteZap\LawFirm\SaaS\Http\Controllers\TenantBillingController::class)->group(function () {
+    Route::get('', 'index')->name('admin.lawfirm.saas.billing-info.index');
+    Route::post('', 'store')->name('admin.lawfirm.saas.billing-info.store');
+});
 
 // -----------------------------------------------
 // AI Assistants
@@ -53,8 +59,24 @@ Route::prefix('assistants')->controller(\SuiteZap\LawFirm\AI\Http\Controllers\Ad
 });
 
 // -----------------------------------------------
-// AI Assistants
+// Mothership Admin API — Gestão de Templates de IA + Cache Sync
+//
+// Autenticação: Header X-Mothership-Key (lido de mothership.app_config.api_secret)
+// Zero .env: o segredo é compartilhado via banco Mothership, não por variável de ambiente.
+//
+// Fluxo de sync:
+//   Mothership Panel salva template → POST /mothership/cache/invalidate →
+//   ai_templates_cache_version++ → próximo request do tenant reconstrói cache
 // -----------------------------------------------
+Route::prefix('mothership')->controller(MothershipTemplateController::class)->group(function () {
+    // Templates CRUD (chamados diretamente ou pelo Mothership Panel)
+    Route::get('templates', 'index')->name('lawfirm.mothership.templates.index');
+    Route::post('templates/upsert', 'upsert')->name('lawfirm.mothership.templates.upsert');
+    Route::patch('templates/{slug}/deactivate', 'deactivate')->name('lawfirm.mothership.templates.deactivate');
+
+    // Webhook de invalidação de cache — chamado pelo Mothership Panel após qualquer mutação
+    Route::post('cache/invalidate', 'invalidateCache')->name('lawfirm.mothership.cache.invalidate');
+});
 
 // -----------------------------------------------
 // Diagnóstico S3/MinIO

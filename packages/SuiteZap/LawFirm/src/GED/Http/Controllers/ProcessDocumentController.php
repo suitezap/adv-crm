@@ -204,7 +204,7 @@ class ProcessDocumentController extends Controller
                 );
 
                 // 6. Enviar via Service
-                $evolutionService = app(\SuiteZap\LawFirm\Services\Whatsapp\EvolutionService::class);
+                $evolutionService = app(\SuiteZap\LawFirm\Whatsapp\Services\EvolutionService::class);
                 $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
                 $instanceName = $config['instance'] ?? env('EVOLUTION_INSTANCE_NAME');
                 $evolutionService->sendMessage($instanceName, $phone, $msg);
@@ -227,8 +227,15 @@ class ProcessDocumentController extends Controller
         $document = ProcessDocument::findOrFail($id);
         $document->update([
             'status' => $request->status,
-            'notes' => $request->notes
+            'notes' => $request->notes,
         ]);
+
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Status atualizado com sucesso.',
+            ]);
+        }
 
         session()->flash('success', 'Status do documento atualizado.');
         return redirect()->back();
@@ -294,7 +301,7 @@ class ProcessDocumentController extends Controller
             );
 
             // 6. Enviar via Service
-            $evolutionService = app(\SuiteZap\LawFirm\Services\Whatsapp\EvolutionService::class);
+            $evolutionService = app(\SuiteZap\LawFirm\Whatsapp\Services\EvolutionService::class);
 
             $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
             $instanceName = $config['instance'] ?? env('EVOLUTION_INSTANCE_NAME');

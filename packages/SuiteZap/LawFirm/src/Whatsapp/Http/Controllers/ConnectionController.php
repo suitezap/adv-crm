@@ -5,7 +5,7 @@ namespace SuiteZap\LawFirm\Whatsapp\Http\Controllers;
 use Illuminate\Support\Facades\View;
 use Illuminate\Http\Request;
 use Webkul\Admin\Http\Controllers\Controller;
-use SuiteZap\LawFirm\Services\Whatsapp\EvolutionService;
+use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 
 class ConnectionController extends Controller

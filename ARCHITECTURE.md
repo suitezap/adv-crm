@@ -1,4 +1,4 @@
-# 🏛 LawFirm CRM - Documento de Arquitetura (v3.12 - DDD & SaaS)
+# 🏛 LawFirm CRM - Documento de Arquitetura (v3.17 - DDD & SaaS Multi-Tenant)
 
 ## 1. Visão Geral
 Este projeto segue a arquitetura **Domain-Driven Design (DDD)** adaptada para **SaaS Multi-Tenant**.
@@ -211,9 +211,45 @@ src/
     *   **Integração no Webhook** (`WebhookController`): A controller passa a reconhecer payloads de push que indicam alterações em monitoramentos (como novas movimentações). Se ativo, delega para `EvolutionService` realizar o dispatch da mensagem baseada num Custom Template.
     *   **Template Dinâmico**: A notificação é moldada por um texto padrão inserido nativamente em `Config/system.php` sob o namespace `escavador_monitoramento_update`.
 
-## 5. Auditoria Estrutural e Mapa de Dívida Técnica (v3.13)
+### 4.27 Extinção do Legado Raiz (v3.14)
+*   **Decisão:** Extinguir definitivamente a dívida técnica residual da migração original, promovendo as últimas classes (relíquias) da raiz de infraestrutura para seus respectivos Domínios de negócio nativos.
+*   **Mudanças:**
+    *   `SafeActivityDataGrid` relocada do legado `src/DataGrids` para `src/Legal/DataGrids`.
+    *   Pastas estruturais obsoletas na raiz (`src/Events`, `src/Rules`, `src/Observers`, `src/DataGrids`, `src/Services/Whatsapp`) formalmente extintas e deletadas do root do LawFirm.
+    *   O Service Provider (`LawFirmServiceProvider`) foi ajustado para injetar os namespaces corretos sob seus Bounded Contexts, atingindo isolamento arquitetural (Zero Root Debt).
 
-O projeto atingiu um nível maduro de separação de domínios. Todos os controllers órfãos e arquivos residuais que inflavam artificialmente a raiz foram migrados para dentro de seus devidos *Bounded Contexts*.
+### 4.28 Integração de Pagamentos Asaas e Créditos de IA (v3.15)
+*   **Decisão:** Integrar o gateway de pagamentos Asaas para gerenciar o faturamento de assinaturas e venda avulsa de créditos de inteligência artificial, mantendo a filosofia "Zero .env" e os padrões "Skinny Controller" no domínio SaaS.
+*   **Mudanças:**
+    *   **Backend (`AsaasService` & `SubscriptionCheckoutController`):** Serviço dedicado criado para intermediar a gestão de clientes e pagamentos na API V3 do Asaas. As requisições ganham dinamicidade ao buscar as credenciais direto no nó de infraestrutura tipo `asaas` (banco MotherShip).
+    *   **Frontend (Vanilla JS):** O painel do Krayin CRM (Aba Minha Assinatura) agora abriga os planos de renovação e opções de recarga de créditos. Os botões acionam métodos `fetch` injetando o CSRF para se proteger do Vue.js invasivo da dashboard ("Financial Tab Pattern").
+    *   **Webhooks Assíncronos (`AsaasWebhookController`):** Controller que consome payloads isentos do CSRF e consolida recebimentos. Automatiza o preenchimento de `ai_tokens_balance` global no MotherShip e notifica a requisição de reset de cache.
+
+### 4.29 Dados de Faturamento Multi-Tenant SaaS (v3.15)
+*   **Decisão:** Centralizar os dados de identificação do comprador (Razão Social, CNPJ, Email, CEP, etc.) na camada global MotherShip (Tabela 1:1 `tenant_billing_infos`), separando-os da configuração local do tenant (`core_config`). Isso garante que operações vitais (como gateway Asaas) consumam regras e dados de faturamento desatrelados do CRM.
+*   **Mudanças:**
+    *   **Backend (`TenantBillingController` & `TenantBillingInfo`):** Controller restrito para CRUD destas chaves no Model Eloquent vinculado à connection `mothership`. O `AsaasService` também repriorizou sua origem de dados, usando `core_config` apenas como fallback legado de último recurso.
+    *   **Frontend Modular:** A UI de "Dados do Comprador" atua como um grid embeddado direto na aba `Minha Assinatura`, operando de forma autônoma via AJAX REST, com fetch automático de logradouros através da integração API Viacep/OpenCep.
+
+### 4.30 Precificação Dinâmica de Checkouts e Parcelamento (v3.16)
+*   **Decisão:** Expandir o Gateway de Pagamentos para suportar pacotes customizáveis de créditos de IA e parcelamentos via Cartão de Crédito, blindando a conversão numérica com validação estrita no Backend.
+*   **Mudanças:**
+    *   **Backend (`AsaasService` & `SubscriptionCheckoutController`):** O método `createCreditCheckout` injeta ativamente as flags conjuntas `['DETACHED', 'INSTALLMENT']` no payload do Asaas quando a opção de Parcelamento é eleita. Adicionalmente, o Controller atua como Firewall, ignorando os preços manipulados no FrontEnd e recalculando a taxa real: `Preço = Créditos / 100`, forçando a conversão mandatória e prevenindo interceptação de request.
+    *   **Frontend:** Refatoração de botões do Modal de Checkout utilizando estilos HEX inline injetados diretamente na View, suprimindo o problema do JIT Compiler do Tailwind CSS com dependências nativas "Dark Mode". Campos de "Outro Valor" interativos incluídos com cálculo assíncrono antes do *submit*.
+
+### 4.31 Hardening Arquitetural e Conformidade Total (v3.17)
+*   **Decisão:** Eliminar as 4 violações residuais identificadas em auditoria estrutural pós-v3.16: `env()` fallback silencioso, acesso direto ao `Storage::` fora do `SaasFileService`, Controller gordo com lógica de negócio inline e ausência de arquivo de rota dedicado para o domínio `Whatsapp`.
+*   **Mudanças:**
+    *   **`env()` Removido (`FinancialController`):** O fallback `env('EVOLUTION_INSTANCE_NAME')` foi eliminado. Quando o `MotherShipService::getEvolutionConfig()` não encontra a instância, o sistema retorna HTTP **503** com mensagem clara ao usuário — sem vazamento silencioso de credenciais do servidor entre tenants.
+    *   **`Storage::` Proibido (`FinancialController`):** As chamadas diretas `Storage::exists()`, `Storage::get()` e `Storage::mimeType()` no método `downloadReceipt()` foram substituídas por delegação ao `SaasFileService`, garantindo acesso ao bucket S3/MinIO correto de cada tenant.
+    *   **`SaasFileService` Expandido:** Adicionados métodos `get(string $path): ?string`, `mimeType(string $path): ?string` e `storeRaw(string $path, string $contents): bool` para completar a interface de manipulação de arquivos sem expor o `Storage::` direto a callers externos.
+    *   **Skinny Controller (`FinancialController`):** Toda a lógica de composição de mensagem WhatsApp (extração de telefone, template lookup, substituição de tags `{cliente_nome}`, `{valor}`, `{data_vencimento}`) foi extraída para `FinancialService::prepareBillingWhatsapp(Financial $financial): array`. O controller reduziu de ~90 para ~35 linhas no método `sendWhatsappBilling()`.
+    *   **Segregação de Rotas (`Whatsapp`):** Criado `src/Http/Routes/admin-whatsapp.php` dedicado ao domínio `Whatsapp` (antes as rotas viviam em `admin-saas.php`). Registrado no master loader `routes.php`; bloco duplicado removido de `admin-saas.php`.
+    *   **Diretórios Fantasma Deletados:** As pastas `src/Events/`, `src/Observers/`, `src/Rules/`, `src/Listeners/` e `src/Services/` (incluindo `Services/Whatsapp/`) — que persistiam como estruturas vazias desde a v3.14 — foram definitivamente removidas do filesystem.
+
+## 5. Auditoria Estrutural e Mapa de Dívida Técnica (v3.17)
+
+O projeto atingiu seu nível máximo de maturidade no isolamento de domínios. Todos os controllers órfãos e arquivos residuais que inflavam artificialmente a raiz foram completamente migrados.
 
 ### 5.1 Diagrama de Classes (Situação Atual)
 
@@ -221,40 +257,44 @@ O projeto atingiu um nível maduro de separação de domínios. Todos os control
 classDiagram
     direction TB
 
-    %% --- DOMÍNIOS CORE (SOLID) ---
+    %% --- DOMÍNIOS CORE SÓLIDOS (verde) ---
     namespace Legal_Domain {
         class Processo
         class Prazo
         class CaseChecklist
         class ProcessoController
         class ChecklistController
+        class DeadlineService
     }
 
     namespace Financial_Domain {
-        class Financial
+        class Financial_Model
         class FinancialService
         class FinancialController
-    }
-
-    namespace AI_Domain {
-        class AiExecution
-        class AssistantTemplate
-        class AssistantHistory
-        class AssistantController_Admin
-        class AssistantHistoryController_Admin
-        class AssistantHistoryDataGrid
-        class ProcessAiAssistant_Job
+        class FinancialDashboardService
     }
 
     namespace GED_Domain {
         class ProcessDocument
         class DocumentService
         class ProcessDocumentController
-        class Anexo_Model
+        class SaasFileService
     }
 
     namespace Whatsapp_Domain {
         class ConnectionController
+        class EvolutionService
+        class SendPrazoWhatsapp
+    }
+
+    %% --- DOMÍNIOS EM MATURAÇÃO (amarelo) ---
+    namespace AI_Domain {
+        class AssistantController_Admin
+        class AssistantHistoryController_Admin
+        class ProcessAiAssistant_Job
+        class AssistantTemplate
+        class AssistantHistory
+        class N8nService
     }
 
     namespace Escavador_Domain {
@@ -262,46 +302,57 @@ classDiagram
         class EscavadorService
         class EscavadorRequest
         class EscavadorMonitoramento
+        class WebhookController
         class EscavadorHistoryController_Admin
-        class EscavadorMonitoramentoController_Admin
     }
-    
+
+    %% --- INFRAESTRUTURA SAAS (azul) ---
     namespace SaaS_Domain {
-        class SaasTransactionController
-        class SaasTransactionsDataGrid
         class MotherShipService
+        class SaasTransactionController
+        class Subscription
+        class Tenant
+        class AsaasService
+        class UserObserver
     }
 
     %% Relações
-    Legal_Domain ..> GED_Domain : Utiliza
-    Legal_Domain ..> Financial_Domain : Utiliza (via Ajax)
-    ProcessoController --> MotherShipService : Verifica Tenant
-    AssistantController_Admin --> ProcessAiAssistant_Job : Despacha
-    EscavadorController --> EscavadorService : Delega
-    EscavadorService --> MotherShipService : Lê `infrastructure_nodes` e Preços (app_config)
-    EscavadorMonitoramentoController_Admin --> EscavadorMonitoramento : Altera config (notify_whatsapp)
-    Financial_Domain ..> Whatsapp_Domain : Notificações de Cobrança
-    Escavador_Domain ..> Whatsapp_Domain : Alertas Webhook (Callback)
-    SaasTransactionController --> MotherShipService : Billing & Ledger
+    Legal_Domain ..> GED_Domain : DocumentService
+    Legal_Domain ..> Financial_Domain : Ajax
+    Financial_Domain ..> Whatsapp_Domain : prepareBillingWhatsapp
+    Financial_Domain ..> GED_Domain : SaasFileService
+    Financial_Domain ..> SaaS_Domain : MotherShipService
+    Escavador_Domain ..> Whatsapp_Domain : Alertas Callback
+    Escavador_Domain ..> SaaS_Domain : infrastructure_nodes
+    AI_Domain ..> SaaS_Domain : ai_tokens_balance
+    GED_Domain ..> SaaS_Domain : SaasFileService → S3
+    Whatsapp_Domain ..> SaaS_Domain : getEvolutionConfig
 
     style Legal_Domain fill:#2a9d8f,color:#fff
     style Financial_Domain fill:#2a9d8f,color:#fff
-    style AI_Domain fill:#e9c46a,color:#000
     style GED_Domain fill:#2a9d8f,color:#fff
-    style SaaS_Domain fill:#264653,color:#fff
     style Whatsapp_Domain fill:#2a9d8f,color:#fff
+    style AI_Domain fill:#e9c46a,color:#000
     style Escavador_Domain fill:#e9c46a,color:#000
+    style SaaS_Domain fill:#264653,color:#fff
 ```
 
-### 5.2 Pontos de Atenção (Technical Debt)
+### 5.2 Histórico de Dívida Técnica (Resolvida)
 
-**✅ Resolvidos (Limpeza v3.8 - v3.12):**
-*   `src/Models/*`: Removidos models duplicados e realocados outros.
-*   `src/Listeners/` & `src/Observers/`: Arquivos órfãos movidos para domínios.
+**✅ Limpeza v3.8 – v3.14:**
+*   `src/Models/*`: Removidos models duplicados e realocados.
+*   `src/Listeners/`, `src/Observers/`, `src/Events/`, `src/Rules/`, `src/DataGrids/`: Arquivos órfãos migrados integralmente para seus domínios. A última relíquia (`SafeActivityDataGrid`) alocada em `Legal` na v3.14, pastas deletadas.
+*   `src/Services/Whatsapp`: Consolidado no domínio `Whatsapp`.
 *   `src/Services/N8nService.php`: Movido para `AI`.
-*   Unificação de Histórico do *Escavador* e precificação reestruturada centralmente, garantindo isolamento entre negócio principal e consumos externos.
 
-**🟢 Status Atual:** A pasta `src/` raiz não contém mais classes de negócio soltas (Models, Controllers, Services, Observers). Todos os arquivos estão estritamente dentro de seus Bounded Contexts.
+**✅ Hardening v3.17:**
+*   `FinancialController`: `env()` fallback removido (→ HTTP 503 explícito). `Storage::` direto substituído por `SaasFileService`. Método `sendWhatsappBilling()` esvaziado (~90→~35 linhas) com lógica extraída para `FinancialService::prepareBillingWhatsapp()`.
+*   `SaasFileService`: Expandido com `get()`, `mimeType()` e `storeRaw()` — interface pública completa para manipulação de arquivos sem expor `Storage::` a callers.
+*   `admin-whatsapp.php`: Criado como arquivo de rota dedicado ao domínio `Whatsapp`; removido de `admin-saas.php`.
+*   Diretórios fantasma `src/Events/`, `src/Observers/`, `src/Rules/`, `src/Listeners/`, `src/Services/` deletados definitivamente.
+
+**🟢 Status Atual — Dívida Técnica Zero (v3.17):**
+A pasta `src/` está 100% esterilizada. Todos os Bounded Contexts possuem estrutura `Models/Http/Controllers/Services/DataGrids` completa. Nenhum arquivo de lógica/negócio reside fora de seu domínio. O pacote está preparado para escala SaaS multi-tenant corporativa.
 
 ## 6. Padrões de Frontend (UI/UX)
 

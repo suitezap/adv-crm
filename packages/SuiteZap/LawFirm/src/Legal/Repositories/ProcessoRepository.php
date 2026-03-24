@@ -13,6 +13,6 @@ class ProcessoRepository extends Repository
      */
     public function model()
     {
-        return 'SuiteZap\LawFirm\Contracts\Processo';
+        return \SuiteZap\LawFirm\Legal\Models\Processo::class;
     }
 }

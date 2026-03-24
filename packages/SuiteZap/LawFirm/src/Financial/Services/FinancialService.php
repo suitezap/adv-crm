@@ -116,6 +116,85 @@ class FinancialService
         return Financial::findOrFail($id)->delete();
     }
 
+    /**
+     * Prepara os dados para envio de cobrança via WhatsApp.
+     *
+     * Extrai o telefone do cliente, compila o template de mensagem com base no
+     * status de vencimento e retorna um array pronto para o EvolutionService.
+     *
+     * @param  Financial  $financial  Lançamento carregado com relações processo.person
+     * @return array  ['phone' => string, 'message' => string]
+     *
+     * @throws \InvalidArgumentException  Se o lançamento já está pago ou se não há pessoa/telefone
+     */
+    public function prepareBillingWhatsapp(Financial $financial): array
+    {
+        if ($financial->status === 'pago') {
+            throw new \InvalidArgumentException('Lançamento já está pago.');
+        }
+
+        $person = $financial->processo->person ?? null;
+        if (!$person) {
+            throw new \InvalidArgumentException('Nenhuma pessoa associada ao processo.');
+        }
+
+        // Extrai o primeiro telefone disponível
+        $phone = null;
+        $contactNumbers = $person->contact_numbers;
+        if (is_array($contactNumbers)) {
+            foreach ($contactNumbers as $contact) {
+                if (!empty($contact['value'])) {
+                    $phone = $contact['value'];
+                    break;
+                }
+            }
+        } elseif (is_string($contactNumbers)) {
+            $phone = $contactNumbers;
+        } elseif ($contactNumbers instanceof \Illuminate\Support\Collection) {
+            $phoneObj = $contactNumbers->first();
+            $phone = $phoneObj ? $phoneObj->value : null;
+        }
+
+        $cleanPhone = preg_replace('/\D/', '', $phone ?? '');
+        if (empty($cleanPhone)) {
+            throw new \InvalidArgumentException('Cliente não possui telefone cadastrado.');
+        }
+
+        // Adiciona prefixo do Brasil se necessário
+        if (strlen($cleanPhone) >= 10 && strlen($cleanPhone) <= 11) {
+            $cleanPhone = '55' . $cleanPhone;
+        }
+
+        // Compila o template de mensagem com base no status de vencimento
+        $nomeCliente = explode(' ', trim($person->name))[0];
+        $valor       = number_format((float) $financial->valor, 2, ',', '.');
+        $descricao   = $financial->nome;
+        $dataVencimento = $financial->data_vencimento ? Carbon::parse($financial->data_vencimento) : null;
+        $hoje        = Carbon::now()->startOfDay();
+
+        $defaultOverdue = 'Olá {cliente_nome}, verificamos uma pendência de {valor} referente a {descricao}, vencida em {data_vencimento}. Podemos atualizar o boleto?';
+        $defaultDue     = 'Olá {cliente_nome}, lembrete amigável do vencimento de {descricao} no valor de {valor} para o dia {data_vencimento}.';
+
+        $templateOverdue = core()->getConfigData('lawfirm.whatsapp_templates.messages.financial_billing_overdue') ?: $defaultOverdue;
+        $templateDue     = core()->getConfigData('lawfirm.whatsapp_templates.messages.financial_billing_due_today') ?: $defaultDue;
+
+        $dataStr  = $dataVencimento ? $dataVencimento->format('d/m/Y') : 'data a confirmar';
+        $replaces = [
+            '{cliente_nome}'    => $nomeCliente,
+            '{valor}'           => 'R$ ' . $valor,
+            '{descricao}'       => $descricao,
+            '{data_vencimento}' => $dataStr,
+        ];
+
+        $template = ($dataVencimento && $dataVencimento->lt($hoje)) ? $templateOverdue : $templateDue;
+        $message  = str_replace(array_keys($replaces), array_values($replaces), $template);
+
+        return [
+            'phone'   => $cleanPhone,
+            'message' => $message,
+        ];
+    }
+
     // =========================================================================
     // MÉTODOS PRIVADOS
     // =========================================================================

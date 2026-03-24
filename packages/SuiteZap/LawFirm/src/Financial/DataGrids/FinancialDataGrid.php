@@ -45,7 +45,9 @@ class FinancialDataGrid extends DataGrid
                 'law_financials.tipo',
                 'law_financials.nome',
                 'law_financials.valor',
+                'law_financials.valor as raw_valor',
                 'law_financials.data_vencimento',
+                'law_financials.data_vencimento as raw_data_vencimento',
                 'law_financials.status',
                 'law_financials.status as raw_status',
                 'persons.name as person_name',
@@ -242,6 +244,11 @@ class FinancialDataGrid extends DataGrid
                 // Sanitização mantendo apenas números
                 $cleanPhone = preg_replace('/\D/', '', $phone ?? '');
 
+                // Lógica do código do país (Adiciona 55 se tiver 10 ou 11 dígitos, Brasil)
+                if (strlen($cleanPhone) >= 10 && strlen($cleanPhone) <= 11) {
+                    $cleanPhone = '55' . $cleanPhone;
+                }
+
                 // Se não tiver telefone válido
                 if (empty($cleanPhone)) {
                     return '<button type="button" disabled class="px-2 py-1 rounded bg-gray-300 text-white text-xs font-bold cursor-not-allowed" title="Sem telefone cadastrado">
@@ -250,19 +257,20 @@ class FinancialDataGrid extends DataGrid
                 }
 
                 // Lógica da mensagem
-                $valor = number_format((float) ($row->valor ?? 0), 2, ',', '.');
+                $valor = number_format((float) ($row->raw_valor ?? 0), 2, ',', '.');
                 $descricao = $row->nome;
                 $nomeCliente = explode(' ', trim($row->person_name ?? 'Cliente'))[0];
 
                 // Parse da data de vencimento com tratamento de formato
                 $dataVencimento = null;
-                if ($row->data_vencimento) {
+                $rawDate = $row->raw_data_vencimento ?? $row->data_vencimento;
+                if ($rawDate) {
                     // Tenta formato ISO (Y-m-d) primeiro, depois BR (d/m/Y)
                     try {
-                        $dataVencimento = \Carbon\Carbon::parse($row->data_vencimento);
+                        $dataVencimento = \Carbon\Carbon::parse($rawDate);
                     } catch (\Exception $e) {
                         try {
-                            $dataVencimento = \Carbon\Carbon::createFromFormat('d/m/Y', $row->data_vencimento);
+                            $dataVencimento = \Carbon\Carbon::createFromFormat('d/m/Y', $rawDate);
                         } catch (\Exception $e2) {
                             $dataVencimento = null;
                         }
@@ -270,20 +278,10 @@ class FinancialDataGrid extends DataGrid
                 }
                 $hoje = \Carbon\Carbon::now()->startOfDay();
 
-                if ($dataVencimento && $dataVencimento->lt($hoje)) {
-                    // Vencida
-                    $msg = "Olá {$nomeCliente}, verificamos uma pendência de R$ {$valor} referente a {$descricao}, vencida em {$dataVencimento->format('d/m/Y')}. Podemos atualizar o boleto?";
-                } else {
-                    // A vencer ou hoje
-                    $dataStr = $dataVencimento ? $dataVencimento->format('d/m/Y') : 'data a confirmar';
-                    $msg = "Olá {$nomeCliente}, lembrete amigável do vencimento de {$descricao} no valor de R$ {$valor} para o dia {$dataStr}.";
-                }
-
-                $link = "https://wa.me/55{$cleanPhone}?text=" . urlencode($msg);
-
-                return '<a href="' . $link . '" target="_blank" class="px-2 py-1 rounded bg-green-500 text-white text-xs font-bold hover:bg-green-600 inline-block text-center" title="Enviar Cobrança">
+                // O frontend cuidará da confirmação e do disparo Ajax
+                return '<button type="button" onclick="sendWhatsappBilling(' . $row->id . ')" class="px-2 py-1 rounded bg-green-500 text-white text-xs font-bold hover:bg-green-600 inline-block text-center" title="Enviar Cobrança">
                             <span class="icon-message"></span> ZAP
-                        </a>';
+                        </button>';
             },
         ]);
 

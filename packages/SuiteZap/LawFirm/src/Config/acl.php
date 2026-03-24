@@ -68,4 +68,44 @@ return [
         'route' => 'admin.configuration.index',
         'sort' => 1,
     ],
+
+    // Child 5 Group: Assistentes IA
+    [
+        'key' => 'lawfirm.assistants',
+        'name' => 'Assistentes IA',
+        'route' => 'lawfirm.assistants.index',
+        'sort' => 5,
+    ],
+
+    // Child 6 Group: Assistente Jurídico
+    [
+        'key' => 'lawfirm.escavador',
+        'name' => 'Assistente Jurídico',
+        'route' => 'lawfirm.escavador.index',
+        'sort' => 6,
+    ],
+
+    // Child 6.1 Group: Certificados Digitais
+    [
+        'key' => 'lawfirm.escavador_certs',
+        'name' => 'Certificados Digitais (Jurídico)',
+        'route' => 'lawfirm.escavador.certificados.view',
+        'sort' => 7,
+    ],
+
+    // Child 7 Group: Assinatura SaaS
+    [
+        'key' => 'lawfirm.saas',
+        'name' => 'Assinatura e Créditos SaaS',
+        'route' => 'admin.lawfirm.saas.index',
+        'sort' => 8,
+    ],
+    // Child 7 Item: Gerenciar Assinatura
+    [
+        'key' => 'lawfirm.saas.manage',
+        'name' => 'Gerenciar Assinatura e Créditos',
+        'route' => 'admin.lawfirm.saas.index',
+        'sort' => 1,
+    ],
 ];
+

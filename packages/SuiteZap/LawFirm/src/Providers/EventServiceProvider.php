@@ -4,7 +4,7 @@ namespace SuiteZap\LawFirm\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use SuiteZap\LawFirm\Events\PrazoCreated;
-use SuiteZap\LawFirm\Listeners\SendPrazoWhatsapp;
+use SuiteZap\LawFirm\Whatsapp\Listeners\SendPrazoWhatsapp;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
