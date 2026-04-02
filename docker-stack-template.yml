@@ -98,7 +98,7 @@ services:
 
       # ⚠️ REGRA LAWFIRM: Variáveis de S3 (FILESYSTEM_DISK, AWS_*),
       # APIs de IA (N8N_*) e WhatsApp (EVOLUTION_*) não devem figurar aqui!
-      # São injetados pelo MotherShipService::configureTenantStorage() (v3.20+)
+      # São injetados pelo MotherShipService::configureTenantStorage() (v3.17+)
       # com base na tabela `infrastructure_nodes` e `app_config` do hub.
 
     networks:

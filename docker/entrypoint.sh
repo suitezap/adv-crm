@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Iniciando LawFirm SaaS v6.2 (LF v3.20 | Billing PF/PJ + SaaS Isolation)..."
+echo "🚀 Iniciando LawFirm SaaS v6.2 (LF v3.20)..."
 
 # 1. Setup Inicial
 cd /var/www/html
