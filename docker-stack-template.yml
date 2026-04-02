@@ -1,0 +1,117 @@
+version: "3.8"
+
+services:
+  app:
+    image: suitezap/lawfirm:v1.7
+    hostname: adv
+
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.adv.rule=Host(`adv.suitezap.com.br`)"
+        - "traefik.http.routers.adv.entrypoints=websecure"
+        - "traefik.http.routers.adv.tls.certresolver=letsencrypt"
+        - "traefik.http.services.adv.loadbalancer.server.port=80"
+
+    volumes:
+      # ⚠️ REGRA LAWFIRM: Uso de discos locais para arquivos de tenant (GED) é PROIBIDO!
+      # Toda gestão de arquivos do cliente ocorre via S3/MinIO consumidos do hub Mothership.
+      # O volume local abaixo serve APENAS para arquivos de cache da framework,
+      # logs do Laravel e views compiladas.
+      # Obs: Adotamos "named volumes" em vez de bind mounts (/opt/...) pois no Swarm
+      # garantir que a pasta existe no Worker Node de destino exige infra extra (ex: NFS).
+      - app_storage_adv:/var/www/html/storage
+
+    environment:
+      # -----------------------------------------------------------------
+      # ⚙️ APP
+      # -----------------------------------------------------------------
+      - APP_NAME="Escritório Teste"
+      - APP_ENV=production
+      - APP_KEY=base64:43UF+dRtPT0AwNVBwePH3YrNJFgVq3gEHTasQSVMMWL=
+      - APP_DEBUG=false
+      - APP_URL=https://adv.suitezap.com.br
+      - APP_TIMEZONE=America/Sao_Paulo
+      - APP_LOCALE=pt_BR
+      - APP_CURRENCY=BRL
+
+      # HTTPS FIX
+      - ASSET_URL=https://adv.suitezap.com.br
+      - TRUSTED_PROXIES=*
+
+      # -----------------------------------------------------------------
+      # 🆔 TENANT
+      # -----------------------------------------------------------------
+      - TENANT_ID=tenant_escritorio_teste
+
+      # -----------------------------------------------------------------
+      # 🛸 BANCO MOTHERSHIP (CONTROLE)
+      # -----------------------------------------------------------------
+      # Credenciais do hub central. Configurações da API, S3, Asaas e integrações
+      # são obtidas dinamicamente daqui através do MotherShipService.
+      - DB_MOTHERSHIP_CONNECTION=mysql
+      - DB_MOTHERSHIP_HOST=mariadb
+      - DB_MOTHERSHIP_PORT=3306
+      - DB_MOTHERSHIP_DATABASE=mothership_db
+      - DB_MOTHERSHIP_USERNAME=krayin_admin
+      - DB_MOTHERSHIP_PASSWORD=Acesso2k2xNaoPermitido
+
+      # -----------------------------------------------------------------
+      # 💾 BANCO TENANT (DADOS)
+      # -----------------------------------------------------------------
+      - DB_CONNECTION=mysql
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_DATABASE=tenant_escritorio_teste
+      - DB_USERNAME=krayin_admin
+      - DB_PASSWORD=Acesso2k2xNaoPermitido
+      - DB_PREFIX=
+
+      # -----------------------------------------------------------------
+      # ⚙️ DRIVERS
+      # -----------------------------------------------------------------
+      - BROADCAST_DRIVER=log
+      - CACHE_DRIVER=file
+      - SESSION_DRIVER=database
+      - QUEUE_CONNECTION=sync
+
+      # -----------------------------------------------------------------
+      # 🛠️ LOGS
+      # -----------------------------------------------------------------
+      - LOG_CHANNEL=stderr
+      - LOG_LEVEL=debug
+
+      # -----------------------------------------------------------------
+      # 📧 EMAIL (DEV SAFE)
+      # -----------------------------------------------------------------
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=zoho.com
+      - MAIL_PORT=587
+      - MAIL_USERNAME=sac@suitezap.com.br
+      - MAIL_PASSWORD=Eu_&m_2k2x
+      - MAIL_ENCRYPTION=tls
+      - MAIL_FROM_ADDRESS=sac@suitezap.com.br
+      - MAIL_FROM_NAME=SuiteZap
+
+      # ⚠️ REGRA LAWFIRM: Variáveis de S3 (FILESYSTEM_DISK, AWS_*),
+      # APIs de IA (N8N_*) e WhatsApp (EVOLUTION_*) não devem figurar aqui!
+      # São injetados pelo MotherShipService::configureTenantStorage() (v3.20+)
+      # com base na tabela `infrastructure_nodes` e `app_config` do hub.
+
+    networks:
+      - suitezap_rede
+
+# -------------------------------------------------------------------------
+# Mapeamento e Declaração de Volumes da Stack (SWARM)
+# -------------------------------------------------------------------------
+volumes:
+  # Declaração do named volume para uso seguro no Docker Swarm
+  app_storage_adv:
+    driver: local
+
+networks:
+  suitezap_rede:
+    external: true

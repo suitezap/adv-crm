@@ -1,4 +1,6 @@
-# 🏛 LawFirm CRM - Documento de Arquitetura (v3.17 - DDD & SaaS Multi-Tenant)
+# 🏛 LawFirm CRM - Documento de Arquitetura (v3.20 - DDD & SaaS Multi-Tenant)
+> [!IMPORTANT]
+> **Manutenção do Documento:** Este arquivo **DEVE** ser atualizado (seção 4.x) e a versão incrementada no cabeçalho sempre que houver mudanças estruturais, novas funcionalidades core ou atualizações na constante de versão em `LawFirmServiceProvider.php`.
 
 ## 1. Visão Geral
 Este projeto segue a arquitetura **Domain-Driven Design (DDD)** adaptada para **SaaS Multi-Tenant**.
@@ -247,7 +249,51 @@ src/
     *   **Segregação de Rotas (`Whatsapp`):** Criado `src/Http/Routes/admin-whatsapp.php` dedicado ao domínio `Whatsapp` (antes as rotas viviam em `admin-saas.php`). Registrado no master loader `routes.php`; bloco duplicado removido de `admin-saas.php`.
     *   **Diretórios Fantasma Deletados:** As pastas `src/Events/`, `src/Observers/`, `src/Rules/`, `src/Listeners/` e `src/Services/` (incluindo `Services/Whatsapp/`) — que persistiam como estruturas vazias desde a v3.14 — foram definitivamente removidas do filesystem.
 
-## 5. Auditoria Estrutural e Mapa de Dívida Técnica (v3.17)
+### 4.32 Idempotência do Mothership e Hardening do Deploy Docker (v3.17)
+*   **Decisão:** Tornar o ambiente Docker resiliente a falhas de boot de container e resolver permanentemente o provisionamento de novos tenants no SaaS.
+*   **Problema 1 (Container Crash Loop):** O `entrypoint.sh` rodava `artisan migrate` forçando o caminho `Webkul/Mail`, que havia sido deletado no refactoring anterior, resultando em "Migration path not found" e derrubando a stack imediatamente no Docker Swarm.
+*   **Problema 2 (Não-Idempotência):** A tabela de controle `migrations` vive no banco do Tenant, enquanto as migrations do Mothership alteram o banco central. Sempre que um *novo* tenant era provisionado, o Laravel tentava rodar as migrations do Mothership de novo, gerando erro `Table already exists` e quebrando o deploy (Erro 42S01).
+*   **Mudanças:**
+    *   **Entrypoint Limpo:** Removidos caminhos órfãos do `docker/entrypoint.sh`.
+    *   **Migrations Blindadas:** Todas as migrations da connection `mothership` (como `app_config` e `lawfirm_assistant_templates`) receberam blocos `hasTable()` e `hasColumn()`, tornando o ecossistema 100% idempotente a deploys paralelos ou novos tenants.
+    *   **Configuração via Compose:** Adotado o modelo `.env.docker` (passagem explícita de `DB_MOTHERSHIP_*` via `environment:` do `docker-compose.yml`), abandonando o antipattern de `COPY .env` para a imagem e evitando conexões recusas por *localhost*.
+
+### 4.33 Krayin 2.1.6 Localization e Estabilização de Rotas (v3.17)
+*   **Decisão:** Corrigir os DataGrids e formulários corrompidos no idioma Português (PT-BR) após a atualização do Core do Krayin (v2.1.6) e estabilizar Views do sistema como o Dashboard Financeiro.
+*   **Problema 1 (Seeders Destrutivos e Locale):** Seeders do Krayin (ex: `PipelineSeeder`, `AttributeSeeder`) usam a função `trans()` para preencher o banco de dados. No boot do Docker, se o locale (`pt_BR`) não estava no cache, o Laravel salvava chaves brutas de tradução (ex: `admin::app.seeders...`) corrompendo 100% da interface do usuário baseada nesses atributos.
+*   **Problema 2 (Erro 500 no Dashboard Financeiro):** O Laravel 10/11 passou a lançar a exceção fatal `UrlGenerationException` ao compilar Views Blade que injetam rotas JavaScript com o ID dinâmico omitido (ex: `route('admin.lawfirm.financial.quick_pay', '')`). Isso causava a quebra massiva das telas do sistema.
+*   **Mudanças:**
+    *   **Data Fixer (`entrypoint.sh`):** Adicionado um bloco de execução forçada via `artisan tinker` após o boot dos containers. Este bloco audita e corrige silenciosamente 7 tabelas do CRM (pipelines, estágios, papéis, origens de lead, tipos, workflows, templates e meia centena de atributos), forçando-os para os nomes consolidados em Português-BR independente da tradução nativa do momento do build.
+    *   **Padrão REPLACE_ID (`Blade` e JS):** Enraizado nas regras de Frontend do pacote que rotas geradas pelo Blade para consumo assíncrono do JavaScript nunca usem o id vazio nas views. Devem usar um string placeholder explícito injetado via route: `route('nome_da_rota', 'REPLACE_ID')` com substituição `.replace('REPLACE_ID', id)` puramente *client-side*.
+    *   **Branding Control (`LawFirmServiceProvider`):** Adicionada constante `VERSION` = `3.18` injetada globalmente no Header (exibindo `Versão 2.1.6 | LF 3.18`).
+
+### 4.34 Integração Asaas: Sincronização Local, CheckoutSession e Idempotência (v3.18)
+*   **Decisão:** Eliminar falhas de perda de créditos de IA (race conditions, bloqueios de webhook em localhost ou checkouts de cartão de crédito) mapeando rigidamente os nós de pagamento na infraestrutura.
+*   **Mudanças:**
+    *   **Nó Asaas Estrutural:** Adicionado `asaas_node_id` na tabela `tenants` do banco Mothership e na model genérica `Tenant`, equiparando o gateway financeiro ao nível arquitetural de deploy do N8N e MinIO.
+    *   **Fallback Síncrono (`SaaSController` & `AsaasService`):** Adicionado `AsaasService::syncTenantPayments()`. Quando o usuário retorna de um checkout via parâmetro `?payment=success` (ou até sem parâmetro na listagem da assinatura com debounce de 60s), o sistema consulta ativamente a API do Asaas filtrando as últimas faturas recentes para auditar aprovações no status `RECEIVED` ou `CONFIRMED`. Isso garante recebimento de créditos **instantaneamente** em ambientes locais impermeáveis a Webhooks.
+    *   **Injeção Reversa de CheckoutSession:** Resolvido o *bug* em que faturas geradas através de `checkouts` avulsos não transferiam as metadados do `externalReference`. Os algoritmos do Webhook mapeiam o ID do `checkoutSession`, buscam a sessão pai pendente localmente (que foi criada no ato do click do botão pagar) e transferem o vínculo seguro para o tenant, reabilitando os pagamentos por Cartão de Crédito.
+    *   **Idempotência Robusta e Proporção 1:1:** O schema inicial armazenava o ID de pagamento do Asaas (`pay_xxxx`) em colunas inteiras, truncando strings para `0` e quebrando chaves únicas. O tipo de `reference_id` na `saas_transactions` foi convertido para `VARCHAR(255)`. Simultaneamente, a plataforma convergiu o câmbio de Créditos de IA para a proporção **1:1 (R$ 1,00 = 1 Crédito)**, garantindo espelhamento fiscal e clareza total no extrato da plataforma.
+    *   **Fallback Definitivo (Single-Tenant Asaas):** Cada cliente possui sua própria subconta (InfrastructureNode) do Asaas. Diante disto, caso um pagamento perca completamente o tracking do `externalReference`, uma heurística assume que a transação inevitavelmente pertence ao dono da conta, creditando a proporção BRL exata baseando-se exclusivamente no valor pago.
+
+### 4.35 Resiliência de Storage S3 e Herança de Tokens WhatsApp (v3.19)
+*   **Decisão:** Eliminar erros do tipo `500 Internal Server Error` no provisionamento a frio de novos Tenants garantindo resiliência total nos adaptadores de Storage e instâncias de WhatsApp Web.
+*   **Problema (S3/MinIO):** A criação Just-In-Time de buckets falhava pois nomes atrelados ao tenant (ex: `TsT_Local_S3`) violavam a sintaxe restrita da AWS/MinIO (proibição de letras maiúsculas e underlines), causando `InvalidBucketName (400)`.
+*   **Problema (WhatsApp API):** A injeção vazia do `token` da Evolution API lançava Exceção na interface administrativa quando o tenant não possuía chave individual.
+*   **Mudanças:**
+    *   **Auto-Sanitização (`MotherShipService`):** O `minio_bucket_name` lido do banco é agressivamente convertido usando `preg_replace('/[^a-z0-9.-]/', '-', strtolower(...))` em tempo de execução. O nome sanitizado alimenta de forma segura a variável `filesystems.disks.s3.bucket`.
+    *   **Criação JIT (`SaasFileService`):** O método `store()` agora intercepta retornos `false` da Facade `Storage` e força a criação física do Bucket (`ensureBucketExists()`) usando as próprias credenciais empossadas da Facade, retentando o upload na sequência.
+    *   **Herança de Nó (`MotherShipService`):** O método `getEvolutionConfig()` adota o comportamento de herança. Se o Tenant não tiver o seu próprio `evolution_api_key`, a plataforma envia o Token Master do seu respectivo Servidor Hospedeiro (`$node->api_key`).
+    *   **UX (Auto-Refresh):** O QR Code da view `admin/whatsapp/index.blade.php` recebeu um daemon que auto-atualiza o payload `base64` a cada 40 segundos, suportando a expiração natural da sessão remota da Evolution API sem recarregamento manual da página.
+
+### 4.36 Suporte a Pessoa Física e Jurídica no Billing (v3.20)
+*   **Decisão:** Compatibilizar o módulo de Dados de Faturamento (`admin/juridico/billing-info`) com as novas colunas `company_name`, `cpf` e `cnpj` adicionadas à tabela `tenant_billing_infos` do banco MotherShip em Abr/2026, substituindo o campo unificado legado `cpf_cnpj` por campos distintos e tipados.
+*   **Mudanças:**
+    *   **Model (`TenantBillingInfo`):** Adicionados `company_name`, `cpf` e `cnpj` ao `$fillable`. Coluna `cpf_cnpj` mantida na lista para retrocompatibilidade.
+    *   **Controller (`TenantBillingController@store`):** Validação expandida com os 3 novos campos (todos `nullable`). Lógica de preenchimento automático do campo legado `cpf_cnpj` implementada: prioriza `cnpj` (PJ) > `cpf` (PF) > valor de `cpf_cnpj` enviado — garantindo zero breaking changes em integrações existentes (ex: `AsaasService`).
+    *   **View (`billing-info.blade.php`):** Formulário reestruturado com toggle **PF / PJ**. Em modo PJ, o formulário exibe campos de `Razão Social` e `CNPJ`; em modo PF, exibe `Nome Completo` e `CPF`. Máscaras de input separadas (CPF: `000.000.000-00`, CNPJ: `00.000.000/0000-00`). Validação client-side via `checkDocUx()`. Modo leitura exibe seções distintas por tipo de pessoa detectado via `$isPJ` (PHP-side, baseado na presença do campo `cnpj`). Campos do tipo oposto são limpos no toggle para evitar envio cruzado.
+
+## 5. Auditoria Estrutural e Mapa de Dívida Técnica (v3.18)
 
 O projeto atingiu seu nível máximo de maturidade no isolamento de domínios. Todos os controllers órfãos e arquivos residuais que inflavam artificialmente a raiz foram completamente migrados.
 
@@ -351,7 +397,11 @@ classDiagram
 *   `admin-whatsapp.php`: Criado como arquivo de rota dedicado ao domínio `Whatsapp`; removido de `admin-saas.php`.
 *   Diretórios fantasma `src/Events/`, `src/Observers/`, `src/Rules/`, `src/Listeners/`, `src/Services/` deletados definitivamente.
 
-**🟢 Status Atual — Dívida Técnica Zero (v3.17):**
+**✅ Hardening v3.18:**
+*   Idempotência implementada para o ecossistema Asaas visando concorrência atômica nos creditamentos `saas_transactions` (Zero Race Conditions/Double Spend).
+*   Expansão formal do schema `mothership.tenants` para acomodar o `asaas_node_id`, resolvendo infraestruturas fragmentadas em multi-franquia SaaS.
+
+**🟢 Status Atual — Dívida Técnica Zero (v3.20):**
 A pasta `src/` está 100% esterilizada. Todos os Bounded Contexts possuem estrutura `Models/Http/Controllers/Services/DataGrids` completa. Nenhum arquivo de lógica/negócio reside fora de seu domínio. O pacote está preparado para escala SaaS multi-tenant corporativa.
 
 ## 6. Padrões de Frontend (UI/UX)

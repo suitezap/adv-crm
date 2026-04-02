@@ -1,14 +1,86 @@
+# --- Git & IDE ---
 .git
+.github
+.vscode
+.gemini
+.agents
+.agent
+
+# --- Credenciais & Ambiente ---
 .env
+
+# --- Dependências (instaladas no build) ---
 node_modules
 vendor
+
+# --- Storage transitório (não persistido na imagem) ---
 storage/logs/*.log
-!storage/app/public
-! .env.example
-bootstrap/cache/*.php
 storage/framework/views/*.php
 storage/framework/sessions/*
 storage/framework/cache/*
 storage/framework/testing/*
 storage/framework/laravel-logger/*
+storage/escavador/*
+bootstrap/cache/*.php
 
+# --- Manter storage público (assets)  ---
+!storage/app/public
+
+# --- Manter .env.example como referência ---
+!.env.example
+
+# --- Arquivos de debug/diagnose da raiz (NÃO vão para produção) ---
+debug_*.php
+diagnose*.php
+check_*.php
+fix_*.php
+fix_*.txt
+fix_*.html
+clean_*.php
+rebuild.php
+remove_logo.php
+inject_*.php
+migrate_*.php
+patch_*.php
+generate_*.php
+update_*.php
+update_cards.php
+update_layout.php
+update_modals.php
+update_pix_key.php
+parse.py
+tinker_test.php
+temp_*.php
+
+# --- Arquivos de teste avulsos da raiz ---
+test_*.php
+test_*.js
+test_*.html
+
+# --- Logs e saídas temporárias ---
+*.log
+error.log
+out_*.log
+last_log.txt
+temp_*.txt
+temp_*.log
+temp_erro_log.txt
+gen_out.txt
+dry_run.txt
+routes_debug.txt
+staged.txt
+unstaged.txt
+status.txt
+git_status_output.txt
+pdf_urls.txt
+output.json
+escavador_html.txt
+
+# --- Dados CSV de debug/IA ---
+ai_studio_code*.csv
+
+# --- Arquivos HTML de debug ---
+lead_dump.html
+
+# --- Scripts PHP de temp específicos ---
+temp_processo.php

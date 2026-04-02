@@ -45,23 +45,39 @@
             </div>
 
             @php
-                // O Controller injeta a variável $billingInfo
                 $info = $billingInfo ?? null;
                 $hasData = $info !== null;
+                // Detecta o tipo de pessoa pelo preenchimento das colunas novas
+                $isPJ = $hasData && !empty($info->cnpj);
             @endphp
 
             {{-- Visão de Leitura --}}
             <div id="billingInfoRead" class="{{ $hasData ? 'block' : 'hidden' }}">
                 @if($hasData)
                     <div class="grid grid-cols-2 gap-4 text-sm max-md:grid-cols-1">
+                        @if($isPJ)
                         <div>
-                            <span class="block text-xs text-gray-500 dark:text-gray-400">Razão Social / Nome</span>
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">Razão Social</span>
+                            <strong class="text-gray-800 dark:text-gray-200">{{ $info->company_name ?: $info->name }}</strong>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">CNPJ</span>
+                            <strong class="text-gray-800 dark:text-gray-200">{{ $info->cnpj ?: $info->cpf_cnpj }}</strong>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">Responsável (Nome)</span>
+                            <strong class="text-gray-800 dark:text-gray-200">{{ $info->name }}</strong>
+                        </div>
+                        @else
+                        <div>
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">Nome Completo</span>
                             <strong class="text-gray-800 dark:text-gray-200">{{ $info->name }}</strong>
                         </div>
                         <div>
-                            <span class="block text-xs text-gray-500 dark:text-gray-400">CPF/CNPJ</span>
-                            <strong class="text-gray-800 dark:text-gray-200">{{ $info->cpf_cnpj }}</strong>
+                            <span class="block text-xs text-gray-500 dark:text-gray-400">CPF</span>
+                            <strong class="text-gray-800 dark:text-gray-200">{{ $info->cpf ?: $info->cpf_cnpj }}</strong>
                         </div>
+                        @endif
                         <div>
                             <span class="block text-xs text-gray-500 dark:text-gray-400">E-mail de Faturamento</span>
                             <strong class="text-gray-800 dark:text-gray-200">{{ $info->email }}</strong>
@@ -92,14 +108,61 @@
                 <form onsubmit="window.saveBillingInfo(event)" id="formBillingInfo">
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1">
-                        <div class="flex flex-col gap-1">
-                            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Razão Social / Nome Completo *</label>
-                            <input type="text" name="name" value="{{ $info->name ?? '' }}" required class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+
+                        {{-- Toggle Tipo de Pessoa --}}
+                        <div class="col-span-2 flex items-center gap-4 mb-1">
+                            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">Tipo de Pessoa:</span>
+                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                <input type="radio" name="pessoa_tipo" value="PF" id="tipo_pf"
+                                    {{ (!$isPJ) ? 'checked' : '' }}
+                                    onchange="window.togglePessoaTipo('PF')"
+                                    class="accent-brandColor">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">Pessoa Física (PF)</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                <input type="radio" name="pessoa_tipo" value="PJ" id="tipo_pj"
+                                    {{ $isPJ ? 'checked' : '' }}
+                                    onchange="window.togglePessoaTipo('PJ')"
+                                    class="accent-brandColor">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">Pessoa Jurídica (PJ)</span>
+                            </label>
                         </div>
-                        <div class="flex flex-col gap-1">
-                            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">CPF ou CNPJ *</label>
-                            <input type="text" name="cpf_cnpj" value="{{ $info->cpf_cnpj ?? '' }}" required class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+
+                        {{-- [PJ] Razão Social --}}
+                        <div class="flex flex-col gap-1 col-span-2 pj-field {{ $isPJ ? '' : 'hidden' }}" id="fieldCompanyName">
+                            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Razão Social *</label>
+                            <input type="text" name="company_name" id="billing_company_name"
+                                value="{{ $info->company_name ?? '' }}"
+                                class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                         </div>
+
+                        {{-- Nome do Responsável / Nome Completo --}}
+                        <div class="flex flex-col gap-1" id="fieldName">
+                            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300" id="labelName">
+                                {{ $isPJ ? 'Nome do Responsável *' : 'Nome Completo *' }}
+                            </label>
+                            <input type="text" name="name" value="{{ $info->name ?? '' }}" required
+                                class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                        </div>
+
+                        {{-- [PF] CPF --}}
+                        <div class="flex flex-col gap-1 pf-field {{ $isPJ ? 'hidden' : '' }}" id="fieldCpf">
+                            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">CPF *</label>
+                            <input type="text" name="cpf" id="billing_cpf"
+                                value="{{ $info->cpf ?? ($info->cpf_cnpj ?? '') }}"
+                                class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                placeholder="000.000.000-00">
+                        </div>
+
+                        {{-- [PJ] CNPJ --}}
+                        <div class="flex flex-col gap-1 pj-field {{ $isPJ ? '' : 'hidden' }}" id="fieldCnpj">
+                            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">CNPJ *</label>
+                            <input type="text" name="cnpj" id="billing_cnpj"
+                                value="{{ $info->cnpj ?? '' }}"
+                                class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                placeholder="00.000.000/0000-00">
+                        </div>
+
                         <div class="flex flex-col gap-1">
                             <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">E-mail *</label>
                             <input type="email" name="email" value="{{ $info->email ?? '' }}" required class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brandColor focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
@@ -169,21 +232,23 @@
     @pushOnce('scripts')
     <script>
         window.billingHasData = {{ $hasData ? 'true' : 'false' }};
+        window.billingIsPJ    = {{ $isPJ ? 'true' : 'false' }};
 
         // --- MÁSCARAS ---
         const masks = {
-            cpfCnpj: (v) => {
+            cpf: (v) => {
                 v = v.replace(/\D/g, "");
-                if (v.length <= 11) {
-                    v = v.replace(/(\d{3})(\d)/, "$1.$2");
-                    v = v.replace(/(\d{3})(\d)/, "$1.$2");
-                    v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-                } else {
-                    v = v.replace(/^(\d{2})(\d)/, "$1.$2");
-                    v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
-                    v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
-                    v = v.replace(/(\d{4})(\d)/, "$1-$2");
-                }
+                v = v.replace(/(\d{3})(\d)/, "$1.$2");
+                v = v.replace(/(\d{3})(\d)/, "$1.$2");
+                v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+                return v.substring(0, 14);
+            },
+            cnpj: (v) => {
+                v = v.replace(/\D/g, "");
+                v = v.replace(/^(\d{2})(\d)/, "$1.$2");
+                v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+                v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
+                v = v.replace(/(\d{4})(\d)/, "$1-$2");
                 return v.substring(0, 18);
             },
             cep: (v) => {
@@ -203,28 +268,47 @@
             input.addEventListener('input', (e) => {
                 e.target.value = maskFn(e.target.value);
             });
-            // Applica logo de início
             input.value = maskFn(input.value);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const cpfCnpjInput = document.querySelector('input[name="cpf_cnpj"]');
-            const cepInput = document.getElementById('billing_postal_code');
+            const cpfInput  = document.getElementById('billing_cpf');
+            const cnpjInput = document.getElementById('billing_cnpj');
+            const cepInput  = document.getElementById('billing_postal_code');
             const phoneInput = document.querySelector('input[name="phone"]');
 
-            if (cpfCnpjInput) applyMask(cpfCnpjInput, masks.cpfCnpj);
-            if (cepInput) applyMask(cepInput, masks.cep);
+            if (cpfInput)  applyMask(cpfInput,  masks.cpf);
+            if (cnpjInput) applyMask(cnpjInput, masks.cnpj);
+            if (cepInput)  applyMask(cepInput,  masks.cep);
             if (phoneInput) applyMask(phoneInput, masks.phone);
+
+            // Aplica blur para validação
+            if (cpfInput)  cpfInput.addEventListener('blur',  (e) => checkDocUx(e.target, 'cpf'));
+            if (cnpjInput) cnpjInput.addEventListener('blur', (e) => checkDocUx(e.target, 'cnpj'));
         });
 
-        // --- VALIDAÇÃO CPF/CNPJ ---
-        function isValidCpfCnpj(val) {
-            const v = val.replace(/\D/g, '');
-            if (v.length === 11) return isValidCpf(v);
-            if (v.length === 14) return isValidCnpj(v);
-            return false;
-        }
+        // --- TOGGLE TIPO DE PESSOA PF/PJ ---
+        window.togglePessoaTipo = function(tipo) {
+            const isPJ = (tipo === 'PJ');
+            document.querySelectorAll('.pj-field').forEach(el => el.classList.toggle('hidden', !isPJ));
+            document.querySelectorAll('.pf-field').forEach(el => el.classList.toggle('hidden', isPJ));
 
+            const labelName = document.getElementById('labelName');
+            if (labelName) labelName.textContent = isPJ ? 'Nome do Responsável *' : 'Nome Completo *';
+
+            // Limpa campos opostos para não enviar dado inválido
+            if (isPJ) {
+                const cpfEl = document.getElementById('billing_cpf');
+                if (cpfEl) cpfEl.value = '';
+            } else {
+                const cnpjEl = document.getElementById('billing_cnpj');
+                const compEl = document.getElementById('billing_company_name');
+                if (cnpjEl) cnpjEl.value = '';
+                if (compEl) compEl.value = '';
+            }
+        };
+
+        // --- VALIDAÇÃO CPF/CNPJ ---
         function isValidCpf(cpf) {
             if (/^(\d)\1{10}$/.test(cpf)) return false;
             let sum = 0, rest;
@@ -262,25 +346,21 @@
             return result === parseInt(digits.charAt(1));
         }
 
-        function checkCpfCnpjUx(input) {
-            const val = input.value;
-            const msgEl = document.getElementById('cpfCnpjError') || createErrorEl(input, 'cpfCnpjError');
-            if (val.replace(/\D/g, '').length > 0 && !isValidCpfCnpj(val)) {
-                input.classList.add('border-red-500', 'focus:border-red-500');
-                msgEl.textContent = 'Documento inválido.';
+        function checkDocUx(input, tipo) {
+            const val = input.value.replace(/\D/g, '');
+            const errorId = tipo === 'cpf' ? 'cpfError' : 'cnpjError';
+            const msgEl = document.getElementById(errorId) || createErrorEl(input, errorId);
+            const valid = tipo === 'cpf' ? (val.length === 11 && isValidCpf(val)) : (val.length === 14 && isValidCnpj(val));
+            if (val.length > 0 && !valid) {
+                input.classList.add('border-red-500');
+                msgEl.textContent = tipo === 'cpf' ? 'CPF inválido.' : 'CNPJ inválido.';
                 msgEl.classList.remove('hidden');
                 return false;
-            } else {
-                input.classList.remove('border-red-500', 'focus:border-red-500');
-                msgEl.classList.add('hidden');
-                return true;
             }
+            input.classList.remove('border-red-500');
+            msgEl.classList.add('hidden');
+            return true;
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const cpfCnpjInput = document.querySelector('input[name="cpf_cnpj"]');
-            if (cpfCnpjInput) cpfCnpjInput.addEventListener('blur', (e) => checkCpfCnpjUx(e.target));
-        });
 
         function createErrorEl(inputNode, id) {
             const el = document.createElement('span');
@@ -318,15 +398,15 @@
                     cepInput.classList.remove('border-red-500');
                     msgEl.classList.add('hidden');
 
-                    let inputAddr = document.getElementById('billing_address');
-                    let inputProv = document.getElementById('billing_province');
-                    let inputCity = document.getElementById('billing_city');
+                    let inputAddr  = document.getElementById('billing_address');
+                    let inputProv  = document.getElementById('billing_province');
+                    let inputCity  = document.getElementById('billing_city');
                     let inputState = document.getElementById('billing_state');
                     
-                    if (inputAddr) { inputAddr.value = data.logradouro; inputAddr.classList.add('bg-green-50'); }
-                    if (inputProv) { inputProv.value = data.bairro; inputProv.classList.add('bg-green-50'); }
-                    if (inputCity) { inputCity.value = data.localidade; inputCity.classList.add('bg-green-50'); }
-                    if (inputState) { inputState.value = data.uf; inputState.classList.add('bg-green-50'); }
+                    if (inputAddr)  { inputAddr.value  = data.logradouro; inputAddr.classList.add('bg-green-50'); }
+                    if (inputProv)  { inputProv.value  = data.bairro;     inputProv.classList.add('bg-green-50'); }
+                    if (inputCity)  { inputCity.value  = data.localidade; inputCity.classList.add('bg-green-50'); }
+                    if (inputState) { inputState.value = data.uf;         inputState.classList.add('bg-green-50'); }
 
                     setTimeout(() => {
                         [inputAddr, inputProv, inputCity, inputState].forEach(el => {
@@ -362,11 +442,15 @@
         window.saveBillingInfo = function(e) {
             e.preventDefault();
             const form = e.target;
-            
-            const cpfCnpjInput = document.querySelector('input[name="cpf_cnpj"]');
-            if (cpfCnpjInput && !checkCpfCnpjUx(cpfCnpjInput)) {
-                cpfCnpjInput.focus();
-                return;
+
+            // Valida o campo do tipo de pessoa ativo
+            const tipoPJ = document.getElementById('tipo_pj')?.checked;
+            if (tipoPJ) {
+                const cnpjEl = document.getElementById('billing_cnpj');
+                if (cnpjEl && !checkDocUx(cnpjEl, 'cnpj')) { cnpjEl.focus(); return; }
+            } else {
+                const cpfEl = document.getElementById('billing_cpf');
+                if (cpfEl && !checkDocUx(cpfEl, 'cpf')) { cpfEl.focus(); return; }
             }
 
             const btn = document.getElementById('btnSaveBilling');

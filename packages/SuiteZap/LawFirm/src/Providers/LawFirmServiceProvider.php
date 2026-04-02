@@ -14,6 +14,11 @@ use SuiteZap\LawFirm\Whatsapp\Listeners\SendPrazoWhatsapp;
 class LawFirmServiceProvider extends ServiceProvider
 {
     /**
+     * Versão do pacote LawFirm.
+     */
+    public const VERSION = '3.20';
+
+    /**
      * Bootstrap services.
      *
      * Método executado após todos os Service Providers serem registrados.

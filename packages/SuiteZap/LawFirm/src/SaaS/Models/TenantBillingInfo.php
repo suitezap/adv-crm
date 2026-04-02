@@ -30,8 +30,11 @@ class TenantBillingInfo extends Model
     protected $fillable = [
         'tenant_id',
         'name',
+        'company_name',   // Razão Social (PJ) — Abr/2026
         'email',
-        'cpf_cnpj',
+        'cpf_cnpj',       // Legado — mantido por retrocompatibilidade
+        'cpf',            // CPF isolado do responsável (PF) — Abr/2026
+        'cnpj',           // CNPJ isolado da empresa (PJ) — Abr/2026
         'phone',
         'postal_code',
         'address',

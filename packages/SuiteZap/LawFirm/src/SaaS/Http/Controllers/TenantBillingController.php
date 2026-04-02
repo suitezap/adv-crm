@@ -32,7 +32,10 @@ class TenantBillingController extends Controller
     {
         $request->validate([
             'name'           => 'required|string|max:255',
-            'cpf_cnpj'       => 'required|string|max:30',
+            'company_name'   => 'nullable|string|max:150',
+            'cpf_cnpj'       => 'nullable|string|max:30',
+            'cpf'            => 'nullable|string|max:20',
+            'cnpj'           => 'nullable|string|max:20',
             'email'          => 'required|email|max:255',
             'phone'          => 'nullable|string|max:30',
             'postal_code'    => 'required|string|max:20',
@@ -51,14 +54,23 @@ class TenantBillingController extends Controller
                 throw new Exception('O ID do Tenant não está definido no ambiente atual.');
             }
 
+            // Preenche automaticamente cpf_cnpj (campo legado) com
+            // o CNPJ se for PJ, ou o CPF se for PF, para máxima compatibilidade.
+            $cnpjRaw = $request->input('cnpj');
+            $cpfRaw  = $request->input('cpf');
+            $cpfCnpjLegacy = $cnpjRaw ?: ($cpfRaw ?: $request->input('cpf_cnpj'));
+
             // Atualiza ou Cria usando updateOrCreate para facilitar
             TenantBillingInfo::on('mothership')->updateOrCreate(
                 ['tenant_id' => $tenantId],
-                $request->only([
-                    'name', 'email', 'cpf_cnpj', 'phone',
-                    'postal_code', 'address', 'address_number',
-                    'complement', 'province', 'city', 'state' // state=UF
-                ])
+                array_merge(
+                    $request->only([
+                        'name', 'company_name', 'email', 'cpf', 'cnpj',
+                        'phone', 'postal_code', 'address', 'address_number',
+                        'complement', 'province', 'city', 'state',
+                    ]),
+                    ['cpf_cnpj' => $cpfCnpjLegacy] // preenche campo legado automaticamente
+                )
             );
 
             if ($request->ajax() || $request->wantsJson()) {

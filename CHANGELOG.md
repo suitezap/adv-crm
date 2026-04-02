@@ -1,3 +1,34 @@
+## **LF v3.20 — Docker suitezap/lawfirm:v1.7 (Abril 2026)**
+
+> Release customizada SuiteZap/LawFirm sobre Krayin CRM v2.1.6.
+
+### ✨ Novidades
+* **Faturamento PF/PJ:** Novo módulo de Dados de Faturamento (`billing-info`) com separação
+  de campos por tipo de pessoa. Formulário com toggle dinâmico PF/PJ, máscaras de input
+  dedicadas (CPF `000.000.000-00` / CNPJ `00.000.000/0000-00`) e validação client-side.
+  Campos adicionados em `tenant_billing_infos`: `company_name`, `cpf`, `cnpj`.
+  Campo legado `cpf_cnpj` mantido com preenchimento automático via bridge no controller.
+
+### 🐛 Correções
+* **SaaS Isolation:** Corrigido vazamento de dados entre tenants nos DataGrids de transações
+  e adições de crédito (`SaasTransactionsDataGrid`, `SaasAdditionsDataGrid`). Migration
+  `2026_04_01_000001_fix_null_tenant_id_in_saas_transactions` aplicada para sanitizar
+  registros históricos com `tenant_id` nulo.
+
+### 🐳 Docker
+* Imagem atualizada: `suitezap/lawfirm:v1.7` (de v1.6).
+* `.dockerignore` expandido: arquivos `debug_*.php`, `fix_*.php`, `test_*.php`, logs e
+  CSVs de debug agora excluídos da imagem de produção.
+* `entrypoint.sh` v6.2: banner de boot atualizado.
+
+### 📖 Documentação
+* `ARCHITECTURE.md` atualizado para v3.20 com seção 4.36 (Billing PF/PJ).
+* `ARCHITECTURE_dir.md` atualizado com rota `/billing-info` no mapa de telas e diagrama Mermaid.
+* Política de manutenção de versão adicionada ao topo do `ARCHITECTURE.md`.
+* `LawFirmServiceProvider::VERSION` atualizado para `'3.20'`.
+
+---
+
 ## **v2.1.6 (22 of Dec 2025)** - *Release*
 
 * #2377[fixed] Sale owner dropdown now displays values correctly for individual users

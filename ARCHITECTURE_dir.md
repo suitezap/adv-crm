@@ -1,4 +1,4 @@
-# 📂 LawFirm CRM - Arquitetura de Diretórios e Telas (UI)
+# 📂 LawFirm CRM - Arquitetura de Diretórios e Telas (UI) - Krayin v2.1.6 / LF v3.20
 
 Este documento mapeia visualmente a estrutura de pastas do pacote **SuiteZap/LawFirm** (baseado na arquitetura Domain-Driven Design - DDD) e detalha quais telas (Views) são entregues à interface do usuário.
 
@@ -6,7 +6,7 @@ Este documento mapeia visualmente a estrutura de pastas do pacote **SuiteZap/Law
 
 ## 1. Estrutura Raiz de Domínios (`src/`)
 
-Desde a versão v3.17, o pacote possui **Dívida Técnica Zero** na raiz. Todos os arquivos de negócio estão encapsulados em seus domínios:
+Desde a versão v3.18, o pacote possui **Dívida Técnica Zero** na raiz. Todos os arquivos de negócio estão encapsulados em seus domínios:
 
 ```text
 packages/SuiteZap/LawFirm/src/
@@ -25,6 +25,9 @@ packages/SuiteZap/LawFirm/src/
 ├── SaaS/               # Domínio: Infraestrutura Multi-Tenant e Pagamentos
 └── Whatsapp/           # Domínio: Mensageria (Evolution API)
 ```
+
+> [!WARNING]
+> **Sincronia com o Entrypoint Docker:** Ao refatorar, mover ou deletar diretórios do Master/Webkul (ex: `Webkul/Mail`), é estritamente obrigatório remover o `--path` correspondente no arquivo `docker/entrypoint.sh`. Deixar um caminho fantasma causa exceção de `Migration path not found` no boot do container, resultando em rejeição imediata da stack no Docker Swarm.
 
 ---
 
@@ -83,6 +86,10 @@ As interfaces visuais (HTML/Blade) ficam armazenadas globalmente em `src/Resourc
 ### ☁️ Minha Assinatura & Configurações (`views/admin/saas/` e `whatsapp/`)
 *   **Painel da Assinatura (SaaS Dashboard):** Mostra os dados cadastrais do escritório, a assinatura Asaas vigente, consumo de espaço do bucket (HD) e créditos de Inteligência Artificial restantes.
 *   **Checkout & Adicionais:** Telas e modais SPA (Single Page Application) onde o cliente insere o Cartão de Crédito ou escaneia QR Code PIX para upgrades (com validação `['DETACHED', 'INSTALLMENT']` no back-end).
+*   **Dados de Faturamento (`billing-info`):** Formulário dedicado para o preenchimento dos dados fiscais e de cobrança do assinante. Suporta dois modos:
+    *   **Pessoa Física (PF):** Campos de Nome Completo e CPF separados.
+    *   **Pessoa Jurídica (PJ):** Campos de Razão Social, Nome do Responsável e CNPJ separados.
+    *   Toggle PF/PJ via radio buttons com troca dinâmica dos campos visíveis (Vanilla JS). Dados persistidos nos campos individuais (`cpf`, `cnpj`, `company_name`) no MotherShip, mantendo compatibilidade com o campo legado `cpf_cnpj`.
 *   **WhatsApp / Conexões:** Tela técnica simples exigindo a leitura do QR Code do WhatsApp via API Evolution, para permitir disparos de Prazos, Avisos do Escavador e Faturas.
 
 ---
@@ -138,6 +145,7 @@ graph TD
     Configuracoes -->|/admin/juridico/assinatura| SaasDash[Gestão de Assinatura]
     SaasDash --> CheckoutPlan[Modal Pagamento Assinatura]
     SaasDash --> CheckoutCredit[Modal Compra Créditos IA]
+    SaasDash -->|/admin/juridico/billing-info| BillingInfo[Dados de Faturamento PF/PJ]
     
     %% Estilização
     style FichaProcesso fill:#2a9d8f,stroke:#fff,stroke-width:2px,color:#fff
@@ -162,10 +170,29 @@ Para suporte ao desenvolvimento e *debugging*, esta é a taxonomia padrão das U
 | **AI (Assistentes)** | `/admin/juridico/assistants` | Vitrine de Assistentes e Agentes configurados pelo Mothership Panel. |
 | **AI (Assistentes)** | `/admin/juridico/assistants/{slug}` | Tela do Chatbot para usar prompts contextuais (ex: Resumo de Sentença). |
 | **SaaS** | `/admin/juridico/assinatura` | Gestão do Tenant: Planos, limites de S3, saldo bancário Asaas e consumo de IA. |
+| **SaaS** | `/admin/juridico/billing-info` | Dados de Faturamento: Formulário PF/PJ com campos individuais `cpf`/`cnpj`/`company_name`. Toggle dinâmico de tipo de pessoa. |
 | **Whatsapp** | `/admin/juridico/whatsapp` | Status da Evolution API e espelhamento de QR Code para o smartphone do advogado. |
 
 > Todas estas rotas são agrupadas sob os middlewares `['web', 'admin_locale', 'user']` do Krayin (garantindo que apenas usuários autenticados daquele Tenant específico tenham acesso).
 
 ---
 
-*Gerado pela auditoria de mapeamento em Março/2026 (v3.17 SaaS Compliance).*
+## 6.6 Chamadas de Rotas Laravel no JavaScript (REPLACE_ID Pattern)
+No Laravel 10/11 (Krayin v2.x), gerar rotas em views Blade passando parâmetros dinâmicos vazios (`route('admin.name', '')`) em funções JavaScript **lança uma exceção fatal (`UrlGenerationException`)** durante a compilação da tela, resultando em um **Erro 500 total**.
+
+**Solução Padrão (REPLACE_ID):**
+Nunca deixe parâmetros obrigatórios de rota vazios no compilador Blade quando for utilizar Javascript em seguida. Use um placeholder seguro em caixa alta (ex: `REPLACE_ID`) e substitua via String nativo antes de realizar o fetch.
+
+**❌ PROIBIDO (Gera Erro 500 no Back-end):**
+```javascript
+const response = await fetch("{{ route('admin.api.action', '') }}/" + jsId);
+```
+
+**✅ OBRIGATÓRIO (REPLACE_ID):**
+```javascript
+const baseRoute = "{{ route('admin.api.action', 'REPLACE_ID') }}";
+const finalUrl = baseRoute.replace('REPLACE_ID', jsId);
+const response = await fetch(finalUrl);
+```
+
+*Gerado pela auditoria de mapeamento em Abril/2026 (v3.20 SaaS Compliance).*
