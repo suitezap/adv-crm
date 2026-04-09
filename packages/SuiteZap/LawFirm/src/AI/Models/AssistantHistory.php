@@ -29,6 +29,11 @@ class AssistantHistory extends Model implements AssistantHistoryContract
         'generated_content',
         'execution_mode',
         'status',
+        'execution_id',
+        'node_name',
+        'model',
+        'total_cost',
+        'real_cost',
     ];
 
     /**
@@ -38,6 +43,8 @@ class AssistantHistory extends Model implements AssistantHistoryContract
      */
     protected $casts = [
         'input_data' => 'array',
+        'total_cost' => 'decimal:4',
+        'real_cost' => 'decimal:4',
     ];
 
     /**

@@ -2,7 +2,7 @@
 name: krayin_lawfirm_architecture
 description: Standards for SuiteZap/LawFirm package (DDD/SaaS).
 ---
-# LawFirm CRM - Architecture Standards (v3.10)
+# LawFirm CRM - Architecture Standards (v3.25)
 
 ## 1. Directory Structure (Domain-Driven)
 All code lives in `packages/SuiteZap/LawFirm/src/`.

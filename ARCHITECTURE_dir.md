@@ -1,4 +1,4 @@
-# 📂 LawFirm CRM - Arquitetura de Diretórios e Telas (UI) - Krayin v2.1.6 / LF v3.20
+# 📂 LawFirm CRM - Arquitetura de Diretórios e Telas (UI) - Krayin v2.1.6 / LF v3.25
 
 Este documento mapeia visualmente a estrutura de pastas do pacote **SuiteZap/LawFirm** (baseado na arquitetura Domain-Driven Design - DDD) e detalha quais telas (Views) são entregues à interface do usuário.
 
@@ -76,7 +76,7 @@ As interfaces visuais (HTML/Blade) ficam armazenadas globalmente em `src/Resourc
 ### 🤖 Assistentes de IA e Automação (`views/admin/assistants/`)
 *   **Painel da IA (Index):** Lista todos os agentes de IA disponíveis para o escritório (sincronizados com o Mothership).
 *   **Chat/Console de IA:** Tela onde o advogado interage com o assistente (ex: Analisador de Sentenças, Criador de Petição) alimentando o contexto do Lead ou Processo correspondente.
-*   **Histórico de Execuções:** DataGrid contendo respostas prévias e tokens gastos localmente (`AiExecution`).
+*   **Histórico de Execuções:** DataGrid contendo respostas prévias e telemetria financeira avançada (rastreamento de custos reais e metadados como `execution_id` extraídos dos nós n8n) salva em `AssistantHistory`.
 
 ### 🔎 Integração Escavador (`views/admin/escavador/`)
 *   **Painel do Escavador:** Dashboard com créditos restantes da API, e opções para consultar Termos e OABs.
@@ -86,6 +86,7 @@ As interfaces visuais (HTML/Blade) ficam armazenadas globalmente em `src/Resourc
 ### ☁️ Minha Assinatura & Configurações (`views/admin/saas/` e `whatsapp/`)
 *   **Painel da Assinatura (SaaS Dashboard):** Mostra os dados cadastrais do escritório, a assinatura Asaas vigente, consumo de espaço do bucket (HD) e créditos de Inteligência Artificial restantes.
 *   **Checkout & Adicionais:** Telas e modais SPA (Single Page Application) onde o cliente insere o Cartão de Crédito ou escaneia QR Code PIX para upgrades (com validação `['DETACHED', 'INSTALLMENT']` no back-end).
+*   **Meus Pedidos e Transações (`Orders` / `Additions`):** Telas com DataGrids (`SaasOrdersDataGrid` e `SaasAdditionsDataGrid`) contendo o histórico de tentativas de pagamento, compra de tokens/planos e extratos detalhados (com garantias estritas de isolamento do Tenant). A rastreabilidade atrela cada transação ao usuário final que a requisitou.
 *   **Dados de Faturamento (`billing-info`):** Formulário dedicado para o preenchimento dos dados fiscais e de cobrança do assinante. Suporta dois modos:
     *   **Pessoa Física (PF):** Campos de Nome Completo e CPF separados.
     *   **Pessoa Jurídica (PJ):** Campos de Razão Social, Nome do Responsável e CNPJ separados.
@@ -145,6 +146,7 @@ graph TD
     Configuracoes -->|/admin/juridico/assinatura| SaasDash[Gestão de Assinatura]
     SaasDash --> CheckoutPlan[Modal Pagamento Assinatura]
     SaasDash --> CheckoutCredit[Modal Compra Créditos IA]
+    SaasDash -->|/admin/juridico/orders| OrdersDash[Meus Pedidos e Faturas]
     SaasDash -->|/admin/juridico/billing-info| BillingInfo[Dados de Faturamento PF/PJ]
     
     %% Estilização
@@ -170,6 +172,7 @@ Para suporte ao desenvolvimento e *debugging*, esta é a taxonomia padrão das U
 | **AI (Assistentes)** | `/admin/juridico/assistants` | Vitrine de Assistentes e Agentes configurados pelo Mothership Panel. |
 | **AI (Assistentes)** | `/admin/juridico/assistants/{slug}` | Tela do Chatbot para usar prompts contextuais (ex: Resumo de Sentença). |
 | **SaaS** | `/admin/juridico/assinatura` | Gestão do Tenant: Planos, limites de S3, saldo bancário Asaas e consumo de IA. |
+| **SaaS** | `/admin/juridico/orders` | Tabela (DataGrid) exibindo o histórico de pedidos (Orders) e status de pagamento do usuário. |
 | **SaaS** | `/admin/juridico/billing-info` | Dados de Faturamento: Formulário PF/PJ com campos individuais `cpf`/`cnpj`/`company_name`. Toggle dinâmico de tipo de pessoa. |
 | **Whatsapp** | `/admin/juridico/whatsapp` | Status da Evolution API e espelhamento de QR Code para o smartphone do advogado. |
 
@@ -195,4 +198,4 @@ const finalUrl = baseRoute.replace('REPLACE_ID', jsId);
 const response = await fetch(finalUrl);
 ```
 
-*Gerado pela auditoria de mapeamento em Abril/2026 (v3.20 SaaS Compliance).*
+*Gerado pela auditoria de mapeamento em Abril/2026 (v3.24 SaaS Compliance + AI UX Enhancements).*

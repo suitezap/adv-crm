@@ -50,3 +50,10 @@ temp_error_log.txt
 temp_log.txt
 unstaged.txt
 dry_run.txt
+
+# LawFirm Debug Files
+debug_*.php
+out_*.log
+test_*.php
+remove_logo.php
+.env.docker

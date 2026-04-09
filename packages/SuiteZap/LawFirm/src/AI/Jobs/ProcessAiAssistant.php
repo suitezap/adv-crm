@@ -90,13 +90,53 @@ class ProcessAiAssistant implements ShouldQueue
 
             if ($response->successful()) {
                 $result = $response->json();
-                // Determine output field
+                
+                // Determine primary output field
                 $output = $result['output'] ?? $result['text'] ?? $result['message'] ?? $response->body();
+
+                // Priority 1: Direct metadata from JSON keys (New n8n pattern)
+                $executionId = $result['execution_id'] ?? null;
+                $nodeName = $result['node_name'] ?? null;
+                $model = $result['model'] ?? null;
+                $totalCost = isset($result['total_cost']) ? (float) $result['total_cost'] : null;
+                $realCost = isset($result['real_cost']) ? (float) $result['real_cost'] : null;
+
+                // Priority 2: Fallback to metadata extraction from string suffix " - [{...}]" (Legacy pattern)
+                if (!$executionId && is_string($output)) {
+                    $lastDashPos = strrpos($output, ' - ');
+                    
+                    if ($lastDashPos !== false) {
+                        $potentialJson = trim(substr($output, $lastDashPos + 3));
+                        
+                        if (str_starts_with($potentialJson, '[') || str_starts_with($potentialJson, '{')) {
+                            $metadataArray = json_decode($potentialJson, true);
+                            
+                            if (json_last_error() === JSON_ERROR_NONE && is_array($metadataArray)) {
+                                // Handle if it's a non-empty array
+                                $metadata = (isset($metadataArray[0]) && is_array($metadataArray[0])) ? reset($metadataArray) : $metadataArray;
+                                
+                                if (is_array($metadata)) {
+                                    $output = trim(substr($output, 0, $lastDashPos)); // Clean text
+                                    $executionId = $metadata['execution_id'] ?? $executionId;
+                                    $nodeName = $metadata['node_name'] ?? $nodeName;
+                                    $model = $metadata['model'] ?? $model;
+                                    $totalCost = isset($metadata['total_cost']) ? (float) $metadata['total_cost'] : $totalCost;
+                                    $realCost = isset($metadata['real_cost']) ? (float) $metadata['real_cost'] : $realCost;
+                                }
+                            }
+                        }
+                    }
+                }
 
                 // 6. Update History with Success
                 $this->history->update([
                     'generated_content' => $output,
-                    'status' => 'completed'
+                    'status' => 'completed',
+                    'execution_id' => $executionId,
+                    'node_name' => $nodeName,
+                    'model' => $model,
+                    'total_cost' => $totalCost,
+                    'real_cost' => $realCost,
                 ]);
 
                 Log::info("AI Assistant Job Completed [HistoryID: {$this->history->id}]");

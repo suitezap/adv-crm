@@ -1,4 +1,4 @@
-# 🏛 LawFirm CRM - Documento de Arquitetura (v3.20 - DDD & SaaS Multi-Tenant)
+# 🏛 LawFirm CRM - Documento de Arquitetura (v3.25 - DDD & SaaS Multi-Tenant)
 > [!IMPORTANT]
 > **Manutenção do Documento:** Este arquivo **DEVE** ser atualizado (seção 4.x) e a versão incrementada no cabeçalho sempre que houver mudanças estruturais, novas funcionalidades core ou atualizações na constante de versão em `LawFirmServiceProvider.php`.
 
@@ -15,7 +15,7 @@ O código é estritamente separado por responsabilidade.
 | **Legal** | `SuiteZap\LawFirm\Legal` | Core jurídico (Processos, Prazos, Checklists). | `Processo`, `Prazo`, `CaseChecklist` |
 | **Financial**| `SuiteZap\LawFirm\Financial` | Honorários, Custas e Faturamento. | `Financial` |
 | **GED** | `SuiteZap\LawFirm\GED` | Gestão de Arquivos, Anexos e Checklists. | `ProcessDocument`, `Anexo` |
-| **SaaS** | `SuiteZap\LawFirm\SaaS` | Infraestrutura Multi-tenant. | `Tenant`, `Subscription`, `InfrastructureNode` |
+| **SaaS** | `SuiteZap\LawFirm\SaaS` | Infraestrutura Multi-tenant. | `Tenant`, `Subscription`, `InfrastructureNode`, `SaasOrder` |
 | **AI** | `SuiteZap\LawFirm\AI` | Assistentes e Automação. | `AiExecution`, `AssistantTemplate`, `AssistantHistory` |
 | **Escavador** | `SuiteZap\LawFirm\Escavador` | Integração com a API do Escavador (v1/v2). |  `EscavadorRequest` |
 
@@ -276,6 +276,13 @@ src/
     *   **Idempotência Robusta e Proporção 1:1:** O schema inicial armazenava o ID de pagamento do Asaas (`pay_xxxx`) em colunas inteiras, truncando strings para `0` e quebrando chaves únicas. O tipo de `reference_id` na `saas_transactions` foi convertido para `VARCHAR(255)`. Simultaneamente, a plataforma convergiu o câmbio de Créditos de IA para a proporção **1:1 (R$ 1,00 = 1 Crédito)**, garantindo espelhamento fiscal e clareza total no extrato da plataforma.
     *   **Fallback Definitivo (Single-Tenant Asaas):** Cada cliente possui sua própria subconta (InfrastructureNode) do Asaas. Diante disto, caso um pagamento perca completamente o tracking do `externalReference`, uma heurística assume que a transação inevitavelmente pertence ao dono da conta, creditando a proporção BRL exata baseando-se exclusivamente no valor pago.
 
+### 4.34.1 Bugfix: Filtro Inválido no syncTenantPayments (v3.20)
+*   **Problema:** O `AsaasService::syncTenantPayments()` passava `externalReference => $tenantId` no filtro da API `/v3/payments`. A API do Asaas realiza **busca exata** neste campo, mas o formato salvo é `"{tenantId}|tipo|valor"`. O filtro nunca retornava resultados e nenhum crédito era sincronizado após a compra.
+*   **Segundo Problema:** O `SaaSController::index()` não invalidava o cache da `subscription` após o sync, e não distinguia o retorno de um checkout (`?payment=success`) de visitas comuns — o throttle de 60s podia bloquear o primeiro sync crítico pós-compra.
+*   **Correções:**
+    *   **`AsaasService::syncTenantPayments()`:** Removido o filtro `externalReference` da query HTTP. A busca passa a usar `status=RECEIVED,CONFIRMED` + `dateCreatedFrom` (últimos 30 dias). A filtragem por tenant permanece local (via `externalReference` do payload + fallback por valor). Adicionado fallback que usa o `value` do pagamento para crédito (`tenantId|credit|valor`) quando nenhuma outra referência é encontrada (arquitetura single-tenant Asaas).
+    *   **`SaaSController::index()`:** Quando `?payment` está presente na URL (retorno de checkout), os caches `asaas_sync_last_run_*`, `tenant_*_subscription` e `asaas_node_config` são invalidados **antes** do sync, garantindo exibição imediata do saldo atualizado.
+
 ### 4.35 Resiliência de Storage S3 e Herança de Tokens WhatsApp (v3.19)
 *   **Decisão:** Eliminar erros do tipo `500 Internal Server Error` no provisionamento a frio de novos Tenants garantindo resiliência total nos adaptadores de Storage e instâncias de WhatsApp Web.
 *   **Problema (S3/MinIO):** A criação Just-In-Time de buckets falhava pois nomes atrelados ao tenant (ex: `TsT_Local_S3`) violavam a sintaxe restrita da AWS/MinIO (proibição de letras maiúsculas e underlines), causando `InvalidBucketName (400)`.
@@ -293,7 +300,52 @@ src/
     *   **Controller (`TenantBillingController@store`):** Validação expandida com os 3 novos campos (todos `nullable`). Lógica de preenchimento automático do campo legado `cpf_cnpj` implementada: prioriza `cnpj` (PJ) > `cpf` (PF) > valor de `cpf_cnpj` enviado — garantindo zero breaking changes em integrações existentes (ex: `AsaasService`).
     *   **View (`billing-info.blade.php`):** Formulário reestruturado com toggle **PF / PJ**. Em modo PJ, o formulário exibe campos de `Razão Social` e `CNPJ`; em modo PF, exibe `Nome Completo` e `CPF`. Máscaras de input separadas (CPF: `000.000.000-00`, CNPJ: `00.000.000/0000-00`). Validação client-side via `checkDocUx()`. Modo leitura exibe seções distintas por tipo de pessoa detectado via `$isPJ` (PHP-side, baseado na presença do campo `cnpj`). Campos do tipo oposto são limpos no toggle para evitar envio cruzado.
 
-## 5. Auditoria Estrutural e Mapa de Dívida Técnica (v3.18)
+### 4.37 Orders — Intenção de Compra e Rastreio de Usuário (v3.21)
+*   **Decisão:** Refatorar o fluxo completo de compra de Créditos/Assinatura para registrar a "Intenção de Compra" (Order) antes de chamar o gateway Asaas, resolver a ausência de rastreio do usuário que origina a compra, e corrigir o bug de conversão que inflava créditos em 100x.
+*   **Problemas Resolvidos:**
+    *   **Bug Crítico:** O JavaScript (`index.blade.php`) calculava `Math.floor(price * 100)` para "créditos", resultando em cobranças 100x maiores no Asaas (R$ 5,00 → 500 créditos → R$ 500,00 de cobrança).
+    *   **Ausência de `user_id`:** Nenhuma transação de crédito (`saas_transactions`) guardava qual usuário iniciou a compra. O DataGrid sempre exibia "(Sistema)".
+    *   **Ausência de "Fonte da Verdade" local:** O sistema só gravava algo no banco APÓS o pagamento cair, criando um "voo cego" sobre intenções de compra não concluídas.
+    *   **Workaround frágil:** O `AsaasService` criava registros `credit_pending` na tabela `saas_transactions` como hack para rastrear sessões de checkout, poluindo o ledger.
+*   **Mudanças:**
+    *   **Tabela `saas_orders` (Nova):** Criada via migration no banco do Tenant. Campos: `tenant_id`, `user_id` (FK → `users`), `type` (ENUM: `ai_credits`, `subscription`), `value` (DECIMAL — proporcional 1:1), `asaas_payment_id`, `asaas_checkout_session_id`, `status` (`PENDING` → `PAID` / `EXPIRED` / `CANCELED`), `description`, timestamps.
+    *   **Model `SaasOrder`:** Eloquent com relationships `user()` (BelongsTo) e `transactions()` (HasMany), helpers `isPending()`, `isPaid()`, `markAsPaid()`.
+    *   **Controller `SubscriptionCheckoutController`:** Refatorado para criar uma `SaasOrder` com `status=PENDING` e `user_id=auth()->id()` ANTES de chamar a API do Asaas. Recebe apenas `value` (R$, float) em vez de `credits` + `price` separados. Proporção 1:1 forçada no backend.
+    *   **`AsaasService`:** (a) Removido workaround de `SaasTransaction` com `type=credit_pending`. (b) Novo formato de `externalReference`: `"order_{id}"` em vez de `"{tenantId}|tipo|valor"`. (c) Assinaturas de `createCreditCheckout` e `createSubscriptionCheckout` agora retornam `array{checkout_url, session_id}` e recebem `$orderId`. (d) `syncTenantPayments()` decomcomposto em dois processadores: `processOrderBasedPayment()` (v3.21+) e `processLegacyPayment()` (retrocompatibilidade).
+    *   **`AsaasWebhookController`:** Refatorado com 4 rotas de resolução priorizadas: (1) Order-based via `"order_{id}"` no externalReference, (2) Lookup de `SaasOrder` por `checkoutSession`, (3) Parser legado `"{tenantId}|tipo|valor"`, (4) Fallback single-tenant por valor.
+    *   **Frontend (`index.blade.php`):** (a) Removido `Math.floor(price * 100)` — agora passa o valor direto (1:1). (b) Payload do fetch alinhado: envia `value` em vez de `credits` + `price`. (c) Fix do bug no `.then()` que executava `redirect` E `alert` simultaneamente. (d) Botão "Ver Meus Pedidos" adicionado ao cabeçalho da seção de checkout.
+    *   **`SaasOrdersDataGrid` (Novo):** DataGrid para listagem de pedidos com colunas de Tipo (badge), Valor, Status (badge colorido), Usuário, ID Asaas e Data. Filtro por `tenant_id` canônico.
+    *   **`SaasOrderController` (Novo):** Controller skinny para renderizar a view de pedidos e servir o DataGrid via AJAX.
+    *   **Rota `admin/juridico/orders`:** Registrada em `admin-saas.php` como `admin.lawfirm.saas.orders.index`.
+
+### 4.38 Hardening de Isolamento Multi-Tenant e Identidade de Usuário (v3.22)
+*   **Decisão:** Eliminar os riscos de vazamento de dados inter-tenants (cross-tenant data leakage) nos históricos financeiros e garantir a rastreabilidade completa (`user_id`) das adições de crédito para responsabilização precisa.
+*   **Mudanças:**
+    *   **Isolamento Estrito (`SaasTransactionsDataGrid` e `SaasAdditionsDataGrid`):** Refatorados para forçar filtragens canônicas utilizando `core()->getCurrentTenantId()` em todas as queries. Prevenção absoluta contra envenenamento de chave onde um usuário poderia visualizar transações ou integrações de outro escritório pelo painel SaaS.
+    *   **Identidade e Auditoria:** Coluna `user_id` propagada rigorosamente por todo o ciclo de vida da transação. As requisições de compras geradas pelo `SubscriptionCheckoutController` atrelam o cliente autenticado até a conversão final validada no `AsaasWebhookController`.
+    *   **Rateio de Crédito Preciso (1:1):** Eliminação de inflacionamentos residuais nas conversões de gateways de pagamento, solidificando a lógica arquitetural de paridade integral (1 BRL = 1 Token de IA).
+
+### 4.39 Restrição de Funcionalidades IA para Contas Trial (v3.23)
+*   **Decisão:** Limitar a geração de prompts avulsos na interface dos Assistentes de IA para tenants que estão no modelo "Trial", preservando todavia a capacidade de "Execução com IA" para degustação do fluxo completo.
+*   **Mudanças:**
+    *   **Frontend (Assistentes e Leads):** As views `index.blade.php`, `show.blade.php` e `lead-tools-panel.blade.php` agora consultam `$isTrial` iterando o status via `MotherShipService::getTenantConfig()->classification`. Quando ativo, o botão "Gerar Prompt" é substituído por um alerta 🚫 visual indicando indisponibilidade no trial. O botão "Executar com IA" não sofre restrições.
+
+### 4.40 Melhorias de UX — Assistentes de IA (v3.24)
+*   **Decisão:** Aprimorar a usabilidade das interfaces de Assistentes de IA com exportação para PDF, janela modal mais ampla e melhor aproveitamento de espaço entre colunas.
+*   **Mudanças:**
+    *   **Botão "Salvar PDF" (`index.blade.php`, `show.blade.php`, `lead-tools-panel.blade.php`):** Adicionado botão `📄 Salvar PDF` ao lado do botão `📋 Copiar` na seção de resultado. O botão só aparece após a geração de conteúdo (segue a visibilidade de `lf-assist-copy-btn`). A exportação usa a API nativa `window.open()` + `window.print()` do browser: o conteúdo Markdown renderizado é injetado em uma janela nova com estilos tipográficos limpos, e o diálogo de impressão/PDF do SO é acionado automaticamente. Nenhuma dependência de biblioteca backend (ex: DomPDF) foi necessária.
+    *   **Aumento da Janela Modal (`max-width`):** O `.lf-modal-dialog` em `index.blade.php` e `lead-tools-panel.blade.php` teve o `max-width` elevado de `960px`/`900px` para **`1200px`**, proporcionando área visual significativamente maior para leitura de documentos jurídicos gerados.
+    *   **Layout Assimétrico das Colunas (40% / 60%):** O `grid-template-columns` do `.lf-modal-body` foi alterado de `1fr 1fr` (50/50) para `1fr 1.5fr` (40/60) em todas as três views. A coluna de resultado/resumo da IA recebe ~60% da largura total, priorizando a leitura do conteúdo gerado sobre o formulário de entrada.
+    *   **Padrão de Botões de Ação:** Os botões de resultado (`Salvar PDF`, `Copiar`, `Salvar como Nota`) são agrupados em um `.flex.gap-2` dentro do `.lf-result-header`, garantindo alinhamento visual consistente.
+    *   **`window.lfAssistants.pdf()` e `window.lfToolsPanel.pdf()`:** Métodos adicionados aos objetos JS globais respectivos, seguindo o padrão de extensão de `window.*` já estabelecido na arquitetura de frontend (Seção 6.1).
+
+### 4.41 Rastreamento de Custos e Metadados do n8n (v3.25)
+*   **Decisão:** Rastrear os custos reais de consumo de IA (`total_cost`, `real_cost`) e metadados de execução (`execution_id`, `model`, `node_name`) extraídos diretamente do webhook de retorno do n8n para a tabela `lawfirm_assistant_history` (Tenant DB).
+*   **Mudanças:**
+    *   **Migration e Model:** Adicionadas colunas nativas e suportadas por `$fillable` ao model `AssistantHistory` em "AI/Models", com suporte a decimais de precisão máxima (`decimal:4`) para lidar com micropagamentos da OpenAI/Anthropic.
+    *   **Parser Desacoplado no Job:** O `ProcessAiAssistant.php` atuando como Worker Assíncrono agora intercepta o payload final do n8n buscando um sufixo opcional (apendado) no formato ` - [{JSON}]`. Este acoplamento garante retrocompatibilidade: separa graciosamente o conteúdo textual jurídico (apresentável ao advogado) dos metadados de bilhetagem técnica, salvando as informações exatas da transação do nó no banco do Tenant, alimentadas através das APIs de conversão USD/BRL do MotherShip.
+
+## 5. Auditoria Estrutural e Mapa de Dívida Técnica (v3.23)
 
 O projeto atingiu seu nível máximo de maturidade no isolamento de domínios. Todos os controllers órfãos e arquivos residuais que inflavam artificialmente a raiz foram completamente migrados.
 
@@ -356,9 +408,11 @@ classDiagram
     namespace SaaS_Domain {
         class MotherShipService
         class SaasTransactionController
+        class SaasOrderController
         class Subscription
         class Tenant
         class AsaasService
+        class SaasOrder
         class UserObserver
     }
 
@@ -401,8 +455,8 @@ classDiagram
 *   Idempotência implementada para o ecossistema Asaas visando concorrência atômica nos creditamentos `saas_transactions` (Zero Race Conditions/Double Spend).
 *   Expansão formal do schema `mothership.tenants` para acomodar o `asaas_node_id`, resolvendo infraestruturas fragmentadas em multi-franquia SaaS.
 
-**🟢 Status Atual — Dívida Técnica Zero (v3.20):**
-A pasta `src/` está 100% esterilizada. Todos os Bounded Contexts possuem estrutura `Models/Http/Controllers/Services/DataGrids` completa. Nenhum arquivo de lógica/negócio reside fora de seu domínio. O pacote está preparado para escala SaaS multi-tenant corporativa.
+**🟢 Status Atual — Dívida Técnica Zero (v3.24):**
+A pasta `src/` está 100% esterilizada. Todos os Bounded Contexts possuem estrutura `Models/Http/Controllers/Services/DataGrids` completa. Nenhum arquivo de lógica/negócio reside fora de seu domínio. O pacote está preparado para escala SaaS multi-tenant corporativa com escopo e auditorias de usuário robustas.
 
 ## 6. Padrões de Frontend (UI/UX)
 
