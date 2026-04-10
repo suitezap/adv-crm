@@ -106,11 +106,16 @@
                                 loading: false,
                                 connecting: false,
                                 qrCode: null,
-                                pollInterval: null
+                                pollInterval: null,
+                                refreshInterval: null
                             }
                         },
                         mounted() {
                             console.log('WhatsApp Manager Mounted. Status:', this.status);
+                            if (this.status === 'qrcode') {
+                                this.startPolling();
+                                this.startRefreshTimer();
+                            }
                         },
                         methods: {
                             async connect() {
@@ -144,8 +149,10 @@
                                         this.qrCode = data.base64;
                                         this.status = 'qrcode';
                                         this.startPolling();
+                                        this.startRefreshTimer();
                                     } else if (data.status === 'connected') {
                                         this.status = 'connected';
+                                        this.stopRefreshTimer();
                                     }
                                 } catch (error) {
                                     console.error(error);
@@ -190,6 +197,7 @@
                                     this.status = 'disconnected';
                                     this.qrCode = null;
                                     this.stopPolling();
+                                    this.stopRefreshTimer();
                                 } catch (error) {
                                     console.error(error);
                                     // Only alert if it's NOT a backend error we decided to ignore
@@ -198,6 +206,7 @@
                                     this.status = 'disconnected';
                                     this.qrCode = null;
                                     this.stopPolling();
+                                    this.stopRefreshTimer();
                                 } finally {
                                     this.loading = false;
                                 }
@@ -214,6 +223,7 @@
                                         if (data.status === 'connected') {
                                             this.status = 'connected';
                                             this.stopPolling();
+                                            this.stopRefreshTimer();
                                         }
                                     } catch (e) {
                                         console.error('Polling error', e);
@@ -225,6 +235,24 @@
                                 if (this.pollInterval) {
                                     clearInterval(this.pollInterval);
                                     this.pollInterval = null;
+                                }
+                            },
+
+                            startRefreshTimer() {
+                                if (this.refreshInterval) return;
+                                
+                                this.refreshInterval = setInterval(() => {
+                                    if (this.status === 'qrcode') {
+                                        console.log('Refreshing QR Code...');
+                                        this.connect();
+                                    }
+                                }, 40000); // 40 seconds
+                            },
+
+                            stopRefreshTimer() {
+                                if (this.refreshInterval) {
+                                    clearInterval(this.refreshInterval);
+                                    this.refreshInterval = null;
                                 }
                             }
                         }

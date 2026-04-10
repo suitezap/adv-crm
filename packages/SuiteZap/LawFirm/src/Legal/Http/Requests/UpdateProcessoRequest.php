@@ -3,8 +3,8 @@
 namespace SuiteZap\LawFirm\Legal\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use SuiteZap\LawFirm\Rules\ValidarCNJ;
-use SuiteZap\LawFirm\Rules\ValidarCpfCnpj;
+use SuiteZap\LawFirm\Legal\Rules\ValidarCNJ;
+use SuiteZap\LawFirm\Legal\Rules\ValidarCpfCnpj;
 
 class UpdateProcessoRequest extends FormRequest
 {
@@ -49,12 +49,12 @@ class UpdateProcessoRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     $type = $this->input('opposing_party_type');
                     if ($type === 'PF') {
-                        $rule = new \SuiteZap\LawFirm\Rules\Cpf;
+                        $rule = new \SuiteZap\LawFirm\Legal\Rules\Cpf;
                         if (!$rule->passes($attribute, $value)) {
                             $fail('O CPF da parte contrária é inválido.');
                         }
                     } elseif ($type === 'PJ') {
-                        $rule = new \SuiteZap\LawFirm\Rules\Cnpj;
+                        $rule = new \SuiteZap\LawFirm\Legal\Rules\Cnpj;
                         if (!$rule->passes($attribute, $value)) {
                             $fail('O CNPJ da parte contrária é inválido.');
                         }

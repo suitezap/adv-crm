@@ -5,6 +5,8 @@ namespace SuiteZap\LawFirm\Legal\Observers;
 use Carbon\Carbon;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use Webkul\Activity\Repositories\ActivityRepository;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class ProcessoObserver
 {
@@ -30,6 +32,55 @@ class ProcessoObserver
     }
 
     /**
+     * Handle the Processo "deleting" event.
+     * Fires BEFORE the DB row is removed, enabling us to cascade deletions
+     * through Eloquent observers (which SQL-CASCADE would bypass entirely).
+     *
+     * @param  \SuiteZap\LawFirm\Legal\Models\Processo  $processo
+     * @return void
+     */
+    public function deleting(Processo $processo)
+    {
+        // 1. Prazos — triggers PrazoObserver::deleted which removes linked Calendar Activities
+        $processo->prazos->each(function ($prazo) {
+            $prazo->delete();
+        });
+
+        // 2. Anexos — delete from S3, then remove DB row
+        $processo->anexos->each(function ($anexo) {
+            if (!empty($anexo->path)) {
+                try {
+                    Storage::disk('s3')->delete($anexo->path);
+                } catch (\Throwable $e) {
+                    Log::warning("ProcessoObserver: Failed S3 delete for Anexo path [{$anexo->path}]: " . $e->getMessage());
+                }
+            }
+            $anexo->delete();
+        });
+
+        // 3. ProcessDocuments (GED template docs) — delete from S3, then remove DB row
+        $processo->documents->each(function ($doc) {
+            if (!empty($doc->file_path)) {
+                try {
+                    Storage::disk('s3')->delete($doc->file_path);
+                } catch (\Throwable $e) {
+                    Log::warning("ProcessoObserver: Failed S3 delete for ProcessDocument path [{$doc->file_path}]: " . $e->getMessage());
+                }
+            }
+            $doc->delete();
+        });
+
+        // 4. Notas — quick bulk delete (no observer needed)
+        $processo->notas()->delete();
+
+        // 5. Financeiros — quick bulk delete  
+        $processo->financeiros()->delete();
+
+        // 6. Clean up the Audiência Calendar Event
+        $this->forceCleanupCalendarEvent($processo);
+    }
+
+    /**
      * Handle the Processo "deleted" event.
      *
      * @param  \SuiteZap\LawFirm\Legal\Models\Processo  $processo
@@ -37,7 +88,7 @@ class ProcessoObserver
      */
     public function deleted(Processo $processo)
     {
-        $this->forceCleanupCalendarEvent($processo);
+        // Cascade is handled in deleting(). This hook is kept for future extensibility.
     }
 
     /**
@@ -49,7 +100,6 @@ class ProcessoObserver
      */
     private function ensureCalendarEvent(Processo $processo)
     {
-        // Se usar guard 'user' falhar, pega o admin de forma falback. Se não houver auth, não cria log/calendar.
         $userId = auth()->guard('user')->id() ?? $processo->user_id;
 
         if (!$userId) {
@@ -58,31 +108,26 @@ class ProcessoObserver
 
         $tag = "[REF:PROC_ID:{$processo->id}]";
 
-        // 1. Find existing activity by TAG
         $activities = $this->activityRepository->findWhere([
             'type' => 'meeting',
             'is_done' => 0,
             'user_id' => $userId
         ]);
 
-        // Filter collection to find the specific tag in comment
         $existingActivity = $activities->first(function ($activity) use ($tag) {
-            return str_contains($activity->comment, $tag);
+            return str_contains($activity->comment ?? '', $tag);
         });
 
-        // 2. Determine Action: Cleanup OR Upsert
         $isActive = strtolower(trim($processo->status)) === 'ativo';
         $hasDate = !empty($processo->data_audiencia);
 
         if (!$isActive || !$hasDate) {
-            // Case A: Cleanup (Not active OR no date) -> Delete if exists
             if ($existingActivity) {
                 $this->activityRepository->delete($existingActivity->id);
             }
             return;
         }
 
-        // Case B: Upsert (Active AND has date)
         $scheduledFrom = Carbon::parse($processo->data_audiencia);
         $scheduledTo = $scheduledFrom->copy()->addHour();
         $title = 'Audiência: ' . $processo->titulo;
@@ -96,23 +141,22 @@ class ProcessoObserver
             'schedule_to' => $scheduledTo->format('Y-m-d H:i:s'),
             'is_done' => 0,
             'user_id' => $userId,
-            'process_id' => $processo->id, // If custom column exists
+            'process_id' => $processo->id,
             'participants' => [
                 'users' => [$userId]
             ]
         ];
 
         if ($existingActivity) {
-            // Update
             $this->activityRepository->update($payload, $existingActivity->id);
         } else {
-            // Create
             $this->activityRepository->create($payload);
         }
     }
 
     /**
-     * Force clean up calendar events when a process is soft-deleted or force-deleted.
+     * Force clean up ALL calendar events tagged for a given processo —
+     * including is_done=1 entries that the previous cleanup logic missed.
      *
      * @param Processo $processo
      * @return void
@@ -121,17 +165,12 @@ class ProcessoObserver
     {
         $tag = "[REF:PROC_ID:{$processo->id}]";
 
-        $activities = $this->activityRepository->findWhere([
-            'type' => 'meeting',
-            'is_done' => 0,
-        ]);
+        $all = $this->activityRepository->findWhere(['type' => 'meeting']);
 
-        $existingActivity = $activities->first(function ($activity) use ($tag) {
-            return str_contains($activity->comment, $tag);
+        $all->filter(function ($activity) use ($tag) {
+            return str_contains($activity->comment ?? '', $tag);
+        })->each(function ($activity) {
+            $this->activityRepository->delete($activity->id);
         });
-
-        if ($existingActivity) {
-            $this->activityRepository->delete($existingActivity->id);
-        }
     }
 }

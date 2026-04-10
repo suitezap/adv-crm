@@ -23,7 +23,8 @@ class Tenant extends Model
         'storage_node_id',
         'evolution_instance_name',
         'evolution_api_key',
-        'minio_bucket_name'
+        'minio_bucket_name',
+        'asaas_node_id'
     ];
 
     public function subscription()
@@ -44,5 +45,10 @@ class Tenant extends Model
     public function n8nNode()
     {
         return $this->belongsTo(InfrastructureNode::class, 'n8n_node_id');
+    }
+
+    public function asaasNode()
+    {
+        return $this->belongsTo(InfrastructureNode::class, 'asaas_node_id');
     }
 }

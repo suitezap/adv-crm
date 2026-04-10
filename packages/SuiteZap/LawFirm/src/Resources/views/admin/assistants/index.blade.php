@@ -6,6 +6,8 @@
         @php
             $tenantId = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantId();
             $brandColor = core()->getConfigData('general.settings.menu_color.brand_color') ?? '#7c3aed';
+            $tenantConfig = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantConfig();
+            $isTrial = $tenantConfig && stripos($tenantConfig->classification ?? '', 'trial') !== false;
         @endphp
 
         @push('styles')
@@ -197,7 +199,7 @@
                     transform: translate(-50%, -50%);
                     z-index: 10001;
                     width: 95%;
-                    max-width: 960px;
+                    max-width: 1200px;
                     max-height: 90vh;
                     overflow-y: auto;
                     background: #fff;
@@ -262,7 +264,7 @@
                 /* ── Body: Two columns ───────────────────────────────────── */
                 .lf-modal-body {
                     display: grid;
-                    grid-template-columns: 1fr 1fr;
+                    grid-template-columns: 1fr 1.5fr;
                     gap: 24px;
                     padding: 24px;
                 }
@@ -672,13 +674,7 @@
                                 {{-- Action button --}}
                                 <div class="mt-4 border-t border-gray-100 pt-3 dark:border-gray-800">
                                     <button type="button" class="lf-btn-primary"
-                                        onclick="window.lfAssistants.open(
-                                                                                                                                                                                        {{ $template->id }},
-                                                                                                                                                                                        '{{ addslashes($template->title) }}',
-                                                                                                                                                                                        '{{ $template->slug }}',
-                                                                                                                                                                                        {{ json_encode($template->prompt_structure) }},
-                                                                                                                                                                                        {{ $template->n8n_webhook_url ? 'true' : 'false' }}
-                                                                                                                                                                                    )">
+                                        onclick="window.lfAssistants.open({{ $template->id }}, '{{ addslashes($template->title) }}', '{{ $template->slug }}', {{ json_encode($template->prompt_structure) }}, {{ $template->n8n_webhook_url ? 'true' : 'false' }})">
                                         ✨ Usar Assistente
                                     </button>
                                 </div>
@@ -738,10 +734,16 @@
                         <div class="lf-modal-result">
                             <div class="lf-result-header">
                                 <h4 class="lf-section-title">Resultado</h4>
-                                <button id="lf-assist-copy-btn" class="lf-copy-btn"
-                                    onclick="window.lfAssistants.copy()">
-                                    📋 Copiar
-                                </button>
+                                <div class="flex gap-2">
+                                    <button id="lf-assist-pdf-btn" class="lf-copy-btn"
+                                        onclick="window.lfAssistants.pdf()">
+                                        📄 Salvar PDF
+                                    </button>
+                                    <button id="lf-assist-copy-btn" class="lf-copy-btn"
+                                        onclick="window.lfAssistants.copy()">
+                                        📋 Copiar
+                                    </button>
+                                </div>
                             </div>
                             <div class="lf-result-body">
                                 <div id="lf-assist-placeholder" class="lf-result-placeholder"
@@ -764,11 +766,17 @@
 
                     {{-- Footer --}}
                     <div class="lf-modal-footer">
-                        <button id="lf-assist-btn-generate" onclick="window.lfAssistants.generate()"
-                            class="lf-btn-secondary">
-                            <span id="lf-gen-text">📝 Gerar Prompt</span>
-                            <span id="lf-gen-loading" style="display:none;">⏳ Gerando...</span>
-                        </button>
+                        @if($isTrial)
+                            <button id="lf-assist-btn-generate" type="button" onclick="alert('Na versão Trial essa opção não está disponível, para maiores detalhes contate o Suporte.')" class="lf-btn-secondary" style="border-color:#fbd38d; color:#dd6b20; background-color:#fffaf0;" title="Na versão Trial essa opção não está disponível">
+                                <span id="lf-gen-text">🚫 Gerar Prompt (Trial)</span>
+                                <span id="lf-gen-loading" style="display:none;">⏳ Gerando...</span>
+                            </button>
+                        @else
+                            <button id="lf-assist-btn-generate" onclick="window.lfAssistants.generate()" class="lf-btn-secondary">
+                                <span id="lf-gen-text">📝 Gerar Prompt</span>
+                                <span id="lf-gen-loading" style="display:none;">⏳ Gerando...</span>
+                            </button>
+                        @endif
                         <button id="lf-assist-btn-execute" onclick="window.lfAssistants.execute()"
                             class="lf-btn-primary" style="display:none;">
                             <span id="lf-exec-text">✨ Executar com IA</span>
@@ -814,6 +822,7 @@
                             el('lf-assist-loading').style.display = state === 'loading' ? 'flex' : 'none';
                             el('lf-assist-result').style.display = state === 'result' ? 'block' : 'none';
                             el('lf-assist-copy-btn').style.display = state === 'result' ? 'inline' : 'none';
+                            el('lf-assist-pdf-btn').style.display = state === 'result' ? 'inline' : 'none';
 
                             var busy = (state === 'loading');
                             el('lf-assist-btn-generate').disabled = busy;

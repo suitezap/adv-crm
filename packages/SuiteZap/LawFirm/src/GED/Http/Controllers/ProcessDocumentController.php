@@ -143,6 +143,34 @@ class ProcessDocumentController extends Controller
         }
     }
 
+    public function downloadAttachment($id)
+    {
+        try {
+            $anexo = \SuiteZap\LawFirm\Legal\Models\Anexo::findOrFail($id);
+
+            $path = $anexo->path;
+            if (empty($path)) {
+                return redirect()->back()->with('error', 'Arquivo não encontrado (Caminho vazio).');
+            }
+
+            if (str_starts_with($path, 'public/')) {
+                $path = substr($path, 7);
+            }
+
+            $disk = \Illuminate\Support\Facades\Storage::disk(config('filesystems.default', 's3'));
+
+            if (!$disk->exists($path)) {
+                return redirect()->back()->with('error', 'Arquivo físico não encontrado no servidor remoto.');
+            }
+
+            return $disk->download($path, $anexo->nome_original ?? 'anexo.pdf');
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erro ao baixar anexo {$id}: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao baixar anexo: ' . $e->getMessage());
+        }
+    }
+
     // --- FROM LEGACY CONTROLLER ---
 
     // Importa os itens de um Template para o Processo Atual

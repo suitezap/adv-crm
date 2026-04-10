@@ -3,6 +3,9 @@
 namespace SuiteZap\LawFirm\SaaS\Services;
 
 use SuiteZap\LawFirm\SaaS\Models\InfrastructureNode;
+use SuiteZap\LawFirm\SaaS\Models\SaasOrder;
+use SuiteZap\LawFirm\SaaS\Models\SaasTransaction;
+use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
@@ -15,11 +18,12 @@ use Exception;
  * Integração com a API do Asaas v3 — Checkout API.
  * Documentação: https://docs.asaas.com/docs/introdução-1
  *
- * Arquitetura:
+ * Arquitetura (v3.21 — Order-based):
  *  - Credenciais (api_key, base_url, checkout_url) vêm do MotherShip (infrastructure_nodes type=asaas)
  *  - Ambiente sandbox/produção configurável via MotherShip sem tocar em .env
  *  - Toda cobrança usa POST /v3/checkouts (Asaas Checkout API)
- *  - URL de checkout: {checkout_url}/checkoutSession/show?id={ID_RETORNADO}
+ *  - externalReference = "order_{id}" (referência à tabela saas_orders local)
+ *  - Proporção fixa: R$ 1,00 = 1 Crédito de IA
  */
 class AsaasService
 {
@@ -137,7 +141,7 @@ class AsaasService
 
     /**
      * Recupera os detalhes de um Payment Link (Checkout) via API do Asaas.
-     * Necessário pois o Asaas não envia o externalReference nos webhooks de pagamentos 
+     * Necessário pois o Asaas não envia o externalReference nos webhooks de pagamentos
      * gerados a partir de checkouts.
      *
      * @param string $id ID do Payment Link (ex: payl_123456)
@@ -175,7 +179,7 @@ class AsaasService
     public static function getOwnerCustomerData(): array
     {
         $tenantId = MotherShipService::getTenantId();
-        
+
         // 1. Tenta buscar da nova tabela global de Faturamento SaaS (MotherShip)
         $billing = \SuiteZap\LawFirm\SaaS\Models\TenantBillingInfo::on('mothership')
             ->where('tenant_id', $tenantId)
@@ -216,21 +220,21 @@ class AsaasService
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // CHECKOUT API — POST /v3/checkouts
+    // CHECKOUT API — POST /v3/checkouts (v3.21 — Order-based)
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
      * Cria um Checkout para compra avulsa de Créditos de IA.
      *
-     * Aceita PIX e Cartão de Crédito (à vista).
-     * Retorna a URL completa da tela de checkout.
+     * Proporção fixa: R$ 1,00 = 1 Crédito.
      *
-     * @param  int    $credits     Quantidade de créditos do pacote
-     * @param  float  $price       Valor em reais
+     * @param  float  $value        Valor em R$ (= quantidade de créditos)
      * @param  array  $customerData Dados do cliente (já montados por getOwnerCustomerData())
-     * @return string URL do checkout
+     * @param  string $paymentMethod PIX, CREDIT_CARD, CREDIT_CARD_INSTALLMENT
+     * @param  int    $orderId      ID da SaasOrder local (criada pelo Controller)
+     * @return array  { checkout_url: string, session_id: string }
      */
-    public static function createCreditCheckout(int $credits, float $price, array $customerData, string $paymentMethod = 'PIX'): string
+    public static function createCreditCheckout(float $value, array $customerData, string $paymentMethod = 'PIX', int $orderId = 0): array
     {
         $config   = self::getConfig();
         $tenantId = MotherShipService::getTenantId();
@@ -246,6 +250,9 @@ class AsaasService
             $chargeTypes = ['DETACHED', 'INSTALLMENT']; // Asaas exige DETACHED junto com INSTALLMENT no array
         }
 
+        // Créditos = Valor em R$ (proporção 1:1)
+        $credits = $value;
+
         $payload = [
             'billingTypes'    => $billingTypes,
             'chargeTypes'     => $chargeTypes,
@@ -258,14 +265,14 @@ class AsaasService
             ],
             'items' => [
                 [
-                    'name'        => "Pacote de {$credits} Créditos de IA",
+                    'name'        => "Créditos IA (R$ " . number_format($value, 2, ',', '.') . ")",
                     'description' => "Recarga de créditos para os Assistentes de IA do LawFirm CRM. Tenant: {$tenantId}",
                     'quantity'    => 1,
-                    'value'       => $price,
+                    'value'       => $value,
                 ],
             ],
-            // Referência externa para correlacionar no webhook
-            'externalReference' => "{$tenantId}|credit|{$credits}",
+            // v3.21: externalReference baseado na Order local
+            'externalReference' => "order_{$orderId}",
             'customerData'     => $customerData,
         ];
 
@@ -276,22 +283,25 @@ class AsaasService
             throw new Exception('Asaas não retornou ID de checkout válido.');
         }
 
-        return $config['checkout_url'] . '/checkoutSession/show?id=' . $result['id'];
+        return [
+            'checkout_url' => $config['checkout_url'] . '/checkoutSession/show?id=' . $result['id'],
+            'session_id'   => $result['id'],
+        ];
     }
 
     /**
      * Cria um Checkout para Assinatura Mensal (recorrente) do plano.
      *
      * Aceita apenas Cartão de Crédito pois PIX não é compatível com chargeType RECURRENT.
-     * Retorna a URL completa da tela de checkout.
      *
-     * @param  string $planId   Identificador do plano (ex: 'pro_mensal')
-     * @param  float  $price    Valor mensal em reais
-     * @param  string $planName Nome de exibição do plano
+     * @param  string $planId       Identificador do plano (ex: 'pro_anual')
+     * @param  float  $price        Valor mensal em reais
+     * @param  string $planName     Nome de exibição do plano
      * @param  array  $customerData Dados do cliente
-     * @return string URL do checkout
+     * @param  int    $orderId      ID da SaasOrder local
+     * @return array  { checkout_url: string, session_id: string }
      */
-    public static function createSubscriptionCheckout(string $planId, float $price, string $planName, array $customerData): string
+    public static function createSubscriptionCheckout(string $planId, float $price, string $planName, array $customerData, int $orderId = 0): array
     {
         $config   = self::getConfig();
         $tenantId = MotherShipService::getTenantId();
@@ -308,7 +318,7 @@ class AsaasService
             ],
             'items' => [
                 [
-                    'name'        => $planName,
+                    'name'        => mb_substr($planName, 0, 30),
                     'description' => "Assinatura mensal do plano {$planName} — LawFirm CRM",
                     'quantity'    => 1,
                     'value'       => $price,
@@ -319,7 +329,8 @@ class AsaasService
                 'cycle'       => 'MONTHLY',
                 'nextDueDate' => now()->addDay()->format('Y-m-d H:i:s'),
             ],
-            'externalReference' => "{$tenantId}|subscription|{$planId}",
+            // v3.21: externalReference baseado na Order local
+            'externalReference' => "order_{$orderId}",
             'customerData'     => $customerData,
         ];
 
@@ -329,7 +340,10 @@ class AsaasService
             throw new Exception('Asaas não retornou ID de checkout válido.');
         }
 
-        return $config['checkout_url'] . '/checkoutSession/show?id=' . $result['id'];
+        return [
+            'checkout_url' => $config['checkout_url'] . '/checkoutSession/show?id=' . $result['id'],
+            'session_id'   => $result['id'],
+        ];
     }
 
     /**
@@ -357,7 +371,7 @@ class AsaasService
             ],
             'items' => [
                 [
-                    'name'        => $name,
+                    'name'        => mb_substr($name, 0, 30),
                     'description' => $description,
                     'quantity'    => 1,
                     'value'       => $price,
@@ -377,5 +391,251 @@ class AsaasService
         }
 
         return $config['checkout_url'] . '/checkoutSession/show?id=' . $result['id'];
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // SYNC ATIVO — Fallback para ambientes onde o webhook não chega
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Sincroniza pagamentos recentes do Asaas que ainda não foram processados.
+     * Resolve o problema de testes locais onde o webhook não chega, processando idempoticamente.
+     *
+     * v3.21: Primeiro tenta resolver via SaasOrder (novo formato "order_{id}").
+     * Fallback: mantém parser legado "{tenantId}|tipo|valor" para pagamentos em trânsito.
+     */
+    public static function syncTenantPayments(): void
+    {
+        try {
+            $config   = self::getConfig();
+            $tenantId = MotherShipService::getTenantId();
+
+            if (!$config || !$tenantId) return;
+
+            Log::info("AsaasService::syncTenantPayments: iniciando sync para tenant {$tenantId}.");
+
+            // Busca pagamentos RECEIVED/CONFIRMED dos últimos 30 dias.
+            $dateFrom = now()->subDays(30)->format('Y-m-d');
+
+            $response = Http::withHeaders([
+                'access_token' => $config['api_key'],
+                'accept'       => 'application/json',
+            ])->get($config['api_url'] . '/v3/payments', [
+                'status'     => 'RECEIVED,CONFIRMED',
+                'dateCreatedFrom' => $dateFrom,
+                'limit'      => 50,
+            ]);
+
+            if ($response->failed()) {
+                Log::warning('AsaasService::syncTenantPayments: falha na chamada à API Asaas.', [
+                    'status'   => $response->status(),
+                    'body'     => $response->body(),
+                ]);
+                return;
+            }
+
+            $payments = $response->json('data', []);
+            Log::info("AsaasService::syncTenantPayments: {" . count($payments) . "} pagamentos encontrados na API.");
+
+            foreach ($payments as $payment) {
+                $paymentId = $payment['id'] ?? null;
+                if (!$paymentId) continue;
+
+                // --- IDEMPOTÊNCIA: verifica se já foi processado PARA ESTE TENANT ---
+                $transactionExists = SaasTransaction::where('reference_type', 'asaas_payment')
+                    ->where('reference_id', $paymentId)
+                    ->where('tenant_id', $tenantId)
+                    ->exists();
+
+                if ($transactionExists) {
+                    continue;
+                }
+
+                // Tenta obter o externalReference — primeiro do payment, depois do PaymentLink
+                $externalReference = $payment['externalReference'] ?? null;
+
+                if (!$externalReference && !empty($payment['paymentLink'])) {
+                    try {
+                        $linkData          = self::getPaymentLink($payment['paymentLink']);
+                        $externalReference = $linkData['externalReference'] ?? null;
+                    } catch (\Exception $e) {
+                        Log::warning("AsaasService::sync: erro ao buscar PaymentLink {$payment['paymentLink']}: " . $e->getMessage());
+                    }
+                }
+
+                // ── NOVO (v3.21): Tenta resolver via SaasOrder ──────────
+                if ($externalReference && str_starts_with($externalReference, 'order_')) {
+                    self::processOrderBasedPayment($externalReference, $payment, $tenantId);
+                    continue;
+                }
+
+                // ── Tenta recuperar via sessão de checkout salva em SaasOrder ──
+                if (!$externalReference && !empty($payment['checkoutSession'])) {
+                    $order = SaasOrder::where('asaas_checkout_session_id', $payment['checkoutSession'])
+                        ->where('tenant_id', $tenantId)
+                        ->where('status', 'PENDING')
+                        ->first();
+
+                    if ($order) {
+                        self::processOrderBasedPayment("order_{$order->id}", $payment, $tenantId);
+                        continue;
+                    }
+                }
+
+                // ── FALLBACK LEGADO: formato "{tenantId}|tipo|valor" ─────
+                if ($externalReference) {
+                    self::processLegacyPayment($externalReference, $payment, $tenantId);
+                    continue;
+                }
+
+                Log::warning('AsaasService::sync: pagamento sem externalReference identificável — ignorado.', [
+                    'payment_id' => $paymentId,
+                    'tenant_id'  => $tenantId,
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('AsaasService::syncTenantPayments falhou: ' . $e->getMessage());
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // PROCESSADORES DE PAGAMENTO INTERNOS
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Processa um pagamento baseado em SaasOrder (v3.21+).
+     * Formato do externalReference: "order_{id}"
+     */
+    public static function processOrderBasedPayment(string $externalReference, array $payment, string $tenantId): void
+    {
+        $orderId = (int) str_replace('order_', '', $externalReference);
+
+        $order = SaasOrder::where('id', $orderId)
+            ->where('tenant_id', $tenantId)
+            ->first();
+
+        if (!$order) {
+            Log::warning("AsaasService: order #{$orderId} não encontrada para tenant {$tenantId}.");
+            return;
+        }
+
+        // Idempotência: se já foi pago, ignora
+        if ($order->isPaid()) {
+            Log::info("AsaasService: order #{$orderId} já processada (PAID).");
+            return;
+        }
+
+        $paymentId = $payment['id'];
+
+        // Busca a subscription do MotherShip
+        $subscription = Subscription::on('mothership')
+            ->where('tenant_id', $tenantId)
+            ->first();
+
+        if (!$subscription) {
+            Log::error("AsaasService: assinatura não encontrada para tenant {$tenantId}.");
+            return;
+        }
+
+        // Marca a order como PAID
+        $order->markAsPaid($paymentId);
+
+        if ($order->type === 'ai_credits') {
+            // Proporção 1:1 — usa o valor da order (fonte da verdade)
+            $creditsToAdd = (float) $order->value;
+            $subscription->ai_tokens_balance += $creditsToAdd;
+            $subscription->save();
+
+            $invoiceInfo = '';
+            if (!empty($payment['invoiceNumber'])) {
+                $invoiceInfo = " - Fatura Asaas: {$payment['invoiceNumber']}";
+            }
+
+            SaasTransaction::create([
+                'tenant_id'      => $tenantId,
+                'user_id'        => $order->user_id, // ← Rastreio do usuário!
+                'type'           => 'credit',
+                'amount'         => $creditsToAdd,
+                'balance_after'  => $subscription->ai_tokens_balance,
+                'service_type'   => 'asaas_checkout',
+                'description'    => "Recarga de R$ " . number_format($creditsToAdd, 2, ',', '.') . " em Créditos de IA via Asaas ({$paymentId}){$invoiceInfo}",
+                'reference_id'   => $paymentId,
+                'reference_type' => 'asaas_payment',
+            ]);
+
+            Log::info("AsaasService: +R$ {$creditsToAdd} créditos → tenant {$tenantId}, user #{$order->user_id}. Saldo: {$subscription->ai_tokens_balance}");
+
+        } elseif ($order->type === 'subscription') {
+            $subscription->status = 'active';
+            $subscription->save();
+            Log::info("AsaasService: assinatura renovada → tenant {$tenantId} via order #{$orderId}.");
+        }
+
+        // Invalida cache
+        Cache::forget("tenant_{$tenantId}_subscription");
+        Cache::forget("tenant_{$tenantId}_available_assistants");
+        Cache::forget('asaas_node_config');
+    }
+
+    /**
+     * Processa um pagamento no formato legado "{tenantId}|tipo|valor".
+     * Mantido para retrocompatibilidade com pagamentos em trânsito.
+     */
+    private static function processLegacyPayment(string $externalReference, array $payment, string $tenantId): void
+    {
+        $parts = explode('|', $externalReference);
+        if (count($parts) < 3) {
+            Log::warning('AsaasService::sync: externalReference legado mal formatado.', ['ref' => $externalReference]);
+            return;
+        }
+
+        [$refTenantId, $type, $valueStr] = $parts;
+
+        // Garante que o pagamento pertence EXATAMENTE a este tenant
+        if ($refTenantId !== $tenantId) {
+            Log::warning('AsaasService::sync: pagamento com tenant_id diferente do atual — ignorado.', [
+                'payment_id'    => $payment['id'],
+                'ref_tenant_id' => $refTenantId,
+                'current_tenant'=> $tenantId,
+            ]);
+            return;
+        }
+
+        $subscription = Subscription::on('mothership')
+            ->where('tenant_id', $tenantId)
+            ->first();
+
+        if (!$subscription) {
+            Log::error("AsaasService::sync: assinatura não encontrada para tenant {$tenantId}.");
+            return;
+        }
+
+        $paymentId = $payment['id'];
+
+        if ($type === 'credit') {
+            $creditsToAdd = (float) $valueStr;
+            $subscription->ai_tokens_balance += $creditsToAdd;
+            $subscription->save();
+
+            $invoiceInfo = '';
+            if (!empty($payment['invoiceNumber'])) {
+                $invoiceInfo = " - Fatura Asaas: {$payment['invoiceNumber']}";
+            }
+
+            SaasTransaction::create([
+                'tenant_id'      => $tenantId,
+                'type'           => 'credit',
+                'amount'         => $payment['value'] ?? $creditsToAdd,
+                'balance_after'  => $subscription->ai_tokens_balance,
+                'service_type'   => 'asaas_checkout',
+                'description'    => "Recarga de {$creditsToAdd} Créditos de IA via Asaas ({$paymentId}){$invoiceInfo} - Legado",
+                'reference_id'   => $paymentId,
+                'reference_type' => 'asaas_payment',
+            ]);
+
+            Log::info("AsaasService::sync (legado): +{$creditsToAdd} créditos sincronizados para tenant {$tenantId}.");
+            Cache::forget("tenant_{$tenantId}_subscription");
+            Cache::forget("tenant_{$tenantId}_available_assistants");
+        }
     }
 }

@@ -16,8 +16,28 @@ class SaaSController extends Controller
     /**
      * Display the subscription dashboard.
      */
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
+        $tenantId    = MotherShipService::getTenantId() ?? 'default';
+        $syncCacheKey = 'asaas_sync_last_run_' . $tenantId;
+        $subCacheKey  = "tenant_{$tenantId}_subscription";
+
+        // Pagamento retornado do checkout — força sync imediato e invalida cache da subscription
+        $isPaymentReturn = $request->has('payment');
+        if ($isPaymentReturn) {
+            \Illuminate\Support\Facades\Cache::forget($syncCacheKey);    // ignora throttle
+            \Illuminate\Support\Facades\Cache::forget($subCacheKey);     // subscription atualizada após sync
+            \Illuminate\Support\Facades\Cache::forget('asaas_node_config');
+        }
+
+        // Sincroniza pagamentos pendentes (throttled: 1x a cada 60s fora do fluxo de retorno)
+        if (!\Illuminate\Support\Facades\Cache::has($syncCacheKey)) {
+            \SuiteZap\LawFirm\SaaS\Services\AsaasService::syncTenantPayments();
+            \Illuminate\Support\Facades\Cache::put($syncCacheKey, true, 60); // throttle 60 segundos
+            // Invalida cache da subscription para refletir créditos adicionados pelo sync
+            \Illuminate\Support\Facades\Cache::forget($subCacheKey);
+        }
+
         // 1. Busca dados do MotherShip
         $subscription = MotherShipService::getCurrentSubscription();
 

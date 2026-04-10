@@ -66,7 +66,7 @@ class FinancialController extends Controller
         // Obtém todas as métricas do Service
         $metrics = $this->dashboardService->getAllMetrics($startDate, $endDate);
 
-        return view('lawfirm::financial.index', [
+        return view('lawfirm::Financial.index', [
             'totalReceitas' => $metrics['totalReceitas'],
             'totalDespesas' => $metrics['totalDespesas'],
             'saldoLiquido' => $metrics['saldoLiquido'],

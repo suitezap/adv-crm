@@ -352,7 +352,8 @@
                                 formData.append('payment_date', this.paymentDate);
                                 formData.append('payment_method', this.paymentMethod);
 
-                                const response = await fetch("{{ route('admin.lawfirm.financial.quick_pay', '') }}/" + this.id, {
+                                const url = "{{ route('admin.lawfirm.financial.quick_pay', 'REPLACE_ID') }}".replace('REPLACE_ID', this.id);
+                                const response = await fetch(url, {
                                     method: 'POST',
                                     headers: {
                                         'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value
@@ -397,7 +398,8 @@
                         btn.innerHTML = '<span class="icon-loader animate-spin"></span> ...';
                     }
 
-                    fetch("{{ route('admin.lawfirm.financial.send_whatsapp', '') }}/" + id, {
+                    const url = "{{ route('admin.lawfirm.financial.send_whatsapp', 'REPLACE_ID') }}".replace('REPLACE_ID', id);
+                    fetch(url, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value

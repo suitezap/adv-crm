@@ -10,9 +10,11 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::connection('mothership')->table('lawfirm_assistant_templates', function (Blueprint $table) {
-            $table->string('area')->nullable()->after('category')->comment('Área Jurídica principal do assistente');
-        });
+        if (!Schema::connection('mothership')->hasColumn('lawfirm_assistant_templates', 'area')) {
+            Schema::connection('mothership')->table('lawfirm_assistant_templates', function (Blueprint $table) {
+                $table->string('area')->nullable()->after('category')->comment('Área Jurídica principal do assistente');
+            });
+        }
     }
 
     /**

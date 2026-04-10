@@ -10,19 +10,21 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::connection('mothership')->create('lawfirm_assistant_templates', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('tenant_id')->nullable()->index()->comment('Se null, é um template global');
-            $table->string('category')->index();
-            $table->string('title');
-            $table->text('description')->nullable();
-            $table->string('icon')->nullable();
-            $table->longText('prompt_structure');
-            $table->string('n8n_webhook_url')->nullable();
-            $table->string('required_module')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
+        if (!Schema::connection('mothership')->hasTable('lawfirm_assistant_templates')) {
+            Schema::connection('mothership')->create('lawfirm_assistant_templates', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('tenant_id')->nullable()->index()->comment('Se null, é um template global');
+                $table->string('category')->index();
+                $table->string('title');
+                $table->text('description')->nullable();
+                $table->string('icon')->nullable();
+                $table->longText('prompt_structure');
+                $table->string('n8n_webhook_url')->nullable();
+                $table->string('required_module')->nullable();
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+            });
+        }
     }
 
     /**

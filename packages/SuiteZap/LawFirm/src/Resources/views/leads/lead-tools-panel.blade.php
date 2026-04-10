@@ -6,6 +6,9 @@
     $tenantId = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantId();
     $leadId = $lead->id;
 
+    $tenantConfig = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantConfig();
+    $isTrial = $tenantConfig && stripos($tenantConfig->classification ?? '', 'trial') !== false;
+
     // Load templates from DB for dynamic labels
     $toolTemplates = \SuiteZap\LawFirm\AI\Models\AssistantTemplate::whereIn('slug', [
         'pre-triagem-checklist',
@@ -160,6 +163,9 @@
                             class="lf-save-note-btn">
                             <span class="icon-note"></span> Salvar como Nota
                         </button>
+                        <button id="lf-pdf-btn" onclick="window.lfToolsPanel.pdf()" class="lf-copy-btn">
+                            📄 Salvar PDF
+                        </button>
                         <button id="lf-copy-btn" onclick="window.lfToolsPanel.copy()" class="lf-copy-btn">
                             📋 Copiar
                         </button>
@@ -186,10 +192,17 @@
 
         {{-- Footer --}}
         <div class="lf-modal-footer">
-            <button id="lf-btn-generate" onclick="window.lfToolsPanel.generate()" class="secondary-button">
-                <span id="lf-gen-text">📝 Gerar Prompt</span>
-                <span id="lf-gen-loading" style="display:none;">⏳ Gerando...</span>
-            </button>
+            @if($isTrial)
+                <button id="lf-btn-generate" type="button" onclick="alert('Na versão Trial essa opção não está disponível, para maiores detalhes contate o Suporte.')" class="secondary-button" style="border-color:#fbd38d; color:#dd6b20; background-color:#fffaf0;" title="Na versão Trial essa opção não está disponível">
+                    <span id="lf-gen-text">🚫 Gerar Prompt (Trial)</span>
+                    <span id="lf-gen-loading" style="display:none;">⏳ Gerando...</span>
+                </button>
+            @else
+                <button id="lf-btn-generate" onclick="window.lfToolsPanel.generate()" class="secondary-button">
+                    <span id="lf-gen-text">📝 Gerar Prompt</span>
+                    <span id="lf-gen-loading" style="display:none;">⏳ Gerando...</span>
+                </button>
+            @endif
             <button id="lf-btn-execute" onclick="window.lfToolsPanel.execute()" class="primary-button">
                 <span id="lf-exec-text">✨ Executar com IA</span>
                 <span id="lf-exec-loading" style="display:none;">🧠 Processando...</span>
@@ -248,7 +261,7 @@
             transform: translate(-50%, -50%);
             z-index: 10001;
             width: 95%;
-            max-width: 900px;
+            max-width: 1200px;
             max-height: 90vh;
             overflow-y: auto;
             background: #fff;
@@ -313,7 +326,7 @@
         /* Body */
         .lf-modal-body {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1.5fr;
             gap: 24px;
             padding: 24px;
         }
@@ -891,24 +904,33 @@
                         },
 
                         copy: function () {
-                            var copyBtn = document.getElementById('lf-copy-btn');
-                            try {
-                                // Fallback for HTTP: use a temporary textarea + execCommand
-                                var ta = document.createElement('textarea');
-                                ta.value = rawResult;
-                                ta.style.position = 'fixed';
-                                ta.style.left = '-9999px';
-                                document.body.appendChild(ta);
-                                ta.select();
-                                document.execCommand('copy');
-                                document.body.removeChild(ta);
+                            if (!rawResult) return;
+                            var ta = document.createElement('textarea');
+                            ta.value = rawResult;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
 
-                                copyBtn.textContent = '✅ Copiado!';
-                                setTimeout(function () { copyBtn.textContent = '📋 Copiar'; }, 1500);
-                            } catch (e) {
-                                console.error('Copy failed:', e);
-                                alert('Não foi possível copiar. Use Ctrl+C manualmente.');
-                            }
+                            var btn = document.getElementById('lf-copy-btn');
+                            var oldText = btn.innerHTML;
+                            btn.innerHTML = '✅ Copiado!';
+                            setTimeout(function () { btn.innerHTML = oldText; }, 2000);
+                        },
+
+                        pdf: function () {
+                            if (!rawResult) return;
+                            var printWindow = window.open('', '', 'height=600,width=800');
+                            printWindow.document.write('<html><head><title>Resultado IA</title>');
+                            printWindow.document.write('<style>body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; color: #333; } h1, h2, h3 { color: #111; }</style>');
+                            printWindow.document.write('</head><body>');
+                            printWindow.document.write(renderMd(rawResult));
+                            printWindow.document.write('</body></html>');
+                            printWindow.document.close();
+                            printWindow.focus();
+                            setTimeout(function() {
+                                printWindow.print();
+                            }, 250);
                         },
 
                         saveAsNote: async function (btn) {

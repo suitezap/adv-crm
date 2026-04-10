@@ -208,9 +208,14 @@
 
                 {{-- CARD 1: STATUS DA ASSINATURA --}}
                 <div class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white px-4 py-5 dark:border-gray-800 dark:bg-gray-900">
-                    <div class="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-300">
-                        <span class="icon-setting text-base"></span>
-                        Status da Assinatura
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-300">
+                            <span class="icon-setting text-base"></span>
+                            Status da Assinatura
+                        </div>
+                        <span class="font-mono text-[10px] text-gray-400 uppercase bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700" title="Tenant ID">
+                            {{ \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantId() }}
+                        </span>
                     </div>
 
                     <div class="flex flex-col gap-3 text-sm">
@@ -314,6 +319,10 @@
                         <span class="icon-cart text-xl"></span>
                         Upgrade & Créditos (Integração Asaas)
                     </div>
+                    <a href="{{ route('admin.lawfirm.saas.orders.index') }}" class="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
+                        <span class="icon-list text-sm"></span>
+                        Ver Meus Pedidos
+                    </a>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
@@ -338,16 +347,16 @@
                         <p class="text-sm text-gray-500 dark:text-gray-400">Recarregue instantaneamente a cota de uso dos nossos assistentes especializados.</p>
                         
                         <div class="mt-auto flex flex-col gap-2">
-                            <button onclick="window.openPaymentModal(500, 5.00)" class="flex justify-between items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400">
-                                <span>Pacote Básico</span>
+                            <button onclick="window.openPaymentModal(5.00)" class="flex justify-between items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400">
+                                <span>R$ 5,00 em Créditos</span>
                                 <span class="font-bold">R$ 5,00</span>
                             </button>
-                            <button onclick="window.openPaymentModal(1500, 10.00)" class="flex justify-between items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400">
-                                <span>Pacote Intermediário</span>
+                            <button onclick="window.openPaymentModal(10.00)" class="flex justify-between items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400">
+                                <span>R$ 10,00 em Créditos</span>
                                 <span class="font-bold">R$ 10,00</span>
                             </button>
-                            <button onclick="window.openPaymentModal(2500, 15.00)" class="flex justify-between items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition">
-                                <span>Pacote Avançado</span>
+                            <button onclick="window.openPaymentModal(15.00)" class="flex justify-between items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition">
+                                <span>R$ 15,00 em Créditos</span>
                                 <span class="font-bold">R$ 15,00</span>
                             </button>
                         </div>
@@ -358,13 +367,13 @@
                             <div class="flex gap-2 items-center">
                                 <div class="relative flex-1">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">R$</span>
-                                    <input type="number" id="customCreditInput" min="5" step="1" value="20" class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:border-brandColor focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 transition-all">
+                                    <input type="number" id="customCreditInput" min="1" step="1" value="20" class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:border-brandColor focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 transition-all">
                                 </div>
                                 <button onclick="window.openCustomPaymentModal()" class="rounded-lg bg-gray-800 px-4 py-2 text-sm font-bold text-white hover:bg-gray-900 transition dark:bg-gray-700 dark:hover:bg-gray-600">
                                     Gerar
                                 </button>
                             </div>
-                            <p class="text-[10.5px] text-gray-400 mt-1.5 dark:text-gray-500"><i class="icon-info"></i> Taxa: R$ 1,00 = 100 Créditos de IA</p>
+                            <p class="text-[10.5px] text-gray-400 mt-1.5 dark:text-gray-500"><i class="icon-info"></i> Taxa: R$ 1,00 = 1 Crédito de IA</p>
                         </div>
                     </div>
                 </div>
@@ -508,8 +517,6 @@
                 @endif
             </div>
 
-            </div>
-
         @endif
     </div>
 
@@ -558,29 +565,27 @@
             });
         };
 
-        // Variáveis de estado do modal
-        var selectedCredits = 0;
-        var selectedPrice = 0;
+        // Variável de estado do modal — valor em R$ (proporção 1:1 com créditos)
+        var selectedValue = 0;
 
-        window.openPaymentModal = function(credits, price) {
-            selectedCredits = credits;
-            selectedPrice = price;
-            
-            document.getElementById('modalCreditsText').innerText = credits.toLocaleString('pt-BR') + ' Créditos de IA';
-            document.getElementById('modalPriceText').innerText = 'R$ ' + price.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            
+        window.openPaymentModal = function(value) {
+            selectedValue = value;
+
+            document.getElementById('modalCreditsText').innerText = 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' em Créditos de IA';
+            document.getElementById('modalPriceText').innerText = 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
             document.getElementById('paymentModal').classList.remove('hidden');
         };
 
         window.openCustomPaymentModal = function() {
             var rawValue = document.getElementById('customCreditInput').value;
-            var price = parseFloat(rawValue);
-            if (isNaN(price) || price < 1) {
+            var value = parseFloat(rawValue);
+            if (isNaN(value) || value < 1) {
                 alert('Por favor, informe um valor válido (mínimo R$ 1,00).');
                 return;
             }
-            var credits = Math.floor(price * 100);
-            window.openPaymentModal(credits, price);
+            // Proporção 1:1 — R$ 1,00 = 1 Crédito. Sem multiplicação.
+            window.openPaymentModal(value);
         };
 
         window.closePaymentModal = function() {
@@ -588,7 +593,7 @@
         };
 
         window.asaasCheckoutCredits = function(paymentMethod) {
-            var btnEvent = event.currentTarget; // btnPix ou btnCard
+            var btnEvent = event.currentTarget;
             var originalText = btnEvent.innerHTML;
             btnEvent.innerHTML = '<i class="fa fa-spinner fa-spin text-lg"></i> Processando...';
             btnEvent.disabled = true;
@@ -608,8 +613,7 @@
                     'X-CSRF-TOKEN': _csrfToken
                 },
                 body: JSON.stringify({
-                    credits: selectedCredits,
-                    price: selectedPrice,
+                    value: selectedValue,
                     payment_method: paymentMethod
                 })
             })
@@ -617,6 +621,7 @@
             .then(function(data) {
                 if (data.success && data.checkoutUrl) {
                     window.location.href = data.checkoutUrl;
+                } else {
                     alert('Erro ao gerar checkout: ' + (data.message || 'Erro desconhecido'));
                     btnEvent.innerHTML = originalText;
                     document.getElementById('btnPayPix').disabled = false;

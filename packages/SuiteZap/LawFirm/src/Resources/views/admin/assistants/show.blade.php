@@ -3,6 +3,11 @@
         {{ $template->title }}
         </x-slot>
 
+        @php
+            $tenantConfig = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantConfig();
+            $isTrial = $tenantConfig && stripos($tenantConfig->classification ?? '', 'trial') !== false;
+        @endphp
+
         {{-- Direct script inclusion to avoid stack issues --}}
         <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
@@ -146,6 +151,18 @@
             .dark .secondary-button:hover {
                 background: #4b5563;
             }
+
+            .lf-main-grid {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            @media (min-width: 1024px) {
+                .lf-main-grid {
+                    grid-template-columns: 1fr 1.5fr;
+                }
+            }
         </style>
 
         <div class="flex flex-col gap-4">
@@ -167,7 +184,7 @@
             </div>
 
             <!-- Two Column Layout -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="lf-main-grid">
                 <!-- LEFT: Form -->
                 <div class="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-700">
                     <div class="p-6">
@@ -207,10 +224,17 @@
                             @endif
 
                             <div class="flex items-center gap-4 pt-4">
-                                <button type="button" id="generate-btn" class="secondary-button">
-                                    <span id="generate-btn-text">📝 Gerar Prompt</span>
-                                    <span id="generate-btn-loading" class="hidden">⏳ Gerando...</span>
-                                </button>
+                                @if($isTrial)
+                                    <button id="generate-btn" type="button" onclick="alert('Na versão Trial essa opção não está disponível, para maiores detalhes contate o Suporte.')" class="secondary-button" style="border-color:#fbd38d; color:#dd6b20; background-color:#fffaf0;" title="Na versão Trial essa opção não está disponível">
+                                        <span id="generate-btn-text">🚫 Gerar Prompt (Trial)</span>
+                                        <span id="generate-btn-loading" class="hidden">⏳ Gerando...</span>
+                                    </button>
+                                @else
+                                    <button type="button" id="generate-btn" class="secondary-button">
+                                        <span id="generate-btn-text">📝 Gerar Prompt</span>
+                                        <span id="generate-btn-loading" class="hidden">⏳ Gerando...</span>
+                                    </button>
+                                @endif
 
                                 <button type="button" id="btn-execute-ia" class="primary-button">
                                     <span id="execute-btn-text">✨ Executar com IA</span>
@@ -226,10 +250,16 @@
                     <div class="p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-bold text-gray-800 dark:text-white">Resultado</h3>
-                            <button id="copy-btn"
-                                class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors hidden">
-                                📋 Copiar
-                            </button>
+                            <div class="flex gap-2">
+                                <button id="pdf-btn"
+                                    class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors hidden">
+                                    📄 Salvar PDF
+                                </button>
+                                <button id="copy-btn"
+                                    class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors hidden">
+                                    📋 Copiar
+                                </button>
+                            </div>
                         </div>
 
                         <div id="result-placeholder"
@@ -376,6 +406,7 @@
                                 placeholder.classList.add('hidden');
                                 loading.style.display = 'none';
                                 copyBtn.classList.remove('hidden');
+                                document.getElementById('pdf-btn').classList.remove('hidden');
                             } else {
                                 alert('Erro: ' + JSON.stringify(data));
                             }
@@ -442,6 +473,7 @@
 
                                         loading.style.display = 'none';
                                         copyBtn.classList.remove('hidden');
+                                        document.getElementById('pdf-btn').classList.remove('hidden');
 
                                         // Reset Button
                                         btnExec.disabled = false;
@@ -487,8 +519,31 @@
                         rawArea.select();
                         document.execCommand('copy');
                         rawArea.style.display = 'none';
-                        cBtn.textContent = '✓ Copiado!';
-                        setTimeout(() => cBtn.textContent = '📋 Copiar', 2000);
+                        
+                        const originalText = cBtn.innerHTML;
+                        cBtn.innerHTML = '✅ Copiado!';
+                        setTimeout(() => cBtn.innerHTML = originalText, 2000);
+                    }
+
+                    // PDF button
+                    const pdfBtn = e.target.closest('#pdf-btn');
+                    if (pdfBtn) {
+                        e.preventDefault();
+                        const rawArea = document.getElementById('raw-result');
+                        const content = rawArea.value;
+                        if (!content) return;
+                        
+                        const printWindow = window.open('', '', 'height=600,width=800');
+                        printWindow.document.write('<html><head><title>Documento IA</title>');
+                        printWindow.document.write('<style>body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; color: #333; } h1, h2, h3 { color: #111; }</style>');
+                        printWindow.document.write('</head><body>');
+                        printWindow.document.write(parseMarkdown(content));
+                        printWindow.document.write('</body></html>');
+                        printWindow.document.close();
+                        printWindow.focus();
+                        setTimeout(function() {
+                            printWindow.print();
+                        }, 250);
                     }
                 });
             });

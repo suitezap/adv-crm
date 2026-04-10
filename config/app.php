@@ -94,8 +94,7 @@ return [
     | to any of the locales which will be supported by the application.
     |
      */
-
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale' => env('APP_LOCALE', 'pt_BR'),
 
     /*
     |--------------------------------------------------------------------------
@@ -127,8 +126,7 @@ return [
     | the language folders that are provided through your application.
     |
      */
-
-    'fallback_locale' => 'en',
+    'fallback_locale' => 'pt_BR',
 
     /*
     |--------------------------------------------------------------------------
@@ -140,8 +138,7 @@ return [
     | localized telephone numbers, street address information and more.
     |
      */
-
-    'faker_locale' => 'en_US',
+    'faker_locale' => 'pt_BR',
 
     /*
     |--------------------------------------------------------------------------

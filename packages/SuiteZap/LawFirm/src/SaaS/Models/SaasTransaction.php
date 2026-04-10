@@ -11,6 +11,7 @@ class SaasTransaction extends Model
     protected $table = 'saas_transactions';
 
     protected $fillable = [
+        'tenant_id',
         'type',
         'amount',
         'balance_after',

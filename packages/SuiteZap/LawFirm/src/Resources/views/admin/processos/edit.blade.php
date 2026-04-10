@@ -348,6 +348,7 @@
                         clone.style.display = 'none';
                         // Copy values for textareas and selects manually as cloneNode does not always preserve dynamic values
                         clone.value = input.value;
+                        if (input.type === 'checkbox' || input.type === 'radio') clone.checked = input.checked;
                         form.appendChild(clone);
                     });
                 }
@@ -359,6 +360,7 @@
                         const clone = input.cloneNode(true);
                         clone.style.display = 'none';
                         clone.value = input.value;
+                        if (input.type === 'checkbox' || input.type === 'radio') clone.checked = input.checked;
                         form.appendChild(clone);
                     });
                 }

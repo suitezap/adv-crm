@@ -37,7 +37,15 @@ class SaasFileService
         $storedPath = $this->getDisk()->putFileAs($directory, $file, $name);
 
         if ($storedPath === false) {
-            throw new \Exception("Erro ao salvar arquivo no disco.");
+            // Se falhou e estivermos no S3, tentamos verificar se o bucket existe e criá-lo (JIT)
+            if (config('filesystems.default') === 's3') {
+                $this->ensureBucketExists();
+                $storedPath = $this->getDisk()->putFileAs($directory, $file, $name);
+            }
+
+            if ($storedPath === false) {
+                throw new \Exception("Erro ao salvar arquivo no disco.");
+            }
         }
 
         return $storedPath;
@@ -82,7 +90,53 @@ class SaasFileService
      */
     public function storeRaw(string $path, string $contents): bool
     {
-        return $this->getDisk()->put($path, $contents);
+        $result = $this->getDisk()->put($path, $contents);
+
+        if ($result === false) {
+            // Tentativa de criação JIT do bucket caso falhe inicialmente
+            if (config('filesystems.default') === 's3') {
+                $this->ensureBucketExists();
+                $result = $this->getDisk()->put($path, $contents);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Garante a existência do bucket no S3/MinIO (Criação JIT)
+     */
+    public function ensureBucketExists(): void
+    {
+        try {
+            if (config('filesystems.default') !== 's3') {
+                return;
+            }
+
+            $disk = $this->getDisk();
+            
+            /** @var \Aws\S3\S3Client $client */
+            $client = $disk->getClient();
+            $bucket = config('filesystems.disks.s3.bucket');
+
+            if (!$bucket) {
+                return;
+            }
+
+            try {
+                $client->headBucket(['Bucket' => $bucket]);
+            } catch (\Aws\S3\Exception\S3Exception $e) {
+                // Se bucket não existir, cria
+                if ($e->getStatusCode() == 404 || str_contains((string) $e->getAwsErrorCode(), 'NoSuchBucket') || str_contains((string) $e->getAwsErrorCode(), 'NotFound')) {
+                    $client->createBucket(['Bucket' => $bucket]);
+                    \Illuminate\Support\Facades\Log::info("SAAS INFO: Bucket '{$bucket}' criado automaticamente (JIT) no S3/MinIO.");
+                } else {
+                    throw $e;
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("SAAS ERRO: Falha ao garantir/criar bucket no MinIO: " . $e->getMessage());
+        }
     }
 
     /**

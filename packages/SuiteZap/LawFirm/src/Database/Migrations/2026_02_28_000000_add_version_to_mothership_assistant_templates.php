@@ -17,10 +17,12 @@ return new class extends Migration {
 
     public function up(): void
     {
-        Schema::connection('mothership')->table('lawfirm_assistant_templates', function (Blueprint $table) {
-            $table->unsignedInteger('version')->default(1)->after('is_active')
-                ->comment('Versão do template. Incrementada a cada atualização via API.');
-        });
+        if (!Schema::connection('mothership')->hasColumn('lawfirm_assistant_templates', 'version')) {
+            Schema::connection('mothership')->table('lawfirm_assistant_templates', function (Blueprint $table) {
+                $table->unsignedInteger('version')->default(1)->after('is_active')
+                    ->comment('Versão do template. Incrementada a cada atualização via API.');
+            });
+        }
     }
 
     public function down(): void

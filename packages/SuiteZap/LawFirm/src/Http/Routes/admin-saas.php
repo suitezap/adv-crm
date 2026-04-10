@@ -37,6 +37,12 @@ Route::prefix('billing-info')->controller(\SuiteZap\LawFirm\SaaS\Http\Controller
 });
 
 // -----------------------------------------------
+// SaaS Orders (Pedidos / Intenções de Compra) — v3.21
+// -----------------------------------------------
+Route::get('orders', [\SuiteZap\LawFirm\SaaS\Http\Controllers\SaasOrderController::class, 'index'])
+    ->name('admin.lawfirm.saas.orders.index');
+
+// -----------------------------------------------
 // AI Assistants
 // -----------------------------------------------
 Route::prefix('assistants')->controller(\SuiteZap\LawFirm\AI\Http\Controllers\Admin\AssistantController::class)->group(function () {

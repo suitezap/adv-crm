@@ -215,6 +215,12 @@ class PrazoController extends Controller
 
         $prazo->delete();
 
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'message' => trans('lawfirm::app.prazos.delete-success'),
+            ], 200);
+        }
+
         session()->flash('success', trans('lawfirm::app.prazos.delete-success'));
 
         return back();

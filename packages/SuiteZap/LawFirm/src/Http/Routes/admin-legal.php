@@ -30,6 +30,7 @@ Route::prefix('processos')->controller(ProcessoController::class)->group(functio
     Route::put('{id}', 'update')->name('admin.processos.update');
     Route::delete('{id}', 'destroy')->name('admin.processos.destroy');
     Route::delete('anexo/{id}', [ProcessDocumentController::class, 'destroy'])->name('admin.processos.delete_attachment');
+    Route::get('anexo/download/{id}', [ProcessDocumentController::class, 'downloadAttachment'])->name('admin.processos.download_attachment');
     Route::post('documentos/store', [ProcessDocumentController::class, 'store'])->name('admin.processos.store_documents');
     Route::post('mass-delete', 'massDestroy')->name('admin.processos.mass_delete');
 

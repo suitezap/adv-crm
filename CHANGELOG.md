@@ -1,4 +1,15 @@
-## **LF v3.20 (Docker v1.7) (Abril 2026)** - *Release*
+## **LF v3.21 (Abril 2026)** - *Refatoração Orders SaaS*
+
+* [critical-fix] Bug no cálculo de créditos: `Math.floor(price * 100)` no frontend inflava cobranças em 100x no Asaas (R$ 5 → R$ 500).
+* [critical-fix] Bug no `.then()` do fetch que executava `window.location.href` E `alert()` simultaneamente após checkout bem-sucedido.
+* [feature] Nova tabela `saas_orders` — registra a "Intenção de Compra" ANTES de chamar o Asaas, com `user_id` do solicitante.
+* [feature] Novo `SaasOrdersDataGrid` e página "Meus Pedidos" (`admin/juridico/orders`) com status colorido (PENDING/PAID/EXPIRED/CANCELED).
+* [enhancement] `externalReference` do Asaas mudou de `"{tenantId}|tipo|valor"` para `"order_{id}"`, simplificando webhook e sync.
+* [enhancement] Rastreio de usuário: `SaasTransaction` de crédito agora recebe `user_id` extraído da `SaasOrder`, DataGrids exibem nomes corretos.
+* [removed] Workaround `credit_pending` em `saas_transactions` eliminado — substituído pela `SaasOrder`.
+* [compatibility] Fallback legado mantido no webhook/sync para pagamentos em trânsito no formato antigo.
+
+## **LF v3.20 (Docker v1.7.1) (Abril 2026)** - *Release*
 
 * [feature] Suporte a Pessoa Física e Jurídica (`company_name`, `cpf`, `cnpj`) no módulo de Dados de Faturamento do SaaS.
 * [fixed] Isolamento de dados: Correção de vazamento de transações financeiras e adições de créditos SaaS (escopo correto por Tenant).

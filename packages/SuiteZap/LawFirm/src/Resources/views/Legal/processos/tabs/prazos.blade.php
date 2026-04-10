@@ -74,17 +74,13 @@
                                     value="{{ $prazo->descricao }}">
                             </td>
                             <td class="px-1 py-1 text-center">
-                                <!-- Checkbox de Delete (Soft Delete via Update) -->
-                                <div class="flex items-center justify-center">
-                                    <label class="cursor-pointer text-red-600" title="Remover">
-                                        <input type="checkbox" name="prazos[{{ $index }}][should_delete]" value="1"
-                                            style="display:none;"
-                                            onchange="this.closest('tr').style.opacity = this.checked ? '0.3' : '1'">
-                                        <span class="icon-delete text-xl text-red-500 hover:text-red-700 cursor-pointer"
-                                            onclick="var cb=this.previousElementSibling;cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'))"
-                                            title="Remover"></span>
-                                    </label>
-                                </div>
+                                {{-- AJAX Delete: removes row immediately without needing to save the form --}}
+                                <button type="button"
+                                    class="text-red-500 hover:text-red-700"
+                                    title="Remover Prazo"
+                                    onclick="deletarPrazo({{ $prazo->id }}, 'prazo-row-{{ $index }}')">
+                                    <span class="icon-delete text-xl"></span>
+                                </button>
                             </td>
                         </tr>
                     @endif
@@ -129,6 +125,41 @@
 
             container.insertAdjacentHTML('beforeend', html);
             prazoIndex++;
+        }
+
+        /**
+         * Immediately deletes an existing saved Prazo via AJAX.
+         * Triggers PrazoObserver::deleted to remove the linked Calendar Activity too.
+         */
+        function deletarPrazo(prazoId, rowId) {
+            if (!confirm('Tem certeza que deseja apagar este prazo?')) return;
+
+            const row = document.getElementById(rowId);
+            if (row) row.style.opacity = '0.4';
+
+            const url = `{{ url('admin/juridico/prazos') }}/${prazoId}`;
+            const csrfToken = '{{ csrf_token() }}';
+
+            fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Erro ao apagar prazo.');
+                return res.json();
+            })
+            .then(data => {
+                if (row) row.remove();
+            })
+            .catch(err => {
+                if (row) row.style.opacity = '1';
+                alert('Não foi possível apagar o prazo. Tente novamente.');
+                console.error(err);
+            });
         }
     </script>
 @endpush

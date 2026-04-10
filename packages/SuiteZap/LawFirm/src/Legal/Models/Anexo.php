@@ -30,10 +30,6 @@ class Anexo extends Model
      * Get a secure signed URL for the file.
      * Uses Storage::temporaryUrl() for private bucket access with 15min expiration.
      */
-    /**
-     * Get a secure signed URL for the file.
-     * Uses Storage::temporaryUrl() for private bucket access with 15min expiration.
-     */
     public function getUrlAttribute(): string
     {
         $path = $this->path;
@@ -42,23 +38,10 @@ class Anexo extends Model
             return '';
         }
 
-        // Remove 'public/' from start of path if present (legacy storage)
-        if (str_starts_with($path, 'public/')) {
-            $path = substr($path, 7);
-        }
-
-        // Use temporaryUrl for secure signed URLs (valid for 15 minutes)
-        try {
-            // Force S3 disk as configured by MotherShipService
-            return Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(15));
-        } catch (\Exception $e) {
-            // Fallback to regular URL if temporaryUrl fails
-            try {
-                return Storage::disk('s3')->url($path);
-            } catch (\Exception $e2) {
-                return '';
-            }
-        }
+        // Retorna a rota do proxy interno do Laravel para evitar o erro 
+        // "SignatureDoesNotMatch" que ocorre quando o Reverse Proxy no servidor MinIO 
+        // não avança o cabeçalho 'Host' original. O backend resolve e autentica via SDK.
+        return route('admin.processos.download_attachment', $this->id);
     }
 
     /**

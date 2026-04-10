@@ -110,7 +110,7 @@ class MotherShipService
         return [
             'base_url' => rtrim($node->base_url, '/'),
             'instance' => $tenantConfig->evolution_instance_name,
-            'token' => $tenantConfig->evolution_api_key
+            'token' => $tenantConfig->evolution_api_key ?: $node->api_key
         ];
     }
 
@@ -185,7 +185,7 @@ class MotherShipService
             'filesystems.disks.s3.key' => $storageNode->api_key,
             'filesystems.disks.s3.secret' => $metaData['secret'],
             'filesystems.disks.s3.region' => $metaData['region'] ?? 'us-east-1',
-            'filesystems.disks.s3.bucket' => $tenantConfig->minio_bucket_name ?? ($metaData['bucket'] ?? 'lawfirm-fallback'),
+            'filesystems.disks.s3.bucket' => preg_replace('/[^a-z0-9.-]/', '-', strtolower($tenantConfig->minio_bucket_name ?? ($metaData['bucket'] ?? 'lawfirm-fallback'))),
             'filesystems.disks.s3.endpoint' => rtrim($storageNode->base_url, '/'),
             'filesystems.disks.s3.use_path_style_endpoint' => $metaData['use_path_style_endpoint'] ?? true,
             'filesystems.disks.s3.throw' => false,

@@ -170,6 +170,11 @@ class ProcessoController extends Controller
     }
 
     /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \SuiteZap\LawFirm\Legal\Http\Requests\StoreProcessoRequest  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(\SuiteZap\LawFirm\Legal\Http\Requests\StoreProcessoRequest $request)
     {
         // DEBUG: Log uploaded files details before validation

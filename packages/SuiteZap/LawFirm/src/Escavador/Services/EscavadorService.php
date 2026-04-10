@@ -501,6 +501,7 @@ class EscavadorService
 
         if ($apiResult['success']) {
             \SuiteZap\LawFirm\SaaS\Models\SaasTransaction::create([
+                'tenant_id' => $tenantId,
                 'type' => 'debit',
                 'amount' => $cost,
                 'balance_after' => $subscription->ai_tokens_balance,

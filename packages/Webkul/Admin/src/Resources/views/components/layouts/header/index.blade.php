@@ -88,6 +88,10 @@
                     <!-- Version -->
                     <p class="text-gray-400">
                         @lang('admin::app.layouts.app-version', ['version' => core()->version()])
+                        &nbsp;|&nbsp;
+                        <span title="LawFirm SaaS">
+                            LF {{ \SuiteZap\LawFirm\Providers\LawFirmServiceProvider::VERSION }}
+                        </span>
                     </p>
                 </div>
 

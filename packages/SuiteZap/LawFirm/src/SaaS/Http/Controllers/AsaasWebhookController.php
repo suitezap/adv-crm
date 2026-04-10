@@ -4,15 +4,21 @@ namespace SuiteZap\LawFirm\SaaS\Http\Controllers;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
+use SuiteZap\LawFirm\SaaS\Models\SaasOrder;
+use SuiteZap\LawFirm\SaaS\Models\SaasTransaction;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use SuiteZap\LawFirm\SaaS\Services\AsaasService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * AsaasWebhookController
  *
  * Processa notificações de eventos de pagamento enviadas pelo Asaas.
+ *
+ * v3.21: Prioriza resolução via SaasOrder (externalReference = "order_{id}").
+ * Mantém fallback para formato legado "{tenantId}|tipo|valor".
  *
  * ─── Segurança (documentação Asaas) ─────────────────────────────────────────
  * O Asaas envia um token de autenticação no header:
@@ -21,11 +27,6 @@ use Illuminate\Support\Facades\Log;
  * Este token é opcional mas altamente recomendado. Deve ser configurado no
  * painel Asaas em: Menu do usuário → Integrações → Mecanismos de segurança
  * e armazenado no MotherShip (meta_data.webhook_token do nó Asaas).
- *
- * ─── Fluxo de Validação de Saque ────────────────────────────────────────────
- * Para transferências/saques, o Asaas envia: POST 5s após a criação.
- * Máximo 3 tentativas → cancelamento automático na 3ª falha.
- * Resposta deve ser 200 para aprovar, qualquer outro para rejeitar.
  */
 class AsaasWebhookController extends Controller
 {
@@ -59,7 +60,6 @@ class AsaasWebhookController extends Controller
         }
 
         // ── 3. Alerta sobre chave de API próxima da expiração ──────────────
-        // O Asaas envia ACCESS_TOKEN_EXPIRING antes de expirar (ciclo de vida)
         if ($event === 'ACCESS_TOKEN_EXPIRING') {
             Log::warning('AsaasWebhook: CHAVE DE API PRÓXIMA DA EXPIRAÇÃO! Renove em: Integrações → Chaves de API.', [
                 'payload' => $payload,
@@ -71,8 +71,6 @@ class AsaasWebhookController extends Controller
 
     /**
      * Valida o token de autenticação do webhook.
-     * O token é enviado no header 'asaas-access-token' pelo Asaas.
-     * Deve ser configurado no painel Asaas e armazenado em meta_data.webhook_token.
      */
     private function isAuthorized(Request $request): bool
     {
@@ -88,31 +86,78 @@ class AsaasWebhookController extends Controller
         return hash_equals($expectedToken, (string) $receivedToken);
     }
 
+    /**
+     * Processa um pagamento recebido/confirmado do Asaas.
+     *
+     * Fluxo de resolução (v3.21):
+     *  1. Tenta resolver via SaasOrder (externalReference = "order_{id}")
+     *  2. Tenta resolver via checkoutSession salvo na SaasOrder
+     *  3. Fallback legado: "{tenantId}|tipo|valor"
+     *  4. Fallback definitivo: single-tenant Asaas (valor como crédito)
+     */
     private function handlePayment(?array $payment): void
     {
         if (!$payment) return;
 
-        $externalReference = $payment['externalReference'] ?? null;
+        $paymentId = $payment['id'] ?? null;
+        if (!$paymentId) return;
 
-        // Asaas /v3/checkouts geram Payment Links. O webhook PAYMENT_RECEIVED traz 
-        // o ID do link em 'paymentLink', mas NÃO herda o externalReference automaticamente.
+        $externalReference = $payment['externalReference'] ?? null;
+        $tenantId = MotherShipService::getTenantId();
+
+        // ── Recupera externalReference do PaymentLink se necessário ──────
         if (!$externalReference && !empty($payment['paymentLink'])) {
             try {
-                $linkId = $payment['paymentLink'];
-                $linkData = AsaasService::getPaymentLink($linkId);
+                $linkData = AsaasService::getPaymentLink($payment['paymentLink']);
                 $externalReference = $linkData['externalReference'] ?? null;
             } catch (\Exception $e) {
                 Log::error("AsaasWebhook: Erro ao buscar dados do PaymentLink {$payment['paymentLink']}: " . $e->getMessage());
             }
         }
 
-        if (!$externalReference) {
-            Log::warning('AsaasWebhook: pagamento sem externalReference (e sem link).', ['id' => $payment['id'] ?? '']);
+        // ── ROTA 1 (v3.21): Order-based ("order_{id}") ──────────────────
+        if ($externalReference && str_starts_with($externalReference, 'order_')) {
+            AsaasService::processOrderBasedPayment($externalReference, $payment, $tenantId);
             return;
         }
 
-        // Formato: {tenantId}|{type}|{value}
-        // Exemplo: "42|credit|500" ou "42|subscription|pro_anual"
+        // ── ROTA 2: Tenta resolver via checkoutSession → SaasOrder ──────
+        if (!$externalReference && !empty($payment['checkoutSession'])) {
+            $order = SaasOrder::where('asaas_checkout_session_id', $payment['checkoutSession'])
+                ->where('tenant_id', $tenantId)
+                ->where('status', 'PENDING')
+                ->first();
+
+            if ($order) {
+                AsaasService::processOrderBasedPayment("order_{$order->id}", $payment, $tenantId);
+                return;
+            }
+        }
+
+        // ── ROTA 3: Formato legado "{tenantId}|tipo|valor" ──────────────
+        if ($externalReference) {
+            $this->handleLegacyPayment($externalReference, $payment);
+            return;
+        }
+
+        // ── ROTA 4: Fallback definitivo (single-tenant Asaas) ───────────
+        if ($tenantId && !empty($payment['value'])) {
+            $creditsFromValue = (float)$payment['value'];
+            $fakeRef = "{$tenantId}|credit|{$creditsFromValue}";
+            Log::info("AsaasWebhook: fallback externalReference criado a partir do valor R$ {$payment['value']} -> {$creditsFromValue} créditos.");
+            $this->handleLegacyPayment($fakeRef, $payment);
+            return;
+        }
+
+        Log::warning('AsaasWebhook: pagamento sem externalReference e sem forma de identificar tenant.', ['id' => $paymentId]);
+    }
+
+    /**
+     * Processa pagamento no formato legado "{tenantId}|tipo|valor".
+     * Mantido para retrocompatibilidade com pagamentos gerados antes da v3.21.
+     */
+    private function handleLegacyPayment(string $externalReference, array $payment): void
+    {
         $parts = explode('|', $externalReference);
         if (count($parts) < 3) {
             Log::warning('AsaasWebhook: externalReference mal formatado.', ['ref' => $externalReference]);
@@ -130,23 +175,52 @@ class AsaasWebhookController extends Controller
             return;
         }
 
+        // --- IDEMPOTENCY CHECK (com escopo de tenant) ---
+        $transactionExists = SaasTransaction::where('reference_type', 'asaas_payment')
+            ->where('reference_id', $payment['id'])
+            ->where('tenant_id', $tenantId)
+            ->exists();
+
+        if ($transactionExists) {
+            Log::info("AsaasWebhook: Pagamento {$payment['id']} já processado anteriormente para tenant {$tenantId}.");
+            return;
+        }
+
         try {
             if ($type === 'credit') {
                 $creditsToAdd = (float) $valueStr;
                 $subscription->ai_tokens_balance += $creditsToAdd;
                 $subscription->save();
-                Log::info("AsaasWebhook: +{$creditsToAdd} créditos → tenant {$tenantId}. Saldo: {$subscription->ai_tokens_balance}");
+
+                $invoiceInfo = '';
+                if (!empty($payment['invoiceNumber'])) {
+                    $invoiceInfo = " - Fatura Asaas: {$payment['invoiceNumber']}";
+                }
+
+                SaasTransaction::create([
+                    'tenant_id' => $tenantId,
+                    'type' => 'credit',
+                    'amount' => $payment['value'] ?? $creditsToAdd,
+                    'balance_after' => $subscription->ai_tokens_balance,
+                    'service_type' => 'asaas_webhook',
+                    'description' => "Recarga de {$creditsToAdd} Créditos de IA via Asaas ({$payment['id']}){$invoiceInfo} - Legado",
+                    'reference_id' => $payment['id'],
+                    'reference_type' => 'asaas_payment',
+                ]);
+
+                Log::info("AsaasWebhook (legado): +{$creditsToAdd} créditos → tenant {$tenantId}. Saldo: {$subscription->ai_tokens_balance}");
+
             } elseif ($type === 'subscription') {
                 $subscription->status = 'active';
                 $subscription->save();
-                Log::info("AsaasWebhook: assinatura renovada → tenant {$tenantId}, plano: {$valueStr}");
+                Log::info("AsaasWebhook (legado): assinatura renovada → tenant {$tenantId}, plano: {$valueStr}");
             }
 
-            // Invalida cache do tenant para refletir mudanças imediatamente
+            // Invalida cache do tenant
             $this->invalidateCache($tenantId);
 
         } catch (\Exception $e) {
-            Log::error('AsaasWebhook: falha ao processar pagamento: ' . $e->getMessage());
+            Log::error('AsaasWebhook: falha ao processar pagamento legado: ' . $e->getMessage());
         }
     }
 
@@ -155,8 +229,8 @@ class AsaasWebhookController extends Controller
      */
     private function invalidateCache(string $tenantId): void
     {
-        \Illuminate\Support\Facades\Cache::forget("tenant_{$tenantId}_subscription");
-        \Illuminate\Support\Facades\Cache::forget("tenant_{$tenantId}_available_assistants");
-        \Illuminate\Support\Facades\Cache::forget('asaas_node_config');
+        Cache::forget("tenant_{$tenantId}_subscription");
+        Cache::forget("tenant_{$tenantId}_available_assistants");
+        Cache::forget('asaas_node_config');
     }
 }

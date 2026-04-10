@@ -13,11 +13,13 @@ return new class extends Migration {
 
     public function up(): void
     {
-        Schema::connection('mothership')->table('app_config', function (Blueprint $table) {
-            $table->string('type', 50)->default('string')->after('value');
-            $table->string('group', 100)->default('general')->after('type');
-            $table->timestamp('created_at')->nullable()->after('updated_at');
-        });
+        if (!Schema::connection('mothership')->hasColumn('app_config', 'type')) {
+            Schema::connection('mothership')->table('app_config', function (Blueprint $table) {
+                $table->string('type', 50)->default('string')->after('value');
+                $table->string('group', 100)->default('general')->after('type');
+                $table->timestamp('created_at')->nullable()->after('updated_at');
+            });
+        }
     }
 
     public function down(): void
