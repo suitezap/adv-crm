@@ -46,6 +46,7 @@ class PrazoDataGrid extends DataGrid
                 'law_processo_prazos.data_vencimento',
                 'law_processo_prazos.status',
                 'law_processo_prazos.status as raw_status',
+                'law_processo_prazos.notificar_whatsapp',
                 'processos.titulo as processo_titulo',
                 'processos.id as processo_id',
                 'processos.data_audiencia as processo_data_audiencia',
@@ -109,6 +110,22 @@ class PrazoDataGrid extends DataGrid
                     : '';
                 return '<a href="' . $url . '" class="text-blue-600 hover:underline font-medium">'
                     . e($row->processo_titulo) . '</a>' . $clientInfo;
+            },
+        ]);
+
+        // Coluna: Robô WhatsApp
+        $this->addColumn([
+            'index'      => 'notificar_whatsapp',
+            'label'      => 'Robô Zap',
+            'type'       => 'boolean',
+            'sortable'   => true,
+            'searchable' => false,
+            'filterable' => true,
+            'closure'    => function ($row) {
+                if ($row->notificar_whatsapp) {
+                    return '<span class="badge badge-round badge-success" title="Ativado">🔔 Ativado</span>';
+                }
+                return '<span class="badge badge-round badge-warning" title="Desativado">🔕 Inativo</span>';
             },
         ]);
 
@@ -391,6 +408,16 @@ class PrazoDataGrid extends DataGrid
                 return route('lawfirm.prazos.notify', $row->id);
             },
             'confirm_text' => 'Deseja enviar a notificação de prazo para o cliente agora?',
+        ]);
+
+        // Toggle Robô Agendador
+        $this->addAction([
+            'icon'          => 'icon-notification',
+            'title'         => 'Ativar / Desativar Robô Agendador de Prazos',
+            'method'        => 'GET',
+            'url'           => function ($row) {
+                return route('admin.prazos.toggle-notify', $row->id);
+            },
         ]);
     }
 }

@@ -1,4 +1,4 @@
-# 🏛 LawFirm CRM - Documento de Arquitetura (v3.25 - DDD & SaaS Multi-Tenant)
+# 🏛 LawFirm CRM - Documento de Arquitetura (v3.28 - DDD & SaaS Multi-Tenant)
 > [!IMPORTANT]
 > **Manutenção do Documento:** Este arquivo **DEVE** ser atualizado (seção 4.x) e a versão incrementada no cabeçalho sempre que houver mudanças estruturais, novas funcionalidades core ou atualizações na constante de versão em `LawFirmServiceProvider.php`.
 
@@ -339,11 +339,50 @@ src/
     *   **Padrão de Botões de Ação:** Os botões de resultado (`Salvar PDF`, `Copiar`, `Salvar como Nota`) são agrupados em um `.flex.gap-2` dentro do `.lf-result-header`, garantindo alinhamento visual consistente.
     *   **`window.lfAssistants.pdf()` e `window.lfToolsPanel.pdf()`:** Métodos adicionados aos objetos JS globais respectivos, seguindo o padrão de extensão de `window.*` já estabelecido na arquitetura de frontend (Seção 6.1).
 
+### 4.42 Hardening de Conformidade — Zero Storage Direto e Zero env() em Produção (v3.26)
+*   **Decisão:** Eliminar as últimas violações das Regras de Ouro identificadas em auditoria estrutural pós-v3.25: uso direto de `Storage::` fora do `SaasFileService` e chamadas `env()` sem fallback via `MotherShipService` em código de produção crítico.
+*   **Mudanças:**
+    *   **`ProcessoObserver` (Legal):** As chamadas `Storage::disk('s3')->delete()` nos hooks `deleting()` para remoção de `Anexos` e `ProcessDocuments` foram substituídas por `$this->fileService->delete()` via injeção de dependência do `SaasFileService`. O observer agora resolve sempre o bucket correto do tenant ao excluir arquivos em cascata.
+    *   **`ProcessDocumentController` (GED) — Downloads:** Os métodos `download()` e `downloadAttachment()` foram refatorados de `Storage::download()` / `Storage::disk()` para `SaasFileService::get()` + `SaasFileService::mimeType()` com resposta HTTP streaming manual (`Content-Disposition: attachment`), garantindo acesso ao bucket isolado por tenant.
+    *   **`ProcessDocumentController` (GED) — WhatsApp:** Os fallbacks `env('EVOLUTION_INSTANCE_NAME')` nos métodos `importTemplate()` e `sendChecklist()` foram substituídos por `MotherShipService::getEvolutionConfig()` com abort elegante (log de erro + flash `warning`) quando a instância não está configurada no MotherShip. O fluxo principal (importação do template de documentos) não é interrompido.
+    *   **`SendPrazoWhatsapp` (Whatsapp):** Substituído `env('EVOLUTION_INSTANCE_NAME')` direto por `MotherShipService::getEvolutionConfig()`. Quando não configurado, o listener retorna com `Log::error()` sem exception — prevenindo falhas silenciosas em ambientes SaaS.
+    *   **`AssistantController::execute()` (AI):** Substituído `env('N8N_WEBHOOK_BASE_URL')` por `MotherShipService::getN8nConfig()`. Retorna HTTP **503** com mensagem clara ao usuário quando o nó N8N não está configurado para o tenant — sem vazar variáveis de infraestrutura entre clientes.
+
+### 4.43 Robô Agendador de Prazos e Hardening de Ações Vue (v3.27)
+*   **Decisão:** Automatizar o envio de lembretes de prazos no WhatsApp para Clientes e Advogados, mitigando o uso invasivo do Javascript do Krayin nas DataGrids para garantir o disparo seguro de eventos de opt-in.
+*   **Mudanças:**
+    *   **Tabelas & Modelos:** Adicionada `whatsapp_responsavel` em `Processos` com cast estrito de `varchar(50)` e um Mutator. O Mutator higieniza nativamente a máscara do frontend preservando apenas os números inteiros antes do banco. Adicionada a flag `notificar_whatsapp` e 3 timestamps de controle idempotente (`ultima_notificacao_5d`, `1d`, `0d`) em `Prazo`.
+    *   **Scheduler e Idempotência:** Criado o comando Artisan `SendScheduledPrazoNotifications` atrelado ao `Kernel.php` (dailyAt 07:00). O script consolida lembretes diários, agrupa os envios matinais por Advogado (reduzindo SPAM via array formatting) e despacha os blocos de texto para as APIS do MotherShip/Evolution baseando-se nos 7 templates `system.php` do Tenant.
+    *   **Docker Swarm (Novo Padrão):** O stack de deployment impõe estritamente que, para tarefas agendadas, deve existir um container parceiro e avulso nomeado `scheduler`, rodando um loop infinito isolado de `artisan schedule:run`, sem misturar responsabilidades com os workers do FPM.
+    *   **Blindagem de Ações Vue (DataGrids):** Em Krayin V2 (VueJS), injeções dinâmicas de botões dependentes de `addAction(['method' => 'POST'])` falham de forma silenciosa ou caem em loops de Axios 500 caso o form oculto perca sincronia do Token CSRF. **Padrão Estabelecido:** Toda "ação de um-clique" no DataGrid (ex: *Ativar Robô*) deve obrigatoriamente forçar o tipo `GET`, excluindo o atributo `confirm_text`. Isso oblitera a intercepção nativa do Javascript e devolve o controle ao link nativo `<a href...>` para recarregar com segurança em rotas do controller que possuam `redirect()->back()`.
+
 ### 4.41 Rastreamento de Custos e Metadados do n8n (v3.25)
 *   **Decisão:** Rastrear os custos reais de consumo de IA (`total_cost`, `real_cost`) e metadados de execução (`execution_id`, `model`, `node_name`) extraídos diretamente do webhook de retorno do n8n para a tabela `lawfirm_assistant_history` (Tenant DB).
 *   **Mudanças:**
     *   **Migration e Model:** Adicionadas colunas nativas e suportadas por `$fillable` ao model `AssistantHistory` em "AI/Models", com suporte a decimais de precisão máxima (`decimal:4`) para lidar com micropagamentos da OpenAI/Anthropic.
     *   **Parser Desacoplado no Job:** O `ProcessAiAssistant.php` atuando como Worker Assíncrono agora intercepta o payload final do n8n buscando um sufixo opcional (apendado) no formato ` - [{JSON}]`. Este acoplamento garante retrocompatibilidade: separa graciosamente o conteúdo textual jurídico (apresentável ao advogado) dos metadados de bilhetagem técnica, salvando as informações exatas da transação do nó no banco do Tenant, alimentadas através das APIs de conversão USD/BRL do MotherShip.
+
+### 4.44 Resiliência Docker e Isolamento Redis Swarm (v3.28)
+*   **Decisão:** Impedir a colisão inter-tenant de Filas Assíncronas (Jobs/WhatsApp) no Docker Swarm e evitar o corrompimento de logs causados por permissões `root` nos Workers.
+*   **Problema (Permissão de Logs):** A execução do Queue Worker do Laravel na stack Docker (via `command: php artisan queue:work`) ocorria primariamente como usuário Root, gerando um `laravel.log` blindado que o `apache` (`www-data`) não conseguia editar, estourando erro 500 em produção.
+*   **Problema (Colisão Redis):** Múltiplos Tenants apontando o `QUEUE_CONNECTION` para o mesmo container de `redis` no Swarm compartilhavam a mesma fila, fazendo com que o Worker do Tenant A consumisse disparos de WhatsApp solicitados pelo Tenant B.
+*   **Mudanças:**
+    *   **Dockerfile:** Instrução `pecl install redis` adicionada para garantir o carregamento ultra-rápido via cache Nativo PHP (abandonado o fallback para arquivos de disco).
+    *   **Entrypoint Inteligente (`docker/entrypoint.sh`):** Implementado interceptador de argumentos (`$@`). Se o comando enviado pela stack for de processamento em background (workers/schedulers), o script adota encapsulamento via `su -s /bin/sh www-data -c "$*"`. Isso garante que tudo criado no container rode legitimamente sob o usuário restrito do web-server.
+    *   **Orientação Stack Docker Compose:** Obrigatório estipular o `REDIS_PREFIX: {tenant_id}_` nas âncoras (`x-environment`) de subida de novos Tenants para isolar atomicamente chaves e chaves de lock para instâncias isoladas, impossibilitando cross-tenant job execution.
+
+### 4.45 Traceabilidade de IA e Origem de Lead (v3.28)
+*   **Decisão:** Melhorar a rastreabilidade das execuções de IA permitindo identificar instantaneamente de qual Lead a análise foi solicitada.
+*   **Mudanças:**
+    *   **Persistência:** O campo `lead_id` foi adicionado ao fluxo de salvamento em `AssistantController`, garantindo que execuções disparadas pelo painel de ferramentas de leads sejam vinculadas ao registro pai. 
+    *   **UI (DataGrid):** Adicionada a coluna "Origem" ao `AssistantHistoryDataGrid`, exibindo o ID do Lead com link direto para a ficha de edição.
+    *   **UX (Detalhes):** A view de detalhes da execução (`show.blade.php`) agora exibe um link de contexto para o Lead e teve o padding interno da caixa "Dados de Entrada" corrigido para manter a consistência visual com os demais blocos de resultado.
+
+### 4.46 Ocultação Dinâmica de Menus e Hardening de ACL (v3.28)
+*   **Decisão:** Simplificar a interface ocultando módulos não utilizados (como "E-mail") sem alterar o banco de dados do Krayin, e corrigir a ausência de checkboxes de permissão para o LawFirm no gerenciamento de papéis (Roles).
+*   **Mudanças:**
+    *   **Hiding Logic (`LawFirmServiceProvider`):** Implementada filtragem dinâmica no array `config('menu.admin')`. **Padrão de Segurança:** O filtro utiliza `str_starts_with($key, 'mail')` para remover não apenas o menu pai, mas todos os submenus órfãos, prevenindo o erro 500 (`Undefined array key "name"`) no `Menu.php` do Krayin.
+    *   **ACL Granular:** O arquivo `Config/acl.php` foi expandido para incluir ramificações explícitas de CRUD (`create`, `edit`, `delete`, `view`) para cada módulo do LawFirm. Isso é mandatório para que o componente `v-tree-view` da interface de Roles renderize os checkboxes de ativação individual.
 
 ## 5. Auditoria Estrutural e Mapa de Dívida Técnica (v3.23)
 

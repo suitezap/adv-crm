@@ -109,12 +109,13 @@ class AssistantController extends Controller
 
         // Save to history
         $history = AssistantHistory::create([
-            'user_id' => auth()->guard('user')->id(),
-            'template_id' => $template->id,
-            'input_data' => $inputs,
+            'user_id'           => auth()->guard('user')->id(),
+            'lead_id'           => $request->input('lead_id') ?: null,
+            'template_id'       => $template->id,
+            'input_data'        => $inputs,
             'generated_content' => $generatedPrompt,
-            'execution_mode' => 'prompt_only',
-            'status' => 'completed',
+            'execution_mode'    => 'prompt_only',
+            'status'            => 'completed',
         ]);
 
         Log::info('Assistant Prompt Generated', [
@@ -158,31 +159,41 @@ class AssistantController extends Controller
             'timestamp' => now()->toIso8601String()
         ];
 
-        // 3. Construir URL do Webhook
-        $route = $template->n8n_webhook_url;
-        $baseUrl = env('N8N_WEBHOOK_BASE_URL');
+        // 3. Construir URL do Webhook via MotherShipService (Multi-Tenant, Zero .env)
+        $n8nConfig = MotherShipService::getN8nConfig();
 
-        // Verifica se é URL completa ou Rota
+        if (!$n8nConfig) {
+            Log::warning('AssistantController::execute — N8N não configurado para este Tenant.', [
+                'template_slug' => $slug,
+                'tenant_id'     => MotherShipService::getTenantId(),
+            ]);
+            return response()->json(['error' => 'Serviço N8N não configurado para sua conta. Contate o suporte.'], 503);
+        }
+
+        $route  = $template->n8n_webhook_url;
+        $baseUrl = $n8nConfig['url'];
+
+        // Verifica se é URL completa ou rota relativa
         if (filter_var($route, FILTER_VALIDATE_URL)) {
             $targetUrl = $route;
         } else {
-            // Combina Base + Rota
             $targetUrl = rtrim($baseUrl, '/') . '/' . ltrim($route, '/');
         }
 
         // Validação Final
-        if (empty($targetUrl) || $targetUrl == '/') {
-            return response()->json(['error' => 'URL do n8n não pronta. Verifique o .env (N8N_WEBHOOK_BASE_URL) ou o cadastro.'], 500);
+        if (empty($targetUrl) || $targetUrl === '/') {
+            return response()->json(['error' => 'URL do n8n inválida. Verifique o cadastro do template.'], 500);
         }
 
         // 4. Salvar Histórico (Status: QUEUED)
         $history = AssistantHistory::create([
-            'user_id' => auth()->guard('user')->id(),
-            'template_id' => $template->id,
-            'input_data' => $request->all(),
+            'user_id'           => auth()->guard('user')->id(),
+            'lead_id'           => $request->input('lead_id') ?: null,
+            'template_id'       => $template->id,
+            'input_data'        => $request->all(),
             'generated_content' => null, // Will be filled by Job
-            'execution_mode' => 'agent_exec',
-            'status' => 'queued'
+            'execution_mode'    => 'agent_exec',
+            'status'            => 'queued'
         ]);
 
         // 5. Dispatch Job

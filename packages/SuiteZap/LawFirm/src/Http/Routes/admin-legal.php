@@ -50,6 +50,7 @@ Route::prefix('prazos')->controller(PrazoController::class)->group(function () {
     Route::put('{id}', 'update')->name('admin.prazos.update');
     Route::put('{id}/concluir', 'concluir')->name('admin.prazos.concluir');
     Route::get('notify/{id}', 'notifyClient')->name('lawfirm.prazos.notify');
+    Route::get('{id}/toggle-notify', 'toggleNotify')->name('admin.prazos.toggle-notify');
     Route::delete('{id}', 'destroy')->name('admin.prazos.destroy');
 });
 

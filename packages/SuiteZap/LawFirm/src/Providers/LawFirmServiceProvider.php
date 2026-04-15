@@ -99,6 +99,8 @@ class LawFirmServiceProvider extends ServiceProvider
                 \SuiteZap\LawFirm\Console\Commands\CalculateStorageUsage::class,
                 // Gerenciamento de templates de IA no Mothership (zero-deploy sync)
                 \SuiteZap\LawFirm\Console\Commands\PublishAiTemplatesCommand::class,
+                // Robô Agendador de Prazos via WhatsApp
+                \SuiteZap\LawFirm\Whatsapp\Commands\SendScheduledPrazoNotifications::class,
             ]);
         }
 
@@ -156,6 +158,18 @@ class LawFirmServiceProvider extends ServiceProvider
         }
 
         \Illuminate\Support\Facades\Blade::component('lawfirm::assistant-panel', 'assistant-panel');
+
+        // ====================================================================
+        // OCULTAR MENU CORREIO/EMAIL
+        // ====================================================================
+        // Oculta o menu "mail" (E-mail) padrão do Krayin dinamicamente
+        $menu = config('menu.admin');
+        if ($menu) {
+            $menu = array_values(array_filter($menu, function ($item) {
+                return isset($item['key']) && !str_starts_with($item['key'], 'mail');
+            }));
+            config(['menu.admin' => $menu]);
+        }
     }
 
     /**

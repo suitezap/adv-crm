@@ -12,14 +12,18 @@ use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\GED\Models\ProcessDocument;
 use SuiteZap\LawFirm\Legal\Models\ChecklistTemplate;
 use SuiteZap\LawFirm\Legal\Models\LawPersonDetail;
+use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 
 class ProcessDocumentController extends Controller
 {
     protected $documentService;
+    protected $fileService;
 
-    public function __construct(DocumentService $documentService)
+    public function __construct(DocumentService $documentService, SaasFileService $fileService)
     {
         $this->documentService = $documentService;
+        $this->fileService = $fileService;
     }
 
     /**
@@ -115,30 +119,34 @@ class ProcessDocumentController extends Controller
      * Download the specified resource.
      *
      * @param int $id
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse|\Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function download($id)
     {
         try {
             $document = \SuiteZap\LawFirm\GED\Models\ProcessDocument::findOrFail($id);
 
-            // Assuming the model has 'path' or 'url' attribute. 
-            // If it uses the new architecture, it might be separate.
-            // Based on previous contexts, 'Checklist/DocumentService' handles specific paths.
-            // But let's check if the model has a path property.
-            // If not, we might need to use DocumentService.
-
-            // Since I don't see DocumentService::download method usage in other code, 
-            // I'll try a generic Storage download if 'path' exists.
-
             if (empty($document->file_path)) {
                 return redirect()->back()->with('error', 'Arquivo não encontrado (Caminho vazio).');
             }
 
-            return \Illuminate\Support\Facades\Storage::download($document->file_path, $document->name ?? 'documento');
+            // Usa SaasFileService para garantir acesso ao bucket correto do Tenant
+            $contents = $this->fileService->get($document->file_path);
+
+            if ($contents === null) {
+                return redirect()->back()->with('error', 'Arquivo não encontrado no servidor remoto.');
+            }
+
+            $mimeType = $this->fileService->mimeType($document->file_path) ?? 'application/octet-stream';
+            $filename = $document->name ?? basename($document->file_path);
+
+            return response($contents, 200, [
+                'Content-Type'        => $mimeType,
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ]);
 
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Erro ao baixar documento {$id}: " . $e->getMessage());
+            Log::error("Erro ao baixar documento {$id}: " . $e->getMessage());
             return redirect()->back()->with('error', 'Erro ao baixar documento: ' . $e->getMessage());
         }
     }
@@ -157,16 +165,27 @@ class ProcessDocumentController extends Controller
                 $path = substr($path, 7);
             }
 
-            $disk = \Illuminate\Support\Facades\Storage::disk(config('filesystems.default', 's3'));
-
-            if (!$disk->exists($path)) {
+            // Usa SaasFileService para garantir acesso ao bucket correto do Tenant
+            if (!$this->fileService->exists($path)) {
                 return redirect()->back()->with('error', 'Arquivo físico não encontrado no servidor remoto.');
             }
 
-            return $disk->download($path, $anexo->nome_original ?? 'anexo.pdf');
+            $contents = $this->fileService->get($path);
+
+            if ($contents === null) {
+                return redirect()->back()->with('error', 'Não foi possível ler o arquivo no servidor remoto.');
+            }
+
+            $mimeType = $this->fileService->mimeType($path) ?? 'application/octet-stream';
+            $filename  = $anexo->nome_original ?? 'anexo.pdf';
+
+            return response($contents, 200, [
+                'Content-Type'        => $mimeType,
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ]);
 
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Erro ao baixar anexo {$id}: " . $e->getMessage());
+            Log::error("Erro ao baixar anexo {$id}: " . $e->getMessage());
             return redirect()->back()->with('error', 'Erro ao baixar anexo: ' . $e->getMessage());
         }
     }
@@ -233,12 +252,16 @@ class ProcessDocumentController extends Controller
 
                 // 6. Enviar via Service
                 $evolutionService = app(\SuiteZap\LawFirm\Whatsapp\Services\EvolutionService::class);
-                $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
-                $instanceName = $config['instance'] ?? env('EVOLUTION_INSTANCE_NAME');
-                $evolutionService->sendMessage($instanceName, $phone, $msg);
+                $config = MotherShipService::getEvolutionConfig();
 
-                Log::info("Solicitação de documentos enviada via WhatsApp para {$processo->person->name}");
-                session()->flash('success', 'Checklist importado e solicitação enviada via WhatsApp!');
+                if (!$config || empty($config['instance'])) {
+                    Log::error('ProcessDocumentController: Evolution API não configurada no MotherShip. WhatsApp não enviado.');
+                } else {
+                    $evolutionService->sendMessage($config['instance'], $phone, $msg);
+                    Log::info("Solicitação de documentos enviada via WhatsApp para {$processo->person->name}");
+                }
+
+                session()->flash('success', 'Checklist importado' . ($config ? ' e solicitação enviada via WhatsApp!' : '.'));
                 return redirect()->back();
             }
 
@@ -331,12 +354,15 @@ class ProcessDocumentController extends Controller
             // 6. Enviar via Service
             $evolutionService = app(\SuiteZap\LawFirm\Whatsapp\Services\EvolutionService::class);
 
-            $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
-            $instanceName = $config['instance'] ?? env('EVOLUTION_INSTANCE_NAME');
+            $config = MotherShipService::getEvolutionConfig();
 
-            $evolutionService->sendMessage($instanceName, $phone, $msg);
-
-            session()->flash('success', 'Solicitação de documentos enviada com sucesso!');
+            if (!$config || empty($config['instance'])) {
+                Log::error('ProcessDocumentController: Evolution API não configurada no MotherShip. Checklist WhatsApp não enviado.');
+                session()->flash('warning', 'Checklist enviado, mas WhatsApp não está configurado para este workspace.');
+            } else {
+                $evolutionService->sendMessage($config['instance'], $phone, $msg);
+                session()->flash('success', 'Solicitação de documentos enviada com sucesso!');
+            }
 
         } catch (\Exception $e) {
             Log::error("Erro ao enviar checklist manual: " . $e->getMessage());

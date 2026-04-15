@@ -842,7 +842,8 @@
                                         title: formTitle.value,
                                         description: formDesc.value,
                                         observacoes: formObservacoes.value,
-                                        tenant_id: TENANT_ID
+                                        tenant_id: TENANT_ID,
+                                        lead_id: LEAD_ID
                                     })
                                 });
                                 var data = await res.json();
@@ -875,7 +876,8 @@
                                         title: formTitle.value,
                                         description: formDesc.value,
                                         observacoes: formObservacoes.value,
-                                        tenant_id: TENANT_ID
+                                        tenant_id: TENANT_ID,
+                                        lead_id: LEAD_ID
                                     })
                                 });
 

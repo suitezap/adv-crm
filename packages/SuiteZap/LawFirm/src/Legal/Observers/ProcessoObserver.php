@@ -5,7 +5,7 @@ namespace SuiteZap\LawFirm\Legal\Observers;
 use Carbon\Carbon;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use Webkul\Activity\Repositories\ActivityRepository;
-use Illuminate\Support\Facades\Storage;
+use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 use Illuminate\Support\Facades\Log;
 
 class ProcessoObserver
@@ -15,9 +15,15 @@ class ProcessoObserver
      */
     protected $activityRepository;
 
-    public function __construct(ActivityRepository $activityRepository)
+    /**
+     * @var SaasFileService
+     */
+    protected $fileService;
+
+    public function __construct(ActivityRepository $activityRepository, SaasFileService $fileService)
     {
         $this->activityRepository = $activityRepository;
+        $this->fileService = $fileService;
     }
 
     /**
@@ -46,11 +52,11 @@ class ProcessoObserver
             $prazo->delete();
         });
 
-        // 2. Anexos — delete from S3, then remove DB row
+        // 2. Anexos — delete from S3 via SaasFileService (multi-tenant safe)
         $processo->anexos->each(function ($anexo) {
             if (!empty($anexo->path)) {
                 try {
-                    Storage::disk('s3')->delete($anexo->path);
+                    $this->fileService->delete($anexo->path);
                 } catch (\Throwable $e) {
                     Log::warning("ProcessoObserver: Failed S3 delete for Anexo path [{$anexo->path}]: " . $e->getMessage());
                 }
@@ -58,11 +64,11 @@ class ProcessoObserver
             $anexo->delete();
         });
 
-        // 3. ProcessDocuments (GED template docs) — delete from S3, then remove DB row
+        // 3. ProcessDocuments (GED template docs) — delete from S3 via SaasFileService (multi-tenant safe)
         $processo->documents->each(function ($doc) {
             if (!empty($doc->file_path)) {
                 try {
-                    Storage::disk('s3')->delete($doc->file_path);
+                    $this->fileService->delete($doc->file_path);
                 } catch (\Throwable $e) {
                     Log::warning("ProcessoObserver: Failed S3 delete for ProcessDocument path [{$doc->file_path}]: " . $e->getMessage());
                 }

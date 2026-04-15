@@ -95,15 +95,31 @@
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label>Responsável Interno</x-admin::form.control-group.label>
                             <x-admin::form.control-group.control
-                                type="select" name="user_id" label="Responsável Interno">
+                                type="select" name="user_id" label="Responsável Interno"
+                                :value="old('user_id', $processo->user_id)">
                                 <option value="">@lang('lawfirm::app.processos.form.select-choose')</option>
                                 @foreach($userRepository->all() as $user)
-                                    <option value="{{ $user->id }}" {{ old('user_id', $processo->user_id) == $user->id ? 'selected' : '' }}>
+                                    <option value="{{ $user->id }}" {{ (int)old('user_id', $processo->user_id) === (int)$user->id ? 'selected' : '' }}>
                                         {{ $user->name }}
                                     </option>
                                 @endforeach
                             </x-admin::form.control-group.control>
                             <x-admin::form.control-group.error control-name="user_id" />
+                        </x-admin::form.control-group>
+
+                        {{-- WhatsApp do Advogado Responsável (Robô Agendador) --}}
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                📱 WhatsApp do Advogado Responsável
+                            </x-admin::form.control-group.label>
+                            <x-admin::form.control-group.control
+                                type="text"
+                                name="whatsapp_responsavel"
+                                :value="old('whatsapp_responsavel', $processo->whatsapp_responsavel)"
+                                label="WhatsApp do Advogado Responsável"
+                                placeholder="(99) 99999-9999" />
+                            <x-admin::form.control-group.error control-name="whatsapp_responsavel" />
+                            <p class="text-xs text-gray-400 mt-1">Usado pelo Robô Agendador para envio de lembretes de prazo.</p>
                         </x-admin::form.control-group>
                     </div>
 

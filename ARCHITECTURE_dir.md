@@ -1,4 +1,4 @@
-# 📂 LawFirm CRM - Arquitetura de Diretórios e Telas (UI) - Krayin v2.1.6 / LF v3.25
+# 📂 LawFirm CRM - Arquitetura de Diretórios e Telas (UI) - Krayin v2.1.6 / LF v3.28
 
 Este documento mapeia visualmente a estrutura de pastas do pacote **SuiteZap/LawFirm** (baseado na arquitetura Domain-Driven Design - DDD) e detalha quais telas (Views) são entregues à interface do usuário.
 
@@ -28,6 +28,8 @@ packages/SuiteZap/LawFirm/src/
 
 > [!WARNING]
 > **Sincronia com o Entrypoint Docker:** Ao refatorar, mover ou deletar diretórios do Master/Webkul (ex: `Webkul/Mail`), é estritamente obrigatório remover o `--path` correspondente no arquivo `docker/entrypoint.sh`. Deixar um caminho fantasma causa exceção de `Migration path not found` no boot do container, resultando em rejeição imediata da stack no Docker Swarm.
+> 
+> **Nota de Processamento Assíncrono:** O `entrypoint.sh` agora intercepta comandos arbitrários (`$@`) despachados pelo `command:` da Stack do Swarm. Comandos que não sejam o servidor web nativo irão rodar sob a delegação de `su -s /bin/sh www-data -c` para preservar e isolar as permissões de gravação da pasta `storage/logs/laravel.log`.
 
 ---
 
@@ -61,6 +63,7 @@ As interfaces visuais (HTML/Blade) ficam armazenadas globalmente em `src/Resourc
     *   **Aba Notas:** Bloco de anotações internas.
     *   **Aba Informações:** Formulário primário com o OAB, Tribunal, Juízo e Partes.
 *   **Gestão de Prazos:** Tela dedicada de calendário ou lista consolidando os prazos pendentes de todos os processos daquele advogado.
+    *   *Features UI:* Integra o alternador rápido (ícone de notificação) do **Robô Agendador de Prazos** para automatizar avisos de SMS/WhatsApp via cronjob.
 *   **Fichas de Clientes (Contacts/Leads):** Extensão das telas do CRM injetando dados específicos jurídicos (OAB do lead, cpf/cnpj).
 
 ### 💰 Módulo Financeiro (`views/Financial/`)
@@ -76,7 +79,7 @@ As interfaces visuais (HTML/Blade) ficam armazenadas globalmente em `src/Resourc
 ### 🤖 Assistentes de IA e Automação (`views/admin/assistants/`)
 *   **Painel da IA (Index):** Lista todos os agentes de IA disponíveis para o escritório (sincronizados com o Mothership).
 *   **Chat/Console de IA:** Tela onde o advogado interage com o assistente (ex: Analisador de Sentenças, Criador de Petição) alimentando o contexto do Lead ou Processo correspondente.
-*   **Histórico de Execuções:** DataGrid contendo respostas prévias e telemetria financeira avançada (rastreamento de custos reais e metadados como `execution_id` extraídos dos nós n8n) salva em `AssistantHistory`.
+*   **Histórico de Execuções:** DataGrid contendo respostas prévias e telemetria financeira avançada. Agora inclui a coluna **Origem (Lead)** para rastreabilidade e link direto para o registro de origem, além de correções de espaçamento (padding) no visualizador de "Dados de Entrada".
 
 ### 🔎 Integração Escavador (`views/admin/escavador/`)
 *   **Painel do Escavador:** Dashboard com créditos restantes da API, e opções para consultar Termos e OABs.
@@ -198,4 +201,4 @@ const finalUrl = baseRoute.replace('REPLACE_ID', jsId);
 const response = await fetch(finalUrl);
 ```
 
-*Gerado pela auditoria de mapeamento em Abril/2026 (v3.24 SaaS Compliance + AI UX Enhancements).*
+*Gerado pela auditoria de mapeamento em Abril/2026 (v3.28 Traceability Hardening + Dynamic Menu Filtering).*

@@ -25,9 +25,9 @@ fi
 
 # CRÍTICO: Integridade de Storage
 echo "🔧 Ajustando Storage..."
-mkdir -p storage/app/public/processos storage/app/public/configuration
-chown -R www-data:www-data storage/app/public bootstrap/cache
-chmod -R 775 storage/app/public
+mkdir -p storage/app/public/processos storage/app/public/configuration storage/framework/cache/data storage/framework/views storage/framework/sessions storage/logs
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
 
 echo "🔗 Linking Storage..."
 php artisan storage:link
@@ -181,6 +181,19 @@ php artisan tinker --execute="
     echo 'pt_BR OK';
 " 2>/dev/null
 
-# 6. Start Apache
-echo "🔥 Subindo Apache..."
-exec apache2-foreground
+# 6. Start Process
+if [ $# -gt 0 ]; then
+    if [ "$1" != "apache2-foreground" ]; then
+        echo "⚙️ Executando comando em background: $@"
+        # Preserva eventuais aspas e escapes de strings complexas (ex: sh -c "while true...")
+        CMD_STR=$(printf "%q " "$@")
+        # Roda workers e schedulers como www-data para não estourar permissões de root
+        exec su -s /bin/sh www-data -c "$CMD_STR"
+    else
+        echo "🔥 Subindo Apache..."
+        exec "$@"
+    fi
+else
+    echo "🔥 Subindo Apache..."
+    exec apache2-foreground
+fi

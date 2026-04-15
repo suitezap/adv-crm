@@ -74,8 +74,9 @@ class UpdateProcessoRequest extends FormRequest
             'advogado_oab' => 'nullable|string|max:20',
             'whatsapp_advogado_contrario' => ['nullable', 'string', 'max:20', 'regex:/^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/'],
             'email_advogado_contrario' => 'nullable|email:rfc,dns|max:255',
-            'subarea_direito' => 'nullable|string|max:255',
-            'user_id' => 'nullable|exists:users,id',
+            'subarea_direito'              => 'nullable|string|max:255',
+            'user_id'                      => 'nullable|exists:users,id',
+            'whatsapp_responsavel'         => 'nullable|string|max:50',
 
             // PRAZOS ARRAY
             'prazos' => 'nullable|array',

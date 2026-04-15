@@ -115,14 +115,17 @@ class EvolutionService
      */
     public function fetchInstance($instanceName)
     {
-        return $this->request('GET', "/instance/fetchInstances", [
-            'instanceName' => $instanceName
-        ]);
+        return $this->request('GET', "/instance/fetchInstances?instanceName={$instanceName}");
     }
 
     /**
-     * Desconecta (Logout) e Deleta instância
+     * Deslogar a conta em vez de apagar a instância e perder webhooks
      */
+    public function logoutInstance($instanceName)
+    {
+        return $this->request('DELETE', "/instance/logout/{$instanceName}");
+    }
+
     /**
      * Desconecta (Logout) e Deleta instância
      */

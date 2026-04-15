@@ -37,12 +37,15 @@ class AssistantHistoryDataGrid extends DataGrid
     {
         $queryBuilder = DB::table('lawfirm_assistant_history')
             ->leftJoin('users', 'lawfirm_assistant_history.user_id', '=', 'users.id')
+            ->leftJoin('leads', 'lawfirm_assistant_history.lead_id', '=', 'leads.id')
             ->select(
                 'lawfirm_assistant_history.id as history_id',
                 'lawfirm_assistant_history.template_id',
                 'users.name as user_name',
                 'lawfirm_assistant_history.status',
                 'lawfirm_assistant_history.execution_mode',
+                'lawfirm_assistant_history.lead_id',
+                'leads.title as lead_title',
                 'lawfirm_assistant_history.created_at'
             );
 
@@ -51,6 +54,7 @@ class AssistantHistoryDataGrid extends DataGrid
         $this->addFilter('template_id', 'lawfirm_assistant_history.template_id');
         $this->addFilter('status', 'lawfirm_assistant_history.status');
         $this->addFilter('execution_mode', 'lawfirm_assistant_history.execution_mode');
+        $this->addFilter('lead_id', 'lawfirm_assistant_history.lead_id');
 
         $this->setQueryBuilder($queryBuilder);
 
@@ -90,6 +94,26 @@ class AssistantHistoryDataGrid extends DataGrid
             'type' => 'string',
             'sortable' => true,
             'searchable' => true,
+        ]);
+
+        $this->addColumn([
+            'index' => 'origem',
+            'label' => 'Origem',
+            'type' => 'string',
+            'sortable' => false,
+            'searchable' => false,
+            'closure' => function ($row) {
+                if ($row->lead_id) {
+                    $leadUrl  = route('admin.leads.view', $row->lead_id);
+                    $leadTitle = e($row->lead_title ?? 'Lead #' . $row->lead_id);
+                    return '<a href="' . $leadUrl . '" title="Abrir Lead" style="text-decoration:none;">'
+                        . '<span class="badge badge-round" style="background:#7B2CBF;color:#fff;font-size:11px;white-space:nowrap;">'
+                        . '🔗 Lead: ' . $leadTitle
+                        . '</span></a>';
+                }
+
+                return '<span class="badge badge-round badge-secondary" style="font-size:11px;">Manual</span>';
+            }
         ]);
 
         $this->addColumn([

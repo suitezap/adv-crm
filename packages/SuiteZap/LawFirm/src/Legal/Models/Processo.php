@@ -55,6 +55,7 @@ class Processo extends Model
         'link_audiencia', // hearing_link identified in view
         'advogado_responsavel_nome',
         'advogado_responsavel_oab',
+        'whatsapp_responsavel',
     ];
 
     /**
@@ -103,6 +104,20 @@ class Processo extends Model
         $clean = str_replace(',', '.', $clean);
 
         $this->attributes['valor_causa'] = (float) $clean;
+    }
+
+    /**
+     * Mutator: WhatsApp Responsável
+     * Remove caracteres não numéricos antes de salvar (mantendo apenas números).
+     */
+    public function setWhatsappResponsavelAttribute($value)
+    {
+        if (empty($value)) {
+            $this->attributes['whatsapp_responsavel'] = null;
+            return;
+        }
+
+        $this->attributes['whatsapp_responsavel'] = preg_replace('/[^0-9]/', '', $value);
     }
 
     /**

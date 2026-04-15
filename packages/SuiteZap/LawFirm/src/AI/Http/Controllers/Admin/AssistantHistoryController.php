@@ -31,7 +31,7 @@ class AssistantHistoryController extends Controller
      */
     public function show($id)
     {
-        $history = AssistantHistory::with(['template', 'user'])->findOrFail($id);
+        $history = AssistantHistory::with(['template', 'user', 'lead'])->findOrFail($id);
 
         return view('lawfirm::admin.assistants.history.show', compact('history'));
     }

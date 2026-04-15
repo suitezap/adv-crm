@@ -92,12 +92,41 @@
                         Assistente: <strong>{{ $history->template->title ?? 'Desconhecido' }}</strong> •
                         Usuário: <strong>{{ $history->user->name ?? 'Desconhecido' }}</strong> •
                         Data: {{ core()->formatDate($history->created_at, 'd/m/Y H:i') }}
+                        @if($history->lead_id && $history->lead)
+                            •
+                            Origem: <a href="{{ route('admin.leads.view', $history->lead_id) }}"
+                                class="font-semibold text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300"
+                                title="Abrir Lead">🔗 Lead: {{ $history->lead->title }}</a>
+                        @elseif(!$history->lead_id)
+                            • Origem: <span class="font-semibold text-gray-600 dark:text-gray-400">Execução Manual</span>
+                        @endif
                     </div>
                 </div>
                 <a href="{{ route('lawfirm.assistants.history.index') }}" class="text-blue-600 hover:underline text-sm">
                     ← Voltar para Histórico
                 </a>
             </div>
+
+            {{-- Lead Origin Banner (shown only when execution was triggered from a Lead) --}}
+            @if($history->lead_id && $history->lead)
+                <div class="flex items-center gap-4 rounded-lg border border-violet-200 bg-violet-50 px-5 py-4
+                            dark:border-violet-800/60 dark:bg-violet-900/20">
+                    <div class="flex-shrink-0 text-2xl">🔗</div>
+                    <div class="flex flex-col gap-0.5 flex-1">
+                        <p class="text-sm font-semibold text-violet-800 dark:text-violet-300">
+                            Esta análise foi executada a partir de um Lead
+                        </p>
+                        <p class="text-sm text-violet-600 dark:text-violet-400">
+                            Lead vinculado: <strong>{{ $history->lead->title }}</strong>
+                        </p>
+                    </div>
+                    <a href="{{ route('admin.leads.view', $history->lead_id) }}"
+                       class="flex-shrink-0 inline-flex items-center gap-2 rounded-lg bg-violet-600 hover:bg-violet-700
+                              px-4 py-2 text-sm font-semibold text-white transition-colors">
+                        Abrir Lead →
+                    </a>
+                </div>
+            @endif
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Left: Inputs -->
@@ -114,12 +143,12 @@
                                 @foreach($history->input_data as $key => $value)
                                     @if($key !== 'tenant_id')
                                         <div class="border-b border-gray-100 dark:border-gray-800 pb-4">
-                                            <p
-                                                class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                                            <p class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
                                                 {{ ucwords(str_replace('_', ' ', $key)) }}
                                             </p>
-                                            <p
-                                                class="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
+                                            <p class="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed
+                                                       bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700
+                                                       rounded-lg px-6 py-4">
                                                 {{ $value }}
                                             </p>
                                         </div>

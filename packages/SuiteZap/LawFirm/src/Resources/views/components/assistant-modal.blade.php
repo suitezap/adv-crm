@@ -161,7 +161,8 @@
                 const payload = {
                     title: this.form.title,
                     description: this.form.description,
-                    tenant_id: this.form.tenantId
+                    tenant_id: this.form.tenantId,
+                    lead_id: {{ $entityId ?? 'null' }}
                 };
 
                 try {

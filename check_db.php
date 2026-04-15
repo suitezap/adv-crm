@@ -1,35 +1,36 @@
 <?php
-require __DIR__ . '/vendor/autoload.php';
-$app = require_once __DIR__ . '/bootstrap/app.php';
+require __DIR__.'/vendor/autoload.php';
+$app = require_once __DIR__.'/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 try {
-    // We use a raw connection to check mysql.user locally if possible, 
-    // but if the main connection fails, we can't easily query via Laravel's DB facade 
-    // if that facade is what's broken.
-    // However, the error happens on 'select * from core_config', so connection fails during handshake.
+    // Tenant 8 from previous logs
+    \SuiteZap\LawFirm\SaaS\Services\MotherShipService::setTenantId(8);
+} catch (\Exception $e) {}
 
-    // Attempt to connect using mysqli directly to bypass Laravel for diagnostic
-    $host = config('database.connections.mysql.host');
-    $user = config('database.connections.mysql.username');
-    $pass = config('database.connections.mysql.password');
-    $port = config('database.connections.mysql.port');
+// But to bypass setTenantId which failed, let's just make direct Eloquent queries
+// using the MotherShip models.
+try {
+    $tenant = \SuiteZap\LawFirm\SaaS\Models\Tenant::on('mothership')->find(8);
+    if (!$tenant) {
+        die("Tenant 8 not found\n");
+    }
 
-    echo "Configured Connection: $user@$host:$port\n";
+    echo "Tenant 8:\n";
+    echo "Evolution Node ID: " . $tenant->evolution_node_id . "\n";
+    echo "Evolution Instance Name: " . $tenant->evolution_instance_name . "\n";
+    echo "Evolution API Key (specific): " . $tenant->evolution_api_key . "\n";
 
-    $mysqli = new mysqli($host, $user, $pass, "mysql", $port);
-
-    if ($mysqli->connect_error) {
-        echo "MYSQLI CONNECT ERROR: " . $mysqli->connect_error . "\n";
-    } else {
-        echo "MYSQLI CONNECT SUCCEESS!\n";
-        $res = $mysqli->query("SELECT user, host, plugin FROM user WHERE user='$user'");
-        while ($row = $res->fetch_assoc()) {
-            print_r($row);
-        }
+    if ($tenant->evolution_node_id) {
+        $node = \SuiteZap\LawFirm\SaaS\Models\InfrastructureNode::on('mothership')
+            ->find($tenant->evolution_node_id);
+    
+        echo "\nNode Info:\n";
+        echo "Base URL: " . $node->base_url . "\n";
+        echo "API Key (global): " . $node->api_key . "\n";
     }
 
 } catch (\Exception $e) {
-    echo "GENERAL ERROR: " . $e->getMessage() . "\n";
+    echo "DB Error: " . $e->getMessage() . "\n";
 }

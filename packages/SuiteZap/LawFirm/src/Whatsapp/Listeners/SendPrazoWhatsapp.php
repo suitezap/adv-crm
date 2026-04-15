@@ -7,6 +7,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Legal\Events\PrazoCreated;
 use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 
 class SendPrazoWhatsapp
 {
@@ -108,7 +109,14 @@ class SendPrazoWhatsapp
             Log::info("Enviando Mensagem: {$msg}");
 
             // 5. Enviar via Service
-            $instanceName = env('EVOLUTION_INSTANCE_NAME');
+            $evolutionConfig = MotherShipService::getEvolutionConfig();
+
+            if (!$evolutionConfig || empty($evolutionConfig['instance'])) {
+                Log::error("SendPrazoWhatsapp: Evolution API não configurada no MotherShip para este Tenant. Prazo ID {$prazo->id} não notificado.");
+                return;
+            }
+
+            $instanceName = $evolutionConfig['instance'];
             Log::info("LawFirm: Usando Instância Evolution: '{$instanceName}'");
 
             // Cleaning phone

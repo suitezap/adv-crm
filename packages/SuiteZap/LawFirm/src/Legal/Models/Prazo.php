@@ -20,6 +20,10 @@ class Prazo extends Model
         'status',
         'concluido_em',
         'activity_id',
+        'notificar_whatsapp',
+        'ultima_notificacao_5d',
+        'ultima_notificacao_1d',
+        'ultima_notificacao_0d',
     ];
 
     /**
@@ -28,8 +32,12 @@ class Prazo extends Model
      * @var array
      */
     protected $casts = [
-        'data_vencimento' => 'datetime',
-        'concluido_em' => 'datetime',
+        'data_vencimento'      => 'datetime',
+        'concluido_em'         => 'datetime',
+        'notificar_whatsapp'   => 'boolean',
+        'ultima_notificacao_5d' => 'datetime',
+        'ultima_notificacao_1d' => 'datetime',
+        'ultima_notificacao_0d' => 'datetime',
     ];
 
     /**

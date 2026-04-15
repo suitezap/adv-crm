@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use SuiteZap\LawFirm\Legal\DataGrids\PrazoDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\Legal\Models\Prazo;
-use SuiteZap\LawFirm\Events\PrazoCreated;
+use SuiteZap\LawFirm\Legal\Events\PrazoCreated;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -81,6 +81,41 @@ class PrazoController extends Controller
         } catch (\Exception $e) {
             Log::error("Erro ao notificar prazo: " . $e->getMessage());
             session()->flash('error', 'Erro ao enviar mensagem: ' . $e->getMessage());
+        }
+
+        return redirect()->back();
+    }
+
+    /**
+     * Toggle WhatsApp automated notifications (Robô Agendador) for a Prazo.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function toggleNotify($id)
+    {
+        try {
+            $prazo = Prazo::findOrFail($id);
+            $prazo->update(['notificar_whatsapp' => !$prazo->notificar_whatsapp]);
+
+            $status = $prazo->notificar_whatsapp ? 'ativado' : 'desativado';
+            $msg    = "Robô Agendador {$status} para o prazo: {$prazo->titulo}";
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $msg,
+                    'notificar_whatsapp' => $prazo->notificar_whatsapp,
+                ]);
+            }
+
+            session()->flash('success', $msg);
+        } catch (\Exception $e) {
+            Log::error("Erro ao fazer toggle do prazo: " . $e->getMessage());
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+            session()->flash('error', 'Erro ao alterar notificação: ' . $e->getMessage());
         }
 
         return redirect()->back();
