@@ -4,8 +4,10 @@ namespace SuiteZap\LawFirm\Legal\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use SuiteZap\LawFirm\Financial\Models\Financial;
-
+use SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso;
+use SuiteZap\LawFirm\Escavador\Models\EscavadorMonitoramento;
 class Processo extends Model
 {
     /**
@@ -56,6 +58,7 @@ class Processo extends Model
         'advogado_responsavel_nome',
         'advogado_responsavel_oab',
         'whatsapp_responsavel',
+        'envolvidos_escavador',
     ];
 
     /**
@@ -106,19 +109,7 @@ class Processo extends Model
         $this->attributes['valor_causa'] = (float) $clean;
     }
 
-    /**
-     * Mutator: WhatsApp Responsável
-     * Remove caracteres não numéricos antes de salvar (mantendo apenas números).
-     */
-    public function setWhatsappResponsavelAttribute($value)
-    {
-        if (empty($value)) {
-            $this->attributes['whatsapp_responsavel'] = null;
-            return;
-        }
 
-        $this->attributes['whatsapp_responsavel'] = preg_replace('/[^0-9]/', '', $value);
-    }
 
     /**
      * The attributes that should be cast.
@@ -323,5 +314,45 @@ class Processo extends Model
     public function checklists()
     {
         return $this->hasMany(\SuiteZap\LawFirm\Legal\Models\CaseChecklist::class, 'processo_id');
+    }
+
+    /**
+     * Get the imported WhatsApp messages for the processo.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function whatsappMessages(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProcessoWhatsappMessage::class)->orderBy('message_timestamp', 'asc');
+    }
+
+    /**
+     * Get the WhatsApp import sessions for the processo.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function whatsappImports(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(WhatsappImport::class, 'processo_id')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get the escavador processo mirror data.
+     *
+     * @return HasOne
+     */
+    public function escavadorProcesso(): HasOne
+    {
+        return $this->hasOne(EscavadorProcesso::class, 'processo_id');
+    }
+
+    /**
+     * Get the escavador monitoramentos linked to this process.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function escavadorMonitoramentos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(EscavadorMonitoramento::class, 'processo_id');
     }
 }

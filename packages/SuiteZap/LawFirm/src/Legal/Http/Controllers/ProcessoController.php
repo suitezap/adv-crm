@@ -177,13 +177,6 @@ class ProcessoController extends Controller
      */
     public function store(\SuiteZap\LawFirm\Legal\Http\Requests\StoreProcessoRequest $request)
     {
-        // DEBUG: Log uploaded files details before validation
-        if ($request->hasFile('anexos')) {
-            foreach ($request->file('anexos') as $file) {
-                \Log::debug("STORE UPLOAD DEBUG: Name={$file->getClientOriginalName()} | Ext={$file->getClientOriginalExtension()} | MimeType={$file->getMimeType()} | GuessedExt={$file->guessExtension()} | Size={$file->getSize()}");
-            }
-        }
-
         $data = $request->validated();
 
         $data['person_id'] = !empty($data['person_id']) ? $data['person_id'] : null;
@@ -279,17 +272,12 @@ class ProcessoController extends Controller
      */
     public function update(\SuiteZap\LawFirm\Legal\Http\Requests\UpdateProcessoRequest $request, $id)
     {
-        // DEBUG: Log uploaded files details before validation
-        if ($request->hasFile('anexos')) {
-            foreach ($request->file('anexos') as $file) {
-                \Log::debug("UPLOAD DEBUG: Name={$file->getClientOriginalName()} | Ext={$file->getClientOriginalExtension()} | MimeType={$file->getMimeType()} | GuessedExt={$file->guessExtension()} | Size={$file->getSize()}");
-            }
-        }
-
         $data = $request->validated();
 
         $data['person_id'] = !empty($data['person_id']) ? $data['person_id'] : null;
-        $data['lead_id'] = !empty($data['lead_id']) ? $data['lead_id'] : null;
+        if (array_key_exists('lead_id', $data)) {
+            $data['lead_id'] = !empty($data['lead_id']) ? $data['lead_id'] : null;
+        }
         $data['user_id'] = !empty($data['user_id']) ? $data['user_id'] : null;
 
         Event::dispatch('lawfirm.processo.update.before', $id);
@@ -304,6 +292,11 @@ class ProcessoController extends Controller
         // 3. Sincronizar Prazos
         if ($request->has('prazos')) {
             $this->deadlineService->syncDeadlines($processo, $request->input('prazos'));
+        }
+
+        // 3b. Sincronizar prazo de Audiência automaticamente
+        if (!empty($data['data_audiencia'])) {
+            $this->deadlineService->syncAudienciaPrazo($processo, $data['data_audiencia']);
         }
 
         // 4. Sincronizar Notas

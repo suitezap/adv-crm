@@ -75,7 +75,8 @@ class StoreProcessoRequest extends FormRequest
             'email_advogado_contrario' => 'nullable|email:rfc,dns|max:255',
             'subarea_direito'              => 'nullable|string|max:255',
             'user_id'                      => 'nullable|exists:users,id',
-            'whatsapp_responsavel'         => 'nullable|string|max:50',
+            'whatsapp_responsavel'         => ['nullable', 'string', 'max:50', 'regex:/^\d{2,3}\s?\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/'],
+            'envolvidos_escavador'         => 'nullable|string',
 
             // PRAZOS ARRAY (Permitir campos essenciais para Sync não serem capados no request->validated())
             'prazos' => 'nullable|array',
@@ -103,6 +104,7 @@ class StoreProcessoRequest extends FormRequest
     {
         return [
             'whatsapp_advogado_contrario.regex' => 'O formato do WhatsApp é inválido. Use: (99) 99999-9999.',
+            'whatsapp_responsavel.regex' => 'O formato do WhatsApp é inválido. Ex: 55 (99) 99999-9999.',
             'prazos.*.titulo.required' => 'O título do prazo é obrigatório.',
             'prazos.*.data_vencimento.required' => 'A data de vencimento do prazo é obrigatória.',
             'anexos.*.mimes' => 'Tipo de arquivo não permitido. Aceitos: PDF, Imagens, Office, Texto (txt, log, md, csv).',

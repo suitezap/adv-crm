@@ -19,7 +19,12 @@ class SaasWebhookController extends Controller
     {
         // 1. Security Check
         $token = $request->header('X-SAAS-TOKEN');
-        $secret = config('lawfirm.saas.webhook_secret', env('SAAS_SECRET_TOKEN'));
+        // Lê diretamente do BD Mothership garantindo sync com painel global
+        $secret = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getAppConfig('api_secret');
+        
+        if (empty($secret)) {
+            $secret = config('lawfirm.saas.webhook_secret');
+        }
 
         if (!$secret || $token !== $secret) {
             Log::warning('SaaS Webhook: Unauthorized access attempt.', ['ip' => $request->ip()]);

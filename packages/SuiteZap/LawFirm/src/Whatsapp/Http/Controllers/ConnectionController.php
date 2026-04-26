@@ -2,10 +2,11 @@
 
 namespace SuiteZap\LawFirm\Whatsapp\Http\Controllers;
 
-use Illuminate\Support\Facades\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 
 class ConnectionController extends Controller
@@ -24,109 +25,85 @@ class ConnectionController extends Controller
     {
         $instanceName = $this->getInstanceName();
 
-        // Check current status
-        $status = 'disconnected';
+        $status  = 'disconnected';
         $profile = null;
 
         $response = $this->service->fetchInstance($instanceName);
 
-        // DEBUG: Log the raw response
-        \Illuminate\Support\Facades\Log::info('WhatsApp fetchInstance Response', [
-            'instanceName' => $instanceName,
-            'response' => $response
-        ]);
-
-        // Evolution API returns array of instances or specific instance
         if ($response['success']) {
-            // Logic to parse response depending on API version
-            // Assuming simple structure for now or adjust based on API response
-            $data = $response['data'];
-
-            // Evolution API can return:
-            // 1. Array of objects: [0 => ['instance' => [...]]]
-            // 2. Direct object (sometimes)
-            // 3. Array of instances without 'instance' wrapper (older versions)
-
-            // Normalize to array
+            $data      = $response['data'];
             $instances = isset($data[0]) ? $data : [$data];
 
             foreach ($instances as $item) {
-                // Try to get instance data container
-                $instData = $item['instance'] ?? $item;
+                $instData   = $item['instance'] ?? $item;
+                $instName   = $instData['name'] ?? $instData['instanceName'] ?? null;
+                $connStatus = $instData['connectionStatus'] ?? $instData['status'] ?? 'close';
 
-                // Evolution API v2 uses 'name', older versions use 'instanceName'
-                $instName = $instData['name'] ?? $instData['instanceName'] ?? null;
-
-                if ($instName === $instanceName) {
-                    // Check Status - Evolution API v2 uses 'connectionStatus'
-                    $connStatus = $instData['connectionStatus'] ?? $instData['status'] ?? 'close';
-
-                    \Illuminate\Support\Facades\Log::info('WhatsApp Instance Found', [
-                        'instanceName' => $instanceName,
-                        'connStatus' => $connStatus,
-                        'instData' => $instData
-                    ]);
-
-                    if ($connStatus === 'open') {
-                        $status = 'connected';
-                        $profile = $instData['profileName'] ?? $instData['ownerJid'] ?? 'Conectado';
-                    }
+                if ($instName === $instanceName && $connStatus === 'open') {
+                    $status  = 'connected';
+                    $profile = $instData['profileName'] ?? $instData['ownerJid'] ?? 'Conectado';
                     break;
                 }
             }
         }
 
-        // Buscar o assistente de triagem WhatsApp para exibir na view
         $whatsappAssistant = AssistantTemplate::where('slug', 'triagem-whatsapp')
             ->where('is_active', true)
             ->first();
 
-        return view('lawfirm::admin.whatsapp.index', compact('status', 'profile', 'instanceName', 'whatsappAssistant'));
+        $isConfigured = !empty(MotherShipService::getEvolutionConfig()['instance']);
+
+        return view('lawfirm::admin.whatsapp.index', compact('status', 'profile', 'instanceName', 'whatsappAssistant', 'isConfigured'));
     }
 
     /**
-     * AJAX: Connect / Generate QR
+     * AJAX: Gera QR Code para pareamento.
      */
-    public function connect()
+    public function getQrCode()
     {
         $instanceName = $this->getInstanceName();
 
-        // 1. Ensure instance exists
-        $create = $this->service->createInstance($instanceName);
+        // Garante que a instância existe antes de solicitar o QR
+        $this->service->createInstance($instanceName);
 
-        // 2. Get connection QR
         $connect = $this->service->connectInstance($instanceName);
 
         if (!$connect['success']) {
-            return response()->json(['error' => $connect['error']], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao comunicar com a Evolution API.',
+            ], 500);
         }
 
-        // Return Base64 or Status
         return response()->json([
-            'base64' => $connect['data']['base64'] ?? null,
-            'code' => $connect['data']['code'] ?? null,
-            'status' => 'qrcode',
+            'success' => true,
+            'state'   => $connect['data']['instance']['state'] ?? 'connecting',
+            'qrcode'  => $connect['data']['base64'] ?? null,
         ]);
     }
 
     /**
-     * AJAX: Check Status (Polling)
+     * AJAX: Verifica o status da conexão (Polling).
      */
-    public function status()
+    public function getStatus()
     {
-        $instanceName = $this->getInstanceName();
-        $response = $this->service->connectInstance($instanceName); // Often returns status if already connected
+        $config = MotherShipService::getEvolutionConfig();
 
-        if ($response['success']) {
-            // If returns base64, still waiting
-            if (isset($response['data']['base64'])) {
-                return response()->json(['status' => 'qrcode']);
-            }
-            // Whatever success response means connected
-            return response()->json(['status' => 'connected']);
+        if (!$config) {
+            return response()->json(['success' => false, 'state' => 'unconfigured']);
         }
 
-        return response()->json(['status' => 'disconnected']);
+        $response = $this->service->connectInstance($config['instance']);
+
+        if (!$response || !$response['success']) {
+            return response()->json(['success' => false, 'state' => 'error']);
+        }
+
+        $state = $response['data']['instance']['state'] ?? (
+            isset($response['data']['base64']) ? 'qrcode' : 'connected'
+        );
+
+        return response()->json(['success' => true, 'state' => $state]);
     }
 
     public function disconnect()
@@ -153,16 +130,43 @@ class ConnectionController extends Controller
         return response()->json(['success' => true]);
     }
 
-    protected function getInstanceName()
+    /**
+     * AJAX: Envia uma notificação de teste via WhatsApp. (Admin only)
+     */
+    public function testNotification(Request $request)
     {
-        // Prioriza configuração dinâmica do banco (Multi-Tenant)
-        $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
+        $request->validate([
+            'phone'   => 'required|string',
+            'message' => 'required|string',
+        ]);
+
+        \SuiteZap\LawFirm\Whatsapp\Jobs\SendWhatsappNotification::dispatch(
+            $request->phone,
+            $request->message,
+            [],
+            MotherShipService::getTenantId()
+        );
+
+        return response()->json(['success' => true, 'message' => 'Notificação de teste agendada com sucesso.']);
+    }
+
+    /**
+     * Resolve o nome da instância Evolution para o tenant atual.
+     * Prioridade: MotherShip → config() fallback (dev local).
+     */
+    protected function getInstanceName(): string
+    {
+        $config = MotherShipService::getEvolutionConfig();
 
         if ($config && !empty($config['instance'])) {
             return $config['instance'];
         }
 
-        // Fallback para .env (Legado/Dev)
-        return env('EVOLUTION_INSTANCE_NAME');
+        $fallback = config('lawfirm.evolution.instance_name');
+        if (!$fallback) {
+            abort(503, 'WhatsApp não configurado no MotherShip para este escritório.');
+        }
+
+        return $fallback;
     }
 }

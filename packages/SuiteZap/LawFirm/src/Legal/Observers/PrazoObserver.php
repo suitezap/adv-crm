@@ -45,8 +45,9 @@ class PrazoObserver
         $scheduleFrom = $scheduleDate->copy()->setTime(8, 0, 0);
         $scheduleTo = $scheduleDate->copy()->setTime(18, 0, 0);
 
-        // is_done based on status
-        $isDone = strtolower(trim($prazo->status)) === 'concluído' ? 1 : 0;
+        // is_done based on status — normalize accent: 'concluido' OR 'concluído' → 1
+        $statusNorm = strtolower(str_replace('í', 'i', $prazo->status));
+        $isDone = $statusNorm === 'concluido' ? 1 : 0;
 
         // Create the Activity
         $activity = $this->activityRepository->create([
@@ -98,8 +99,9 @@ class PrazoObserver
         $scheduleFrom = $scheduleDate->copy()->setTime(8, 0, 0);
         $scheduleTo = $scheduleDate->copy()->setTime(18, 0, 0);
 
-        // is_done based on status
-        $isDone = strtolower(trim($prazo->status)) === 'concluído' ? 1 : 0;
+        // is_done based on status — normalize accent: 'concluido' OR 'concluído' → 1
+        $statusNorm = strtolower(str_replace('í', 'i', $prazo->status));
+        $isDone = $statusNorm === 'concluido' ? 1 : 0;
 
         // Update the Activity
         $this->activityRepository->update([

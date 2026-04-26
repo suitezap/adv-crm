@@ -72,7 +72,13 @@ class PrazoController extends Controller
 
             // 5. Enviar via Service
             $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
-            $instanceName = $config['instance'] ?? env('EVOLUTION_INSTANCE_NAME', 'LawFirm');
+            $instanceName = $config['instance'] ?? config('lawfirm.evolution.instance_name');
+
+            if (empty($instanceName)) {
+                Log::warning('Disparo de Prazo ignorado: Instância Evolution não configurada.');
+                session()->flash('warning', 'Mensagem não enviada: WhatsApp não configurado para seu escritório.');
+                return redirect()->back();
+            }
 
             $this->evolutionService->sendMessage($instanceName, $phone, $msg);
 

@@ -55,11 +55,15 @@ class DeadlineService
     {
         $prazo = Prazo::findOrFail($id);
 
+        // Normalize status to canonical lowercase without accents
+        // Handles: 'Concluído', 'concluído', 'Pendente', 'pendente', 'concluido'
+        $rawStatus = $data['status'] ?? $prazo->status;
+        $newStatus = strtolower(str_replace(['í', 'Í'], 'i', $rawStatus));
+
         // Logic for handling status change and conclusion date
-        $newStatus = $data['status'] ?? $prazo->status;
         $concluidoEm = null;
 
-        if ($newStatus === 'concluido' || $newStatus === 'concluído') {
+        if ($newStatus === 'concluido') {
             // If explicitly setting to concluded, update date if not already set
             $concluidoEm = $prazo->concluido_em ?? Carbon::now();
         } elseif ($newStatus === 'pendente') {
@@ -71,17 +75,17 @@ class DeadlineService
         }
 
         $updateData = [
-            'titulo' => $data['titulo'] ?? $prazo->titulo,
+            'titulo'          => $data['titulo'] ?? $prazo->titulo,
             'data_vencimento' => isset($data['data_vencimento']) ? Carbon::parse($data['data_vencimento'])->format('Y-m-d H:i:s') : $prazo->data_vencimento,
-            'tipo' => $data['tipo'] ?? $prazo->tipo,
-            'status' => $newStatus,
-            'descricao' => $data['descricao'] ?? $prazo->descricao,
-            'concluido_em' => $concluidoEm,
+            'tipo'            => $data['tipo'] ?? $prazo->tipo,
+            'status'          => $newStatus,
+            'descricao'       => $data['descricao'] ?? $prazo->descricao,
+            'concluido_em'    => $concluidoEm,
         ];
 
         $prazo->update($updateData);
 
-        Log::info("DeadlineService: Updated deadline ID {$prazo->id}");
+        Log::info("DeadlineService: Updated deadline ID {$prazo->id} status={$newStatus}");
 
         return $prazo;
     }
@@ -185,5 +189,47 @@ class DeadlineService
         }
 
         return $prazo->delete();
+    }
+
+    /**
+     * Sync (create or update) the Audiência prazo for a process.
+     * Called when data_audiencia changes on a Processo.
+     *
+     * @param  Processo  $processo
+     * @param  string|null  $dataAudiencia  The raw datetime string from the form
+     * @return void
+     */
+    public function syncAudienciaPrazo(Processo $processo, ?string $dataAudiencia): void
+    {
+        if (empty($dataAudiencia)) {
+            return;
+        }
+
+        try {
+            $vencimento = Carbon::parse($dataAudiencia)->startOfDay()->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            Log::warning("DeadlineService::syncAudienciaPrazo — could not parse '{$dataAudiencia}': " . $e->getMessage());
+            return;
+        }
+
+        // Find existing audiência prazo for this process
+        $existing = Prazo::where('processo_id', $processo->id)
+            ->where('titulo', 'LIKE', '%Audiência%')
+            ->where('status', '!=', 'concluido')
+            ->first();
+
+        if ($existing) {
+            $existing->update(['data_vencimento' => $vencimento]);
+            Log::info("DeadlineService: Updated audiência prazo ID {$existing->id} for processo {$processo->id}");
+        } else {
+            $prazo = $processo->prazos()->create([
+                'titulo'          => '📅 Audiência',
+                'data_vencimento' => $vencimento,
+                'tipo'            => 'fatal',
+                'status'          => 'pendente',
+                'descricao'       => 'Prazo criado automaticamente a partir da Data da Audiência.',
+            ]);
+            Log::info("DeadlineService: Created audiência prazo ID {$prazo->id} for processo {$processo->id}");
+        }
     }
 }

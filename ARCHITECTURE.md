@@ -1,4 +1,4 @@
-# 🏛 LawFirm CRM - Documento de Arquitetura (v3.28 - DDD & SaaS Multi-Tenant)
+# 🏛 LawFirm CRM - Documento de Arquitetura (v3.35 - DDD & SaaS Multi-Tenant)
 > [!IMPORTANT]
 > **Manutenção do Documento:** Este arquivo **DEVE** ser atualizado (seção 4.x) e a versão incrementada no cabeçalho sempre que houver mudanças estruturais, novas funcionalidades core ou atualizações na constante de versão em `LawFirmServiceProvider.php`.
 
@@ -16,7 +16,7 @@ O código é estritamente separado por responsabilidade.
 | **Financial**| `SuiteZap\LawFirm\Financial` | Honorários, Custas e Faturamento. | `Financial` |
 | **GED** | `SuiteZap\LawFirm\GED` | Gestão de Arquivos, Anexos e Checklists. | `ProcessDocument`, `Anexo` |
 | **SaaS** | `SuiteZap\LawFirm\SaaS` | Infraestrutura Multi-tenant. | `Tenant`, `Subscription`, `InfrastructureNode`, `SaasOrder` |
-| **AI** | `SuiteZap\LawFirm\AI` | Assistentes e Automação. | `AiExecution`, `AssistantTemplate`, `AssistantHistory` |
+| **AI** | `SuiteZap\LawFirm\AI` | Assistentes e Automação. | `AiExecution`, `AssistantTemplate`, `AssistantHistory`, `LeadTriagem` |
 | **Escavador** | `SuiteZap\LawFirm\Escavador` | Integração com a API do Escavador (v1/v2). |  `EscavadorRequest` |
 
 ## 3. Regras de Ouro (Development Standards)
@@ -378,11 +378,68 @@ src/
     *   **UI (DataGrid):** Adicionada a coluna "Origem" ao `AssistantHistoryDataGrid`, exibindo o ID do Lead com link direto para a ficha de edição.
     *   **UX (Detalhes):** A view de detalhes da execução (`show.blade.php`) agora exibe um link de contexto para o Lead e teve o padding interno da caixa "Dados de Entrada" corrigido para manter a consistência visual com os demais blocos de resultado.
 
-### 4.46 Ocultação Dinâmica de Menus e Hardening de ACL (v3.28)
-*   **Decisão:** Simplificar a interface ocultando módulos não utilizados (como "E-mail") sem alterar o banco de dados do Krayin, e corrigir a ausência de checkboxes de permissão para o LawFirm no gerenciamento de papéis (Roles).
+*   **ACL Granular:** O arquivo `Config/acl.php` foi expandido para incluir ramificações explícitas de CRUD (`create`, `edit`, `delete`, `view`) para cada módulo do LawFirm. Isso é mandatório para que o componente `v-tree-view` da interface de Roles renderize os checkboxes de ativação individual.
+
+### 4.47 Integração WhatsApp CRM: Importação de Histórico e Portal Modals (v3.29)
+*   **Decisão:** Permitir a importação direcionada (por intervalo de datas) do histórico de conversas do WhatsApp para dentro do Processo, operando em segundo plano e blindado contra interceptações do SPA Vue.js.
 *   **Mudanças:**
-    *   **Hiding Logic (`LawFirmServiceProvider`):** Implementada filtragem dinâmica no array `config('menu.admin')`. **Padrão de Segurança:** O filtro utiliza `str_starts_with($key, 'mail')` para remover não apenas o menu pai, mas todos os submenus órfãos, prevenindo o erro 500 (`Undefined array key "name"`) no `Menu.php` do Krayin.
-    *   **ACL Granular:** O arquivo `Config/acl.php` foi expandido para incluir ramificações explícitas de CRUD (`create`, `edit`, `delete`, `view`) para cada módulo do LawFirm. Isso é mandatório para que o componente `v-tree-view` da interface de Roles renderize os checkboxes de ativação individual.
+    *   **Persistência (`law_processo_whatsapp_messages`):** Nova tabela para armazenar mensagens, vinculada ao `Processo`. Inclui campo `payload` (JSON) para telemetria bruta e `is_from_me` para distinção entre Advogado (Sistema) e Cliente.
+    *   **Background Jobs (`ImportProcessoWhatsappMessages`):** Lógica de ingestão assíncrona que consome a Evolution API v2, processa o histórico e envia uma notificação no WhatsApp pessoal do Advogado (via robô) ao concluir o processamento.
+    *   **Tagging de Mídia:** Como anexos binários (áudio/vídeo) não são baixados para o servidor local, o sistema aplica um parser visual que injeta emojis de identificação (`📷 [Imagem]`, `🎵 [Áudio]`, `🎥 [Vídeo]`) no texto da mensagem baseando-se no tipo do WAMessage.
+    *   **Portal Dialog Pattern (UI):** Interfaces de chat complexas reescritas com estilos **100% inline** e IDs únicos, forçando a ancoragem no `document.body` via clique para evitar que o Vue Router do Krayin intercepte os blocos HTML como se fossem trocas de página.
+
+### 4.48 Refinamentos de Interface e Resolução de Depreciações (v3.30)
+*   **Decisão:** Melhorar a legibilidade das tabelas de auditoria de IA e garantir a compatibilidade do sistema com versões modernas do PHP (8.4+).
+*   **Mudanças:**
+    *   **DataGrid de IA (`AssistantHistoryDataGrid`):** 
+        *   Adicionada a coluna **Cliente**, realizando um `LEFT JOIN` com a tabela `persons` através de `leads` para exibir explicitamente o nome da pessoa física/jurídica na triagem.
+        *   Largura da coluna `ID` fixada em `60px` e coluna de `Origem` fixada em `100px`. O link longo (título do lead) foi movido do texto principal para o atributo `title` (tooltip), mantendo a visualização da tabela mais enxuta e densa.
+    *   **PHP 8.4+ Compatibilidade (`config/database.php`):** A constante estática `PDO::MYSQL_ATTR_SSL_CA` disparava erro de depreciação. O artefato foi substituído ativamente pelo seu valor literal inteiro (`1007`), mantendo retrocompatibilidade com o driver interno do MySQL sem triggar warnings no terminal e logs do servidor.
+
+### 4.49 Multi-Import de Histórico do WhatsApp (v3.31)
+*   **Decisão:** Permitir múltiplas importações de histórico de WhatsApp por Processo, organizadas por período e contato.
+*   **Mudanças:**
+    *   **Tabela `law_whatsapp_imports`:** Nova tabela pai que registra cada sessão de importação (processo, contato, período, contagem de msgs, status `processing/completed/failed`). Cada importação é rastreada individualmente.
+    *   **FK `import_id` em `law_processo_whatsapp_messages`:** Cada mensagem agora pertence a uma sessão de importação específica (nullable para retrocompatibilidade).
+    *   **Model `WhatsappImport`:** Novo modelo Eloquent com `HasMany → ProcessoWhatsappMessage`, `BelongsTo → Processo`, `BelongsTo → User` (imported_by), e helpers `formattedPeriod()`, `displayPhone()`.
+    *   **Job `ImportProcessoWhatsappMessages`:** Refatorado com try/catch completo. Cria `WhatsappImport` no início com `status=processing`, marca `completed` ao final com `message_count` e `contact_name` capturado da primeira mensagem do interlocutor.
+    *   **Controller:** Novo endpoint `listImports()` retorna JSON com lista de importações. `fetchMessages()` aceita `?import_id=X` para filtragem por sessão.
+    *   **Frontend (Portal Dialog):** Modal de histórico agora exibe uma **barra de tabs horizontais** com pills dinâmicos para cada importação (contato, período, qty msgs, status). O botão "📋 Todas" exibe a conversa unificada.
+    *   **Botões Always-On:** Os botões "Importar WhatsApp" e "Histórico WhatsApp" agora são **sempre visíveis** nas telas de `edit` e `show`, mesmo sem importações anteriores.
+
+### 4.50 Consolidação e Supressão UI do Escavador (v3.32)
+*   **Decisão:** Padronizar e mapear de forma completa todos os 51 endpoints das APIs V1 e V2 do Escavador para suporte a operações automatizadas no backend, enquanto a interface (UI) do "Assistente Jurídico" é purgada de todo o ruído visual e endpoints de infraestrutura.
+*   **Mudanças:**
+    *   **Backend (`EscavadorService`):** O `SERVICE_MAP` foi ampliado cobrindo 51 rotas, com resoluções precisas de méotodos HTTP (ex: correção do `SOLICITARATUALIZAODEUMPROCESSO` para `POST`) e autenticações locais.
+    *   **Frontend (`index.blade.php`):** A matriz local de serviços  (`$allCards`, `SVC_INFO`) reteve a totalidade dos endpoints (garantindo estabilidade e possibilidade de consultas via código), porém a renderização do DOM foi suprimida condicionalmente usando `@continue` no Blade.
+    *   **UX (Limpeza da Filter Bar):** Filtros puramente técnicos ("Monitoramento", "Callbacks", "Assíncronos", "Outros", bem como as opções de chaveamento técnico "API V1" e "API V2") foram completamente obliterados do HMTL. O design do painel Escavador agora foca exlusivamente no *Business Domain* (Processo, Pessoa, Empresa, Advogado, Relatórios Jurídicos, Jurisprudência, Legislações).
+
+### 4.51 Integração DataJud Pública e Assistente Jurídico (v3.33)
+*   **Decisão:** Integrar o serviço público do CNJ (DataJud) como o primeiro provedor alternativo agnóstico dentro do painel de Assistentes Jurídicos, utilizando isolamento completo de domínio e precificação dinâmica.
+*   **Mudanças:**
+    *   **MotherShipService & Rotas Core:** Criado o método `MotherShipService::getDataJudConfig()` para resgatar dinamicamente credenciais do nó `datajud` (URL e API Key), além dos custos baseados na chave `datajud_price_consulta_publica`, livrando o módulo inteiramente de hardcodes de credenciais ou dependência de `.env`.
+    *   **UI/UX (Assistente Jurídico):** O card `DATAJUD_CONSULTA_PUBLICA` foi injetado na grid via `index.blade.php`. Graças ao refactoring prévio do Alpine.js / Vanilla JS, não houve conflito e todas as chamadas assíncronas fetch roteadas para `lawfirm.datajud.servico` foram unificadas.
+    *   **Arquitetura Isolada de Domínio:** Refletindo princípios de Clean Code, toda a lógica de `DataJud` foi encapsulada:
+        *   `src/DataJud/Services/DataJudService.php` responsável pelo request a `api-publica.datajud.cnj.jus.br`.
+        *   `src/DataJud/Http/Controllers/DataJudController.php` como Skinny Controller.
+    *   **Tratamento Financeiro (Ledger):** Como o CRM opera via SaaS, cada clique na UI do DataJud é interceptado na camada do Service, validando se o token da assinatura é suficiente (`ai_tokens_balance`). Ocorrendo a transação, preparamos o estorno via `catch` em caso de falha da request ou registramos permanentemente o custo como `debit` nas `saas_transactions`, emulando fidedignamente o controle financeiro e histórico de consumo.
+
+### 4.52 Auditoria de Conformidade DDD e Consolidação do Controlador WhatsApp (v3.34)
+*   **Decisão:** Corrigir as últimas violações residuais de bounded context identificadas em auditoria automática pós-v3.33: `WhatsappController` com namespace errado fora do domínio, `BaseController` fantasma, `Log::debug` de desenvolvimento em produção e falta de clareza nos comentários da configuração do `.env` do Evolution.
+*   **Mudanças:**
+    *   **Consolidação (Whatsapp):** O arquivo `src/Http/Controllers/WhatsappController.php` (namespace `SuiteZap\LawFirm\Http\Controllers` — ERRADO) foi **eliminado**. Toda a sua lógica foi absorvida pelo `src/Whatsapp/Http/Controllers/ConnectionController.php` (namespace correto `SuiteZap\LawFirm\Whatsapp\Http\Controllers`). O método `testNotification()` que existia apenas no arquivo legado foi portado para o `ConnectionController`.
+    *   **Refatoração (ConnectionController):** Métodos renomeados de `connect()`/`status()` para `getQrCode()`/`getStatus()` (casando com os nomes de rota existentes). Dois blocos `Log::info` de debug removidos do `index()`. Import `MotherShipService` movido para o topo (elimina FQCN inline). Tipo de retorno de `getInstanceName()` declarado como `: string`.
+    *   **Rota Atualizada (`admin-whatsapp.php`):** O `use` e o `Route::controller` foram atualizados de `WhatsappController` para `ConnectionController`. Nomes de rota e verbos HTTP idênticos — zero breaking change.
+    *   **Remoção (BaseController):** O arquivo `src/Http/Controllers/Admin/BaseController.php` (14 linhas, classe fantasma não herdada por nenhuma classe do pacote) foi **deletado**. Confirmado: zero referências `extends BaseController` no codebase.
+    *   **Zero Root Controllers:** O diretório `src/Http/Controllers/` agora contém **0 arquivos PHP** — bounded context 100% limpo.
+    *   **Config Documentada (`Config/lawfirm.php`):** O bloco `evolution` foi redocumentado com "REGRA ZERO", deixando explícito que `env('EVOLUTION_*')` são **dev fallback only** e que `MotherShipService::getEvolutionConfig()` é a fonte canônica mandatória em produção.
+    *   **Cleanup (`ProcessoController`):** Dois blocos `Log::debug` (STORE/UPLOAD DEBUG) removidos dos métodos `store()` e `update()` — artefatos de desenvolvimento não adequados para produção.
+
+### 4.53 Tabela de Triagem de Leads (LeadTriagem) (v3.35)
+*   **Decisão:** Criar a tabela `lead_triagem` para armazenar o resultado estruturado das triagens realizadas pelos assistentes de IA (área, assunto, urgência, tipo, tipo de agente e objetivo).
+*   **Mudanças:**
+    *   **Model:** Criada a Entidade `LeadTriagem` na pasta `src/AI/Models`, vinculada à tabela `lead_triagem` e relacionando o `lead_id` com o Krayin.
+    *   **Isolamento:** A modificação atende aos padrões de Bounded Context do Domínio AI ao focar dados provenientes ou interpretados pelas rotinas automáticas de Triagem.
 
 ## 5. Auditoria Estrutural e Mapa de Dívida Técnica (v3.23)
 
@@ -431,6 +488,7 @@ classDiagram
         class ProcessAiAssistant_Job
         class AssistantTemplate
         class AssistantHistory
+        class LeadTriagem
         class N8nService
     }
 
@@ -441,6 +499,13 @@ classDiagram
         class EscavadorMonitoramento
         class WebhookController
         class EscavadorHistoryController_Admin
+    }
+
+    %% --- DOMÍNIO EM MATURAÇÃO: DataJud ---
+    namespace DataJud_Domain {
+        class DataJudController
+        class DataJudController_Admin
+        class DataJudService
     }
 
     %% --- INFRAESTRUTURA SAAS (azul) ---
@@ -464,6 +529,8 @@ classDiagram
     Escavador_Domain ..> Whatsapp_Domain : Alertas Callback
     Escavador_Domain ..> SaaS_Domain : infrastructure_nodes
     AI_Domain ..> SaaS_Domain : ai_tokens_balance
+    DataJud_Domain ..> SaaS_Domain : MotherShipService
+    DataJud_Domain ..> SaaS_Domain : saas_transactions
     GED_Domain ..> SaaS_Domain : SaasFileService → S3
     Whatsapp_Domain ..> SaaS_Domain : getEvolutionConfig
 
@@ -473,6 +540,7 @@ classDiagram
     style Whatsapp_Domain fill:#2a9d8f,color:#fff
     style AI_Domain fill:#e9c46a,color:#000
     style Escavador_Domain fill:#e9c46a,color:#000
+    style DataJud_Domain fill:#e9c46a,color:#000
     style SaaS_Domain fill:#264653,color:#fff
 ```
 
@@ -494,8 +562,8 @@ classDiagram
 *   Idempotência implementada para o ecossistema Asaas visando concorrência atômica nos creditamentos `saas_transactions` (Zero Race Conditions/Double Spend).
 *   Expansão formal do schema `mothership.tenants` para acomodar o `asaas_node_id`, resolvendo infraestruturas fragmentadas em multi-franquia SaaS.
 
-**🟢 Status Atual — Dívida Técnica Zero (v3.24):**
-A pasta `src/` está 100% esterilizada. Todos os Bounded Contexts possuem estrutura `Models/Http/Controllers/Services/DataGrids` completa. Nenhum arquivo de lógica/negócio reside fora de seu domínio. O pacote está preparado para escala SaaS multi-tenant corporativa com escopo e auditorias de usuário robustas.
+**🟢 Status Atual — Dívida Técnica Zero (v3.35):**
+A pasta `src/Http/Controllers/` contém **0 arquivos PHP** — todos os Controllers estão dentro de seus respectivos Bounded Contexts. Todos os domínios possuem estrutura `Models/Http/Controllers/Services/DataGrids` completa. Nenhum arquivo de lógica/negócio reside fora de seu domínio. O pacote está preparado para escala SaaS multi-tenant corporativa com escopo e auditorias de usuário robustas.
 
 ## 6. Padrões de Frontend (UI/UX)
 
@@ -537,5 +605,15 @@ O HTML5 proíbe estritamente a existência de tags `<form>` aninhadas. Em contex
 Componentes complexos como `documents.blade.php` devem ser arquitetados **sem tags `<form>` próprias**:
 1.  **Inputs Soltos:** Os `<input type="file">` e selects são renderizados livremente no HTML.
 2.  **JavaScript e FormData:** Botões de ação (`onclick`) disparam funções (ex: `window.lfDocsUploadFiles()`) que coletam os dados dos inputs em memória via API `FormData`.
-3.  **Segurança (CSRF):** O token CSRF deve ser lido dinamicamente da meta tag (ex: `window.lfDocsGetCsrfToken()`) e injetado nos *headers* da requisição (`X-CSRF-TOKEN`).
+3.  **Segurança (CSRF):** O token CSRF deve lido dinamicamente da meta tag (ex: `window.lfDocsGetCsrfToken()`) e injetado nos *headers* da requisição (`X-CSRF-TOKEN`).
 4.  **XMLHttpRequest/Fetch:** A submissão ocorre de forma totalmente assíncrona. Em caso de sucesso (status 200), realiza-se um `window.location.reload()` ou uma atualização controlada do DOM para exibir os novos registros.
+
+### 6.6 Diálogos Portais e SPA-Safe Modals
+Em sistemas Krayin (Vue.js SPA), a injeção de HTML via AJAX frequentemente causa efeitos colaterais: o Vue intercepta classes Tailwind ou tenta re-renderizar o conteúdo removendo bindings.
+
+**Solução Padrão (The "Portal Dialog" Pattern):**
+Para modais injetados dinamicamente (ex: Histórico WhatsApp):
+1.  **Estilos Inline:** Use atributos `style=""` em vez de classes de framework nos containers pai do modal para evitar a detecção reativa do Vue/Alpine.
+2.  **Ancoragem Forçada (Portal):** No momento do clique (`open`), o JavaScript deve verificar se o ID do modal está no `document.body`. Caso contrário, use `document.body.appendChild(modal)` para "teletransportar" o modal para fora do container do Vue.
+3.  **IDs Únicos:** Use prefixos proprietários (ex: `lf-wa-hist-*`) para evitar colisões com IDs gerados pelo Krayin Core.
+4.  **JSON Wrapping:** Se o controlador retornar HTML para o modal, empacote-o em uma estrutura JSON (`return response()->json(['html' => $html])`). Isso impede que o interceptador global do Krayin receba HTML puro e interprete erroneamente como uma navegação de página cheia.

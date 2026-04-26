@@ -32,75 +32,92 @@ class EscavadorService
         'BUSCA_TERMO' => ['get', 'busca', 'v1', false],
         'RESUMO_IA' => ['post', 'processos/numero_cnj/{cnj}/ia/resumo/solicitar-atualizacao', 'v2', true],
 
-        // Novos V1
+        // MAPEAMENTO DA UI / ASSISTENTE JURIDICO (V1)
+        'API_V1_BUSCARPORTERMO' => ['get', 'busca', 'v1', false],
+        'API_V1_DOWNLOADDOPDFDAPGINADODIRIOOFICIAL' => ['get', 'diarios/{id}/pdf/pagina/{pagina}/baixar', 'v1', false],
+        'API_V1_OBTERPESSOA' => ['get', 'pessoas/{pessoaId}', 'v1', false],
+        'API_V1_PROCESSOSDEUMAPESSOA' => ['get', 'pessoas/{pessoaId}/processos', 'v1', false],
+        'INFO_INSTITUICAO' => ['get', 'instituicoes/{instituicaoId}', 'v1', false],
+        'PROCESSOS_INSTITUICAO' => ['get', 'instituicoes/{instituicaoId}/processos', 'v1', false],
+        'PESSOAS_INSTITUICAO' => ['get', 'instituicoes/{instituicaoId}/pessoas', 'v1', false],
+        'API_V1_MOVIMENTAESDEUMPROCESSODO' => ['get', 'processos/{processoId}/movimentacoes', 'v1', false],
+        'API_V1_BUSCARPROCESSOSDOSDIRIOSPOROAB' => ['get', 'oab/{estado}/{numero}/processos', 'v1', false],
+        'BUSCA_PROC_DIARIO_NUM' => ['get', 'processos/numero/{numero}', 'v1', false],
+        'API_V1_ENVOLVIDOSDEUMPROCESSO' => ['get', 'processos/{processoId}/envolvidos', 'v1', false],
+        'API_V1_PESQUISARPROCESSONOTRIBUNAL' => ['post', 'processo-tribunal/{numero}/async', 'v1', true],
+        'API_V1_PESQUISARPROCESSOSPORNOME' => ['post', 'tribunal/{origem}/busca-por-nome/async', 'v1', true],
+        'API_V1_PESQUISARPROCESSOSPORCPFOUCNPJ' => ['post', 'tribunal/{origem}/busca-por-documento/async', 'v1', true],
+        'API_V1_PESQUISARPROCESSOSPOROAB' => ['post', 'tribunal/{origem}/busca-por-oab/async', 'v1', true],
+        'API_V1_PESQUISARPROCESSOADMINISTRATIVONUP' => ['post', 'processo-administrativo/{numero_nup}/async', 'v1', true],
+        'API_V1_RETORNARUMAMOVIMENTAO' => ['get', 'movimentacoes/{movimentaco}', 'v1', false],
+        'TRIBUNAIS_SISTEMAS' => ['get', 'tribunal/origens', 'v1', false],
+        'TRIBUNAIS_DETALHES' => ['get', 'tribunal/origens/{origem}', 'v1', false],
+        'ORGAOS_ADMINISTRATIVOS' => ['get', 'orgao-administrativo/origens', 'v1', false],
+
+        // MAPEAMENTO DA UI / ASSISTENTE JURIDICO (V1) — NOVOS
+        'API_V1_CONSULTAR_SALDO'         => ['get',    'quantidade-creditos',                              'v1', false],
+        'API_V1_TODOS_ASYNC_RESULTADOS'  => ['get',    'async/resultados',                                'v1', false],
+        'API_V1_RESULTADO_ASYNC_ID'      => ['get',    'async/resultados/{id}',                           'v1', false],
+        'API_V1_MARCAR_CALLBACKS'        => ['post',   'callbacks/marcar-recebidos',                      'v1', false],
+        'API_V1_RETORNAR_CALLBACKS'      => ['get',    'callbacks',                                       'v1', false],
+        'API_V1_REENVIAR_CALLBACK'       => ['post',   'callbacks/{id}/reenviar',                         'v1', false],
+        'API_V1_RETORNAR_ORIGENS'        => ['get',    'origens',                                         'v1', false],
+        'API_V1_PAGINA_DIARIO'           => ['get',    'diarios/{id}',                                    'v1', false],
+        'API_V1_RETORNAR_MONITORAMENTOS' => ['get',    'monitoramentos',                                  'v1', false],
+        'API_V1_RETORNAR_MONITORAMENTO'  => ['get',    'monitoramentos/{monitoramento}',                   'v1', false],
+        'API_V1_RETORNAR_APARICOES'      => ['get',    'monitoramentos/{monitoramento}/aparicoes',         'v1', false],
+        'API_V1_REMOVER_MONITORAMENTO'   => ['delete', 'monitoramentos/{monitoramento}',                   'v1', false],
+        'API_V1_CRIAR_MONITORAMENTO'     => ['post',   'monitoramentos',                                   'v1', false],
+        'API_V1_TESTAR_CALLBACK'         => ['post',   'monitoramentos/testcallback',                      'v1', false],
+        'API_V1_DIARIOS_MONITORADOS'     => ['get',    'monitoramentos/{monitoramento}/origens',            'v1', false],
+
+        // MAPEAMENTO DA UI / ASSISTENTE JURIDICO (V2)
+        'API_V2_PROCESSOSDOENVOLVIDOPORCPFCNPJOUNOME' => ['get',  'envolvido/processos',                  'v2', false],
+        'API_V2_PROCESSOSDEUMADVOGADOPOROAB'          => ['get',  'advogado/processos',                   'v2', false],
+        'API_V2_PROCESSOPORNUMERAOCNJCAPA'            => ['get',  'processos/numero_cnj/{numero}',         'v2', false],
+        'API_V2_MOVIMENTAESDEUMPROCESSO'              => ['get',  'processos/numero_cnj/{numero}/movimentacoes', 'v2', false],
+        'API_V2_STATUS_ATUALIZACAO'                   => ['get',  'processos/numero_cnj/{numero}/status-atualizacao', 'v2', false],
+        'API_V2_SOLICITARATUALIZAODEUMPROCESSO'       => ['post', 'processos/numero_cnj/{numero}/solicitar-atualizacao', 'v2', true],  // bugfix: era GET
+        'API_V2_TRIBUNAIS_DISPONIVEIS'                => ['get',  'tribunais',                             'v2', false],
+
+        // MAPEAMENTO DA UI / ASSISTENTE JURIDICO (V2) — NOVOS
+        'API_V2_RESUMO_OAB'             => ['get',    'advogado/processos/resumo',                         'v2', false],
+        'API_V2_RESUMO_ENVOLVIDO'       => ['get',    'envolvido/processos/resumo',                        'v2', false],
+        'API_V2_AUTOS_PROCESSO'         => ['get',    'processos/numero_cnj/{numero}/autos',                'v2', false],
+        'API_V2_DOCS_PUBLICOS'          => ['get',    'processos/numero_cnj/{numero}/documentos-publicos',  'v2', false],
+        'API_V2_ENVOLVIDOS_PROCESSO'    => ['get',    'processos/numero_cnj/{numero}/envolvidos',           'v2', false],
+        'API_V2_RESUMO_IA_PROCESSO'     => ['post',   'processos/numero_cnj/{numero}/ia/resumo/solicitar-atualizacao', 'v2', true],
+        'API_V2_STATUS_RESUMO_IA_UI'    => ['get',    'processos/numero_cnj/{numero}/ia/resumo/status',    'v2', false],
+        'API_V2_SISTEMAS_DISPONIVEIS'   => ['get',    'tribunais/sistemas',                                'v2', false],
+        'API_V2_CALLBACKS_LISTAR'       => ['get',    'callbacks',                                         'v2', false],
+
+        // MAPEAMENTO LEGADO MANTIDO PARA CACHE/TESTES
         'BUSCA_JURIS' => ['get', 'jurisprudencias/busca', 'v1', false],
         'BUSCA_DIARIO' => ['get', 'diarios/busca', 'v1', false],
-        'INFO_INSTITUICAO' => ['get', 'instituicoes/{instituicaoId}', 'v1', false],
-        'INFO_PESSOA' => ['get', 'pessoas/{id}', 'v1', false],
         'BUSCA_OAB_PAGA' => ['get', 'oab/{estado}/{numero}/processos', 'v1', false],
-        'PESSOAS_INSTITUICAO' => ['get', 'instituicoes/{instituicaoId}/pessoas', 'v1', false],
-        'PROCESSOS_INSTITUICAO' => ['get', 'instituicoes/{instituicaoId}/processos', 'v1', false],
         'DOC_JURIS' => ['get', 'jurisprudencias/documento/{tipo_documento}/{id_documento}', 'v1', false],
         'PDF_JURIS' => ['get', 'jurisprudencias/documento/{tipo_documento}/{id_documento}/pdf', 'v1', false],
         'BUSCA_LEGIS' => ['get', 'legislacoes/busca', 'v1', false],
         'DOC_LEGIS' => ['get', 'legislacoes/documento/{tipo_documento}/{id_documento}', 'v1', false],
         'FRAG_LEGIS' => ['get', 'legislacoes/documento/{tipo_documento}/{id_documento}/fragmentos', 'v1', false],
-        'MOV_PROCESSO_DIARIO' => ['get', 'movimentacoes/{id}', 'v1', false],
-        'DETALHES_PESSOA' => ['get', 'pessoas/{id}', 'v1', false],
-        'PROCESSOS_PESSOA' => ['get', 'pessoas/{id}/processos', 'v1', false],
         'AUTOS_DOCS_ESP' => ['get', 'processos/{id}/documentos', 'v1', false],
-        'BUSCA_PROC_DIARIO_OAB' => ['get', 'oab/{estado}/{numero}/processos', 'v1', false],
-        'BUSCA_PROC_DIARIO_NUM' => ['get', 'processos/numero/{numero}', 'v1', false],
-        'ENVOLVIDOS_PROC_DIARIO' => ['get', 'processos/{id}/envolvidos', 'v1', false],
-        'MOV_PROC_DIARIO' => ['get', 'processos/{id}/movimentacoes', 'v1', false],
-        'PROC_DIARIO' => ['get', 'processos/{id}', 'v1', false],
-        'API_V1_PESQUISARPROCESSONOTRIBUNAL' => ['post', 'processo-tribunal/{numero}/async', 'v1', false],
-
-        // === Novos V1 (Gratuitos) ===
+        
+        // === Monitoramentos e Async Base (V1 & V2) ===
         'ASYNC_RESULTADOS' => ['get', 'async/resultados', 'v1', false],
         'ASYNC_RESULTADO_ID' => ['get', 'async/resultados/{id}', 'v1', false],
         'CALLBACKS_MARCAR_RECEBIDOS' => ['post', 'callbacks/marcar-recebidos', 'v1', false],
         'CALLBACKS_LISTAR' => ['get', 'callbacks', 'v1', false],
         'CALLBACKS_REENVIAR' => ['post', 'callbacks/{id}/reenviar', 'v1', false],
-        'DIARIOS_ORIGENS' => ['get', 'origens', 'v1', false],
-        'MONITORAMENTO_DIARIOS_ORIGENS' => ['get', 'monitoramentos/{monitoramentoId}/origens', 'v1', false],
         'MONITORAMENTOS_LISTAR' => ['get', 'monitoramentos', 'v1', false],
         'MONITORAMENTOS_ID' => ['get', 'monitoramentos/{monitoramento}', 'v1', false],
         'MONITORAMENTOS_EDITAR' => ['put', 'monitoramentos/{monitoramento}', 'v1', false],
         'MONITORAMENTOS_REMOVER' => ['delete', 'monitoramentos/{monitoramento}', 'v1', false],
         'MONITORAMENTOS_APARICOES' => ['get', 'monitoramentos/{monitoramento}/aparicoes', 'v1', false],
-        'MONITORAMENTOS_TESTAR_CALLBACK' => ['post', 'monitoramentos/testcallback', 'v1', false],
-        'MONITORAMENTOS_TRIBUNAL_LISTAR' => ['get', 'monitoramentos-tribunal', 'v1', false],
-        'MONITORAMENTOS_TRIBUNAL_ID' => ['get', 'monitoramentos-tribunal/{monitoramentoId}', 'v1', false],
-        'MONITORAMENTOS_TRIBUNAL_EDITAR' => ['put', 'monitoramentos-tribunal/{monitoramentoId}', 'v1', false],
-        'MONITORAMENTOS_TRIBUNAL_REMOVER' => ['delete', 'monitoramentos-tribunal/{id}', 'v1', false],
-        // SALDO já existe no método consultarSaldo(). Criaremos uma key pro card genérico
-        'SALDO_V1' => ['get', 'quantidade-creditos', 'v1', false],
-        'TRIBUNAIS_SISTEMAS' => ['get', 'tribunal/origens', 'v1', false],
-        'TRIBUNAL_POR_ORIGEM' => ['get', 'tribunal/origens/{origem}', 'v1', false],
-        'ORGAOS_ADMIN_SISTEMAS' => ['get', 'orgao-administrativo/origens', 'v1', false],
-
-        // Novos V2 Async e Sync
-        'ATUALIZAR_PROCESSO' => ['post', 'processos/numero_cnj/{cnj}/solicitar-atualizacao', 'v2', true],
-        'BAIXAR_AUTOS' => ['get', 'processos/numero_cnj/{cnj}/autos', 'v2', true],
-        'ATUALIZACAO_PROCESSO_DOCS' => ['post', 'processos/numero_cnj/{cnj}/solicitar-atualizacao', 'v2', true],
-        'ATUALIZACAO_PROCESSO_PUB' => ['post', 'processos/numero_cnj/{cnj}/solicitar-atualizacao', 'v2', true],
-        'ATUALIZACAO_PROCESSO_AUTOS' => ['post', 'processos/numero_cnj/{cnj}/solicitar-atualizacao', 'v2', true],
-        'PROCESSOS_ENVOLVIDO_CPF' => ['get', 'envolvido/processos', 'v2', true],
-        'PROCESSOS_ADVOGADO_OAB' => ['get', 'advogado/processos', 'v2', true],
-        'RESUMO_ADVOGADO_OAB' => ['get', 'advogado/resumo', 'v2', false],
-        'RESUMO_ENVOLVIDO' => ['get', 'envolvido/resumo', 'v2', false],
-        'DOCUMENTOS_PUBLICOS' => ['get', 'processos/numero_cnj/{cnj}/documentos-publicos', 'v2', false],
-        'ENVOLVIDOS_PROCESSO' => ['get', 'processos/numero_cnj/{cnj}/envolvidos', 'v2', false],
-        'MOVIMENTACOES_PROCESSO' => ['get', 'processos/numero_cnj/{cnj}/movimentacoes', 'v2', false],
-
-        // === Criação de Monitoramentos (Macro Buttons) ===
-        'CRIAR_MON_DIARIOS'          => ['post', 'monitoramentos',               'v1', false],
-        'CRIAR_MON_TRIBUNAL'         => ['post', 'monitoramentos-tribunal',       'v1', false],
+        'CRIAR_MON_DIARIOS' => ['post', 'monitoramentos', 'v1', false],
+        'CRIAR_MON_TRIBUNAL' => ['post', 'monitoramentos-tribunal', 'v1', false],
         'CRIAR_MON_PROCESSO_V2'      => ['post', 'monitoramentos/processos',      'v2', false],
         'CRIAR_MON_NOVOS_PROCESSO_V2'=> ['post', 'monitoramentos/novos-processos','v2', false],
-
-        // === Novos V2 (Gratuitos) ===
+        
         'STATUS_ATUALIZACAO_PROCESSO' => ['get', 'processos/numero_cnj/{numero}/status-atualizacao', 'v2', false],
         'CALLBACKS_LISTAR_V2' => ['get', 'callbacks', 'v2', false],
         'CALLBACKS_MARCAR_RECEBIDOS_V2' => ['post', 'callbacks/marcar-recebidos', 'v2', false],
@@ -114,8 +131,6 @@ class EscavadorService
         'MONITORAMENTO_PROCESSO_ID' => ['get', 'monitoramentos/processos/{id}', 'v2', false],
         'MONITORAMENTO_PROCESSO_REMOVER' => ['delete', 'monitoramentos/processos/{id}', 'v2', false],
         'STATUS_RESUMO_IA' => ['get', 'processos/numero_cnj/{numero}/ia/resumo/status', 'v2', false],
-        'TRIBUNAIS_LISTAR' => ['get', 'tribunais', 'v2', false],
-        'SISTEMAS_TRIBUNAIS_LISTAR' => ['get', 'tribunais/sistemas', 'v2', false],
     ];
 
     /**
@@ -440,6 +455,31 @@ class EscavadorService
             ];
         }
 
+        // ── 2b. Verificar Janela de Cache (24h default) ────────────────────
+        $requestHash = md5(json_encode(collect($data)->sortKeys()->toArray()));
+        $cacheHours = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEscavadorCacheWindowHours();
+
+        if ($cacheHours > 0) {
+            $cachedRequest = EscavadorRequest::where('tenant_id', $tenantId)
+                ->where('endpoint_type', $serviceType)
+                ->where('request_hash', $requestHash)
+                ->where('status', EscavadorRequest::STATUS_COMPLETED)
+                ->where('created_at', '>=', now()->subHours($cacheHours))
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($cachedRequest && $cachedRequest->payload_response) {
+                return [
+                    'success' => true,
+                    'request' => $cachedRequest,
+                    'data' => $cachedRequest->payload_response,
+                    'error' => null,
+                    'async' => false,
+                    'cached' => true,
+                ];
+            }
+        }
+
         // ── 3. Debitar imediatamente ───────────────────────────────────────
         $subscription->decrement('ai_tokens_balance', $cost);
 
@@ -493,6 +533,7 @@ class EscavadorService
             'tenant_id' => $tenantId,
             'processo_id' => $processoId,
             'external_id' => $externalId,
+            'request_hash' => $requestHash,
             'endpoint_type' => $serviceType,
             'status' => $statusRecord,
             'cost' => $apiResult['success'] ? $cost : 0.00,
@@ -505,8 +546,8 @@ class EscavadorService
                 'type' => 'debit',
                 'amount' => $cost,
                 'balance_after' => $subscription->ai_tokens_balance,
-                'service_type' => 'ESCAVADOR_' . $version,
-                'description' => "Consulta Escavador " . $version . " - " . $serviceType,
+                'service_type' => 'ESCAVADOR_' . $serviceType,
+                'description' => "Escavador: {$serviceType} — Custo: R$ {$cost}",
                 'user_id' => auth()->id(),
                 'reference_id' => $escavadorRequest->id,
                 'reference_type' => EscavadorRequest::class,

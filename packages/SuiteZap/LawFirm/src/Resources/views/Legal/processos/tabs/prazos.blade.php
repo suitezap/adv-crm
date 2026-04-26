@@ -61,10 +61,10 @@
                                 <select name="prazos[{{ $index }}][status]"
                                     class="w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm font-normal text-gray-600 control bg-transparent"
                                     required>
-                                    <option value="pendente" {{ strtolower($prazo->status) == 'pendente' ? 'selected' : '' }}>
+                                    <option value="pendente" {{ in_array(strtolower($prazo->status), ['pendente']) ? 'selected' : '' }}>
                                         Pendente
                                     </option>
-                                    <option value="concluido" {{ strtolower($prazo->status) == 'concluido' || strtolower($prazo->status) == 'concluído' ? 'selected' : '' }}>Concluído
+                                    <option value="concluido" {{ in_array(strtolower(str_replace('í','i',$prazo->status)), ['concluido']) ? 'selected' : '' }}>Concluído
                                     </option>
                                 </select>
                             </td>

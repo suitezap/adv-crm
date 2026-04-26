@@ -71,12 +71,20 @@ class DeadlineController extends Controller
      */
     public function update(Request $request, $id)
     {
+        // Normalize status to canonical lowercase before validation
+        // Accepts 'Concluído', 'concluído', 'Pendente' etc. from form selects
+        if ($request->has('status')) {
+            $request->merge([
+                'status' => strtolower(str_replace(['í', 'Í'], 'i', $request->input('status'))),
+            ]);
+        }
+
         $validated = $request->validate([
-            'titulo' => 'sometimes|required|string|max:255',
+            'titulo'          => 'sometimes|required|string|max:255',
             'data_vencimento' => 'sometimes|required|date',
-            'tipo' => 'sometimes|required|in:fatal,comum',
-            'status' => 'sometimes|required|in:pendente,concluido,Pendente,Concluído',
-            'descricao' => 'nullable|string',
+            'tipo'            => 'sometimes|required|in:fatal,comum',
+            'status'          => 'sometimes|required|in:pendente,concluido',
+            'descricao'       => 'nullable|string',
         ]);
 
         try {

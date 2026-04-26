@@ -168,8 +168,8 @@
                         <select name="prazos[{{ $index }}][status]"
                             class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
                             data-deadline-id="{{ $prazoId }}" onchange="updateDeadlineStatus(this)" required>
-                            <option value="Pendente" {{ $prazoStatus === 'Pendente' ? 'selected' : '' }}>Pendente</option>
-                            <option value="Concluído" {{ $prazoStatus === 'Concluído' ? 'selected' : '' }}>Concluído
+                            <option value="pendente" {{ in_array(strtolower($prazoStatus), ['pendente']) ? 'selected' : '' }}>Pendente</option>
+                            <option value="concluido" {{ in_array(strtolower(str_replace('í','i',$prazoStatus)), ['concluido']) ? 'selected' : '' }}>Concluído
                             </option>
                         </select>
                     </td>

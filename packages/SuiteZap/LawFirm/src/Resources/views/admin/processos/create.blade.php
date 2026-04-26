@@ -44,11 +44,18 @@
                         </x-admin::form.control-group>
 
                         {{-- Pessoa (Cliente) --}}
+                        @php
+                            $personId = old('person_id');
+                            $personLookupData = $personId ? app('Webkul\Attribute\Repositories\AttributeRepository')->getLookUpEntity('persons', $personId) : null;
+                            $personJson = $personLookupData ? ['id' => $personLookupData->id, 'name' => $personLookupData->name] : null;
+                        @endphp
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label class="required">
                                 @lang('lawfirm::app.processos.form.person')
                             </x-admin::form.control-group.label>
                             <x-admin::lookup src="{{ route('admin.contacts.persons.search') }}" name="person_id"
+                                rules="required"
+                                v-bind:value="{{ json_encode($personJson) }}"
                                 :placeholder="trans('lawfirm::app.processos.form.search-client')" />
                             <x-admin::form.control-group.error control-name="person_id" />
                         </x-admin::form.control-group>
@@ -97,9 +104,9 @@
                                 name="whatsapp_responsavel"
                                 :value="old('whatsapp_responsavel')"
                                 label="WhatsApp do Advogado Responsável"
-                                placeholder="(99) 99999-9999" />
+                                placeholder="55 (99) 99999-9999" />
                             <x-admin::form.control-group.error control-name="whatsapp_responsavel" />
-                            <p class="text-xs text-gray-400 mt-1">Usado pelo Robô Agendador para envio de lembretes de prazo.</p>
+                            <p class="text-xs text-gray-400 mt-1">Usado pelo Robô Agendador para envio de lembretes de prazo. Ex: 55 (11) 99999-9999</p>
                         </x-admin::form.control-group>
                     </div>
 
@@ -172,45 +179,49 @@
                         </x-admin::form.control-group>
                     </div>
 
-                    {{-- Row: Área + Fase + Tribunal + Comarca + Vara --}}
-                    <div class="grid grid-cols-5 gap-4">
+                    {{-- Área do Direito + Fase Processual (2 colunas) --}}
+                    <div class="grid grid-cols-2 gap-4 mb-4">
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label>
                                 @lang('lawfirm::app.processos.form.area')
+                                <span class="text-xs text-gray-400 ml-1 font-normal">(Ex: Indenização por Dano Moral)</span>
                             </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="select" name="area_direito"
-                                :label="trans('lawfirm::app.processos.form.area')">
-                                <option value="">@lang('lawfirm::app.processos.form.select-choose')</option>
-                                @foreach(['Civil', 'Trabalhista', 'Penal', 'Tributário', 'Família', 'Consumidor', 'Previdenciário'] as $area)
-                                    <option value="{{ $area }}" {{ old('area_direito') == $area ? 'selected' : '' }}>
-                                        {{ $area }}
-                                    </option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
+                            <x-admin::form.control-group.control
+                                type="text"
+                                name="area_direito"
+                                id="field_area_direito"
+                                :value="old('area_direito')"
+                                :label="trans('lawfirm::app.processos.form.area')"
+                                placeholder="Ex: Civil, Trabalhista, Indenização por Dano Moral..." />
                             <x-admin::form.control-group.error control-name="area_direito" />
                         </x-admin::form.control-group>
 
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label>
                                 @lang('lawfirm::app.processos.form.fase')
+                                <span class="text-xs text-gray-400 ml-1 font-normal">(Ex: Procedimento Comum Cível)</span>
                             </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="select" name="fase_processual"
-                                :label="trans('lawfirm::app.processos.form.fase')">
-                                <option value="">@lang('lawfirm::app.processos.form.select-choose')</option>
-                                @foreach(['Inicial', 'Contestação', 'Réplica', 'Instrução', 'Julgamento', 'Sentença', 'Recurso', 'Execução'] as $fase)
-                                    <option value="{{ $fase }}" {{ old('fase_processual') == $fase ? 'selected' : '' }}>
-                                        {{ $fase }}
-                                    </option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
+                            <x-admin::form.control-group.control
+                                type="text"
+                                name="fase_processual"
+                                id="field_fase_processual"
+                                :value="old('fase_processual')"
+                                :label="trans('lawfirm::app.processos.form.fase')"
+                                placeholder="Ex: Inicial, Instrução, Procedimento Comum Cível..." />
                             <x-admin::form.control-group.error control-name="fase_processual" />
                         </x-admin::form.control-group>
+                    </div>
 
+                    {{-- Tribunal + Comarca + Vara (3 colunas) --}}
+                    <div class="grid grid-cols-3 gap-4">
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label>
                                 @lang('lawfirm::app.processos.form.tribunal')
                             </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="text" name="tribunal" :value="old('tribunal')"
+                            <x-admin::form.control-group.control
+                                type="text" name="tribunal"
+                                id="field_tribunal"
+                                :value="old('tribunal')"
                                 :label="trans('lawfirm::app.processos.form.tribunal')"
                                 :placeholder="trans('lawfirm::app.processos.form.tribunal')" />
                             <x-admin::form.control-group.error control-name="tribunal" />
@@ -220,7 +231,10 @@
                             <x-admin::form.control-group.label>
                                 @lang('lawfirm::app.processos.form.comarca')
                             </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="text" name="comarca" :value="old('comarca')"
+                            <x-admin::form.control-group.control
+                                type="text" name="comarca"
+                                id="field_comarca"
+                                :value="old('comarca')"
                                 :label="trans('lawfirm::app.processos.form.comarca')"
                                 :placeholder="trans('lawfirm::app.processos.form.comarca')" />
                             <x-admin::form.control-group.error control-name="comarca" />
@@ -230,7 +244,10 @@
                             <x-admin::form.control-group.label>
                                 @lang('lawfirm::app.processos.form.vara')
                             </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="text" name="vara" :value="old('vara')"
+                            <x-admin::form.control-group.control
+                                type="text" name="vara"
+                                id="field_vara"
+                                :value="old('vara')"
                                 :label="trans('lawfirm::app.processos.form.vara')"
                                 :placeholder="trans('lawfirm::app.processos.form.placeholder-vara')" />
                             <x-admin::form.control-group.error control-name="vara" />

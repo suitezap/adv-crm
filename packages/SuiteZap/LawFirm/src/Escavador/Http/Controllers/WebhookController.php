@@ -71,21 +71,46 @@ class WebhookController
         if ($isFailure) {
             // Marcar como falha
             $escavadorRequest->markFailed($payload);
-
-            // Estornar o saldo ao tenant
             $this->refundBalance($escavadorRequest->tenant_id, $escavadorRequest->cost);
-
             Log::warning('EscavadorWebhook: requisição falhou, saldo estornado.', [
                 'external_id' => $externalId,
                 'tenant_id' => $escavadorRequest->tenant_id,
-                'cost' => $escavadorRequest->cost,
             ]);
+
+            // Se falhou uma atualização assincona de processo
+            if ($escavadorRequest->processo_id) {
+                $ep = \SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso::where('processo_id', $escavadorRequest->processo_id)->first();
+                if ($ep) {
+                   $ep->update(['status_atualizacao' => 'erro']);
+                }
+            }
 
             return response()->json(['status' => 'failed_and_refunded'], 200);
         }
 
         // ── Sucesso: atualizar registro ─────────────────────────────────────
         $escavadorRequest->markCompleted($payload);
+
+        // Processar os callbacks assíncronos do Refactoring (Resumo IA, Atualização)
+        if ($escavadorRequest->processo_id) {
+            $ep = \SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso::where('processo_id', $escavadorRequest->processo_id)->first();
+            
+            if ($ep) {
+                if ($escavadorRequest->type === 'RESUMO_IA') {
+                    $ep->update(['resumo_ia' => $payload['resumo'] ?? ($payload['data']['resumo'] ?? 'Resumo não localizado no payload.')]);
+                } 
+                elseif ($escavadorRequest->type === 'ATUALIZACAO_PROCESSO_PUB') {
+                    $ep->update([
+                        'status_atualizacao' => 'atualizado', 
+                        'data_ultima_verificacao' => now()
+                    ]);
+                    // Idealmente aqui disparamos o syncMovimentacoes do CacheService de novo
+                    $apiService = app(\SuiteZap\LawFirm\Escavador\Services\EscavadorService::class);
+                    $cacheService = new \SuiteZap\LawFirm\Escavador\Services\EscavadorCacheService($apiService);
+                    $cacheService->syncMovimentacoes($ep);
+                }
+            }
+        }
 
         Log::info('EscavadorWebhook: requisição concluída.', [
             'external_id' => $externalId,
@@ -152,7 +177,7 @@ class WebhookController
         }
 
         // Buscar Configurações de WhatsApp
-        $whatsappNumber = core()->getConfigData('lawfirm.settings.general.contact_whatsapp', '', $monitoramento->tenant_id);
+        $whatsappNumber = core()->getConfigData('lawfirm.settings.general.contact_whatsapp', null, $monitoramento->tenant_id);
         
         if (!$whatsappNumber) {
             Log::warning('EscavadorWebhook: Monitoramento tem notify_whatsapp ativo, mas WhatsApp não está configurado.');
@@ -169,7 +194,7 @@ class WebhookController
         }
 
         // Busca o Template configurado
-        $template = core()->getConfigData('lawfirm.whatsapp_templates.messages.escavador_monitoramento_update', '', $monitoramento->tenant_id);
+        $template = core()->getConfigData('lawfirm.whatsapp_templates.messages.escavador_monitoramento_update', null, $monitoramento->tenant_id);
         
         if (!$template) {
             $template = "Olá! Detectamos uma nova movimentação do seu monitoramento '{termo_monitorado}' em {fonte} na data de {data_atualizacao}. Acesse o CRM para verificar a íntegra.";
@@ -190,6 +215,7 @@ class WebhookController
             $evolution = new EvolutionService();
             // A instância precisa ser a padrão do tenant, que o EvolutionService pega do MotherShipService / settings
             $instanceName = config('lawfirm.evolution.instance_name') ?: 'api'; // Fallback
+            // Fix: pass the true arguments for Tenant Config (tenant_id is the correct argument)
             $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig($monitoramento->tenant_id);
             if ($config && isset($config['instance'])) {
                  $instanceName = $config['instance'];

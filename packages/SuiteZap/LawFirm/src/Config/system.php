@@ -187,7 +187,7 @@ return [
                 'rows' => 4,
                 'channel_based' => true,
                 'info' => 'Variáveis: {cliente_nome}, {valor}, {descricao}, {data_vencimento}.',
-                'default' => "Olá {cliente_nome}, lembrete amigável do vencimento de {descricao} no valor de {valor} para o dia {data_vencimento}.",
+                'default' => "Olá {cliente_nome}, lembrete de vencimento ref. {descricao} no valor de {valor} para o dia {data_vencimento}.",
             ],
             [
                 'name' => 'financial_billing_overdue',

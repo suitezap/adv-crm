@@ -39,6 +39,12 @@ Route::prefix('escavador')->controller(EscavadorController::class)->group(functi
     // Busca genérica por termo (V1)
     Route::post('busca', 'buscarTermo')->name('lawfirm.escavador.busca');
 
+    // --- Processo Escavador (Cache local) ---
+    Route::post('sync-processo', 'syncProcesso')->name('lawfirm.escavador.sync_processo');
+    Route::get('processo-details/{processoId}', 'getProcessoDetails')->name('lawfirm.escavador.processo_details');
+    Route::post('atualizar-tribunal', 'requestAtualizacao')->name('lawfirm.escavador.atualizar_tribunal');
+    Route::post('download-autos', 'downloadAutos')->name('lawfirm.escavador.download_autos');
+
     // Monitoramentos (V1)
     Route::get('monitoramentos', 'monitoramentos')->name('lawfirm.escavador.monitoramentos');
 
@@ -55,7 +61,6 @@ Route::prefix('escavador')->controller(EscavadorController::class)->group(functi
     Route::get   ('certificados/{id}', 'retornarCertificado') ->name('lawfirm.escavador.certificados.show');
     Route::delete('certificados/{id}', 'removerCertificado')  ->name('lawfirm.escavador.certificados.destroy');
 });
-
 // Histórico dos Assistentes Jurídicos
 Route::get('escavador/historico', [EscavadorHistoryController::class, 'index'])
     ->name('lawfirm.escavador.history');

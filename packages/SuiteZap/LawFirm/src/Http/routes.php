@@ -10,7 +10,7 @@ use SuiteZap\LawFirm\Escavador\Http\Controllers\WebhookController;
 Route::middleware(['api'])->group(function () {
     Route::post('api/webhooks/escavador', [WebhookController::class, 'handle'])
         ->name('webhooks.escavador');
-        
+
     Route::post('api/webhooks/asaas', [\SuiteZap\LawFirm\SaaS\Http\Controllers\AsaasWebhookController::class, 'handle'])
         ->name('webhooks.asaas');
 });
@@ -72,6 +72,7 @@ Route::middleware(['web', 'admin_locale', 'user'])
         require __DIR__ . '/Routes/admin-saas.php';
         require __DIR__ . '/Routes/admin-whatsapp.php';
         require __DIR__ . '/Routes/admin-escavador.php';
+        require __DIR__ . '/Routes/admin-datajud.php';
     });
 
 // ============================================================================

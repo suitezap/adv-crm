@@ -84,6 +84,24 @@ class MotherShipService
     }
 
     /**
+     * Recupera um valor da tabela app_config do Mothership (com cache de 5 minutos).
+     */
+    public static function getAppConfig(string $key)
+    {
+        return Cache::remember("mothership_app_config_{$key}", 300, function () use ($key) {
+            try {
+                return \Illuminate\Support\Facades\DB::connection('mothership')
+                    ->table('app_config')
+                    ->where('key', $key)
+                    ->value('value');
+            } catch (\Exception $e) {
+                Log::warning("[MotherShipService] Falha ao ler {$key} de app_config: " . $e->getMessage());
+                return null;
+            }
+        });
+    }
+
+    /**
      * Retorna a configuração da Evolution API para o Tenant atual.
      * Prioriza o banco de dados MotherShip. Retorna null se não configurado.
      */
@@ -142,6 +160,21 @@ class MotherShipService
                 'api_key' => $node->api_key,
             ];
         });
+    }
+
+    /**
+     * Retorna a configuração do DataJud para o Tenant atual.
+     * Busca via MotherShip (não usa env()).
+     */
+    public static function getDataJudConfig()
+    {
+        // Tenta buscar de node se aplicável ou direto do app_config global, fornecendo fallback de chave Master do CNJ
+        $apiKey = self::getAppConfig('datajud_api_key') ?? 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
+
+        return [
+            'api_key' => $apiKey,
+            'url' => 'https://api-publica.datajud.cnj.jus.br/api_publica'
+        ];
     }
 
     /**
@@ -225,6 +258,27 @@ class MotherShipService
     }
 
     /**
+     * Retorna o multiplicador de Markup e Janela de Cache para o Escavador.
+     */
+    public static function getEscavadorMarkup(): float
+    {
+        return Cache::remember('escavador_markup', 3600, function () {
+            $val = \Illuminate\Support\Facades\DB::connection('mothership')->table('app_config')
+                ->where('key', 'escavador_markup_percent')->value('value');
+            return $val !== null ? (float) $val : 100.0;
+        });
+    }
+
+    public static function getEscavadorCacheWindowHours(): int
+    {
+        return Cache::remember('escavador_cache_window_hours', 3600, function () {
+            $val = \Illuminate\Support\Facades\DB::connection('mothership')->table('app_config')
+                ->where('key', 'escavador_cache_window_hours')->value('value');
+            return $val !== null ? (int) $val : 24;
+        });
+    }
+
+    /**
      * Retorna a tabela de preços dinâmica dos serviços do Escavador diretamente
      * do banco de dados Mothership (tabela app_config).
      *
@@ -235,142 +289,105 @@ class MotherShipService
     {
         return Cache::remember('escavador_prices', 3600, function () {
             $configs = \Illuminate\Support\Facades\DB::connection('mothership')->table('app_config')
-                ->whereIn('key', [
-                    // Existing
-                    'escavador_price_capa',
-                    'escavador_price_diario',
-                    'escavador_price_busca',
-                    'escavador_price_resumo',
-                    'escavador_price_busca_juris',
-                    'escavador_price_busca_diario',
-                    'escavador_price_info_inst',
-                    'escavador_price_info_pessoa',
-                    'escavador_price_busca_oab',
-                    'escavador_price_atualizar_processo',
-                    'escavador_price_baixar_autos',
-                    // New V1
-                    'escavador_price_pagina_diario',
-                    'escavador_price_pessoas_instituicao',
-                    'escavador_price_processos_instituicao',
-                    'escavador_price_doc_juris',
-                    'escavador_price_pdf_juris',
-                    'escavador_price_busca_legis',
-                    'escavador_price_doc_legis',
-                    'escavador_price_frag_legis',
-                    'escavador_price_mov_processo_diario',
-                    'escavador_price_detalhes_pessoa',
-                    'escavador_price_processos_pessoa',
-                    'escavador_price_autos_docs_esp',
-                    'escavador_price_busca_proc_diario_oab',
-                    'escavador_price_busca_proc_diario_num',
-                    'escavador_price_envolvidos_proc_diario',
-                    'escavador_price_mov_proc_diario',
-                    'escavador_price_proc_diario',
-                    // New V2
-                    'escavador_price_atualizacao_processo_docs',
-                    'escavador_price_atualizacao_processo_autos',
-                    'escavador_price_atualizacao_processo_pub',
-                    'escavador_price_processos_envolvido_cpf',
-                    'escavador_price_processos_advogado_oab',
-                    'escavador_price_resumo_advogado_oab',
-                    'escavador_price_resumo_envolvido',
-                    'escavador_price_documentos_publicos',
-                    'escavador_price_envolvidos_processo',
-                    'escavador_price_movimentacoes_processo'
-                ])
+                ->where('key', 'like', 'escavador_price_%')
+                ->orWhere('key', 'like', 'datajud_price_%')
                 ->pluck('value', 'key');
 
             return [
-                // Existing
-                'CAPA_PROCESSO' => (float) ($configs['escavador_price_capa'] ?? 3.00),
-                'PDF_DIARIO' => (float) ($configs['escavador_price_diario'] ?? 3.00),
-                'BUSCA_TERMO' => (float) ($configs['escavador_price_busca'] ?? 3.00),
-                'RESUMO_IA' => (float) ($configs['escavador_price_resumo'] ?? 0.08),
-                'BUSCA_JURIS' => (float) ($configs['escavador_price_busca_juris'] ?? 3.00),
-                'BUSCA_DIARIO' => (float) ($configs['escavador_price_busca_diario'] ?? 3.00),
-                'INFO_INSTITUICAO' => (float) ($configs['escavador_price_info_inst'] ?? 3.00),
-                'INFO_PESSOA' => (float) ($configs['escavador_price_info_pessoa'] ?? 3.00),
-                'BUSCA_OAB_PAGA' => (float) ($configs['escavador_price_busca_oab'] ?? 3.00),
-                'ATUALIZAR_PROCESSO' => (float) ($configs['escavador_price_atualizar_processo'] ?? 3.00),
-                'BAIXAR_AUTOS' => (float) ($configs['escavador_price_baixar_autos'] ?? 0.18),
-
-                // New V1
-                'PAGINA_DIARIO' => (float) ($configs['escavador_price_pagina_diario'] ?? 3.00),
-                'PESSOAS_INSTITUICAO' => (float) ($configs['escavador_price_pessoas_instituicao'] ?? 3.00),
-                'PROCESSOS_INSTITUICAO' => (float) ($configs['escavador_price_processos_instituicao'] ?? 3.00),
-                'DOC_JURIS' => (float) ($configs['escavador_price_doc_juris'] ?? 3.00),
-                'PDF_JURIS' => (float) ($configs['escavador_price_pdf_juris'] ?? 3.00),
-                'BUSCA_LEGIS' => (float) ($configs['escavador_price_busca_legis'] ?? 3.00),
-                'DOC_LEGIS' => (float) ($configs['escavador_price_doc_legis'] ?? 3.00),
-                'FRAG_LEGIS' => (float) ($configs['escavador_price_frag_legis'] ?? 3.00),
-                'MOV_PROCESSO_DIARIO' => (float) ($configs['escavador_price_mov_processo_diario'] ?? 3.00),
-                'DETALHES_PESSOA' => (float) ($configs['escavador_price_detalhes_pessoa'] ?? 3.00),
-                'PROCESSOS_PESSOA' => (float) ($configs['escavador_price_processos_pessoa'] ?? 3.00),
+                'DATAJUD_CONSULTA_PUBLICA' => (float) ($configs['datajud_price_consulta_publica'] ?? 0.00),
+                'CAPA_PROCESSO' => (float) ($configs['escavador_price_capa_processo'] ?? 0.01),
+                'PDF_DIARIO' => (float) ($configs['escavador_price_pdf_diario'] ?? 0.02),
+                'BUSCA_TERMO' => (float) ($configs['escavador_price_busca_termo'] ?? 0.03),
+                'RESUMO_IA' => (float) ($configs['escavador_price_resumo_ia'] ?? 0.01),
+                'API_V1_BUSCARPORTERMO' => (float) ($configs['escavador_price_api_v1_buscarportermo'] ?? 0.03),
+                'API_V1_DOWNLOADDOPDFDAPGINADODIRIOOFICIAL' => (float) ($configs['escavador_price_api_v1_downloaddopdfdapginadodiriooficial'] ?? 0.02),
+                'API_V1_OBTERPESSOA' => (float) ($configs['escavador_price_api_v1_obterpessoa'] ?? 0.02),
+                'API_V1_PROCESSOSDEUMAPESSOA' => (float) ($configs['escavador_price_api_v1_processosdeumapessoa'] ?? 0.10),
+                'INFO_INSTITUICAO' => (float) ($configs['escavador_price_info_instituicao'] ?? 0.02),
+                'PROCESSOS_INSTITUICAO' => (float) ($configs['escavador_price_processos_instituicao'] ?? 0.03),
+                'PESSOAS_INSTITUICAO' => (float) ($configs['escavador_price_pessoas_instituicao'] ?? 0.02),
+                'API_V1_MOVIMENTAESDEUMPROCESSODO' => (float) ($configs['escavador_price_api_v1_movimentaesdeumprocessodo'] ?? 0.03),
+                'API_V1_BUSCARPROCESSOSDOSDIRIOSPOROAB' => (float) ($configs['escavador_price_api_v1_buscarprocessosdosdiriosporoab'] ?? 0.03),
+                'BUSCA_PROC_DIARIO_NUM' => (float) ($configs['escavador_price_busca_proc_diario_num'] ?? 0.03),
+                'API_V1_ENVOLVIDOSDEUMPROCESSO' => (float) ($configs['escavador_price_api_v1_envolvidosdeumprocesso'] ?? 0.03),
+                'API_V1_PESQUISARPROCESSONOTRIBUNAL' => (float) ($configs['escavador_price_api_v1_pesquisarprocessonotribunal'] ?? 0.18),
+                'API_V1_PESQUISARPROCESSOSPORNOME' => (float) ($configs['escavador_price_api_v1_pesquisarprocessospornome'] ?? 0.10),
+                'API_V1_PESQUISARPROCESSOSPORCPFOUCNPJ' => (float) ($configs['escavador_price_api_v1_pesquisarprocessosporcpfoucnpj'] ?? 0.10),
+                'API_V1_PESQUISARPROCESSOSPOROAB' => (float) ($configs['escavador_price_api_v1_pesquisarprocessosporoab'] ?? 0.10),
+                'API_V1_PESQUISARPROCESSOADMINISTRATIVONUP' => (float) ($configs['escavador_price_api_v1_pesquisarprocessoadministrativonup'] ?? 0.01),
+                'API_V1_RETORNARUMAMOVIMENTAO' => (float) ($configs['escavador_price_api_v1_retornarumamovimentao'] ?? 0.01),
+                'TRIBUNAIS_SISTEMAS' => (float) ($configs['escavador_price_tribunais_sistemas'] ?? 0.01),
+                'TRIBUNAIS_DETALHES' => (float) ($configs['escavador_price_tribunais_detalhes'] ?? 0.01),
+                'ORGAOS_ADMINISTRATIVOS' => (float) ($configs['escavador_price_orgaos_administrativos'] ?? 0.01),
+                'API_V1_CONSULTAR_SALDO' => (float) ($configs['escavador_price_api_v1_consultar_saldo'] ?? 0.01),
+                'API_V1_TODOS_ASYNC_RESULTADOS' => (float) ($configs['escavador_price_api_v1_todos_async_resultados'] ?? 0.01),
+                'API_V1_RESULTADO_ASYNC_ID' => (float) ($configs['escavador_price_api_v1_resultado_async_id'] ?? 0.01),
+                'API_V1_MARCAR_CALLBACKS' => (float) ($configs['escavador_price_api_v1_marcar_callbacks'] ?? 0.01),
+                'API_V1_RETORNAR_CALLBACKS' => (float) ($configs['escavador_price_api_v1_retornar_callbacks'] ?? 0.01),
+                'API_V1_REENVIAR_CALLBACK' => (float) ($configs['escavador_price_api_v1_reenviar_callback'] ?? 0.01),
+                'API_V1_RETORNAR_ORIGENS' => (float) ($configs['escavador_price_api_v1_retornar_origens'] ?? 0.01),
+                'API_V1_PAGINA_DIARIO' => (float) ($configs['escavador_price_api_v1_pagina_diario'] ?? 0.02),
+                'API_V1_RETORNAR_MONITORAMENTOS' => (float) ($configs['escavador_price_api_v1_retornar_monitoramentos'] ?? 0.01),
+                'API_V1_RETORNAR_MONITORAMENTO' => (float) ($configs['escavador_price_api_v1_retornar_monitoramento'] ?? 0.01),
+                'API_V1_RETORNAR_APARICOES' => (float) ($configs['escavador_price_api_v1_retornar_aparicoes'] ?? 0.01),
+                'API_V1_REMOVER_MONITORAMENTO' => (float) ($configs['escavador_price_api_v1_remover_monitoramento'] ?? 0.01),
+                'API_V1_CRIAR_MONITORAMENTO' => (float) ($configs['escavador_price_api_v1_criar_monitoramento'] ?? 0.01),
+                'API_V1_TESTAR_CALLBACK' => (float) ($configs['escavador_price_api_v1_testar_callback'] ?? 0.01),
+                'API_V1_DIARIOS_MONITORADOS' => (float) ($configs['escavador_price_api_v1_diarios_monitorados'] ?? 0.01),
+                'API_V2_PROCESSOSDOENVOLVIDOPORCPFCNPJOUNOME' => (float) ($configs['escavador_price_api_v2_processosdoenvolvidoporcpfcnpjounome'] ?? 4.50),
+                'API_V2_PROCESSOSDEUMADVOGADOPOROAB' => (float) ($configs['escavador_price_api_v2_processosdeumadvogadoporoab'] ?? 4.50),
+                'API_V2_PROCESSOPORNUMERAOCNJCAPA' => (float) ($configs['escavador_price_api_v2_processopornumeraocnjcapa'] ?? 0.01),
+                'API_V2_MOVIMENTAESDEUMPROCESSO' => (float) ($configs['escavador_price_api_v2_movimentaesdeumprocesso'] ?? 0.05),
+                'API_V2_STATUS_ATUALIZACAO' => (float) ($configs['escavador_price_api_v2_status_atualizacao'] ?? 0.01),
+                'API_V2_SOLICITARATUALIZAODEUMPROCESSO' => (float) ($configs['escavador_price_api_v2_solicitaratualizaodeumprocesso'] ?? 0.01),
+                'API_V2_TRIBUNAIS_DISPONIVEIS' => (float) ($configs['escavador_price_api_v2_tribunais_disponiveis'] ?? 0.01),
+                'API_V2_RESUMO_OAB' => (float) ($configs['escavador_price_api_v2_resumo_oab'] ?? 0.40),
+                'API_V2_RESUMO_ENVOLVIDO' => (float) ($configs['escavador_price_api_v2_resumo_envolvido'] ?? 0.40),
+                'API_V2_AUTOS_PROCESSO' => (float) ($configs['escavador_price_api_v2_autos_processo'] ?? 0.01),
+                'API_V2_DOCS_PUBLICOS' => (float) ($configs['escavador_price_api_v2_docs_publicos'] ?? 0.01),
+                'API_V2_ENVOLVIDOS_PROCESSO' => (float) ($configs['escavador_price_api_v2_envolvidos_processo'] ?? 0.05),
+                'API_V2_RESUMO_IA_PROCESSO' => (float) ($configs['escavador_price_api_v2_resumo_ia_processo'] ?? 0.01),
+                'API_V2_STATUS_RESUMO_IA_UI' => (float) ($configs['escavador_price_api_v2_status_resumo_ia_ui'] ?? 0.01),
+                'API_V2_SISTEMAS_DISPONIVEIS' => (float) ($configs['escavador_price_api_v2_sistemas_disponiveis'] ?? 0.01),
+                'API_V2_CALLBACKS_LISTAR' => (float) ($configs['escavador_price_api_v2_callbacks_listar'] ?? 0.01),
+                'BUSCA_JURIS' => (float) ($configs['escavador_price_busca_juris'] ?? 0.02),
+                'BUSCA_DIARIO' => (float) ($configs['escavador_price_busca_diario'] ?? 0.03),
+                'BUSCA_OAB_PAGA' => (float) ($configs['escavador_price_busca_oab_paga'] ?? 0.03),
+                'DOC_JURIS' => (float) ($configs['escavador_price_doc_juris'] ?? 0.04),
+                'PDF_JURIS' => (float) ($configs['escavador_price_pdf_juris'] ?? 0.07),
+                'BUSCA_LEGIS' => (float) ($configs['escavador_price_busca_legis'] ?? 0.03),
+                'DOC_LEGIS' => (float) ($configs['escavador_price_doc_legis'] ?? 0.03),
+                'FRAG_LEGIS' => (float) ($configs['escavador_price_frag_legis'] ?? 0.03),
                 'AUTOS_DOCS_ESP' => (float) ($configs['escavador_price_autos_docs_esp'] ?? 0.75),
-                'BUSCA_PROC_DIARIO_OAB' => (float) ($configs['escavador_price_busca_proc_diario_oab'] ?? 3.00),
-                'BUSCA_PROC_DIARIO_NUM' => (float) ($configs['escavador_price_busca_proc_diario_num'] ?? 3.00),
-                'ENVOLVIDOS_PROC_DIARIO' => (float) ($configs['escavador_price_envolvidos_proc_diario'] ?? 3.00),
-                'MOV_PROC_DIARIO' => (float) ($configs['escavador_price_mov_proc_diario'] ?? 3.00),
-                'PROC_DIARIO' => (float) ($configs['escavador_price_proc_diario'] ?? 3.00),
-
-                // New V2
-                'ATUALIZACAO_PROCESSO_DOCS' => (float) ($configs['escavador_price_atualizacao_processo_docs'] ?? 0.75),
-                'ATUALIZACAO_PROCESSO_AUTOS' => (float) ($configs['escavador_price_atualizacao_processo_autos'] ?? 1.50),
-                'ATUALIZACAO_PROCESSO_PUB' => (float) ($configs['escavador_price_atualizacao_processo_pub'] ?? 0.20),
-                'PROCESSOS_ENVOLVIDO_CPF' => (float) ($configs['escavador_price_processos_envolvido_cpf'] ?? 3.00),
-                'PROCESSOS_ADVOGADO_OAB' => (float) ($configs['escavador_price_processos_advogado_oab'] ?? 3.00),
-                'RESUMO_ADVOGADO_OAB' => (float) ($configs['escavador_price_resumo_advogado_oab'] ?? 3.00),
-                'RESUMO_ENVOLVIDO' => (float) ($configs['escavador_price_resumo_envolvido'] ?? 3.00),
-                'DOCUMENTOS_PUBLICOS' => (float) ($configs['escavador_price_documentos_publicos'] ?? 0.06),
-                'ENVOLVIDOS_PROCESSO' => (float) ($configs['escavador_price_envolvidos_processo'] ?? 0.05),
-                'MOVIMENTACOES_PROCESSO' => (float) ($configs['escavador_price_movimentacoes_processo'] ?? 3.00),
-                'GERENCIAR_WEBHOOKS_V2'    => 0.00, // Gratuito — listagem e cadastro de URLs de callback
-                'CERTIFICADOS_DIGITAIS'    => 0.00, // Gratuito — gerenciamento de certificados digitais
-
-                // === Novos V1 e V2 (Gratuitos) ===
-                'ASYNC_RESULTADOS' => 0.00,
-                'ASYNC_RESULTADO_ID' => 0.00,
-                'CALLBACKS_MARCAR_RECEBIDOS' => 0.00,
-                'CALLBACKS_LISTAR' => 0.00,
-                'CALLBACKS_REENVIAR' => 0.00,
-                'DIARIOS_ORIGENS' => 0.00,
-                'MONITORAMENTO_DIARIOS_ORIGENS' => 0.00,
-                'MONITORAMENTOS_LISTAR' => 0.00,
-                'MONITORAMENTOS_ID' => 0.00,
-                'MONITORAMENTOS_EDITAR' => 0.00,
-                'MONITORAMENTOS_REMOVER' => 0.00,
-                'MONITORAMENTOS_APARICOES' => 0.00,
-                'MONITORAMENTOS_TESTAR_CALLBACK' => 0.00,
-                'MONITORAMENTOS_TRIBUNAL_LISTAR' => 0.00,
-                'MONITORAMENTOS_TRIBUNAL_ID' => 0.00,
-                'MONITORAMENTOS_TRIBUNAL_EDITAR' => 0.00,
-                'MONITORAMENTOS_TRIBUNAL_REMOVER' => 0.00,
-                'SALDO_V1' => 0.00,
-                'TRIBUNAIS_SISTEMAS' => 0.00,
-                'TRIBUNAL_POR_ORIGEM' => 0.00,
-                'ORGAOS_ADMIN_SISTEMAS' => 0.00,
-
-                'STATUS_ATUALIZACAO_PROCESSO' => 0.00,
-                'CALLBACKS_LISTAR_V2' => 0.00,
-                'CALLBACKS_MARCAR_RECEBIDOS_V2' => 0.00,
-                'CALLBACKS_REENVIAR_V2' => 0.00,
-                'MONITORAMENTO_NOVOS_PROCESSO_LISTAR' => 0.00,
-                'MONITORAMENTO_NOVOS_PROCESSO_ID' => 0.00,
-                'MONITORAMENTO_NOVOS_PROCESSO_REMOVER' => 0.00,
-                'MONITORAMENTO_NOVOS_PROCESSO_RESULTADOS' => 0.00,
-                'MONITORAMENTO_NOVOS_PROCESSO_EDITAR' => 0.00,
-                'MONITORAMENTO_PROCESSO_LISTAR' => 0.00,
-                'MONITORAMENTO_PROCESSO_ID' => 0.00,
-                'MONITORAMENTO_PROCESSO_REMOVER' => 0.00,
-                'STATUS_RESUMO_IA' => 0.00,
-                'TRIBUNAIS_LISTAR' => 0.00,
-                'SISTEMAS_TRIBUNAIS_LISTAR' => 0.00,
-
-                // === Criação de Monitoramentos (Macro Buttons) ===
-                'CRIAR_MON_DIARIOS'          => 3.00, // R$ 3,00 / mês — POST api/v1/monitoramentos
-                'CRIAR_MON_TRIBUNAL'         => 3.00, // R$ 3,00 / mês — POST api/v1/monitoramentos-tribunal
-                'CRIAR_MON_PROCESSO_V2'      => 3.00, // R$ 3,00 / mês — POST api/v2/monitoramentos/processos
-                'CRIAR_MON_NOVOS_PROCESSO_V2'=> 3.00, // R$ 3,00 / mês — POST api/v2/monitoramentos/novos-processos
+                'ASYNC_RESULTADOS' => (float) ($configs['escavador_price_async_resultados'] ?? 0.01),
+                'ASYNC_RESULTADO_ID' => (float) ($configs['escavador_price_async_resultado_id'] ?? 0.01),
+                'CALLBACKS_MARCAR_RECEBIDOS' => (float) ($configs['escavador_price_callbacks_marcar_recebidos'] ?? 0.01),
+                'CALLBACKS_LISTAR' => (float) ($configs['escavador_price_callbacks_listar'] ?? 0.01),
+                'CALLBACKS_REENVIAR' => (float) ($configs['escavador_price_callbacks_reenviar'] ?? 0.01),
+                'MONITORAMENTOS_LISTAR' => (float) ($configs['escavador_price_monitoramentos_listar'] ?? 0.01),
+                'MONITORAMENTOS_ID' => (float) ($configs['escavador_price_monitoramentos_id'] ?? 0.01),
+                'MONITORAMENTOS_EDITAR' => (float) ($configs['escavador_price_monitoramentos_editar'] ?? 0.01),
+                'MONITORAMENTOS_REMOVER' => (float) ($configs['escavador_price_monitoramentos_remover'] ?? 0.01),
+                'MONITORAMENTOS_APARICOES' => (float) ($configs['escavador_price_monitoramentos_aparicoes'] ?? 0.01),
+                'CRIAR_MON_DIARIOS' => (float) ($configs['escavador_price_criar_mon_diarios'] ?? 0.01),
+                'CRIAR_MON_TRIBUNAL' => (float) ($configs['escavador_price_criar_mon_tribunal'] ?? 0.01),
+                'CRIAR_MON_PROCESSO_V2' => (float) ($configs['escavador_price_criar_mon_processo_v2'] ?? 0.01),
+                'CRIAR_MON_NOVOS_PROCESSO_V2' => (float) ($configs['escavador_price_criar_mon_novos_processo_v2'] ?? 0.01),
+                'STATUS_ATUALIZACAO_PROCESSO' => (float) ($configs['escavador_price_status_atualizacao_processo'] ?? 0.01),
+                'CALLBACKS_LISTAR_V2' => (float) ($configs['escavador_price_callbacks_listar_v2'] ?? 0.01),
+                'CALLBACKS_MARCAR_RECEBIDOS_V2' => (float) ($configs['escavador_price_callbacks_marcar_recebidos_v2'] ?? 0.01),
+                'CALLBACKS_REENVIAR_V2' => (float) ($configs['escavador_price_callbacks_reenviar_v2'] ?? 0.01),
+                'MONITORAMENTO_NOVOS_PROCESSO_LISTAR' => (float) ($configs['escavador_price_monitoramento_novos_processo_listar'] ?? 0.01),
+                'MONITORAMENTO_NOVOS_PROCESSO_ID' => (float) ($configs['escavador_price_monitoramento_novos_processo_id'] ?? 0.01),
+                'MONITORAMENTO_NOVOS_PROCESSO_REMOVER' => (float) ($configs['escavador_price_monitoramento_novos_processo_remover'] ?? 0.01),
+                'MONITORAMENTO_NOVOS_PROCESSO_RESULTADOS' => (float) ($configs['escavador_price_monitoramento_novos_processo_resultados'] ?? 0.01),
+                'MONITORAMENTO_NOVOS_PROCESSO_EDITAR' => (float) ($configs['escavador_price_monitoramento_novos_processo_editar'] ?? 0.01),
+                'MONITORAMENTO_PROCESSO_LISTAR' => (float) ($configs['escavador_price_monitoramento_processo_listar'] ?? 0.01),
+                'MONITORAMENTO_PROCESSO_ID' => (float) ($configs['escavador_price_monitoramento_processo_id'] ?? 0.01),
+                'MONITORAMENTO_PROCESSO_REMOVER' => (float) ($configs['escavador_price_monitoramento_processo_remover'] ?? 0.01),
+                'STATUS_RESUMO_IA' => (float) ($configs['escavador_price_status_resumo_ia'] ?? 0.01),
+                'CERTIFICADOS_DIGITAIS' => (float) ($configs['escavador_price_certificados_digitais'] ?? 0.01),
+                'GERENCIAR_WEBHOOKS_V2' => 0.00,
             ];
         });
     }

@@ -6,21 +6,26 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\Escavador\Services\EscavadorService;
+use SuiteZap\LawFirm\Escavador\Services\EscavadorCacheService;
+use SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso;
+use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 
 /**
  * EscavadorController — Admin controller para integração Escavador.
  *
- * Segue o pattern "Skinny Controller" delegando toda lógica ao EscavadorService.
+ * Segue o pattern "Skinny Controller" delegando toda lógica ao EscavadorService / EscavadorCacheService.
  */
 class EscavadorController extends Controller
 {
-    protected EscavadorService $escavador;
+    protected $escavador;
+    protected $cacheService;
 
-    public function __construct(EscavadorService $escavador)
+    public function __construct(EscavadorService $escavador, EscavadorCacheService $cacheService)
     {
         $this->escavador = $escavador;
+        $this->cacheService = $cacheService;
     }
 
     /**
@@ -169,7 +174,7 @@ class EscavadorController extends Controller
     public function buscarTermo(Request $request)
     {
         $request->validate([
-            'q'  => 'required|string|min:2',
+            'q' => 'required|string|min:2',
             'qo' => 'required|string|in:t,p,i,d,en',
         ]);
 
@@ -177,7 +182,7 @@ class EscavadorController extends Controller
 
         $params = array_filter(
             $request->only(['q', 'qo', 'qs', 'limit', 'page', 'utilizar_operadores_logicos']),
-            fn ($v) => $v !== null && $v !== ''
+            fn($v) => $v !== null && $v !== ''
         );
 
         // Defaults conforme a spec da API
@@ -317,12 +322,12 @@ class EscavadorController extends Controller
     public function cadastrarCertificado(Request $request)
     {
         $request->validate([
-            'file'  => 'required|file|mimes:pfx,p12|max:4096',
+            'file' => 'required|file|mimes:pfx,p12|max:4096',
             'senha' => 'required|string|min:1',
         ]);
 
-        $file       = $request->file('file');
-        $senha      = $request->input('senha');
+        $file = $request->file('file');
+        $senha = $request->input('senha');
         $playground = (bool) $request->input('playground', false);
 
         $result = $this->escavador->cadastrarCertificadoComArquivo($file, $senha, $playground);
@@ -341,7 +346,7 @@ class EscavadorController extends Controller
     public function retornarCertificado(Request $request, int $id)
     {
         $playground = (bool) $request->input('playground', false);
-        $result     = $this->escavador->retornarCertificado($id, $playground);
+        $result = $this->escavador->retornarCertificado($id, $playground);
         return response()->json($result);
     }
 
@@ -350,9 +355,130 @@ class EscavadorController extends Controller
      */
     public function removerCertificado(Request $request, int $id)
     {
-        $playground = (bool) $request->input('playground', false);
-        $result     = $this->escavador->removerCertificado($id, $playground);
-        return response()->json($result);
+        $tenantId = MotherShipService::getTenantId();
+        $response = $this->escavador->requestService('DELETE_CERTIFICADO', ['id' => $id], $tenantId);
+        return response()->json($response);
+    }
+
+    // ─── Novos métodos (Hierarquia de Cache / Espelho local) ─────────────────
+
+    /**
+     * Sincroniza a capa de um processo.
+     * Consulta no cache local; se não existir, chama V2 Capa e salva.
+     */
+    public function syncProcesso(Request $request)
+    {
+        $request->validate([
+            'cnj' => 'required|string',
+            'processo_id' => 'nullable|integer|exists:processos,id',
+        ]);
+
+        $tenantId = MotherShipService::getTenantId();
+        $cnj = $request->cnj;
+        $processoId = $request->processo_id;
+
+        $escavadorProcesso = $this->cacheService->findOrFetchCapa($cnj, $tenantId, $processoId);
+
+        if (!$escavadorProcesso) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nenhum processo encontrado no Escavador para este número CNJ.',
+            ], 404);
+        }
+
+        // Tenta também sincronizar as movimentações e envolvidos e documentos assincronamente (se recém criado e nunca tiver feito)
+        // Isso pode ser aprimorado com Filas (Jobs), mas manteremos síncrono para MVP do refactoring
+        if ($escavadorProcesso->wasRecentlyCreated) {
+            $this->cacheService->syncMovimentacoes($escavadorProcesso);
+            $this->cacheService->syncEnvolvidos($escavadorProcesso);
+            $this->cacheService->syncDocumentosPublicos($escavadorProcesso);
+
+            // Dispara pedido de Resumo IA assíncrono para popular depois
+            $this->cacheService->requestResumoIa($escavadorProcesso);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Processo sincronizado com sucesso.',
+            'data' => $escavadorProcesso->toArray(),
+        ]);
+    }
+
+    /**
+     * Retorna os detalhes cacheados localmente do Escavador.
+     */
+    public function getProcessoDetails($processoId)
+    {
+        $tenantId = MotherShipService::getTenantId();
+
+        $escavadorProcesso = EscavadorProcesso::with([
+            'movimentacoes',
+            'documentos',
+            'envolvidos'
+        ])
+            ->where('tenant_id', $tenantId)
+            ->where('processo_id', $processoId)
+            ->first();
+
+        if (!$escavadorProcesso) {
+            return response()->json(['success' => false, 'message' => 'Processo não sincronizado com o Escavador ainda.'], 200);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'processo' => $escavadorProcesso,
+                'is_atualizado' => $escavadorProcesso->isAtualizado(),
+                'needs_refresh' => $escavadorProcesso->needsRefresh(),
+                'resumo_ia_short' => $escavadorProcesso->getResumoExcerpt()
+            ]
+        ]);
+    }
+
+    /**
+     * Solicita a atualização assíncrona no Tribunal (V2)
+     */
+    public function requestAtualizacao(Request $request)
+    {
+        $request->validate(['escavador_processo_id' => 'required|integer|exists:escavador_processos,id']);
+
+        $ep = EscavadorProcesso::where('tenant_id', MotherShipService::getTenantId())
+            ->findOrFail($request->escavador_processo_id);
+
+        $result = $this->cacheService->requestAtualizacaoTribunal($ep);
+
+        return response()->json($result, $result['success'] ? 200 : 400);
+    }
+
+    /**
+     * Faz download dos autos completos (Ação gata por aprovação de R$ 1,50)
+     */
+    public function downloadAutos(Request $request)
+    {
+        $request->validate([
+            'numero_cnj' => 'required|string|min:20',
+            'processo_id' => 'sometimes|nullable|integer',
+        ]);
+
+        $tenantId = MotherShipService::getTenantId();
+        $numeroCnj = $request->input('numero_cnj');
+        $processoId = $request->input('processo_id');
+
+        $result = $this->escavador->requestService(
+            'ATUALIZACAO_PROCESSO_AUTOS',
+            ['numero' => $numeroCnj],
+            $tenantId,
+            $processoId ? (int) $processoId : null
+        );
+
+        if (!$result['success']) {
+            return response()->json(['success' => false, 'message' => $result['error']], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Solicitação de download dos autos enviada. O resultado chegará via webhook.',
+            'request_id' => $result['request']?->id,
+        ]);
     }
 }
-

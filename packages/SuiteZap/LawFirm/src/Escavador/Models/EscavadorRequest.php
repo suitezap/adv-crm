@@ -29,6 +29,7 @@ class EscavadorRequest extends Model
         'tenant_id',
         'processo_id',
         'external_id',
+        'request_hash',
         'endpoint_type',
         'status',
         'cost',

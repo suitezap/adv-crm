@@ -37,6 +37,7 @@ class UpdateProcessoRequest extends FormRequest
             'tribunal' => 'nullable|string|max:255',
             'comarca' => 'nullable|string|max:255',
             'vara' => 'nullable|string|max:255',
+            'protocolo_distribuicao' => 'nullable|string|max:255',
             'link_acesso' => 'nullable|string|max:500',
             'fase_processual' => 'nullable|string|max:255',
             'parte_contraria' => 'nullable|string|max:255',
@@ -76,7 +77,8 @@ class UpdateProcessoRequest extends FormRequest
             'email_advogado_contrario' => 'nullable|email:rfc,dns|max:255',
             'subarea_direito'              => 'nullable|string|max:255',
             'user_id'                      => 'nullable|exists:users,id',
-            'whatsapp_responsavel'         => 'nullable|string|max:50',
+            'whatsapp_responsavel'         => ['nullable', 'string', 'max:50', 'regex:/^\d{2,3}\s?\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/'],
+            'envolvidos_escavador'         => 'nullable|string',
 
             // PRAZOS ARRAY
             'prazos' => 'nullable|array',
@@ -104,6 +106,7 @@ class UpdateProcessoRequest extends FormRequest
     {
         return [
             'whatsapp_advogado_contrario.regex' => 'O formato do WhatsApp é inválido. Use: (99) 99999-9999.',
+            'whatsapp_responsavel.regex' => 'O formato do WhatsApp é inválido. Ex: 55 (99) 99999-9999.',
             'prazos.*.titulo.required' => 'O título do prazo é obrigatório.',
             'prazos.*.data_vencimento.required' => 'A data de vencimento do prazo é obrigatória.',
             'anexos.*.mimes' => 'Tipo de arquivo não permitido. Aceitos: PDF, Imagens, Office, Texto (txt, log, md, csv).',

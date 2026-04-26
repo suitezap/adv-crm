@@ -87,7 +87,7 @@
 
                         {{-- Description --}}
                         @if($btnDesc)
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ Str::limit($btnDesc, 60) }}</p>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $btnDesc }}</p>
                         @endif
                     </div>
 

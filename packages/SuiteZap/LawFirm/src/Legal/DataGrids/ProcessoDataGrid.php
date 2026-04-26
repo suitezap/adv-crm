@@ -98,7 +98,7 @@ class ProcessoDataGrid extends DataGrid
             'type' => 'string',
             'sortable' => true,
             'filterable' => true,
-            'width' => '150px',
+            'width' => '220px',
         ]);
 
         $this->addColumn([
@@ -123,7 +123,7 @@ class ProcessoDataGrid extends DataGrid
             'type' => 'datetime',
             'sortable' => true,
             'filterable' => true,
-            'width' => '150px',
+            'width' => '160px',
             'closure' => function ($row) {
                 if (!$row->data_audiencia) {
                     return '-';
@@ -136,12 +136,12 @@ class ProcessoDataGrid extends DataGrid
                 $formatted = $date->format('d/m/Y H:i');
 
                 if ($diff <= 0) {
-                    return '<div class="px-2 py-1 rounded text-red-800 bg-red-100 font-bold">' . $formatted . '</div>';
+                    return '<span class="px-2 py-1 rounded text-red-800 bg-red-100 font-bold inline-block">' . $formatted . '</span>';
                 } elseif ($diff <= 5) {
-                    return '<div class="px-2 py-1 rounded text-orange-800 bg-orange-100 font-bold">' . $formatted . '</div>';
+                    return '<span class="px-2 py-1 rounded text-orange-800 bg-orange-100 font-bold inline-block">' . $formatted . '</span>';
                 }
 
-                return '<div class="text-gray-600 font-medium">' . $formatted . '</div>';
+                return '<span class="text-gray-600 font-medium">' . $formatted . '</span>';
             },
         ]);
 
@@ -151,7 +151,7 @@ class ProcessoDataGrid extends DataGrid
             'type' => 'string',
             'sortable' => true,
             'filterable' => true,
-            'width' => '100px',
+            'width' => '120px',
             'closure' => function ($row) {
                 $color = 'bg-gray-200 text-gray-800';
                 if ($row->status == 'Ativo')
@@ -159,7 +159,7 @@ class ProcessoDataGrid extends DataGrid
                 if ($row->status == 'Suspenso')
                     $color = 'bg-yellow-100 text-yellow-800';
 
-                return '<span class="px-2 py-1 rounded-full text-xs font-semibold ' . $color . '">' . $row->status . '</span>';
+                return '<span class="px-2 py-1 rounded-full text-xs font-semibold inline-block ' . $color . '">' . $row->status . '</span>';
             }
         ]);
     }

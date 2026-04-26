@@ -16,7 +16,8 @@ class LawFirmServiceProvider extends ServiceProvider
     /**
      * Versão do pacote LawFirm.
      */
-    public const VERSION = '3.25';
+    public const VERSION = '3.35';
+
 
     /**
      * Bootstrap services.

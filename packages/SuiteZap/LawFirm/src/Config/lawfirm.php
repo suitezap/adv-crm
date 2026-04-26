@@ -6,35 +6,37 @@ return [
     | LawFirm / SuiteZap — Configurações Globais
     |--------------------------------------------------------------------------
     |
-    | IMPORTANTE: Configurações sensíveis como api_secret são lidas diretamente
-    | do banco de dados Mothership (tabela `app_config`), eliminando a necessidade
-    | de variáveis de ambiente por stack.
+    | REGRA ZERO: Configurações sensíveis (tokens, API keys, instâncias) são
+    | lidas exclusivamente do banco MotherShip via MotherShipService.
+    | Valores env() abaixo são FALLBACK para ambiente de desenvolvimento local
+    | e NÃO devem ser usados em produção/staging.
     |
-    | O MothershipTemplateController lê o segredo via:
-    |   DB::connection('mothership')->table('app_config')->where('key','api_secret')
-    |
-    | O .env MOTHERSHIP_API_SECRET é mantido apenas como fallback para
-    | ambientes onde a migration app_config ainda não foi executada.
     */
 
     /*
-    | Fallback de segredo para autenticação de API do Mothership.
-    | Preferência: lido de `mothership.app_config.api_secret` (zero deploy).
-    | Fallback: esta variável de ambiente (para migração gradual).
+    | Segredo para autenticação de API do Mothership.
+    | Fonte primária: `mothership.app_config` key `api_secret` (getApiSecretFromDb()).
+    | Fallback DEV: esta variável de ambiente.
     */
     'mothership_secret' => env('MOTHERSHIP_API_SECRET', null),
 
     /*
     |--------------------------------------------------------------------------
-    | Evolution API (WhatsApp)
+    | Evolution API (WhatsApp) — Fallback Local
     |--------------------------------------------------------------------------
     |
-    | Fallback para ambientes sem configuração via MotherShip.
-    | No fluxo normal, MotherShipService::getEvolutionConfig() tem prioridade.
+    | ⛔ PRODUÇÃO: Use MotherShipService::getEvolutionConfig() — OBRIGATÓRIO.
+    | ✅ DEV/LOCAL: Estes valores env() são usados como fallback pelo
+    |               ConnectionController::getInstanceName() quando o MotherShip
+    |               não está configurado (ex: php artisan serve local).
+    |
+    | Canonical source: MotherShipService::getEvolutionConfig()
+    | Returns: ['base_url', 'instance', 'token'] | null
     */
     'evolution' => [
-        'api_url'       => env('EVOLUTION_API_URL'),
-        'api_key'       => env('EVOLUTION_API_KEY'),
-        'instance_name' => env('EVOLUTION_INSTANCE_NAME'),
+        'api_url'       => env('EVOLUTION_API_URL'),       // dev fallback only
+        'api_key'       => env('EVOLUTION_API_KEY'),       // dev fallback only
+        'instance_name' => env('EVOLUTION_INSTANCE_NAME'), // dev fallback only
     ],
 ];
+

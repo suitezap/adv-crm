@@ -219,9 +219,8 @@ class MothershipTemplateController extends Controller
         // Tenta ler do banco Mothership (fonte única de verdade)
         $secret = $this->getApiSecretFromDb();
 
-        // Fallback para .env apenas se o banco ainda não tiver a tabela
         if (empty($secret)) {
-            $secret = env('MOTHERSHIP_API_SECRET');
+            $secret = config('lawfirm.mothership_secret');
         }
 
         if (empty($secret)) {

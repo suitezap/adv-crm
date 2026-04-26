@@ -37,7 +37,6 @@
                             <path d="M15.5295 5.58824C16.7965 5.58824 17.8236 4.56113 17.8236 3.29412C17.8236 2.02711 16.7965 1 15.5295 1C14.2625 1 13.2354 2.02711 13.2354 3.29412C13.2354 4.56113 14.2625 5.58824 15.5295 5.58824Z"></path><path d="M15.5295 6.35291V27"></path><path d="M11.7059 27H19.353"></path><path d="M15.5294 6.34997C11.1119 4.58012 6.18228 4.58012 1.76471 6.34997"></path><path d="M29.2942 6.34997C24.8766 4.58012 19.9471 4.58012 15.5295 6.34997"></path><path d="M6.31319 9.18127L11.7059 18.4908C11.3319 19.3187 10.6042 20.0305 9.6361 20.5155C8.66799 21.0004 7.51375 21.2313 6.35295 21.1722C5.19215 21.2313 4.03791 21.0004 3.06981 20.5155C2.10171 20.0305 1.37403 19.3187 1 18.4908L6.31319 9.18127Z"></path><path d="M24.6662 9.18127L30.0589 18.4908C29.6848 19.3187 28.9572 20.0305 27.9891 20.5155C27.021 21.0004 25.8667 21.2313 24.7059 21.1722C23.5451 21.2313 22.3909 21.0004 21.4228 20.5155C20.4547 20.0305 19.727 19.3187 19.353 18.4908L24.6662 9.18127Z"></path>
                         </svg>
                         <span class="font-bold mt-2 text-white text-sm">Processo</span>
-                        <span style="font-size:.6rem;background:rgba(0,0,0,.2);color:#fff;border-radius:10px;padding:1px 6px;margin-top:4px;font-weight:600;">R$ 3,00/mês</span>
                     </div>
 
                     {{-- Pessoa --}}
@@ -47,7 +46,6 @@
                             <path d="M23.4285 23.6307C22.0023 24.5167 18.7615 26 13 26C7.23852 26 3.99774 24.5167 2.57147 23.6307" stroke-linecap="round"></path>
                         </svg>
                         <span class="font-bold mt-2 text-white text-sm">Pessoa</span>
-                        <span style="font-size:.6rem;background:rgba(0,0,0,.2);color:#fff;border-radius:10px;padding:1px 6px;margin-top:4px;font-weight:600;">R$ 3,00/mês</span>
                     </div>
 
                     {{-- Empresa --}}
@@ -58,7 +56,6 @@
                             <path d="M17 47v-8h8v8M40 1H2v4h38V1z"></path>
                         </svg>
                         <span class="font-bold mt-2 text-white text-sm">Empresa</span>
-                        <span style="font-size:.6rem;background:rgba(0,0,0,.2);color:#fff;border-radius:10px;padding:1px 6px;margin-top:4px;font-weight:600;">R$ 3,00/mês</span>
                     </div>
 
                     {{-- Advogado(a) --}}
@@ -67,7 +64,6 @@
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M6.25 3C6.25 1.48122 7.48122 0.25 9 0.25H13C14.5188 0.25 15.75 1.48122 15.75 3H19C20.6569 3 22 4.34315 22 6V16C22 17.6569 20.6569 19 19 19H3C1.34315 19 0 17.6569 0 16V6C0 4.34315 1.34315 3 3 3H6.25ZM13 1.75C13.6904 1.75 14.25 2.30964 14.25 3H7.75C7.75 2.30964 8.30964 1.75 9 1.75H13ZM3 4.5H19C19.8284 4.5 20.5 5.17157 20.5 6V6.43138L16.2294 9.25L5.77064 9.25L1.5 6.43138V6C1.5 5.17157 2.17157 4.5 3 4.5ZM1.5 8.22862V16C1.5 16.8284 2.17157 17.5 3 17.5H19C19.8284 17.5 20.5 16.8284 20.5 16V8.22863L16.8677 10.626C16.7451 10.7069 16.6014 10.75 16.4545 10.75L5.54545 10.75C5.39857 10.75 5.25492 10.7069 5.13232 10.626L1.5 8.22862ZM9.75 11.5C9.33579 11.5 9 11.8358 9 12.25C9 12.6642 9.33579 13 9.75 13H12.25C12.6642 13 13 12.6642 13 12.25C13 11.8358 12.6642 11.5 12.25 11.5H9.75Z" fill="white"></path>
                         </svg>
                         <span class="font-bold mt-2 text-white text-sm">Advogado</span>
-                        <span style="font-size:.6rem;background:rgba(0,0,0,.2);color:#fff;border-radius:10px;padding:1px 6px;margin-top:4px;font-weight:600;">R$ 3,00/mês</span>
                     </div>
 
                     {{-- Outro --}}
@@ -76,7 +72,6 @@
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line>
                         </svg>
                         <span class="font-bold mt-2 text-white text-sm">Outro</span>
-                        <span style="font-size:.6rem;background:rgba(0,0,0,.2);color:#fff;border-radius:10px;padding:1px 6px;margin-top:4px;font-weight:600;">R$ 3,00/mês</span>
                     </div>
 
                 </div>
@@ -106,10 +101,18 @@
                         <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">Nome do processo (opcional)</label>
                         <input type="text" id="lf-nome" class="lf-esc-input">
                     </div>
+                    <div style="margin-bottom:14px;">
+                        <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">Frequência de Monitoramento</label>
+                        <select id="lf-freq-processo" class="lf-esc-select" onchange="updateModalPrice('processo', this)">
+                            <option value="diario" data-price="R$ 1,76/mês">Diário (R$ 1,76/mês)</option>
+                            <option value="semanal" data-price="R$ 0,85/mês">Semanal (R$ 0,85/mês)</option>
+                            <option value="mensal" data-price="R$ 0,45/mês">Mensal (R$ 0,45/mês)</option>
+                        </select>
+                    </div>
                     <div class="macro-msg-error" style="display:none;color:#dc2626;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;"></div>
                     <div class="macro-msg-success" style="display:none;color:#059669;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#ecfdf5;border-radius:6px;border:1px solid #a7f3d0;"></div>
                     <div style="display:flex;justify-content:flex-end;margin-top:20px;">
-                        <button onclick="submitMonitoramento('processo')" class="lf-esc-btn macro-submit-btn">✅ Finalizar</button>
+                        <button onclick="submitMonitoramento('processo')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">R$ 1,76/mês</span>)</button>
                     </div>
                 </div>
 
@@ -125,10 +128,18 @@
                         <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">CPF (opcional)</label>
                         <input type="text" id="lf-cpf" class="lf-esc-input">
                     </div>
+                    <div style="margin-bottom:14px;">
+                        <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">Frequência de Monitoramento</label>
+                        <select id="lf-freq-pessoa" class="lf-esc-select" onchange="updateModalPrice('pessoa', this)">
+                            <option value="diario" data-price="R$ 1,76/mês">Diário (R$ 1,76/mês)</option>
+                            <option value="semanal" data-price="R$ 0,85/mês">Semanal (R$ 0,85/mês)</option>
+                            <option value="mensal" data-price="R$ 0,45/mês">Mensal (R$ 0,45/mês)</option>
+                        </select>
+                    </div>
                     <div class="macro-msg-error" style="display:none;color:#dc2626;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;"></div>
                     <div class="macro-msg-success" style="display:none;color:#059669;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#ecfdf5;border-radius:6px;border:1px solid #a7f3d0;"></div>
                     <div style="display:flex;justify-content:flex-end;margin-top:20px;">
-                        <button onclick="submitMonitoramento('pessoa')" class="lf-esc-btn macro-submit-btn">✅ Finalizar</button>
+                        <button onclick="submitMonitoramento('pessoa')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">R$ 1,76/mês</span>)</button>
                     </div>
                 </div>
 
@@ -144,10 +155,18 @@
                         <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">CNPJ (opcional)</label>
                         <input type="text" id="lf-cnpj" class="lf-esc-input">
                     </div>
+                    <div style="margin-bottom:14px;">
+                        <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">Frequência de Monitoramento</label>
+                        <select id="lf-freq-empresa" class="lf-esc-select" onchange="updateModalPrice('empresa', this)">
+                            <option value="diario" data-price="R$ 1,76/mês">Diário (R$ 1,76/mês)</option>
+                            <option value="semanal" data-price="R$ 0,85/mês">Semanal (R$ 0,85/mês)</option>
+                            <option value="mensal" data-price="R$ 0,45/mês">Mensal (R$ 0,45/mês)</option>
+                        </select>
+                    </div>
                     <div class="macro-msg-error" style="display:none;color:#dc2626;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;"></div>
                     <div class="macro-msg-success" style="display:none;color:#059669;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#ecfdf5;border-radius:6px;border:1px solid #a7f3d0;"></div>
                     <div style="display:flex;justify-content:flex-end;margin-top:20px;">
-                        <button onclick="submitMonitoramento('empresa')" class="lf-esc-btn macro-submit-btn">✅ Finalizar</button>
+                        <button onclick="submitMonitoramento('empresa')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">R$ 1,76/mês</span>)</button>
                     </div>
                 </div>
 
@@ -172,10 +191,18 @@
                             </select>
                         </div>
                     </div>
+                    <div style="margin-bottom:14px;">
+                        <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">Frequência de Monitoramento</label>
+                        <select id="lf-freq-advogado" class="lf-esc-select" onchange="updateModalPrice('advogado', this)">
+                            <option value="diario" data-price="R$ 1,76/mês">Diário (R$ 1,76/mês)</option>
+                            <option value="semanal" data-price="R$ 0,85/mês">Semanal (R$ 0,85/mês)</option>
+                            <option value="mensal" data-price="R$ 0,45/mês">Mensal (R$ 0,45/mês)</option>
+                        </select>
+                    </div>
                     <div class="macro-msg-error" style="display:none;color:#dc2626;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;"></div>
                     <div class="macro-msg-success" style="display:none;color:#059669;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#ecfdf5;border-radius:6px;border:1px solid #a7f3d0;"></div>
                     <div style="display:flex;justify-content:flex-end;margin-top:20px;">
-                        <button onclick="submitMonitoramento('advogado')" class="lf-esc-btn macro-submit-btn">✅ Finalizar</button>
+                        <button onclick="submitMonitoramento('advogado')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">R$ 1,76/mês</span>)</button>
                     </div>
                 </div>
 
@@ -187,10 +214,18 @@
                         <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">Termo a ser monitorado</label>
                         <input type="text" id="lf-termo-outro" class="lf-esc-input">
                     </div>
+                    <div style="margin-bottom:14px;">
+                        <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">Frequência de Monitoramento</label>
+                        <select id="lf-freq-outro" class="lf-esc-select" onchange="updateModalPrice('outro', this)">
+                            <option value="diario" data-price="R$ 1,76/mês">Diário (R$ 1,76/mês)</option>
+                            <option value="semanal" data-price="R$ 0,85/mês">Semanal (R$ 0,85/mês)</option>
+                            <option value="mensal" data-price="R$ 0,45/mês">Mensal (R$ 0,45/mês)</option>
+                        </select>
+                    </div>
                     <div class="macro-msg-error" style="display:none;color:#dc2626;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;"></div>
                     <div class="macro-msg-success" style="display:none;color:#059669;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#ecfdf5;border-radius:6px;border:1px solid #a7f3d0;"></div>
                     <div style="display:flex;justify-content:flex-end;margin-top:20px;">
-                        <button onclick="submitMonitoramento('outro')" class="lf-esc-btn macro-submit-btn">✅ Finalizar</button>
+                        <button onclick="submitMonitoramento('outro')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">R$ 1,76/mês</span>)</button>
                     </div>
                 </div>
 
@@ -201,8 +236,8 @@
     @push('scripts')
     <script>
     var CSRF_TOKEN = '{{ csrf_token() }}';
-    var ROUTE_EXECUTAR = '{{ route('lawfirm.escavador.servico') }}';
-    var ROUTE_INDEX = '{{ route('lawfirm.escavador.monitoramentos.index') }}';
+    var ROUTE_EXECUTAR = "{{ route('lawfirm.escavador.servico') }}";
+    var ROUTE_INDEX = "{{ route('lawfirm.escavador.monitoramentos.index') }}";
 
     function openMacroModal(tipo) {
         var modal = document.getElementById('lf-macro-modal');
@@ -214,11 +249,31 @@
         });
 
         var panel = document.getElementById('macro-html-' + tipo);
-        if (panel) panel.style.display = 'block';
+        if (panel) {
+            panel.style.display = 'block';
+            // Reset the frequency select to daily and update price button
+            var freqSelect = panel.querySelector('.lf-esc-select[id^="lf-freq-"]');
+            if (freqSelect) {
+                freqSelect.value = 'diario';
+                updateModalPrice(tipo, freqSelect);
+            }
+        }
 
         document.querySelectorAll('.macro-msg-success,.macro-msg-error').forEach(function(el){
             el.style.display = 'none'; el.textContent = '';
         });
+    }
+
+    function updateModalPrice(tipo, selectElem) {
+        var panel = document.getElementById('macro-html-' + tipo);
+        if (!panel) return;
+        var btnPriceSpan = panel.querySelector('.btn-price-display');
+        if (btnPriceSpan) {
+            var selectedOption = selectElem.options[selectElem.selectedIndex];
+            if (selectedOption && selectedOption.dataset.price) {
+                btnPriceSpan.textContent = selectedOption.dataset.price;
+            }
+        }
     }
 
     function closeMacroModal() {
@@ -275,6 +330,12 @@
             if (!termo) { errorMsg = 'Informe o termo a ser monitorado.'; }
             serviceType = 'CRIAR_MON_DIARIOS';
             data = { tipo: 'termo', termo: termo };
+        }
+
+        // Add frequency
+        var freqSelect = document.getElementById('lf-freq-' + tipo);
+        if (freqSelect && data) {
+            data.frequencia = freqSelect.value;
         }
 
         var panel  = document.getElementById('macro-html-' + tipo);

@@ -164,4 +164,50 @@ class EvolutionService
             'linkPreview' => false
         ]);
     }
+
+    /**
+     * Busca histórico de mensagens de um contato e filtra as relativas a um intervalo de datas (localmente).
+     */
+    public function fetchMessagesByDateRange($instanceName, $remoteJid, $startDate = null, $endDate = null, $limit = 500)
+    {
+        $response = $this->request('POST', "/chat/findMessages/{$instanceName}", [
+            'where' => [
+                'key' => [
+                    'remoteJid' => $remoteJid
+                ]
+            ],
+            // Request more messages depending on the necessity, since limits might truncate past dates.
+            // A higher limit ensures we go back in time, but the API has standard pagination limits usually.
+            'limit' => (int) $limit
+        ]);
+
+        if (!$response['success'] || empty($response['data']['messages'])) {
+            return $response;
+        }
+        
+        $messages = $response['data']['messages']['records'] ?? $response['data']['messages'] ?? [];
+        
+        // Filter locally by timestamp if dates are provided
+        if ($startDate || $endDate) {
+            $startTs = $startDate ? strtotime($startDate . ' 00:00:00') : 0;
+            $endTs = $endDate ? strtotime($endDate . ' 23:59:59') : time();
+            
+            $filteredMessages = array_filter($messages, function($msg) use ($startTs, $endTs) {
+                // Evolution API returns messageTimestamp as either a Unix timestamp directly or object.
+                // Assuming it's a Unix timestamp as standard Baileys response.
+                $timestamp = $msg['messageTimestamp'] ?? 0;
+                
+                if (is_array($timestamp) && isset($timestamp['low'])) {
+                     $timestamp = $timestamp['low']; // handle Long timestamps (int64 structure)
+                }
+
+                return $timestamp >= $startTs && $timestamp <= $endTs;
+            });
+            
+            // Re-index array
+            $response['data']['messages'] = array_values($filteredMessages);
+        }
+
+        return $response;
+    }
 }

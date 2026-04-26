@@ -173,7 +173,7 @@ class FinancialService
         $hoje        = Carbon::now()->startOfDay();
 
         $defaultOverdue = 'Olá {cliente_nome}, verificamos uma pendência de {valor} referente a {descricao}, vencida em {data_vencimento}. Podemos atualizar o boleto?';
-        $defaultDue     = 'Olá {cliente_nome}, lembrete amigável do vencimento de {descricao} no valor de {valor} para o dia {data_vencimento}.';
+        $defaultDue     = 'Olá {cliente_nome}, lembrete de vencimento ref {descricao} no valor de {valor} para o dia {data_vencimento}.';
 
         $templateOverdue = core()->getConfigData('lawfirm.whatsapp_templates.messages.financial_billing_overdue') ?: $defaultOverdue;
         $templateDue     = core()->getConfigData('lawfirm.whatsapp_templates.messages.financial_billing_due_today') ?: $defaultDue;
