@@ -62,6 +62,10 @@ Route::prefix('assistants')->controller(\SuiteZap\LawFirm\AI\Http\Controllers\Ad
 
     // Lead Integration
     Route::post('lead/{leadId}/pre-triagem', 'processForLead')->name('lawfirm.assistants.lead.pre-triagem');
+
+    // Cross-Assistant Context (v3.50+)
+    Route::get('lead/{leadId}/triagem', 'getTriagem')->name('lawfirm.assistants.triagem.get');
+    Route::post('lead/{leadId}/triagem/save', 'saveTriagem')->name('lawfirm.assistants.triagem.save');
 });
 
 // -----------------------------------------------
@@ -86,39 +90,9 @@ Route::prefix('mothership')->controller(MothershipTemplateController::class)->gr
 
 // -----------------------------------------------
 // Diagnóstico S3/MinIO
+// Protegido: guard APP_DEBUG=true aplicado no controller.
+// CC fix (v3.49): Storage:: direto removido — usa SaasFileService::testConnection().
 // -----------------------------------------------
-Route::get('debug/test-s3', function () {
-    try {
-        // 1. Tenta pegar o disco padrão
-        $diskName = config('filesystems.default');
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = \Illuminate\Support\Facades\Storage::disk($diskName);
+Route::get('debug/test-s3', [SaaSController::class, 'testS3Connection'])
+    ->name('admin.lawfirm.debug.s3');
 
-        // 2. Tenta escrever um arquivo de teste
-        $filename = 'test-connection-' . time() . '.txt';
-        $content = 'Conexão com S3/MinIO funcionando! ' . now();
-
-        $disk->put($filename, $content);
-
-        // 3. Tenta recuperar a URL
-        $url = $disk->url($filename);
-        $exists = $disk->exists($filename);
-
-        return response()->json([
-            'status' => 'sucesso',
-            'disk_config' => $diskName,
-            'bucket' => config("filesystems.disks.{$diskName}.bucket") ?? 'N/A',
-            'endpoint' => config("filesystems.disks.{$diskName}.endpoint") ?? 'N/A',
-            'file_created' => $exists,
-            'url_generated' => $url,
-            'message' => 'Se você vê isso, o S3 está configurado corretamente.'
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'erro',
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ], 500);
-    }
-})->name('admin.lawfirm.debug.s3');

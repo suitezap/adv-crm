@@ -239,13 +239,19 @@ class ProcessDocumentController extends Controller
                 }
 
                 // 5. Substituir Variáveis
+                $portalLink = route('lawfirm.public.portal.index', [
+                    'id' => $processo->id, 
+                    'token' => hash_hmac('sha256', $processo->id, config('app.key'))
+                ]);
+
                 $msg = str_replace(
-                    ['{cliente_nome}', '{processo_titulo}', '{kit_nome}', '{lista_documentos}'],
+                    ['{cliente_nome}', '{processo_titulo}', '{kit_nome}', '{lista_documentos}', '{link_portal}'],
                     [
                         $processo->person->name,
                         $processo->titulo ?? 'Processo',
                         $template->name ?? 'Documentação',
-                        $docListString
+                        $docListString,
+                        $portalLink
                     ],
                     $templateMsg
                 );
@@ -340,13 +346,19 @@ class ProcessDocumentController extends Controller
             }
 
             // 5. Substituir Variáveis
+            $portalLink = route('lawfirm.public.portal.index', [
+                'id' => $processo->id, 
+                'token' => hash_hmac('sha256', $processo->id, config('app.key'))
+            ]);
+
             $msg = str_replace(
-                ['{cliente_nome}', '{processo_titulo}', '{kit_nome}', '{lista_documentos}'],
+                ['{cliente_nome}', '{processo_titulo}', '{kit_nome}', '{lista_documentos}', '{link_portal}'],
                 [
                     $processo->person->name,
                     $processo->titulo ?? 'Processo',
                     'Seleção Manual',
-                    $docListString
+                    $docListString,
+                    $portalLink
                 ],
                 $templateMsg
             );

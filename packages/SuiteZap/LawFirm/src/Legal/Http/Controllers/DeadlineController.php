@@ -28,7 +28,7 @@ class DeadlineController extends Controller
             'processo_id' => 'required|exists:processos,id',
             'titulo' => 'required|string|max:255',
             'data_vencimento' => 'required|date',
-            'tipo' => 'required|in:fatal,comum',
+            'tipo' => 'required|in:prazo,tarefa',
             'descricao' => 'nullable|string',
             'activity_id' => 'nullable|integer',
         ]);
@@ -82,7 +82,7 @@ class DeadlineController extends Controller
         $validated = $request->validate([
             'titulo'          => 'sometimes|required|string|max:255',
             'data_vencimento' => 'sometimes|required|date',
-            'tipo'            => 'sometimes|required|in:fatal,comum',
+            'tipo'            => 'sometimes|required|in:prazo,tarefa',
             'status'          => 'sometimes|required|in:pendente,concluido',
             'descricao'       => 'nullable|string',
         ]);

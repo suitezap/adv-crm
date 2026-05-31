@@ -62,11 +62,8 @@ class PrazoDataGrid extends DataGrid
         $this->addFilter('client_name', 'persons.name');
 
         // Security / ACL Logic - Filter by User Scope
-        $user = auth()->guard('user')->user();
-
-        // Check 1: Skip filtering if user is administrator (role_id = 1 in Krayin)
-        if ($user && $user->role_id != 1) {
-            $queryBuilder->where('processos.user_id', $user->id);
+        if ($userIds = bouncer()->getAuthorizedUserIds()) {
+            $queryBuilder->whereIn('processos.user_id', $userIds);
         }
 
         // Ordenação: Não-concluídos primeiro (por data ASC), Concluídos no final

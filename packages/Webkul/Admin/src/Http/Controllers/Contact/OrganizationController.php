@@ -51,7 +51,20 @@ class OrganizationController extends Controller
     {
         Event::dispatch('contacts.organization.create.before');
 
-        $organization = $this->organizationRepository->create(request()->all());
+        $data = request()->all();
+        if (isset($data['contact_numbers']) && is_array($data['contact_numbers'])) {
+            foreach ($data['contact_numbers'] as &$contact) {
+                if (!empty($contact['value'])) {
+                    $cleaned = preg_replace('/\D/', '', $contact['value']);
+                    if (strlen($cleaned) >= 10 && !str_starts_with($cleaned, '55')) {
+                        $cleaned = '55' . $cleaned;
+                    }
+                    $contact['value'] = $cleaned;
+                }
+            }
+        }
+
+        $organization = $this->organizationRepository->create($data);
 
         Event::dispatch('contacts.organization.create.after', $organization);
 
@@ -77,7 +90,20 @@ class OrganizationController extends Controller
     {
         Event::dispatch('contacts.organization.update.before', $id);
 
-        $organization = $this->organizationRepository->update(request()->all(), $id);
+        $data = request()->all();
+        if (isset($data['contact_numbers']) && is_array($data['contact_numbers'])) {
+            foreach ($data['contact_numbers'] as &$contact) {
+                if (!empty($contact['value'])) {
+                    $cleaned = preg_replace('/\D/', '', $contact['value']);
+                    if (strlen($cleaned) >= 10 && !str_starts_with($cleaned, '55')) {
+                        $cleaned = '55' . $cleaned;
+                    }
+                    $contact['value'] = $cleaned;
+                }
+            }
+        }
+
+        $organization = $this->organizationRepository->update($data, $id);
 
         Event::dispatch('contacts.organization.update.after', $organization);
 

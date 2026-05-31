@@ -148,12 +148,14 @@ class PrazoController extends Controller
      */
     public function store(Request $request)
     {
+        abort_if(!bouncer()->hasPermission('lawfirm.prazos.create'), 401, 'This action is unauthorized');
+
         \Log::info("PrazoController: store method hit.");
         $request->validate([
             'processo_id' => 'required|exists:processos,id',
             'titulo' => 'required|string|max:255',
             'data_vencimento' => 'required|date',
-            'tipo' => 'required|in:fatal,comum',
+            'tipo' => 'required|in:prazo,tarefa',
             'descricao' => 'nullable|string',
         ]);
 
@@ -186,6 +188,8 @@ class PrazoController extends Controller
      */
     public function edit($id)
     {
+        abort_if(!bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
+
         $prazo = Prazo::findOrFail($id);
 
         return view('lawfirm::admin.prazos.edit', compact('prazo'));
@@ -200,12 +204,14 @@ class PrazoController extends Controller
      */
     public function update(Request $request, $id)
     {
+        abort_if(!bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
+
         $prazo = Prazo::findOrFail($id);
 
         $request->validate([
             'titulo' => 'required|string|max:255',
             'data_vencimento' => 'required|date',
-            'tipo' => 'required|in:fatal,comum',
+            'tipo' => 'required|in:prazo,tarefa',
             'status' => 'required|in:pendente,concluido',
             'descricao' => 'nullable|string',
         ]);
@@ -232,6 +238,8 @@ class PrazoController extends Controller
      */
     public function concluir($id)
     {
+        abort_if(!bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
+
         $prazo = Prazo::findOrFail($id);
 
         $prazo->update([
@@ -252,6 +260,8 @@ class PrazoController extends Controller
      */
     public function destroy($id)
     {
+        abort_if(!bouncer()->hasPermission('lawfirm.prazos.delete'), 401, 'This action is unauthorized');
+
         $prazo = Prazo::findOrFail($id);
 
         $prazo->delete();

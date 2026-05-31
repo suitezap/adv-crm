@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use SuiteZap\LawFirm\SaaS\Models\InfrastructureNode;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
+use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorRequest;
 
 /**
@@ -27,10 +28,17 @@ class EscavadorService
      */
     public const SERVICE_MAP = [
         // Existentes
-        'CAPA_PROCESSO' => ['get', 'processos/numero_cnj/{cnj}', 'v2', false],
+        'CAPA_PROCESSO' => ['get', 'processos/numero_cnj/{numero}', 'v2', false],
         'PDF_DIARIO' => ['get', 'monitoramentos-de-diarios/{id}/publicacao/pdf', 'v1', false],
         'BUSCA_TERMO' => ['get', 'busca', 'v1', false],
-        'RESUMO_IA' => ['post', 'processos/numero_cnj/{cnj}/ia/resumo/solicitar-atualizacao', 'v2', true],
+        'RESUMO_IA' => ['post', 'processos/numero_cnj/{numero}/ia/resumo/solicitar-atualizacao', 'v2', true],
+        
+        // Mapeamentos diretos pro CacheService e Controller
+        'ATUALIZACAO_PROCESSO_PUB' => ['post', 'processos/numero_cnj/{numero}/solicitar-atualizacao', 'v2', true],
+        'ATUALIZACAO_PROCESSO_AUTOS' => ['post', 'processos/numero_cnj/{numero}/solicitar-atualizacao', 'v2', true],
+        'MOVIMENTACOES_PROCESSO' => ['get', 'processos/numero_cnj/{numero}/movimentacoes', 'v2', false],
+        'ENVOLVIDOS_PROCESSO' => ['get', 'processos/numero_cnj/{numero}/envolvidos', 'v2', false],
+        'DOCUMENTOS_PUBLICOS' => ['get', 'processos/numero_cnj/{numero}/documentos-publicos', 'v2', false],
 
         // MAPEAMENTO DA UI / ASSISTENTE JURIDICO (V1)
         'API_V1_BUSCARPORTERMO' => ['get', 'busca', 'v1', false],
@@ -430,7 +438,8 @@ class EscavadorService
             ];
         }
 
-        $cost = $prices[$serviceType];
+        $costBrlRaw = $prices[$serviceType];
+        $costBrlWithMarkup = SuiteCoinService::calculateServicePriceBrl($costBrlRaw);
 
         // ── 2. Verificar saldo da Subscription ────────────────────────────
         $subscription = Subscription::where('tenant_id', $tenantId)->first();
@@ -443,13 +452,12 @@ class EscavadorService
             ];
         }
 
-        if ((float) $subscription->ai_tokens_balance < $cost) {
+        if (!SuiteCoinService::hasSufficientBalance((float) $subscription->suitecoin_balance, $costBrlWithMarkup)) {
             return [
                 'success' => false,
-                'error' => sprintf(
-                    'Saldo insuficiente. Disponível: R$ %.2f | Necessário: R$ %.2f',
-                    $subscription->ai_tokens_balance,
-                    $cost
+                'error' => SuiteCoinService::insufficientBalanceMessage(
+                    $subscription->suitecoin_balance,
+                    $costBrlWithMarkup
                 ),
                 'request' => null,
             ];
@@ -481,7 +489,7 @@ class EscavadorService
         }
 
         // ── 3. Debitar imediatamente ───────────────────────────────────────
-        $subscription->decrement('ai_tokens_balance', $cost);
+        $subscription->decrement('suitecoin_balance', $costBrlWithMarkup);
 
         // ── 4. Resolver endpoint e fazer a chamada ─────────────────────────
         [$method, $endpointTemplate, $version, $isAsync] = self::SERVICE_MAP[$serviceType];
@@ -519,7 +527,7 @@ class EscavadorService
             }
         } else {
             // Falha na API: estornar o saldo
-            $subscription->increment('ai_tokens_balance', $cost);
+            $subscription->increment('suitecoin_balance', $costBrlWithMarkup);
             $statusRecord = EscavadorRequest::STATUS_FAILED;
 
             Log::warning('EscavadorService::requestService — falha na API', [
@@ -536,7 +544,7 @@ class EscavadorService
             'request_hash' => $requestHash,
             'endpoint_type' => $serviceType,
             'status' => $statusRecord,
-            'cost' => $apiResult['success'] ? $cost : 0.00,
+            'cost' => $apiResult['success'] ? $costBrlWithMarkup : 0.00,
             'payload_response' => $payloadResponse,
         ]);
 
@@ -544,10 +552,11 @@ class EscavadorService
             \SuiteZap\LawFirm\SaaS\Models\SaasTransaction::create([
                 'tenant_id' => $tenantId,
                 'type' => 'debit',
-                'amount' => $cost,
-                'balance_after' => $subscription->ai_tokens_balance,
+                'amount' => $costBrlWithMarkup,
+                'balance_after' => $subscription->suitecoin_balance,
+                'currency' => SuiteCoinService::CURRENCY_CODE,
                 'service_type' => 'ESCAVADOR_' . $serviceType,
-                'description' => "Escavador: {$serviceType} — Custo: R$ {$cost}",
+                'description' => "Escavador: {$serviceType} — Custo: " . SuiteCoinService::format(SuiteCoinService::calculateServicePriceVirtual($costBrlRaw)),
                 'user_id' => auth()->id(),
                 'reference_id' => $escavadorRequest->id,
                 'reference_type' => EscavadorRequest::class,

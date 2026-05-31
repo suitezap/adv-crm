@@ -91,14 +91,36 @@
 
             data() {
                 return {
-                    contactNumbers: this.value || [{'value': '', 'label': 'work'}],
+                    contactNumbers: this.formatData(this.value || [{'value': '', 'label': 'work'}]),
                 };
             },
 
             watch: {
                 value(newValue, oldValue) {
                     if (JSON.stringify(newValue) !== JSON.stringify(oldValue)) {
-                        this.contactNumbers = newValue || [{'value': '', 'label': 'work'}];
+                        this.contactNumbers = this.formatData(newValue || [{'value': '', 'label': 'work'}]);
+                    }
+                },
+                contactNumbers: {
+                    deep: true,
+                    handler(newVal) {
+                        if (!newVal) return;
+                        newVal.forEach((item) => {
+                            if (item.value) {
+                                let v = item.value.replace(/\D/g, "");
+                                if (v.length <= 10) {
+                                    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+                                    v = v.replace(/(\d{4})(\d)/, "$1-$2");
+                                } else {
+                                    v = v.replace(/(\d{2})(\d)/, "($1) $2");
+                                    v = v.replace(/(\d{5})(\d)/, "$1-$2");
+                                }
+                                let formatted = v.substring(0, 15);
+                                if (item.value !== formatted) {
+                                    item.value = formatted;
+                                }
+                            }
+                        });
                     }
                 },
             },
@@ -121,10 +143,23 @@
                         'value': '',
                         'label': 'work'
                     }];
+                } else {
+                    this.contactNumbers = this.formatData(this.contactNumbers);
                 }
             },
 
             methods: {
+                formatData(data) {
+                    if (!data) return data;
+                    return data.map(item => {
+                        if (item.value && String(item.value).startsWith('55')) {
+                            // Creates a copy ensuring we don't mutate external references unexpectly
+                            return { ...item, value: String(item.value).substring(2) };
+                        }
+                        return item;
+                    });
+                },
+
                 add() {
                     this.contactNumbers.push({
                         'value': '',

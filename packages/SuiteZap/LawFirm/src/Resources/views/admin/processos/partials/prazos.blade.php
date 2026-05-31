@@ -37,7 +37,7 @@
     <div class="flex items-center justify-between mb-4 mt-6">
         <div class="flex items-center gap-2">
             <p class="text-lg font-bold text-gray-800 dark:text-white">
-                {{ __('lawfirm::app.prazos.section-title') ?? 'Gestão de Prazos' }}
+                {{ __('lawfirm::app.prazos.section-title') ?? 'Gestão de Prazos e Tarefas' }}
             </p>
             @if(isset($processo) && $processo->data_audiencia)
                 <span class="text-base {{ $audienceColorClass }}">
@@ -49,7 +49,7 @@
         <div class="flex gap-2">
             <button type="button" class="primary-button" onclick="adicionarPrazo()">
                 <span class="icon-plus text-lg inline-block align-middle mr-1"></span>
-                {{ __('lawfirm::app.prazos.new-btn') ?? 'Novo Prazo' }}
+                {{ __('lawfirm::app.prazos.new-btn') ?? 'Novo Item' }}
             </button>
         </div>
     </div>
@@ -68,7 +68,7 @@
         <div class="flex gap-2 ml-auto">
             <button type="button" class="primary-button" onclick="adicionarPrazo()">
                 <span class="icon-plus text-lg inline-block align-middle mr-1"></span>
-                {{ __('lawfirm::app.prazos.new-btn') ?? 'Novo Prazo' }}
+                {{ __('lawfirm::app.prazos.new-btn') ?? 'Novo Item' }}
             </button>
         </div>
     </div>
@@ -78,11 +78,12 @@
     <table class="min-w-full text-left text-sm text-gray-500 dark:text-gray-400" id="tabela-prazos">
         <thead class="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-800 dark:text-gray-400">
             <tr>
-                <th scope="col" class="px-6 py-3 min-w-[400px] required">@lang('lawfirm::app.prazos.title-table')</th>
-                <th scope="col" class="px-6 py-3 w-[160px] required">@lang('lawfirm::app.prazos.due-date')</th>
-                <th scope="col" class="px-6 py-3 min-w-[150px] required">@lang('lawfirm::app.prazos.status')</th>
-                <th scope="col" class="px-6 py-3 w-full">Descrição</th>
-                <th scope="col" class="px-6 py-3 w-[50px] text-center"></th>
+                <th scope="col" class="px-6 py-3 required" style="width: 32%; min-width: 250px;">@lang('lawfirm::app.prazos.title-table')</th>
+                <th scope="col" class="px-6 py-3 required" style="width: 100px; min-width: 100px;">Tipo</th>
+                <th scope="col" class="px-6 py-3 required" style="width: 15%; min-width: 160px; padding-left: 1.5rem;">@lang('lawfirm::app.prazos.due-date')</th>
+                <th scope="col" class="px-6 py-3 required" style="width: 5%; min-width: 120px;">@lang('lawfirm::app.prazos.status')</th>
+                <th scope="col" class="px-6 py-3" style="width: 48%; min-width: 300px;">Descrição</th>
+                <th scope="col" class="px-6 py-3 text-center" style="width: 50px;"></th>
             </tr>
         </thead>
         <tbody id="container-prazos">
@@ -93,6 +94,7 @@
                     $prazoDataVencimento = $prazo->data_vencimento ?? null;
                     $prazoStatus = $prazo->status ?? 'Pendente';
                     $prazoDescricao = $prazo->descricao ?? '';
+                    $prazoTipo = $prazo->tipo ?? 'prazo';
 
                     $diff = 999;
                     if ($prazoDataVencimento) {
@@ -133,7 +135,7 @@
                     <input type="hidden" name="prazos[{{ $index }}][id]" value="{{ $prazoId }}">
 
                     <!-- Título -->
-                    <td class="px-1 py-1 min-w-[350px]" style="min-width: 350px;">
+                    <td class="px-1 py-1">
                         <input type="text" name="prazos[{{ $index }}][titulo]" value="{{ $prazoTitulo }}"
                             class="w-full rounded-md border px-3 py-2.5 text-sm font-normal transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 {{ $colorClass }} @error("prazos.{$index}.titulo") border-red-500 @enderror"
                             style="width: 100%; box-sizing: border-box;" required>
@@ -142,21 +144,32 @@
                         @enderror
                     </td>
 
+                    <!-- Tipo -->
+                    <td class="px-1 py-1">
+                        <select name="prazos[{{ $index }}][tipo]"
+                            class="w-full rounded-md border border-gray-300 bg-white pl-2 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                            style="padding-right: 24px;">
+                            <option value="prazo" {{ rtrim(strtolower($prazoTipo)) === 'prazo' ? 'selected' : '' }}>⚖️ Prazo</option>
+                            <option value="tarefa" {{ rtrim(strtolower($prazoTipo)) === 'tarefa' ? 'selected' : '' }}>✅ Tarefa</option>
+                        </select>
+                    </td>
+
                     <!-- Data -->
                     <td class="px-1 py-1">
                         @php
                             $dtVenc = $prazoDataVencimento;
                             if ($dtVenc && $dtVenc instanceof \Carbon\Carbon) {
-                                $dtVenc = $dtVenc->format('Y-m-d');
+                                $dtVenc = $dtVenc->format('Y-m-d\TH:i');
                             } elseif ($dtVenc) {
                                 // Tenta formatar string se possível, ou mantem raw
                                 try {
-                                    $dtVenc = \Carbon\Carbon::parse($dtVenc)->format('Y-m-d');
+                                    $dtVenc = \Carbon\Carbon::parse($dtVenc)->format('Y-m-d\TH:i');
                                 } catch (\Exception $e) {}
                             }
                         @endphp
-                        <input type="date" name="prazos[{{ $index }}][data_vencimento]" value="{{ $dtVenc ?? '' }}"
-                            class="w-full rounded-md border px-3 py-2.5 text-sm font-normal transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 {{ $colorClass }} @error("prazos.{$index}.data_vencimento") border-red-500 @enderror"
+                        <input type="datetime-local" name="prazos[{{ $index }}][data_vencimento]" value="{{ $dtVenc ?? '' }}"
+                            class="w-full rounded-md border pl-3 py-2.5 text-sm font-normal transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 {{ $colorClass }} @error("prazos.{$index}.data_vencimento") border-red-500 @enderror"
+                            style="padding-right: 29px;"
                             required>
                         @error("prazos.{$index}.data_vencimento")
                             <div class="text-red-500 text-xs mt-1">{{ $message }}</div>
@@ -166,7 +179,8 @@
                     <!-- Status -->
                     <td class="px-1 py-1">
                         <select name="prazos[{{ $index }}][status]"
-                            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                            class="w-full rounded-md border border-gray-300 bg-white pl-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                            style="padding-right: 8px;"
                             data-deadline-id="{{ $prazoId }}" onchange="updateDeadlineStatus(this)" required>
                             <option value="pendente" {{ in_array(strtolower($prazoStatus), ['pendente']) ? 'selected' : '' }}>Pendente</option>
                             <option value="concluido" {{ in_array(strtolower(str_replace('í','i',$prazoStatus)), ['concluido']) ? 'selected' : '' }}>Concluído
@@ -205,14 +219,20 @@
             row.className = 'border-b bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-gray-800';
 
             row.innerHTML = `
-                            <td class="px-1 py-1 min-w-[350px]" style="min-width: 350px;">
+                            <td class="px-1 py-1">
                                 <input type="text" name="prazos[${index}][titulo]" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" style="width: 100%; box-sizing: border-box;" placeholder="Título" required>
                             </td>
                             <td class="px-1 py-1">
-                                    <input type="date" name="prazos[${index}][data_vencimento]" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" required>
+                                <select name="prazos[${index}][tipo]" class="w-full rounded-md border border-gray-300 bg-white pl-2 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" style="padding-right: 24px;">
+                                    <option value="prazo" selected>⚖️ Prazo</option>
+                                    <option value="tarefa">✅ Tarefa</option>
+                                </select>
                             </td>
                             <td class="px-1 py-1">
-                                <select name="prazos[${index}][status]" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                                    <input type="datetime-local" name="prazos[${index}][data_vencimento]" class="w-full rounded-md border border-gray-300 bg-white pl-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" style="padding-right: 29px;" required>
+                            </td>
+                            <td class="px-1 py-1">
+                                <select name="prazos[${index}][status]" class="w-full rounded-md border border-gray-300 bg-white pl-3 py-2.5 text-sm font-normal text-gray-600 transition-all hover:border-gray-400 focus:border-blue-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300" style="padding-right: 8px;">
                                     <option value="Pendente">Pendente</option>
                                     <option value="Concluído">Concluído</option>
                                 </select>

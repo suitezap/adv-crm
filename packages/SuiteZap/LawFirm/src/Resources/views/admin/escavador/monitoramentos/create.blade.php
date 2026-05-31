@@ -104,15 +104,15 @@
                     <div style="margin-bottom:14px;">
                         <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">Frequência de Monitoramento</label>
                         <select id="lf-freq-processo" class="lf-esc-select" onchange="updateModalPrice('processo', this)">
-                            <option value="diario" data-price="R$ 1,76/mês">Diário (R$ 1,76/mês)</option>
-                            <option value="semanal" data-price="R$ 0,85/mês">Semanal (R$ 0,85/mês)</option>
-                            <option value="mensal" data-price="R$ 0,45/mês">Mensal (R$ 0,45/mês)</option>
+                            <option value="diario" data-price="Ƶ 22,00/mês">Diário (Ƶ 22,00/mês)</option>
+                            <option value="semanal" data-price="Ƶ 10,63/mês">Semanal (Ƶ 10,63/mês)</option>
+                            <option value="mensal" data-price="Ƶ 5,63/mês">Mensal (Ƶ 5,63/mês)</option>
                         </select>
                     </div>
                     <div class="macro-msg-error" style="display:none;color:#dc2626;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;"></div>
                     <div class="macro-msg-success" style="display:none;color:#059669;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#ecfdf5;border-radius:6px;border:1px solid #a7f3d0;"></div>
                     <div style="display:flex;justify-content:flex-end;margin-top:20px;">
-                        <button onclick="submitMonitoramento('processo')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">R$ 1,76/mês</span>)</button>
+                        <button onclick="submitMonitoramento('processo')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">Ƶ 22,00/mês</span>)</button>
                     </div>
                 </div>
 
@@ -131,15 +131,15 @@
                     <div style="margin-bottom:14px;">
                         <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">Frequência de Monitoramento</label>
                         <select id="lf-freq-pessoa" class="lf-esc-select" onchange="updateModalPrice('pessoa', this)">
-                            <option value="diario" data-price="R$ 1,76/mês">Diário (R$ 1,76/mês)</option>
-                            <option value="semanal" data-price="R$ 0,85/mês">Semanal (R$ 0,85/mês)</option>
-                            <option value="mensal" data-price="R$ 0,45/mês">Mensal (R$ 0,45/mês)</option>
+                            <option value="diario" data-price="Ƶ 22,00/mês">Diário (Ƶ 22,00/mês)</option>
+                            <option value="semanal" data-price="Ƶ 10,63/mês">Semanal (Ƶ 10,63/mês)</option>
+                            <option value="mensal" data-price="Ƶ 5,63/mês">Mensal (Ƶ 5,63/mês)</option>
                         </select>
                     </div>
                     <div class="macro-msg-error" style="display:none;color:#dc2626;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;"></div>
                     <div class="macro-msg-success" style="display:none;color:#059669;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#ecfdf5;border-radius:6px;border:1px solid #a7f3d0;"></div>
                     <div style="display:flex;justify-content:flex-end;margin-top:20px;">
-                        <button onclick="submitMonitoramento('pessoa')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">R$ 1,76/mês</span>)</button>
+                        <button onclick="submitMonitoramento('pessoa')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">Ƶ 22,00/mês</span>)</button>
                     </div>
                 </div>
 
@@ -158,15 +158,15 @@
                     <div style="margin-bottom:14px;">
                         <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">Frequência de Monitoramento</label>
                         <select id="lf-freq-empresa" class="lf-esc-select" onchange="updateModalPrice('empresa', this)">
-                            <option value="diario" data-price="R$ 1,76/mês">Diário (R$ 1,76/mês)</option>
-                            <option value="semanal" data-price="R$ 0,85/mês">Semanal (R$ 0,85/mês)</option>
-                            <option value="mensal" data-price="R$ 0,45/mês">Mensal (R$ 0,45/mês)</option>
+                            <option value="diario" data-price="Ƶ 22,00/mês">Diário (Ƶ 22,00/mês)</option>
+                            <option value="semanal" data-price="Ƶ 10,63/mês">Semanal (Ƶ 10,63/mês)</option>
+                            <option value="mensal" data-price="Ƶ 5,63/mês">Mensal (Ƶ 5,63/mês)</option>
                         </select>
                     </div>
                     <div class="macro-msg-error" style="display:none;color:#dc2626;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;"></div>
                     <div class="macro-msg-success" style="display:none;color:#059669;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#ecfdf5;border-radius:6px;border:1px solid #a7f3d0;"></div>
                     <div style="display:flex;justify-content:flex-end;margin-top:20px;">
-                        <button onclick="submitMonitoramento('empresa')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">R$ 1,76/mês</span>)</button>
+                        <button onclick="submitMonitoramento('empresa')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">Ƶ 22,00/mês</span>)</button>
                     </div>
                 </div>
 
@@ -194,15 +194,15 @@
                     <div style="margin-bottom:14px;">
                         <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">Frequência de Monitoramento</label>
                         <select id="lf-freq-advogado" class="lf-esc-select" onchange="updateModalPrice('advogado', this)">
-                            <option value="diario" data-price="R$ 1,76/mês">Diário (R$ 1,76/mês)</option>
-                            <option value="semanal" data-price="R$ 0,85/mês">Semanal (R$ 0,85/mês)</option>
-                            <option value="mensal" data-price="R$ 0,45/mês">Mensal (R$ 0,45/mês)</option>
+                            <option value="diario" data-price="Ƶ 22,00/mês">Diário (Ƶ 22,00/mês)</option>
+                            <option value="semanal" data-price="Ƶ 10,63/mês">Semanal (Ƶ 10,63/mês)</option>
+                            <option value="mensal" data-price="Ƶ 5,63/mês">Mensal (Ƶ 5,63/mês)</option>
                         </select>
                     </div>
                     <div class="macro-msg-error" style="display:none;color:#dc2626;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;"></div>
                     <div class="macro-msg-success" style="display:none;color:#059669;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#ecfdf5;border-radius:6px;border:1px solid #a7f3d0;"></div>
                     <div style="display:flex;justify-content:flex-end;margin-top:20px;">
-                        <button onclick="submitMonitoramento('advogado')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">R$ 1,76/mês</span>)</button>
+                        <button onclick="submitMonitoramento('advogado')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">Ƶ 22,00/mês</span>)</button>
                     </div>
                 </div>
 
@@ -217,15 +217,15 @@
                     <div style="margin-bottom:14px;">
                         <label style="font-size:.875rem;font-weight:600;display:block;margin-bottom:4px;">Frequência de Monitoramento</label>
                         <select id="lf-freq-outro" class="lf-esc-select" onchange="updateModalPrice('outro', this)">
-                            <option value="diario" data-price="R$ 1,76/mês">Diário (R$ 1,76/mês)</option>
-                            <option value="semanal" data-price="R$ 0,85/mês">Semanal (R$ 0,85/mês)</option>
-                            <option value="mensal" data-price="R$ 0,45/mês">Mensal (R$ 0,45/mês)</option>
+                            <option value="diario" data-price="Ƶ 22,00/mês">Diário (Ƶ 22,00/mês)</option>
+                            <option value="semanal" data-price="Ƶ 10,63/mês">Semanal (Ƶ 10,63/mês)</option>
+                            <option value="mensal" data-price="Ƶ 5,63/mês">Mensal (Ƶ 5,63/mês)</option>
                         </select>
                     </div>
                     <div class="macro-msg-error" style="display:none;color:#dc2626;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#fef2f2;border-radius:6px;border:1px solid #fecaca;"></div>
                     <div class="macro-msg-success" style="display:none;color:#059669;font-size:.875rem;margin-top:8px;padding:8px 12px;background:#ecfdf5;border-radius:6px;border:1px solid #a7f3d0;"></div>
                     <div style="display:flex;justify-content:flex-end;margin-top:20px;">
-                        <button onclick="submitMonitoramento('outro')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">R$ 1,76/mês</span>)</button>
+                        <button onclick="submitMonitoramento('outro')" class="lf-esc-btn macro-submit-btn">✅ Finalizar (<span class="btn-price-display">Ƶ 22,00/mês</span>)</button>
                     </div>
                 </div>
 

@@ -132,7 +132,7 @@
                 <!-- Left: Inputs -->
                 <div
                     class="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 h-full">
-                    <div class="p-8">
+                    <div class="p-6">
                         <h3
                             class="text-lg font-bold text-gray-800 dark:text-white mb-4 border-b border-gray-100 dark:border-gray-800 pb-3 flex items-center gap-2">
                             <span class="text-xl">📋</span> Dados de Entrada
@@ -143,7 +143,7 @@
                                 @foreach($history->input_data as $key => $value)
                                     @if($key !== 'tenant_id')
                                         <div class="border-b border-gray-100 dark:border-gray-800 pb-4">
-                                            <p class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                                            <p class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide px-4">
                                                 {{ ucwords(str_replace('_', ' ', $key)) }}
                                             </p>
                                             <p class="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed
@@ -164,7 +164,7 @@
                 <!-- Right: Result -->
                 <div
                     class="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 h-full">
-                    <div class="p-8 h-full flex flex-col">
+                    <div class="p-6 h-full flex flex-col">
                         <div
                             class="flex items-center justify-between mb-4 border-b border-gray-100 dark:border-gray-800 pb-3">
                             <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">

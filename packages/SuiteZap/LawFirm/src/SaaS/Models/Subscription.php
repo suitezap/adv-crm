@@ -16,7 +16,7 @@ class Subscription extends Model
         'max_users',
         'storage_limit_gb',
         'current_usage_bytes',
-        'ai_tokens_balance',
+        'suitecoin_balance',
         'active_modules'
     ];
 

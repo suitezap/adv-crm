@@ -15,11 +15,16 @@ class SaasTransaction extends Model
         'type',
         'amount',
         'balance_after',
+        'currency',
         'service_type',
         'description',
         'user_id',
         'reference_id',
         'reference_type',
+    ];
+
+    protected $attributes = [
+        'currency' => 'SUITECOIN',
     ];
 
     /**

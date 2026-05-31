@@ -49,11 +49,8 @@ class ProcessoDataGrid extends DataGrid
             );
 
         // Security / ACL Logic - Filter by User Scope
-        $user = auth()->guard('user')->user();
-
-        // Check 1: Skip filtering if user is administrator (role_id = 1 in Krayin)
-        if ($user && $user->role_id != 1) {
-            $queryBuilder->where('processos.user_id', $user->id);
+        if ($userIds = bouncer()->getAuthorizedUserIds()) {
+            $queryBuilder->whereIn('processos.user_id', $userIds);
         }
 
         $this->addFilter('id', 'processos.id');
@@ -151,17 +148,14 @@ class ProcessoDataGrid extends DataGrid
             'type' => 'string',
             'sortable' => true,
             'filterable' => true,
-            'width' => '120px',
+            'width' => '175px',
             'closure' => function ($row) {
-                $color = 'bg-gray-200 text-gray-800';
-                if ($row->status == 'Ativo')
-                    $color = 'bg-green-100 text-green-800';
-                if ($row->status == 'Suspenso')
-                    $color = 'bg-yellow-100 text-yellow-800';
-
-                return '<span class="px-2 py-1 rounded-full text-xs font-semibold inline-block ' . $color . '">' . $row->status . '</span>';
+                $label = $row->status ?: '—';
+                $color = 'bg-gray-100 text-gray-600';
+                return '<span class="px-2 py-1 rounded-full text-xs font-semibold inline-block ' . $color . '">' . htmlspecialchars($label) . '</span>';
             }
         ]);
+
     }
 
     /**

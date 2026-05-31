@@ -159,7 +159,7 @@ class WebhookController
         $subscription = Subscription::where('tenant_id', $tenantId)->first();
 
         if ($subscription) {
-            $subscription->increment('ai_tokens_balance', $cost);
+            $subscription->increment('suitecoin_balance', $cost);
         } else {
             Log::error("EscavadorWebhook: Subscription não encontrada para estorno. tenant_id={$tenantId}");
         }

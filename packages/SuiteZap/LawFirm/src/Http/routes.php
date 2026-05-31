@@ -13,6 +13,25 @@ Route::middleware(['api'])->group(function () {
 
     Route::post('api/webhooks/asaas', [\SuiteZap\LawFirm\SaaS\Http\Controllers\AsaasWebhookController::class, 'handle'])
         ->name('webhooks.asaas');
+
+    Route::post('api/webhooks/tenant-asaas', [\SuiteZap\LawFirm\TenantFinance\Http\Controllers\TenantAsaasWebhookController::class, 'handle'])
+        ->name('webhooks.tenant_asaas');
+
+    // ── WhatsApp Messenger Inbox Webhook (CSRF-exempt — receives Evolution API callbacks) ──
+    Route::post('api/webhooks/whatsapp-messenger/{tenantId}', [\SuiteZap\LawFirm\Whatsapp\Http\Controllers\WhatsappWebhookController::class, 'handle'])
+        ->name('webhooks.whatsapp_messenger');
+});
+
+// ============================================================================
+// PUBLIC WEB ROUTES (Customer Portal)
+// ============================================================================
+Route::middleware(['web'])->group(function () {
+    Route::get('portal/processo/{id}', [\SuiteZap\LawFirm\Legal\Http\Controllers\PublicPortal\CustomerPortalController::class, 'index'])
+        ->name('lawfirm.public.portal.index');
+    Route::post('portal/processo/{id}/update', [\SuiteZap\LawFirm\Legal\Http\Controllers\PublicPortal\CustomerPortalController::class, 'update'])
+        ->name('lawfirm.public.portal.update');
+    Route::post('portal/processo/{id}/upload', [\SuiteZap\LawFirm\Legal\Http\Controllers\PublicPortal\CustomerPortalController::class, 'upload'])
+        ->name('lawfirm.public.portal.upload');
 });
 
 
@@ -73,6 +92,7 @@ Route::middleware(['web', 'admin_locale', 'user'])
         require __DIR__ . '/Routes/admin-whatsapp.php';
         require __DIR__ . '/Routes/admin-escavador.php';
         require __DIR__ . '/Routes/admin-datajud.php';
+        require __DIR__ . '/Routes/admin-tenant-finance.php';
     });
 
 // ============================================================================

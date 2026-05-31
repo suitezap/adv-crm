@@ -2,23 +2,26 @@
 name: krayin_lawfirm_architecture
 description: Standards for SuiteZap/LawFirm package (DDD/SaaS).
 ---
-# LawFirm CRM - Architecture Standards (v3.28)
+# LawFirm CRM - Architecture Standards (v3.47)
 
 ## 1. Directory Structure (Domain-Driven)
-All code lives in `packages/SuiteZap/LawFirm/src/`. **Root is Zero-Debt** — no loose PHP files outside a domain.
-- **Legal/**: `SuiteZap\LawFirm\Legal` — Processos, Prazos, Checklists
+All code lives in `packages/SuiteZap/LawFirm/src/`. **Root is Zero-Debt** — no loose PHP files outside a domain. `src/Http/Controllers/` **must remain empty** (Zero Root Controllers since v3.36).
+- **Legal/**: `SuiteZap\LawFirm\Legal` — Casos, Processos, Prazos, Checklists, LegalOrchestrator
 - **Financial/**: `SuiteZap\LawFirm\Financial` — Honorários, Custas, Faturas
 - **GED/**: `SuiteZap\LawFirm\GED` — Documents, Attachments, S3 uploads
 - **SaaS/**: `SuiteZap\LawFirm\SaaS` — Tenants, Subscriptions, MotherShipService, Asaas, Orders
-- **AI/**: `SuiteZap\LawFirm\AI` — AssistantTemplate, AssistantHistory, ProcessAiAssistant Job
+- **AI/**: `SuiteZap\LawFirm\AI` — AssistantTemplate, AssistantHistory, LeadTriagem, ProcessAiAssistant Job
 - **Escavador/**: `SuiteZap\LawFirm\Escavador` — Escavador API V1/V2, Webhooks, Monitoramentos
-- **Whatsapp/**: `SuiteZap\LawFirm\Whatsapp` — EvolutionService, ConnectionController, Listeners
+- **DataJud/**: `SuiteZap\LawFirm\DataJud` — Consulta Pública CNJ (DataJud REST API)
+- **Whatsapp/**: `SuiteZap\LawFirm\Whatsapp` — EvolutionService, **ConnectionController** (canonical), Listeners
 
 ## 2. Strict Rules
 
 ### 2.1 Models & Controllers
 - ⛔ **NEVER** place Models or Controllers at root `src/`. Must live inside `src/{Domain}/Models` or `src/{Domain}/Http/Controllers`.
+- ⛔ **NEVER** place PHP files in `src/Http/Controllers/` — this directory **must remain empty** at all times (Zero Root Controllers).
 - Namespace pattern: `SuiteZap\LawFirm\{Domain}\{Type}`.
+- **WhatsApp canonical controller:** `SuiteZap\LawFirm\Whatsapp\Http\Controllers\ConnectionController` — routes in `admin-whatsapp.php` point here. Do not create any other WhatsApp controller outside this domain.
 
 ### 2.2 File Storage (Ironclad Rule)
 ⛔ **PROHIBITED anywhere except inside `SaasFileService` itself:**
@@ -48,6 +51,13 @@ return response($contents, 200, [
 
 ### 2.3 Skinny Controllers
 All business logic lives in **Services**. Controllers only orchestrate request → service → response.
+
+### 2.4 No Debug Logs in Production
+⛔ **PROHIBITED in Controllers and Services shipped to production:**
+```php
+\Log::debug(...)  // removes before committing
+```
+✅ Use `Log::info()` or `Log::error()` for legitimate operational logging only.
 
 ## 3. Zero .env — MotherShipService (Mandatory Patterns)
 
@@ -99,22 +109,146 @@ When Evolution, N8N, Asaas, or Escavador is not configured in MotherShip for a t
 - Storage disk is resolved dynamically by `MotherShipService::configureTenantStorage()` at boot — `SaasFileService::getDisk()` always picks up the correct tenant bucket.
 - Balance debits/credits must be registered in `saas_transactions` (tenant DB). Orders tracked in `saas_orders`.
 
+### 4. Escavador (v3.32+ Refactoring)
+*   **MANDATORY "Zero .env" Policy:** Never use `env()` for Escavador tokens or prices. Use `MotherShipService::getTenantConfig()` and `MotherShipService::getEscavadorPrices()`.
+*   **Cost Hierarchy Strategy:** LawFirm CRM uses a cost-savings hierarchical query pattern for Legal Process Intelligence.
+    *   **Level 1: Local Cache** (`EscavadorProcesso`, `EscavadorMovimentacao` tables vs DB records).
+    *   **Level 2: V1 Term Search** (Lower cost, fallback).
+    *   **Level 3: V2 Capa / Autos** (Highest cost, triggered only when explicitly requested/sync'd).
+*   **Async processing:** Heavy requests like `Resumo IA` and `Capa de Tribunal` are processed asynchronously. Webhooks are handled in `WebhookController` without CSRF verification.
+
 ## 6. Frontend & UI Patterns
 - **Tailwind CSS** — standard for all new components.
 - **Vue vs Vanilla JS:** Krayin's Vue instance controls the global DOM. ⛔ Do NOT use Alpine.js inside Blade views Vue manages. ✅ Use Vanilla JS with `MutationObserver` or event delegation.
 - **AJAX & CSRF:** Read `X-CSRF-TOKEN` **at event time** (onclick), never on script init.
 - **Complex Forms (External Tabs Pattern):** Use `window.appendExternalTabs(event, this)` to collect inputs from tabs outside the main `<form>`.
+- **Navigation Filter Bar Pattern (v3.43+):** To prevent visual overload in long detail pages like Processos (`edit`/`show`), inject a horizontal Filter Bar mapping to `.lf-section` divs toggled via Vanilla JS. **Always** persist the active filter using `localStorage` keyed by the entity ID (e.g., `lf_processo_section_{id}`) to preserve user context across form submissions and reloads.
+- **Design System Constraints (.lf-card):** All logical content modules in the CRM core views must be wrapped symmetrically using `<div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">` for coherent spacing. Headers should be separated using `border-b pb-3` and tight tracking.
 - **File Uploads:** ⛔ Do NOT nest `<form>` tags. Use `FormData` + `fetch`/`XMLHttpRequest`.
 - **Routes in JS (REPLACE_ID Pattern):** Never pass empty params to Laravel routes in Blade:
 ```javascript
 // ✅ CORRECT
-const url = "{{ route('admin.route', 'REPLACE_ID') }}".replace('REPLACE_ID', id);
-// ❌ WRONG — throws UrlGenerationException
-const url = "{{ route('admin.route', '') }}" + id;
+const baseRoute = "{{ route('admin.api.route', 'REPLACE_ID') }}";
+const finalUrl = baseRoute.replace('REPLACE_ID', id);
 ```
+- **Form Phone Masking (Global Override Fallback):** `v-mask` is not loaded dynamically to match standard global forms in Vue 3 Krayin correctly across environments. Instead, capture form states using raw `watch` JS handlers inside nested components to dynamically swap the regex for length sizes natively across fields like user numbers! Global Vee-Validate `phone` definition regex has been purposely modified via `vee-validate.js` to allow parentheses and generic text spacing submission limits instead of strictly breaking valid formatted values.
 - **DataGrid Actions (Vue Interference):** When adding custom actions to Krayin DataGrids (`addAction` in `*DataGrid.php`), avoid using `method => 'POST'` for simple state toggles, as the Vue/Axios interceptor frequently drops CSRF validation silently or attempts to render missing icon fonts (e.g., `icon-bell` 0x0 bugs). **MANDATORY:** Use `method => 'GET'` and remove the `confirm_text` parameter so Krayin falls back to a standard `<a href="...">` native browser redirect for toggle endpoints.
 - **Docker Schedulers & Workers:** Cron-based features (`schedule:run`) and Queue runners (`queue:work`) require their own container in the Swarm. The `docker/entrypoint.sh` automatically routes arbitrary `$@` commands through `www-data` to prevent root-owned `laravel.log` permission lockouts.
 - **Redis Queue Isolation:** ⛔ In Docker Swarm deployments sharing a central `redis` instance, you MUST declare `REDIS_PREFIX: {tenant_id}_` in the `docker-compose.yml` ENV variables. Without it, Tenants will consume each other's asynchronous Queue Jobs across the overlay network.
 - **Dynamic Menu Hiding:** When hiding default Krayin menus (e.g., 'mail') via `LawFirmServiceProvider`, always filter using a prefix check (`str_starts_with`). Removing only the parent key leaves orphaned child keys in the config, which causes a fatal error in Krayin's `Menu.php` reconstruction logic.
 - **Granular ACL Definition:** To ensure checkboxes appear in the Admin Role matrix, `acl.php` entries MUST define explicit CRUD child nodes (e.g., `dominio.modulo.create`). Simple top-level keys will be registered but won't render checkboxes in the Vue tree-view component.
+- **The Portal Dialog and Clean Window Pattern (SPA-Safe Modals):** When injecting HTML via AJAX that contains Tailwind classes or interactive elements, the Krayin SPA router may hijack the DOM. **MANDATORY:** (1) For simple overlays, use only inline `style=""` for the modal container and append directly to `document.body` on open. (2) For heavy, complex components (like FullCalendar or advanced grids), avoid iframes inside the current window and instead use a native `window.open` popup routing to a `?clean=true` layout (`admin::layouts.anonymous`) parameter to provide a detached, full-width experience immune to Sidebar clipping.
+- **Vue DOM and Dynamic Elements:** Do not attempt to initialize native Vue components inside elements appended via `insertAdjacentHTML()`. If a native component like a Date Picker is needed in an infinite list (e.g., repeating a row of inputs), generate the required HTML wrapping directly and instantiate the dependency (e.g. `new window.Flatpickr`) explicitly inside a `load` hook or `setTimeout` function to correctly override Vue.js's mounting lifecycle limitations.
+- **Global JS Map Injection (Hydrating Components):** When iterating hundreds of objects in Blade (e.g. Kanban boards) that need complex JSON data on hover or click, ⛔ DO NOT pass JSON arrays via HTML datasets (`data-attr="{{ json_encode() }}"`) and ⛔ DO NOT use `@pushOnce('scripts')` to emit dynamically iterating JSON vars inside loops (Blade Engine will compile strictly the first loop occurrence and swallow the rest, leading to `startPush` Null Pointer bugs). ✅ **MANDATORY**: Produce a unified Hash Map of the objects in the Controller Server-Side, and inject it unconditionally under a standard `<script>` block placed **at the bottom** of the layout view (e.g., `window.__LF_GLOBAL_MAP = {!! $var ?? '{}' !!}`). Components read it statelessly via `dataset.id`.
+- **WhatsApp Template Keys:** 🟢 **MANDATORY:** All dynamic WhatsApp message templates must be stored under the `lawfirm.whatsapp_templates.messages` group in `system.php`. Do not create separate groups like `processos` or `financeiro` for templates, as the application code expects the `.messages.` hierarchy for retrieval.
+- **TenantFinance vs SaaS Asaas (Critical Distinction):** 🔴 Existem **duas integrações Asaas** no pacote — nunca misturá-las:
+  - `SuiteZap\LawFirm\SaaS\Services\AsaasService` → Plataforma cobra o Tenant (SaaS). Usa `infrastructure_nodes` via `MotherShipService`.
+  - `SuiteZap\LawFirm\TenantFinance\Services\TenantAsaasService` → Tenant cobra seus clientes finais. Usa `tenant_asaas_settings` no banco local.
+  - ⛔ **PROIBIDO:** Usar `AsaasService` para criar cobranças de clientes do escritório. A api_key é diferente por conta.
+- **TenantFinance Webhook Route:** A rota `/api/webhooks/tenant-asaas` está isenta de CSRF em `VerifyCsrfToken.php` e registrada no grupo `middleware(['api'])` em `routes.php`. Ao adicionar novos módulos com webhooks, seguir o mesmo padrão.
+- **TenantFinance Module Gate:** O módulo requer a chave `TENANT_FINANCE` em `active_modules` (tabela `subscriptions` no MotherShip). Sem ela, menu e rotas devem retornar 403. ACL granular em `acl.php` sob `lawfirm.cobrancas.*`.
+
+### 6.1 CRITICAL: `v-lookup-component` Registration & Initial Value Pattern (LF v3.42)
+
+> This is a hard-won lesson. Violating these rules causes non-obvious silent failures and JS syntax errors.
+
+#### Problem: Component Not Registered
+`v-lookup-component` is only registered via `@pushOnce('scripts')` inside the Blade partial `x-admin::attributes.edit.lookup`. If your Blade view uses `<v-lookup-component>` without triggering that partial, Vue silently skips the component — the field renders as an empty element with no search, no click, no output.
+
+#### MANDATORY: Always register the component first (before the lookup grid):
+```blade
+{{-- Trigger v-lookup-component registration --}}
+<x-admin::attributes.edit.lookup />
+```
+> Safe: The component has `@if (isset($attribute))` guard — empty include renders nothing visible.
+
+#### MANDATORY: Correct initial value pattern for entity edit forms:
+```blade
+@php
+    $personLookup = optional($processo->person)->id
+        ? app('Webkul\Attribute\Repositories\AttributeRepository')
+            ->getLookUpEntity('persons', $processo->person->id)
+        : null;
+@endphp
+
+<v-lookup-component
+    :attribute="{{ json_encode(['code' => 'person_id', 'name' => 'Pessoa', 'lookup_type' => 'persons']) }}"
+    :value="{{ json_encode($personLookup) }}"
+    validations=""
+></v-lookup-component>
+```
+> **Key:** `{{ json_encode() }}` inside a raw HTML element attribute (not a Blade x-component) is the correct way to pass object values to Vue in Krayin. The same pattern is used in `Webkul/Admin/src/Resources/views/components/attributes/edit/lookup.blade.php`.
+
+#### PROHIBITED approaches (cause JS errors or silent failures):
+| Approach | Failure Mode |
+| :--- | :--- |
+| `v-bind:value='@json($var)'` | `Call to undefined function json()` — `@json` doesn't work inside Blade x-component attribute syntax |
+| `v-bind:value='({!! json_encode($var) !!})'` | Vue `SyntaxError: Invalid or unexpected token` — Vue 3 template compiler evaluates `{}` as statement block, not expression |
+| `v-bind:value="window.processoData.x"` | `Cannot read properties of undefined` — Vue 3 sandboxes template scope and does not expose `window` |
+| `value="{{ json_encode($var) }}"` (without v-bind) | Field renders empty — attribute is passed as a STRING, Vue prop type is Object |
+
+#### Supported `lookup_type` values in Krayin Core:
+- `persons` → `Webkul\Contact\Models\Person`
+- `organizations` → `Webkul\Contact\Models\Organization`
+- `leads` → `Webkul\Lead\Models\Lead`
+- `products` → `Webkul\Product\Models\Product`
+
+---
+
+## 7. Legal Domain — Processo Model Relationships (v3.42+)
+
+The `Processo` model (`SuiteZap\LawFirm\Legal\Models\Processo`) supports the following Krayin Core relationships:
+
+```php
+// Pessoa Física (Contact)
+public function person(): BelongsTo
+{
+    return $this->belongsTo(\Webkul\Contact\Models\Person::class);
+}
+
+// Pessoa Jurídica (Organization) — added v3.42
+public function organization(): BelongsTo
+{
+    return $this->belongsTo(\Webkul\Contact\Models\Organization::class);
+}
+```
+
+Both fields are optional (`nullable`) in the DB and marked **(Opcional)** in the UI, ensuring backward compatibility with all existing processes.
+
+**Search routes registered in `admin-legal.php`:**
+- `GET admin/juridico/processos/search-person` → `ProcessoController@searchPerson`
+- `GET admin/juridico/processos/search-organization` → `ProcessoController@searchOrganization`
+
+---
+
+## 8. Domain-Driven Design: Caso Entity (v3.44+)
+
+At the top of the Legal domain hierarchy resides the **Caso** (Case) entity.
+Hierarchy flow: `Client -> Caso -> Processo`
+
+### Architectural Standards for Custom LawFirm Tables
+*   **Foreign Keys explicitly matching Krayin Type:** When creating migrations for custom tables (e.g., `law_casos`) that relate to Krayin's Core entities (`users`, `persons`, `organizations`), the Foreign Keys **MUST** be defined as `unsignedInteger` (e.g. `$table->unsignedInteger('user_id')`). The Krayin core uses standard `integer` for these Primary Keys, so using `unsignedBigInteger` will cause MySQL 8+ `Constraint Error 3780`.
+*   **Custom AJAX Lookups over Core UI modifications:** To link custom entities (like `Caso` to `Processo`), avoid hardcoding the entity into the native `v-lookup-component` mapped in Krayin's Vue files across `Webkul/Admin/src/Resources/assets/js/components`. Instead, create a specialized AJAX component using JS Vanilla with a hidden input in the Blade view, passing the selected `caso_id` transparently to the REST controller.
+
+### 8.1 LegalOrchestrator — Transactional Domain Service (v3.45)
+
+When a Lead is WON, the `LeadWonListener` delegates to `LegalOrchestrator::convertLeadToLegalStructure()` which runs inside `DB::transaction()`:
+1. Creates a `Caso` (parent entity) from Lead data.
+2. Creates a `Processo` (child entity) linked to the new Caso via `caso_id`.
+3. Links the responsible lawyer (`user_id`) to both entities.
+
+**Golden Rules enforced:**
+- **Skinny Listeners:** `LeadWonListener` contains zero creation logic — only guards and delegation.
+- **Atomicity:** If either creation fails, the entire transaction rolls back.
+- **Zero-Copy Documents:** Files uploaded to any Processo within a Caso are stored under `casos/{caso_id}/documents/` and visible across all sibling processos via `caso_id` query.
+- **Tag-Driven Metadata Prioritization:** Uses standard Lead Tags (e.g. `Trabalhista`, `Crítica`) to populate canonical metadata like Área and Prioridade before falling back to `LeadTriagem` AI metrics.
+- **Canonical Pipelines (v3.46+):** All Legal Status validation must strictly rely on `LegalOrchestrator::VALID_STATUSES` (the 12-stage unified canonical set from "Novo Caso" to "Encerrado") and avoid hard-coded pipeline matching arrays via request rules directly. The Legal Entity assumes standard 12-stage lifecycles, and Processos fallback to canonical mappings over UI inputs.
+
+---
+
+## 9. Top-Level Menus & Layout Organization
+
+- **Assistentes:** The IA and Escavador features reside under a unified "Assistentes" Top-level menu (`icon-user`).
+- **Financeiro:** Cobranças Asaas (TenantFinance) and Dashboard Financeiro now reside inside an exclusive "Financeiro" top-level node.
+- **Do NOT** re-create fragmented UI menus per integration. Keep features nestled within their specific domain clusters or the centralized categories (Legal, Financeiro, Assistentes, Configuração).
 

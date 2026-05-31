@@ -20,6 +20,7 @@ class User extends Authenticatable implements UserContract
     protected $fillable = [
         'name',
         'email',
+        'whatsapp',
         'image',
         'password',
         'api_token',

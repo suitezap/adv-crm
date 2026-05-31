@@ -56,6 +56,7 @@ class UserController extends Controller
         $this->validate(request(), [
             'email'            => 'required|email|unique:users,email',
             'name'             => 'required',
+            'whatsapp'         => 'nullable|string',
             'password'         => 'nullable',
             'confirm_password' => 'nullable|required_with:password|same:password',
             'role_id'          => 'required',
@@ -64,6 +65,14 @@ class UserController extends Controller
         ]);
 
         $data = request()->all();
+
+        if (!empty($data['whatsapp'])) {
+            $cleaned = preg_replace('/\D/', '', $data['whatsapp']);
+            if (strlen($cleaned) >= 10 && !str_starts_with($cleaned, '55')) {
+                $cleaned = '55' . $cleaned;
+            }
+            $data['whatsapp'] = $cleaned;
+        }
 
         if (
             isset($data['password'])
@@ -112,6 +121,7 @@ class UserController extends Controller
         $this->validate(request(), [
             'email'            => 'required|email|unique:users,email,'.$id,
             'name'             => 'required|string',
+            'whatsapp'         => 'nullable|string',
             'password'         => 'nullable|string|min:6',
             'confirm_password' => 'nullable|required_with:password|same:password',
             'role_id'          => 'required|integer|exists:roles,id',
@@ -120,6 +130,14 @@ class UserController extends Controller
         ]);
 
         $data = request()->all();
+
+        if (!empty($data['whatsapp'])) {
+            $cleaned = preg_replace('/\D/', '', $data['whatsapp']);
+            if (strlen($cleaned) >= 10 && !str_starts_with($cleaned, '55')) {
+                $cleaned = '55' . $cleaned;
+            }
+            $data['whatsapp'] = $cleaned;
+        }
 
         if (empty($data['password'])) {
             $data = Arr::except($data, ['password', 'confirm_password']);

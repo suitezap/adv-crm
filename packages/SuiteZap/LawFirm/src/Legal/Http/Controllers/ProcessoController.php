@@ -9,6 +9,7 @@ use SuiteZap\LawFirm\Legal\Repositories\ProcessoRepository;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Contact\Repositories\PersonRepository;
+use Webkul\Contact\Repositories\OrganizationRepository;
 use Webkul\Lead\Repositories\LeadRepository;
 use SuiteZap\LawFirm\GED\Services\DocumentService;
 use SuiteZap\LawFirm\Legal\Services\DeadlineService;
@@ -30,6 +31,13 @@ class ProcessoController extends Controller
      * @var \Webkul\Contact\Repositories\PersonRepository
      */
     protected $personRepository;
+
+    /**
+     * OrganizationRepository object
+     *
+     * @var \Webkul\Contact\Repositories\OrganizationRepository
+     */
+    protected $organizationRepository;
 
     /**
      * LeadRepository object
@@ -85,6 +93,7 @@ class ProcessoController extends Controller
     public function __construct(
         ProcessoRepository $processoRepository,
         PersonRepository $personRepository,
+        OrganizationRepository $organizationRepository,
         LeadRepository $leadRepository,
         ActivityRepository $activityRepository,
         DocumentService $documentService,
@@ -94,6 +103,7 @@ class ProcessoController extends Controller
     ) {
         $this->processoRepository = $processoRepository;
         $this->personRepository = $personRepository;
+        $this->organizationRepository = $organizationRepository;
         $this->leadRepository = $leadRepository;
         $this->activityRepository = $activityRepository;
         $this->documentService = $documentService;
@@ -156,6 +166,8 @@ class ProcessoController extends Controller
      */
     public function create()
     {
+        abort_if(!bouncer()->hasPermission('lawfirm.processos.create'), 401, 'This action is unauthorized');
+
         $leadId = request('lead_id');
         $preSelectedLead = null;
 
@@ -180,7 +192,9 @@ class ProcessoController extends Controller
         $data = $request->validated();
 
         $data['person_id'] = !empty($data['person_id']) ? $data['person_id'] : null;
+        $data['organization_id'] = !empty($data['organization_id']) ? $data['organization_id'] : null;
         $data['lead_id'] = !empty($data['lead_id']) ? $data['lead_id'] : null;
+        $data['caso_id'] = !empty($data['caso_id']) ? $data['caso_id'] : null;
         $data['user_id'] = !empty($data['user_id']) ? $data['user_id'] : null;
 
 
@@ -191,6 +205,11 @@ class ProcessoController extends Controller
         // CREATE PRAZOS (Delegated to DeadlineService)
         if (isset($data['prazos']) && is_array($data['prazos'])) {
             $this->deadlineService->syncDeadlines($processo, $data['prazos']);
+        }
+
+        // Sincronizar prazo de Audiência automaticamente
+        if (!empty($data['data_audiencia'])) {
+            $this->deadlineService->syncAudienciaPrazo($processo, $data['data_audiencia']);
         }
 
         // SYNC NOTAS (Delegated to ProcessoNotaService)
@@ -234,7 +253,13 @@ class ProcessoController extends Controller
             }
         ]);
 
-        return view('lawfirm::admin.processos.show', compact('processo'));
+        // Get LeadTriagem if lead exists
+        $triagem = null;
+        if ($processo->lead_id) {
+            $triagem = \SuiteZap\LawFirm\AI\Models\LeadTriagem::where('lead_id', $processo->lead_id)->first();
+        }
+
+        return view('lawfirm::admin.processos.show', compact('processo', 'triagem'));
     }
 
     /**
@@ -245,10 +270,13 @@ class ProcessoController extends Controller
      */
     public function edit($id)
     {
+        abort_if(!bouncer()->hasPermission('lawfirm.processos.edit'), 401, 'This action is unauthorized');
+
         $processo = \SuiteZap\LawFirm\Legal\Models\Processo::with([
             'person',
             'lead',
             'responsavel',
+            'caso',
             'prazos',
             'anexos',
             'documents',
@@ -275,9 +303,11 @@ class ProcessoController extends Controller
         $data = $request->validated();
 
         $data['person_id'] = !empty($data['person_id']) ? $data['person_id'] : null;
+        $data['organization_id'] = !empty($data['organization_id']) ? $data['organization_id'] : null;
         if (array_key_exists('lead_id', $data)) {
             $data['lead_id'] = !empty($data['lead_id']) ? $data['lead_id'] : null;
         }
+        $data['caso_id'] = !empty($data['caso_id']) ? $data['caso_id'] : null;
         $data['user_id'] = !empty($data['user_id']) ? $data['user_id'] : null;
 
         Event::dispatch('lawfirm.processo.update.before', $id);
@@ -321,6 +351,8 @@ class ProcessoController extends Controller
      */
     public function destroy($id)
     {
+        abort_if(!bouncer()->hasPermission('lawfirm.processos.delete'), 401, 'This action is unauthorized');
+
         try {
             Event::dispatch('lawfirm.processo.delete.before', $id);
 
@@ -398,6 +430,22 @@ class ProcessoController extends Controller
     }
 
     /**
+     * Search organization results.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function searchOrganization()
+    {
+        $term = request('query');
+
+        $results = $this->organizationRepository->scopeQuery(function ($query) use ($term) {
+            return $query->where('name', 'like', '%' . $term . '%');
+        })->paginate(10);
+
+        return response()->json($results);
+    }
+
+    /**
      * Search lead results.
      *
      * @return \Illuminate\Http\JsonResponse
@@ -411,5 +459,141 @@ class ProcessoController extends Controller
         })->paginate(10);
 
         return response()->json($results);
+    }
+
+    /**
+     * Resquest client's registration via WhatsApp
+     */
+    public function requestRegistration($id)
+    {
+        try {
+            $processo = $this->processoRepository->with('person')->findOrFail($id);
+            
+            // 2. Verificar Telefone
+            $phone = null;
+            if ($processo && $processo->person) {
+                $contactNumbers = collect($processo->person->contact_numbers);
+                $phoneData = $contactNumbers->first();
+                $phone = is_object($phoneData) ? $phoneData->value : ($phoneData['value'] ?? null);
+            }
+
+            if (!$phone) {
+                session()->flash('error', 'O cliente não possui telefone cadastrado.');
+                return redirect()->back();
+            }
+
+            // 3. Carregar Template
+            $templateMsg = core()->getConfigData('lawfirm.whatsapp_templates.messages.registration_request');
+            if (empty($templateMsg)) {
+                $templateMsg = "Olá {cliente_nome}. Referente ao processo {processo_titulo}, precisamos que atualize suas informações cadastrais.\nUtilize o link: {link_portal}";
+            }
+
+            // 4. Substituir Variáveis
+            $portalLink = route('lawfirm.public.portal.index', [
+                'id' => $processo->id, 
+                'token' => hash_hmac('sha256', $processo->id, config('app.key'))
+            ]);
+
+            $msg = str_replace(
+                ['{cliente_nome}', '{processo_titulo}', '{link_portal}'],
+                [
+                    $processo->person->name,
+                    $processo->titulo ?? 'Processo',
+                    $portalLink
+                ],
+                $templateMsg
+            );
+
+            // 5. Enviar via Service
+            $evolutionService = app(\SuiteZap\LawFirm\Whatsapp\Services\EvolutionService::class);
+            $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
+
+            if (!$config || empty($config['instance'])) {
+                session()->flash('warning', 'Mensagem não enviada. WhatsApp não está configurado para o escritório.');
+            } else {
+                $evolutionService->sendMessage($config['instance'], $phone, $msg);
+                session()->flash('success', 'Solicitação de cadastro enviada via WhatsApp!');
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erro ao enviar solicitação de cadastro: " . $e->getMessage());
+            session()->flash('error', 'Erro ao enviar mensagem: ' . $e->getMessage());
+        }
+
+        return redirect()->back();
+    }
+
+    /**
+     * Request pending documents via WhatsApp
+     */
+    public function requestDocuments($id)
+    {
+        try {
+            $processo = $this->processoRepository->with(['person', 'documents'])->findOrFail($id);
+            
+            // 2. Verificar Telefone
+            $phone = null;
+            if ($processo && $processo->person) {
+                $contactNumbers = collect($processo->person->contact_numbers);
+                $phoneData = $contactNumbers->first();
+                $phone = is_object($phoneData) ? $phoneData->value : ($phoneData['value'] ?? null);
+            }
+
+            if (!$phone) {
+                session()->flash('error', 'O cliente não possui telefone cadastrado.');
+                return redirect()->back();
+            }
+
+            // Filtrar apenas documentos pendentes
+            $pendingDocs = $processo->documents->where('status', 'pending');
+            
+            if ($pendingDocs->isEmpty()) {
+                session()->flash('warning', 'Não há documentos pendentes para solicitar.');
+                return redirect()->back();
+            }
+
+            $docsList = "";
+            foreach ($pendingDocs as $doc) {
+                $docsList .= "- " . $doc->name . "\n";
+            }
+
+            // 3. Carregar Template
+            $templateMsg = core()->getConfigData('lawfirm.whatsapp_templates.messages.documents_request');
+            if (empty($templateMsg)) {
+                $templateMsg = "Olá {cliente_nome}. Referente ao processo {processo_titulo}, por favor, nos envie os seguintes documentos pendentes:\n\n{documentos_pendentes}\n\nVocê pode enviá-los por aqui mesmo ou através do nosso portal: {link_portal}";
+            }
+
+            // 4. Substituir Variáveis
+            $portalLink = route('lawfirm.public.portal.index', [
+                'id' => $processo->id, 
+                'token' => hash_hmac('sha256', $processo->id, config('app.key'))
+            ]);
+
+            $msg = str_replace(
+                ['{cliente_nome}', '{processo_titulo}', '{documentos_pendentes}', '{link_portal}'],
+                [
+                    $processo->person->name,
+                    $processo->titulo ?? 'Processo',
+                    $docsList,
+                    $portalLink
+                ],
+                $templateMsg
+            );
+
+            // 5. Enviar via Service
+            $evolutionService = app(\SuiteZap\LawFirm\Whatsapp\Services\EvolutionService::class);
+            $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
+
+            if (!$config || empty($config['instance'])) {
+                session()->flash('warning', 'Mensagem não enviada. WhatsApp não está configurado para o escritório.');
+            } else {
+                $evolutionService->sendMessage($config['instance'], $phone, $msg);
+                session()->flash('success', 'Solicitação de documentos pendentes enviada via WhatsApp!');
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erro ao enviar solicitação de documentos: " . $e->getMessage());
+            session()->flash('error', 'Erro ao enviar mensagem: ' . $e->getMessage());
+        }
+
+        return redirect()->back();
     }
 }

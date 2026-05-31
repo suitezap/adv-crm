@@ -56,7 +56,8 @@
                         disable: this.disable ?? [],
                         minDate: this.minDate ?? '',
                         maxDate: this.maxDate ?? '',
-                        altFormat: "Y-m-d",
+                        altInput: true,
+                        altFormat: "d-m-Y",
                         dateFormat: "Y-m-d",
                         weekNumbers: true,
 

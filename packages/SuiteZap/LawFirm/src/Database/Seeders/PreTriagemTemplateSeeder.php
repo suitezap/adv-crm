@@ -31,6 +31,8 @@ Produza:
 6) Probabilidade estratégica de êxito (Baixa, Moderada, Alta)
 7) Competência provável (Juizado, Vara Cível, Vara de Família etc.)
 8) Recomendação: Prosseguir / Ajustar Estratégia / Não Recomendado
+
+**MANDATÓRIO:** A sua resposta FINAL DEVE ser formatada estritamente em **Markdown**, utilizando bem os itens (listas), subtítulos (`##`) e **negrito** nos pontos críticos para facilitar a leitura.
 PROMPT;
 
         $variables = [

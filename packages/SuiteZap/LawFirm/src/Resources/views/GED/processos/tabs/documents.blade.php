@@ -1,283 +1,244 @@
 @php
     $readOnly = $readOnly ?? false;
-    // Garante que a relação seja carregada ou coleção vazia
-    $anexos = $processo->anexos ?? collect([]);
+
+    // Zero-Copy Document Sharing (v3.45):
+    // If processo belongs to a caso, show ALL documents from that caso
+    // (including uploads from sibling processos) — without moving files.
+    if ($processo->caso_id) {
+        $anexos = \SuiteZap\LawFirm\Legal\Models\Anexo::where('processo_id', $processo->id)
+            ->orWhere('caso_id', $processo->caso_id)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->unique('id'); // Prevent duplicates if same doc has both references
+    } else {
+        $anexos = $processo->anexos ?? collect([]);
+    }
+
     $checklistDocs = $processo->documents ?? collect([]);
 
-    // Carregar templates de checklist ordenados
     $checklistTemplates = \SuiteZap\LawFirm\Legal\Models\ChecklistTemplate::query()
         ->orderByRaw("CASE WHEN name LIKE '%Padrão Básico%' THEN 0 ELSE 1 END")
         ->orderBy('name')
         ->get();
 @endphp
 
-<!-- Container Principal -->
-<div class="mt-4 flex flex-col gap-4 w-full rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 shadow-sm"
+@if(!trim($__env->yieldContent('meta_csrf_token')))
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+@endif
+
+{{-- ── CARD 1: Arquivos do Processo ──────────────────────────────────── --}}
+<div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200"
     id="lf-docs-container">
 
-    <!-- Meta CSRF Token Fallback if not in head -->
-    @if(!trim($__env->yieldContent('meta_csrf_token')))
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-    @endif
-
-    <!-- Header com Toggle -->
-    <div class="flex items-center justify-between cursor-pointer select-none" onclick="window.lfDocsToggle()">
-        <div class="flex items-center gap-2">
-            <span class="p-2 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                <i class="icon-file text-xl"></i>
-            </span>
-            <div class="flex flex-col">
-                <p class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                    Documentos e Anexos
-                </p>
-                <span class="text-xs text-gray-500">
-                    {{ $anexos->count() }} arquivo(s) &bull; {{ $checklistDocs->count() }} item(ns) checklist
-                </span>
-            </div>
-        </div>
-
+    <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
         <div class="flex items-center gap-3">
-            <i id="lf-docs-arrow-icon"
-                class="icon-arrow-down text-2xl text-gray-400 transition-transform duration-200"></i>
+            <span class="p-2 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <i class="icon-folder text-xl"></i>
+            </span>
+            <div>
+                <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight">Arquivos do Processo</p>
+                <span class="text-xs text-gray-500">{{ $anexos->count() }} arquivo(s) anexado(s)</span>
+            </div>
         </div>
     </div>
 
-    <!-- Conteúdo Colapsável -->
-    <div id="lf-docs-content" style="display: none;"
-        class="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4 w-full">
-
-        @if(!$readOnly)
-            <!-- Área de Upload (Dropzone) -->
-            <div class="mb-6 w-full">
-                <!-- REMOVIDO FORM NESTED: Agora é puramente JS/AJAX -->
-                <div id="lf-docs-upload-area" class="w-full">
-
-                    <!-- Input Invisível Principal -->
-                    <input type="file" name="anexos[]" multiple id="lf-docs-input" class="hidden"
-                        onchange="window.lfDocsHandleFiles(this.files)">
-
-                    <div id="lf-docs-dropzone"
-                        class="relative flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all dark:bg-gray-800/50 dark:border-gray-700 dark:hover:bg-gray-800 cursor-pointer group w-full"
-                        onclick="document.getElementById('lf-docs-input').click()" ondragover="window.lfDocsDragOver(event)"
-                        ondragleave="window.lfDocsDragLeave(event)" ondrop="window.lfDocsDrop(event)">
-
-                        <div
-                            class="p-3 bg-white dark:bg-gray-700 rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                            <i class="icon-file text-3xl text-blue-500"></i>
-                        </div>
-
-                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
-                            <span class="text-blue-600 font-bold hover:underline">Clique para adicionar</span> ou arraste
-                            arquivos
-                        </p>
-                        <p class="text-xs text-gray-400 mt-1">PDF, DOCX, JPG, PNG (Max: 20MB)</p>
-                    </div>
-
-                    <!-- Lista de Arquivos Selecionados (Preview antes de salvar) -->
-                    <ul id="lf-docs-preview-list" class="mt-3 space-y-2 hidden w-full">
-                        <!-- Preenchido via JS -->
-                    </ul>
-
-                    <!-- Botão Salvar Uploads (Só aparece se houver arquivos) -->
-                    <div id="lf-docs-save-actions" class="mt-4 hidden justify-end w-full">
-                        <button type="button" onclick="window.lfDocsUploadFiles()"
-                            class="primary-button flex items-center gap-2">
-                            <i class="icon-save text-lg"></i>
-                            <span id="lf-docs-save-text">Salvar Novos Arquivos</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        <!-- Lista de Anexos Existentes -->
-        <div class="mb-8 w-full">
-            <h3 class="text-base font-bold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
-                <i class="icon-folder text-gray-400"></i> Arquivos do Processo
-            </h3>
-
-            <div class="overflow-x-auto w-full rounded-lg border border-gray-200 dark:border-gray-800">
-                <table class="min-w-full text-sm w-full">
-                    <thead
-                        class="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
-                        <tr>
-                            <th class="px-4 py-3 text-left font-medium w-auto">Nome</th>
-                            <th class="px-4 py-3 text-right font-medium whitespace-nowrap w-[120px]">Tamanho</th>
-                            @if(!$readOnly)
-                                <th class="px-4 py-3 text-center font-medium w-[100px]">Ações</th>
-                            @endif
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
-                        @forelse($anexos as $anexo)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
-                                id="anexo-row-{{ $anexo->id }}">
-                                <td class="px-4 py-3">
-                                    <a href="{{ $anexo->url }}" target="_blank"
-                                        class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
-                                        <div
-                                            class="flex items-center justify-center w-8 h-8 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 flex-shrink-0">
-                                            <span class="{{ $anexo->icon ?? 'icon-file' }} text-lg"></span>
-                                        </div>
-                                        <div class="flex flex-col min-w-0">
-                                            <span class="font-medium truncate block">{{ $anexo->nome_original }}</span>
-                                            <span class="text-[10px] text-gray-400 uppercase">{{ $anexo->extension }}</span>
-                                        </div>
-                                    </a>
-                                </td>
-                                <td class="px-4 py-3 text-right text-gray-500 whitespace-nowrap">
-                                    {{ number_format(($anexo->tamanho ?? 0) / 1024, 2, ',', '.') }} KB
-                                </td>
-                                @if(!$readOnly)
-                                    <td class="px-4 py-3 text-center">
-                                        <div
-                                            class="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <!-- Download -->
-                                            <a href="{{ $anexo->url }}" target="_blank"
-                                                class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors"
-                                                title="Baixar">
-                                                <span class="icon-download text-lg"></span>
-                                            </a>
-
-                                            <!-- Delete AJAX -->
-                                            <button type="button" onclick="window.lfDocsDeleteAttachment('{{ $anexo->id }}')"
-                                                class="p-1.5 rounded-md text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 transition-colors"
-                                                title="Excluir">
-                                                <span class="icon-delete text-lg"></span>
-                                            </button>
-                                        </div>
-                                    </td>
-                                @endif
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="{{ $readOnly ? 2 : 3 }}" class="px-4 py-8 text-center text-gray-400 italic">
-                                    <div class="flex flex-col items-center gap-2">
-                                        <i class="icon-file text-3xl opacity-20"></i>
-                                        <span>Nenhum documento anexado.</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Divisor -->
-        <div class="border-t border-gray-100 dark:border-gray-800 my-6"></div>
-
-        <!-- Seção Checklist -->
+    @if(!$readOnly)
+        {{-- Área de Upload (Dropzone) --}}
         <div class="w-full">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                    <span class="p-1.5 rounded-md bg-purple-50 text-purple-600 dark:bg-purple-900/20">
-                        <i class="icon-menu text-lg"></i>
-                    </span>
-                    Checklist de Documentos
-                </h3>
+            <input type="file" name="anexos[]" multiple id="lf-docs-input" class="hidden"
+                onchange="window.lfDocsHandleFiles(this.files)">
+
+            <div id="lf-docs-dropzone"
+                class="relative flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all dark:bg-gray-800/50 dark:border-gray-700 dark:hover:bg-gray-800 cursor-pointer group w-full"
+                onclick="document.getElementById('lf-docs-input').click()" ondragover="window.lfDocsDragOver(event)"
+                ondragleave="window.lfDocsDragLeave(event)" ondrop="window.lfDocsDrop(event)">
+
+                <div class="p-3 bg-white dark:bg-gray-700 rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
+                    <i class="icon-file text-3xl text-blue-500"></i>
+                </div>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
+                    <span class="text-blue-600 font-bold hover:underline">Clique para adicionar</span> ou arraste arquivos
+                </p>
+                <p class="text-xs text-gray-400 mt-1">PDF, DOCX, JPG, PNG (Max: 20MB)</p>
             </div>
 
-            @if(!$readOnly)
-                <!-- Importar Kit (Compacto) -->
-                <div
-                    class="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-3 mb-4 flex flex-wrap items-center gap-3 w-full">
-                    <span class="text-sm font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Importar
-                        Modelo:</span>
+            <ul id="lf-docs-preview-list" class="mt-3 space-y-2 hidden w-full"></ul>
 
-                    <div class="flex flex-1 gap-2">
-                        <select id="lf-docs-template-select"
-                            class="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm py-1.5 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="">Selecione...</option>
-                            @foreach($checklistTemplates as $tpl)
-                                <option value="{{ $tpl->id }}">{{ $tpl->name }}</option>
-                            @endforeach
-                        </select>
-                        <button type="button" onclick="window.lfDocsImportTemplate()"
-                            class="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors shadow-sm">
-                            Importar
-                        </button>
-                    </div>
-                </div>
-            @endif
-
-            <!-- Tabela Checklist -->
-            <div class="overflow-x-auto w-full rounded-lg border border-gray-200 dark:border-gray-800">
-                <table class="min-w-full text-sm w-full">
-                    <thead
-                        class="bg-gray-50 dark:bg-gray-800 text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">
-                        <tr>
-                            <th class="px-4 py-3 text-left w-[120px]">Status</th>
-                            <th class="px-4 py-3 text-left">Documento</th>
-                            <th class="px-4 py-3 text-left">Obs</th>
-                            @if(!$readOnly)
-                                <th class="px-4 py-3 text-center w-[150px]">Ações</th>
-                            @endif
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
-                        @forelse($checklistDocs as $doc)
-                            @php
-                                $statusMap = [
-                                    'pending' => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'label' => 'Pendente'],
-                                    'received' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'label' => 'Recebido'],
-                                    'approved' => ['bg' => 'bg-green-100', 'text' => 'text-green-800', 'label' => 'Aprovado'],
-                                    'rejected' => ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'label' => 'Rejeitado'],
-                                ];
-                                $st = $statusMap[$doc->status] ?? $statusMap['pending'];
-                            @endphp
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                <td class="px-4 py-3">
-                                    <span
-                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $st['bg'] }} {{ $st['text'] }}">
-                                        {{ $st['label'] }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                                    {{ $doc->name }}
-                                    @if($doc->file_path)
-                                        <i class="icon-attachment text-gray-400 ml-1" title="Anexo vinculado"></i>
-                                    @endif
-                                </td>
-                                <td class="px-4 py-3 text-gray-500 truncate max-w-[200px]" title="{{ $doc->notes }}">
-                                    {{ $doc->notes ?? '-' }}
-                                </td>
-                                @if(!$readOnly)
-                                    <td class="px-4 py-3 text-center">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <select onchange="window.lfDocsUpdateStatus('{{ $doc->id }}', this.value)"
-                                                class="text-xs border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 py-1 pr-6 cursor-pointer">
-                                                <option value="pending" {{ $doc->status == 'pending' ? 'selected' : '' }}>Pendente
-                                                </option>
-                                                <option value="received" {{ $doc->status == 'received' ? 'selected' : '' }}>
-                                                    Recebido</option>
-                                                <option value="approved" {{ $doc->status == 'approved' ? 'selected' : '' }}>
-                                                    Aprovado</option>
-                                                <option value="rejected" {{ $doc->status == 'rejected' ? 'selected' : '' }}>
-                                                    Rejeitado</option>
-                                            </select>
-
-                                            <!-- Delete -->
-                                            <button type="button" onclick="window.lfDocsDeleteChecklistItem('{{ $doc->id }}')"
-                                                class="text-gray-400 hover:text-red-500 transition-colors">
-                                                <i class="icon-delete text-lg"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                @endif
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="{{ $readOnly ? 3 : 4 }}"
-                                    class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400 italic">
-                                    Nenhum item no checklist. Importe um kit acima.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <div id="lf-docs-save-actions" class="mt-4 hidden justify-end w-full">
+                <button type="button" onclick="window.lfDocsUploadFiles()"
+                    class="primary-button flex items-center gap-2">
+                    <i class="icon-save text-lg"></i>
+                    <span id="lf-docs-save-text">Salvar Novos Arquivos</span>
+                </button>
             </div>
         </div>
+    @endif
+
+    {{-- Lista de Anexos Existentes --}}
+    <div class="overflow-x-auto w-full rounded-lg border border-gray-200 dark:border-gray-800">
+        <table class="min-w-full text-sm w-full">
+            <thead class="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
+                <tr>
+                    <th class="px-4 py-3 text-left font-medium w-auto">Nome</th>
+                    <th class="px-4 py-3 text-right font-medium whitespace-nowrap w-[120px]">Tamanho</th>
+                    @if(!$readOnly)
+                        <th class="px-4 py-3 text-center font-medium w-[100px]">Ações</th>
+                    @endif
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+                @forelse($anexos as $anexo)
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group" id="anexo-row-{{ $anexo->id }}">
+                        <td class="px-4 py-3">
+                            <a href="{{ $anexo->url }}" target="_blank"
+                                class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
+                                <div class="flex items-center justify-center w-8 h-8 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 flex-shrink-0">
+                                    <span class="{{ $anexo->icon ?? 'icon-file' }} text-lg"></span>
+                                </div>
+                                <div class="flex flex-col min-w-0">
+                                    <span class="font-medium truncate block">{{ $anexo->nome_original }}</span>
+                                    <span class="text-[10px] text-gray-400 uppercase">{{ $anexo->extension }}</span>
+                                </div>
+                            </a>
+                        </td>
+                        <td class="px-4 py-3 text-right text-gray-500 whitespace-nowrap">
+                            {{ number_format(($anexo->tamanho ?? 0) / 1024, 2, ',', '.') }} KB
+                        </td>
+                        @if(!$readOnly)
+                            <td class="px-4 py-3 text-center">
+                                <div class="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <a href="{{ $anexo->url }}" target="_blank"
+                                        class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors" title="Baixar">
+                                        <span class="icon-download text-lg"></span>
+                                    </a>
+                                    <button type="button" onclick="window.lfDocsDeleteAttachment('{{ $anexo->id }}')"
+                                        class="p-1.5 rounded-md text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 transition-colors" title="Excluir">
+                                        <span class="icon-delete text-lg"></span>
+                                    </button>
+                                </div>
+                            </td>
+                        @endif
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="{{ $readOnly ? 2 : 3 }}" class="px-4 py-8 text-center text-gray-400 italic">
+                            <div class="flex flex-col items-center gap-2">
+                                <i class="icon-file text-3xl opacity-20"></i>
+                                <span>Nenhum documento anexado.</span>
+                            </div>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{-- ── CARD 2: Checklist de Documentos ──────────────────────────────── --}}
+<div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+
+    <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+        <div class="flex items-center gap-3">
+            <span class="p-2 rounded-full bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                <i class="icon-menu text-xl"></i>
+            </span>
+            <div>
+                <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight">Checklist de Documentos</p>
+                <span class="text-xs text-gray-500">{{ $checklistDocs->count() }} item(ns) no checklist</span>
+            </div>
+        </div>
+    </div>
+
+    @if(!$readOnly)
+        {{-- Importar Kit --}}
+        <div class="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-3 flex flex-wrap items-center gap-3 w-full">
+            <span class="text-sm font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Importar Modelo:</span>
+            <div class="flex flex-1 gap-2">
+                <select id="lf-docs-template-select"
+                    class="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm py-1.5 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">Selecione...</option>
+                    @foreach($checklistTemplates as $tpl)
+                        <option value="{{ $tpl->id }}">{{ $tpl->name }}</option>
+                    @endforeach
+                </select>
+                <button type="button" onclick="window.lfDocsImportTemplate()"
+                    class="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors shadow-sm" title="Importar os itens do modelo para o checklist">
+                    Importar
+                </button>
+                <form action="{{ route('admin.processos.request_documents', $processo->id) }}" method="POST" class="inline" id="form-request-docs">
+                    @csrf
+                    <button type="submit" class="px-3 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-md text-sm font-medium hover:bg-green-100 focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-800/50 transition-colors shadow-sm flex items-center gap-1.5" title="Solicitar documentos pendentes pelo WhatsApp">
+                        <i class="icon-whatsapp font-bold"></i> Solicitar via WhatsApp
+                    </button>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- Tabela Checklist --}}
+    <div class="overflow-x-auto w-full rounded-lg border border-gray-200 dark:border-gray-800">
+        <table class="min-w-full text-sm w-full">
+            <thead class="bg-gray-50 dark:bg-gray-800 text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">
+                <tr>
+                    <th class="px-4 py-3 text-left w-[120px]">Status</th>
+                    <th class="px-4 py-3 text-left">Documento</th>
+                    <th class="px-4 py-3 text-left">Obs</th>
+                    @if(!$readOnly)
+                        <th class="px-4 py-3 text-center w-[150px]">Ações</th>
+                    @endif
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+                @forelse($checklistDocs as $doc)
+                    @php
+                        $statusMap = [
+                            'pending'  => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'label' => 'Pendente'],
+                            'received' => ['bg' => 'bg-blue-100',   'text' => 'text-blue-800',   'label' => 'Recebido'],
+                            'approved' => ['bg' => 'bg-green-100',  'text' => 'text-green-800',  'label' => 'Aprovado'],
+                            'rejected' => ['bg' => 'bg-red-100',    'text' => 'text-red-800',    'label' => 'Rejeitado'],
+                        ];
+                        $st = $statusMap[$doc->status] ?? $statusMap['pending'];
+                    @endphp
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $st['bg'] }} {{ $st['text'] }}">{{ $st['label'] }}</span>
+                        </td>
+                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                            {{ $doc->name }}
+                            @if($doc->file_path)
+                                <i class="icon-attachment text-gray-400 ml-1" title="Anexo vinculado"></i>
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 truncate max-w-[200px]" title="{{ $doc->notes }}">
+                            {{ $doc->notes ?? '-' }}
+                        </td>
+                        @if(!$readOnly)
+                            <td class="px-4 py-3 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <select onchange="window.lfDocsUpdateStatus('{{ $doc->id }}', this.value)"
+                                        class="text-xs border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 py-1 pr-6 cursor-pointer">
+                                        <option value="pending"  {{ $doc->status == 'pending'  ? 'selected' : '' }}>Pendente</option>
+                                        <option value="received" {{ $doc->status == 'received' ? 'selected' : '' }}>Recebido</option>
+                                        <option value="approved" {{ $doc->status == 'approved' ? 'selected' : '' }}>Aprovado</option>
+                                        <option value="rejected" {{ $doc->status == 'rejected' ? 'selected' : '' }}>Rejeitado</option>
+                                    </select>
+                                    <button type="button" onclick="window.lfDocsDeleteChecklistItem('{{ $doc->id }}')"
+                                        class="text-gray-400 hover:text-red-500 transition-colors">
+                                        <i class="icon-delete text-lg"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        @endif
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="{{ $readOnly ? 3 : 4 }}" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400 italic">
+                            Nenhum item no checklist. Importe um kit acima.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 </div>
 

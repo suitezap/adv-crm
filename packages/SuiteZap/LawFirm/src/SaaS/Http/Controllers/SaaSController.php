@@ -6,6 +6,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 use Webkul\User\Models\User;
 use Carbon\Carbon;
 
@@ -128,5 +129,28 @@ class SaaSController extends Controller
         }
 
         return $size;
+    }
+
+    /**
+     * Diagnóstico de conectividade com o bucket S3/MinIO do Tenant.
+     *
+     * CC fix (v3.49): Lógica movida da closure de rota (que usava Storage:: diretamente)
+     * para este método, delegando ao SaasFileService::testConnection() (Regra 2.2).
+     *
+     * Protegido: retorna 403 em produção (APP_DEBUG=false).
+     */
+    public function testS3Connection(SaasFileService $fileService)
+    {
+        if (!config('app.debug')) {
+            return response()->json([
+                'error' => 'Rota de diagnóstico disponível apenas em modo debug (APP_DEBUG=true).',
+            ], 403);
+        }
+
+        $result = $fileService->testConnection();
+
+        $statusCode = ($result['status'] === 'sucesso') ? 200 : 500;
+
+        return response()->json($result, $statusCode);
     }
 }

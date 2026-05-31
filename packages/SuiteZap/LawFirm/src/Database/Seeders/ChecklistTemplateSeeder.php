@@ -31,6 +31,8 @@ Forneça:
 6. Estimativa de Complexidade (Baixa/Média/Alta)
 
 Seja objetivo e profissional.
+
+**OBRIGATÓRIO:** Formate toda a sua resposta em **Markdown**, usando `##` para subtítulos de cada item, **negrito** nos termos técnicos e listas (`-`) para enumerar pontos. Não retorne texto simples.
 PROMPT;
 
         $variables = [

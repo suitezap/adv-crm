@@ -31,32 +31,27 @@ class FinancialDashboardService
      */
     private function getBaseQuery()
     {
-        // Join com processos para acessar o user_id (dono do processo)
-        // FK verificada: processo_id (law_financials) -> id (processos)
-        $query = DB::table('law_financials')
+        // Usa o Model Financial para aproveitar escopos e conexões do Eloquent
+        $query = \SuiteZap\LawFirm\Financial\Models\Financial::query()
             ->join('processos', 'law_financials.processo_id', '=', 'processos.id')
-            ->select('law_financials.*'); // Evita conflito de ID
+            ->select('law_financials.*');
 
-        $user = auth()->guard('user')->user();
+        // Tenta pegar o usuário de ambos os guards possíveis (admin é o padrão Krayin, user é o fallback)
+        $user = auth()->guard('user')->user() ?? auth()->guard('admin')->user();
         $responsibleId = request('responsible_id');
 
-        // 1. Aplica Segurança (ACL)
-        // Skip filtering if user is administrator (role_id = 1)
-        if ($user && $user->role_id != 1 && $user->view_permission !== 'global') {
-            if ($user->view_permission == 'group') {
-                // Filtra por grupo
-                $userIds = $user->groups->flatMap(function ($group) {
-                    return $group->users->pluck('id');
-                })->unique()->toArray();
-                $query->whereIn('processos.user_id', $userIds);
-            } else {
-                // Individual
-                $query->where('processos.user_id', $user->id);
+        // 1. Aplica Segurança (ACL) nativa do Krayin (Bouncer)
+        $userIds = bouncer()->getAuthorizedUserIds();
+
+        if (is_array($userIds)) {
+            // Se array, permissão é individual ou grupo (scope restrito)
+            $query->whereIn('processos.user_id', $userIds);
+        } else {
+            // Se for null, é escopo global/admin (vê tudo). 
+            // 2. Aplica Filtro Manual de Responsável apenas se for admin/global
+            if ($responsibleId && $responsibleId !== '') {
+                $query->where('processos.user_id', $responsibleId);
             }
-        }
-        // 2. Aplica Filtro Manual (Apenas se for Global e escolheu alguém)
-        elseif ($responsibleId) {
-            $query->where('processos.user_id', $responsibleId);
         }
 
         return $query;
@@ -228,6 +223,55 @@ class FinancialDashboardService
         }
 
         return $aging;
+    }
+
+    /**
+     * Retorna dados para o gráfico de Receitas vs Despesas (últimos 6 meses).
+     * Respeita ACL e Joins.
+     */
+    public function getMonthlyTrend(): array
+    {
+        return $this->getBaseQuery()
+            ->selectRaw("
+                DATE_FORMAT(law_financials.data_vencimento, '%Y-%m') as month,
+                SUM(CASE WHEN law_financials.tipo = 'receita' AND law_financials.status != 'cancelado' THEN law_financials.valor ELSE 0 END) as receitas,
+                SUM(CASE WHEN law_financials.tipo = 'despesa' AND law_financials.status != 'cancelado' THEN law_financials.valor ELSE 0 END) as despesas
+            ")
+            ->where('law_financials.data_vencimento', '>=', Carbon::now()->subMonths(6)->startOfMonth())
+            ->groupByRaw("DATE_FORMAT(law_financials.data_vencimento, '%Y-%m')")
+            ->orderBy('month')
+            ->get()
+            ->map(fn($row) => [
+                'month' => Carbon::createFromFormat('Y-m', $row->month)->translatedFormat('M/y'),
+                'receitas' => (float) $row->receitas,
+                'despesas' => (float) $row->despesas,
+            ])->toArray();
+    }
+
+    /**
+     * Retorna a distribuição por forma de pagamento.
+     * Respeita ACL e Joins.
+     */
+    public function getPaymentDistribution(): array
+    {
+        return $this->getBaseQuery()
+            ->selectRaw("
+                COALESCE(NULLIF(payment_method, ''), 'sem_metodo') as method,
+                COUNT(*) as total
+            ")
+            ->where('law_financials.status', '!=', 'cancelado')
+            ->groupBy('method')
+            ->get()
+            ->mapWithKeys(fn($row) => [
+                match($row->method) {
+                    'pix' => 'PIX',
+                    'boleto' => 'Boleto',
+                    'cartao' => 'Cartão',
+                    'transferencia' => 'Transferência',
+                    'dinheiro' => 'Dinheiro',
+                    default => 'Outros',
+                } => (int) $row->total,
+            ])->toArray();
     }
 
     /**

@@ -19,22 +19,6 @@ return new class extends Migration {
             $table->string('tipo')->nullable();
             $table->string('tipo_agente')->nullable();
             $table->text('objetivo')->nullable();
-            $table->string('risco')->nullable();
-            $table->string('probabilidade')->nullable();
-            $table->text('recomendacao')->nullable();
-            $table->string('competencia')->nullable();
-            $table->text('risco_operacional')->nullable();
-            $table->text('informacoes_faltantes')->nullable();
-            $table->text('perguntas_chave')->nullable();
-            $table->string('tipo_atuacao')->nullable();
-            $table->string('complexidade')->nullable();
-            $table->string('modelo_honorarios')->nullable();
-            $table->text('estrategia_cobranca')->nullable();
-            $table->text('argumentacao_valor')->nullable();
-            $table->text('abordagem_abertura')->nullable();
-            $table->text('estrategia_objecoes')->nullable();
-            $table->text('frase_fechamento')->nullable();
-            $table->text('cta')->nullable();
             $table->timestamps();
 
             // Foreign Key

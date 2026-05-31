@@ -1,436 +1,301 @@
 <x-admin::layouts>
-    <x-slot:title>
-        Dashboard Financeiro
-        </x-slot>
+    <x-slot:title>Dashboard Financeiro</x-slot>
 
-        <!--
-        Main Container -->
-        <div class="flex flex-col gap-6" style="gap: 1.5rem; display: flex; flex-direction: column;">
+    {{-- ═══════════════════════════════════════════════════════════
+         CSS — injected into <head> via @stack('styles') to avoid
+         Vue.js app.mount("#app") DOM replacement conflict.
+    ═══════════════════════════════════════════════════════════ --}}
+    @push('styles')
+    <style>
+        /* ─── Dashboard Container ─────────────────────────────── */
+        .fd { padding:1.5rem; display:flex; flex-direction:column; gap:1.75rem; }
 
-            <!-- Header Section -->
-            <div
-                class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-800">
+        /* ─── Panel (white section box) ───────────────────────── */
+        .fd-pnl { background:#fff; border-radius:14px; border:1px solid #e5e7eb; box-shadow:0 1px 5px rgba(0,0,0,.04); overflow:hidden; }
+        .fd-pnl-hd { display:flex; align-items:center; gap:.55rem; padding:.85rem 1.35rem; border-bottom:1px solid #f1f5f9; background:#fafbfd; }
+        .fd-pnl-hd-icon { font-size:1.05rem; }
+        .fd-pnl-hd-title { font-size:.75rem; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:.07em; margin:0; }
+        .fd-pnl-hd-badge { margin-left:auto; font-size:.65rem; font-weight:600; color:#94a3b8; background:#eef2f9; padding:2px 9px; border-radius:99px; }
+        .fd-pnl-bd { padding:1.35rem; }
 
-                <!-- Left: Context -->
-                <div class="flex flex-col">
-                    <div class="flex items-center gap-2">
-                        <span class="icon-dashboard text-2xl text-blue-600"></span>
-                        <h1 class="text-xl font-bold text-gray-800 dark:text-white">Dashboard Financeiro</h1>
-                    </div>
-                    <p class="text-sm text-gray-500 mt-1 pl-8">Controladoria jurídica com métricas avançadas.</p>
+        /* ─── Top bar ─────────────────────────────────────────── */
+        .fd-top { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; padding:1rem 1.35rem; }
+        .fd-top h1 { font-size:1.25rem; font-weight:800; color:#1e293b; margin:0; }
+        .fd-top-sub { font-size:.75rem; color:#94a3b8; margin-top:2px; }
+        .fd-sel { font-size:.78rem; border:1px solid #d1d9e6; border-radius:8px; padding:.4rem .75rem; background:#f8fafd; color:#334155; outline:none; cursor:pointer; }
+        .fd-sel:focus { border-color:#818cf8; }
+        .fd-user-tag { font-size:.78rem; color:#64748b; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:8px; padding:.35rem .8rem; }
+
+        /* ─── KPI grid ────────────────────────────────────────── */
+        .fd-kpi-g { display:grid; gap:1rem; grid-template-columns:repeat(5,1fr); }
+        @media(max-width:1100px){ .fd-kpi-g { grid-template-columns:repeat(3,1fr); } }
+        @media(max-width:650px) { .fd-kpi-g { grid-template-columns:repeat(2,1fr); } }
+
+        .fd-kpi { border-radius:12px; padding:1.1rem 1.15rem .95rem; border:1px solid transparent; display:flex; flex-direction:column; gap:.3rem; }
+        .fd-kpi-ic { font-size:1.2rem; margin-bottom:2px; }
+        .fd-kpi-lb { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+        .fd-kpi-vl { font-size:1.3rem; font-weight:800; }
+        .fd-kpi-nt { font-size:.65rem; }
+
+        /* pastel skins */
+        .fd-g { background:#ecfdf5; border-color:#bbf7d0; }
+        .fd-g .fd-kpi-lb,.fd-g .fd-kpi-nt { color:#166534; } .fd-g .fd-kpi-vl { color:#16a34a; }
+        .fd-r { background:#fff1f2; border-color:#fecdd3; }
+        .fd-r .fd-kpi-lb,.fd-r .fd-kpi-nt { color:#881337; } .fd-r .fd-kpi-vl { color:#dc2626; }
+        .fd-b { background:#eff6ff; border-color:#bfdbfe; }
+        .fd-b .fd-kpi-lb,.fd-b .fd-kpi-nt { color:#1e3a5f; } .fd-b .fd-kpi-vl { color:#2563eb; }
+        .fd-p { background:#f5f3ff; border-color:#ddd6fe; }
+        .fd-p .fd-kpi-lb,.fd-p .fd-kpi-nt { color:#4c1d95; } .fd-p .fd-kpi-vl { color:#7c3aed; }
+        .fd-a { background:#fffbeb; border-color:#fde68a; }
+        .fd-a .fd-kpi-lb,.fd-a .fd-kpi-nt { color:#78350f; } .fd-a .fd-kpi-vl { color:#d97706; }
+        .fd-o .fd-kpi-vl { color:#ea580c !important; }
+
+        /* progress bar */
+        .fd-bar { height:4px; background:rgba(0,0,0,.08); border-radius:99px; overflow:hidden; margin-top:4px; }
+        .fd-bar-f { height:100%; border-radius:99px; }
+
+        /* ─── Charts ──────────────────────────────────────────── */
+        .fd-ch-g { display:grid; gap:1.25rem; grid-template-columns:1.6fr 1fr; }
+        @media(max-width:900px){ .fd-ch-g { grid-template-columns:1fr; } }
+        .fd-ch-ttl { font-size:.78rem; font-weight:700; color:#475569; margin:0 0 .85rem; }
+        .fd-ch-wrap { position:relative; height:260px; }
+
+        /* ─── Performance ─────────────────────────────────────── */
+        .fd-pf-g { display:grid; gap:1rem; grid-template-columns:1fr 1fr; }
+        @media(max-width:650px){ .fd-pf-g { grid-template-columns:1fr; } }
+        .fd-pf { background:#f8fafd; border:1px solid #e5e7eb; border-radius:12px; padding:1.1rem 1.2rem; }
+        .fd-pf-lb { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#64748b; margin:0; }
+        .fd-pf-vl { font-size:1.4rem; font-weight:800; margin:.35rem 0 0; }
+        .fd-pf-ht { font-size:.7rem; color:#94a3b8; margin-top:4px; }
+
+        /* ─── Aging ───────────────────────────────────────────── */
+        .fd-ag-g { display:grid; gap:1rem; grid-template-columns:repeat(4,1fr); }
+        @media(max-width:800px){ .fd-ag-g { grid-template-columns:repeat(2,1fr); } }
+        .fd-ag { border-radius:12px; padding:1rem 1.15rem; border:1px solid transparent; display:flex; flex-direction:column; gap:.35rem; }
+        .fd-ag-tg { font-size:.6rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; padding:2px 8px; border-radius:99px; width:max-content; }
+        .fd-ag-vl { font-size:1.15rem; font-weight:800; }
+        .fd-ag-sb { font-size:.65rem; opacity:.6; }
+    </style>
+    @endpush
+
+    {{-- ═══════════════════════════════════════════════════════════
+         CONTENT — rendered inside Krayin's admin layout slot.
+         NO inline <style> tags here (Vue destroys them on mount).
+    ═══════════════════════════════════════════════════════════ --}}
+    <div class="fd">
+
+        {{-- ── HEADER ── --}}
+        <div class="fd-pnl">
+            <div class="fd-top">
+                <div>
+                    <h1>💼 Dashboard Financeiro</h1>
+                    <p class="fd-top-sub">Visão consolidada do escritório</p>
                 </div>
-
-                <!-- Right: Filters -->
-                <div class="flex flex-col md:flex-row gap-3 items-end md:items-center">
-
-                    @php
-                        $user = auth()->guard('user')->user();
-                        $isGlobal = $user->view_permission === 'global';
-                    @endphp
-
-                    @if($isGlobal)
-                        <form id="filter-form" action="" method="GET" class="flex gap-2">
-                            <!-- User Filter -->
-                            <select name="responsible_id" onchange="this.form.submit()"
-                                class="rounded-lg border-gray-300 text-sm focus:border-blue-500 focus:ring-blue-500 shadow-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 py-2">
-                                <option value="">Todos os Advogados</option>
-                                @foreach($users as $u)
-                                    <option value="{{ $u->id }}" {{ request('responsible_id') == $u->id ? 'selected' : '' }}>
-                                        {{ $u->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            <!-- Date Filters would go here seamlessly -->
-                        </form>
-                    @else
-                        <!-- Individual View Indicator -->
-                        <div
-                            class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium border border-gray-200">
-                            <span class="icon-user text-gray-400 mr-1"></span> {{ $user->name }}
-                        </div>
-                    @endif
-                </div>
+                @php
+                    $authUser = auth()->guard('user')->user() ?? auth()->guard('admin')->user();
+                    $isGlobal = $authUser && $authUser->view_permission === 'global';
+                @endphp
+                @if($isGlobal)
+                    <form method="GET">
+                        <select class="fd-sel" name="responsible_id" onchange="this.form.submit()">
+                            <option value="">👤 Todos os Advogados</option>
+                            @foreach($users as $u)
+                                <option value="{{ $u->id }}" {{ request('responsible_id') == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                @elseif($authUser)
+                    <span class="fd-user-tag">👤 {{ $authUser->name }}</span>
+                @endif
             </div>
-
-            <!-- Row 1: Main KPIs (5 Columns) - JS Force Applied -->
-            <div id="main-kpi-grid">
-
-                <!-- Receitas -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center dark:bg-gray-900 dark:border-gray-800">
-                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">TOTAL RECEITAS</span>
-                    <div class="mt-2 flex items-baseline gap-1">
-                        <span class="text-xl font-extrabold text-green-600">
-                            R$ {{ number_format($totalReceitas, 2, ',', '.') }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Despesas -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center dark:bg-gray-900 dark:border-gray-800">
-                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">TOTAL DESPESAS</span>
-                    <div class="mt-2 flex items-baseline gap-1">
-                        <span class="text-xl font-extrabold text-red-600">
-                            R$ {{ number_format($totalDespesas, 2, ',', '.') }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Saldo -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center dark:bg-gray-900 dark:border-gray-800">
-                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">SALDO LÍQUIDO</span>
-                    <div class="mt-2 flex items-baseline gap-1">
-                        <span
-                            class="text-xl font-extrabold {{ $saldoLiquido >= 0 ? 'text-green-600' : 'text-red-600' }}">
-                            R$ {{ number_format($saldoLiquido, 2, ',', '.') }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Margem -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center dark:bg-gray-900 dark:border-gray-800">
-                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">MARGEM</span>
-                    <div class="mt-2 flex items-baseline gap-1">
-                        <span
-                            class="text-xl font-extrabold {{ $margemPercent >= 0 ? 'text-blue-600' : 'text-red-600' }}">
-                            {{ number_format($margemPercent, 1, ',', '.') }}%
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Pendente -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center dark:bg-gray-900 dark:border-gray-800">
-                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">PENDENTE A RECEBER</span>
-                    <div class="mt-2 flex items-baseline gap-1">
-                        <span class="text-xl font-extrabold text-gray-700 dark:text-gray-300">
-                            R$ {{ number_format($pendenteReceber, 2, ',', '.') }}
-                        </span>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Row 2: Secondary Performance KPIs -->
-            <div id="performance-grid">
-
-                <!-- Collection Rate - Font size standardized to text-xl -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center dark:bg-gray-900 dark:border-gray-800">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">TAXA DE
-                            RECEBIMENTO</span>
-                        <span class="icon-sort-amount-up text-gray-300 text-xs"></span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span
-                            class="text-xl font-extrabold {{ $collectionRate >= 80 ? 'text-green-600' : ($collectionRate >= 50 ? 'text-orange-600' : 'text-red-600') }}">
-                            {{ number_format($collectionRate, 1, ',', '.') }}%
-                        </span>
-                    </div>
-                </div>
-
-                <!-- DSO - Font size standardized to text-xl -->
-                <div
-                    class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center dark:bg-gray-900 dark:border-gray-800">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">PRAZO MÉDIO
-                            (DSO)</span>
-                        <span class="icon-calendar text-gray-300 text-xs"></span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span
-                            class="text-xl font-extrabold {{ $dso <= 30 ? 'text-green-600' : ($dso <= 60 ? 'text-orange-600' : 'text-red-600') }}">
-                            {{ number_format($dso, 1, ',', '.') }} dias
-                        </span>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Row 3: Aging Report - Font size standardized to text-xl -->
-            <div id="aging-grid">
-
-                <!-- 0-30 -->
-                <div
-                    class="bg-green-50 p-5 rounded-xl border border-green-100 flex flex-row items-center justify-between h-24 dark:bg-green-900 dark:border-green-800">
-                    <span
-                        class="text-[10px] font-bold text-green-700 uppercase tracking-widest bg-green-100 px-2 py-0.5 rounded-full">0-30
-                        DIAS</span>
-                    <span class="text-xl font-extrabold text-green-600">
-                        R$ {{ number_format($aging['0_30'] ?? 0, 2, ',', '.') }}
-                    </span>
-                </div>
-
-                <!-- 31-60 -->
-                <div style="background-color: #fefce8; border-color: #fef08a;"
-                    class="p-5 rounded-xl border flex flex-row items-center justify-between h-24">
-                    <span style="background-color: #fef08a; color: #a16207;"
-                        class="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full">31-60
-                        DIAS</span>
-                    <span style="color: #ca8a04;" class="text-xl font-extrabold">
-                        R$ {{ number_format($aging['31_60'] ?? 0, 2, ',', '.') }}
-                    </span>
-                </div>
-
-                <!-- 61-90 -->
-                <div
-                    class="bg-orange-50 p-5 rounded-xl border border-orange-100 flex flex-row items-center justify-between h-24 dark:bg-orange-900 dark:border-orange-800">
-                    <span
-                        class="text-[10px] font-bold text-orange-600 uppercase tracking-widest bg-orange-100 px-2 py-0.5 rounded-full">61-90
-                        DIAS</span>
-                    <span class="text-xl font-extrabold text-orange-600">
-                        R$ {{ number_format($aging['61_90'] ?? 0, 2, ',', '.') }}
-                    </span>
-                </div>
-
-                <!-- >90 -->
-                <div
-                    class="bg-red-50 p-5 rounded-xl border border-red-100 flex flex-row items-center justify-between h-24 dark:bg-red-900 dark:border-red-800">
-                    <span
-                        class="text-[10px] font-bold text-red-600 uppercase tracking-widest bg-red-100 px-2 py-0.5 rounded-full">>90
-                        DIAS</span>
-                    <span class="text-xl font-extrabold text-red-600">
-                        R$ {{ number_format($aging['over_90'] ?? 0, 2, ',', '.') }}
-                    </span>
-                </div>
-
-            </div>
-
-            <!-- DataGrid -->
-            <div
-                class="bg-white rounded-xl border border-gray-200 shadow-sm dark:bg-gray-900 dark:border-gray-800 mt-6">
-                <x-admin::datagrid :src="route('admin.lawfirm.financial.index')" />
-            </div>
-
         </div>
 
-        <!-- 
-        FORCE SCRIPT: Injecting styles via JS to survive re-renders. 
-    -->
-        @push('scripts')
-            <!-- Ensure Alpine.js is loaded -->
-            <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+        {{-- ── SECTION 1: RESUMO FINANCEIRO ── --}}
+        <div class="fd-pnl">
+            <div class="fd-pnl-hd">
+                <span class="fd-pnl-hd-icon">💰</span>
+                <h2 class="fd-pnl-hd-title">Resumo Financeiro</h2>
+                <span class="fd-pnl-hd-badge">KPIs</span>
+            </div>
+            <div class="fd-pnl-bd">
+                <div class="fd-kpi-g">
 
-            <script>
-                document.addEventListener("DOMContentLoaded", function () {
-                    const style = document.createElement('style');
-                    style.innerHTML = `
-                                                #main-kpi-grid {
-                                                    display: grid !important;
-                                                    gap: 1rem !important;
-                                                    grid-template-columns: 1fr !important;
-                                                }
-                                                @media (min-width: 768px) {
-                                                    #main-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
-                                                }
-                                                @media (min-width: 1200px) {
-                                                    #main-kpi-grid { grid-template-columns: repeat(5, 1fr) !important; }
-                                                }
+                    <div class="fd-kpi fd-g">
+                        <span class="fd-kpi-ic">📈</span>
+                        <span class="fd-kpi-lb">Total Receitas</span>
+                        <span class="fd-kpi-vl">R$ {{ number_format($totalReceitas, 2, ',', '.') }}</span>
+                        <span class="fd-kpi-nt">Lançamentos ativos</span>
+                    </div>
 
-                                                #performance-grid {
-                                                    display: grid !important;
-                                                    gap: 1rem !important;
-                                                    grid-template-columns: 1fr !important;
-                                                }
-                                                @media (min-width: 1024px) {
-                                                    #performance-grid { grid-template-columns: 1fr 1.5fr !important; }
-                                                }
+                    <div class="fd-kpi fd-r">
+                        <span class="fd-kpi-ic">📉</span>
+                        <span class="fd-kpi-lb">Total Despesas</span>
+                        <span class="fd-kpi-vl">R$ {{ number_format($totalDespesas, 2, ',', '.') }}</span>
+                        <span class="fd-kpi-nt">Lançamentos ativos</span>
+                    </div>
 
-                                                #aging-grid {
-                                                    display: grid !important;
-                                                    gap: 1rem !important;
-                                                    grid-template-columns: 1fr !important;
-                                                }
-                                                @media (min-width: 768px) {
-                                                    #aging-grid { grid-template-columns: repeat(2, 1fr) !important; }
-                                                }
-                                                @media (min-width: 1200px) {
-                                                    #aging-grid { grid-template-columns: repeat(4, 1fr) !important; }
-                                                }
-                                            `;
-                    document.head.appendChild(style);
-                });
-            </script>
+                    <div class="fd-kpi fd-b {{ $saldoLiquido < 0 ? 'fd-o' : '' }}">
+                        <span class="fd-kpi-ic">⚖️</span>
+                        <span class="fd-kpi-lb">Saldo Líquido</span>
+                        <span class="fd-kpi-vl">R$ {{ number_format($saldoLiquido, 2, ',', '.') }}</span>
+                        <span class="fd-kpi-nt">Receitas − Despesas</span>
+                    </div>
 
-            <!-- Quick Pay Modal (Alpine.js Component) -->
-            <div x-data="quickPayModal()" @open-quick-pay.window="openModal($event.detail.id)" x-show="open" x-cloak
-                class="fixed inset-0 z-50 overflow-y-auto">
+                    <div class="fd-kpi fd-p">
+                        <span class="fd-kpi-ic">📊</span>
+                        <span class="fd-kpi-lb">Margem de Lucro</span>
+                        <span class="fd-kpi-vl">{{ number_format($margemPercent, 1, ',', '.') }}%</span>
+                        <div class="fd-bar"><div class="fd-bar-f" style="width:{{ min(100,max(0,$margemPercent)) }}%;background:#7c3aed;"></div></div>
+                    </div>
 
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="open = false"></div>
+                    <div class="fd-kpi fd-a">
+                        <span class="fd-kpi-ic">⏳</span>
+                        <span class="fd-kpi-lb">A Receber</span>
+                        <span class="fd-kpi-vl">R$ {{ number_format($pendenteReceber, 2, ',', '.') }}</span>
+                        <span class="fd-kpi-nt">Receitas pendentes</span>
+                    </div>
 
-                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                    <div
-                        class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg dark:bg-gray-800">
+                </div>
+            </div>
+        </div>
 
-                        <form @submit.prevent="submitQuickPay">
-                            <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4 dark:bg-gray-900">
-                                <div class="sm:flex sm:items-start">
-                                    <div
-                                        class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
-                                        <span class="icon-check text-green-600 text-lg"></span>
-                                    </div>
-                                    <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                                        <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
-                                            Confirmar Recebimento</h3>
-                                        <div class="mt-4 flex flex-col gap-4">
-
-                                            <!-- Data Pagamento -->
-                                            <div>
-                                                <label
-                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data
-                                                    do Pagamento</label>
-                                                <input type="date" x-model="paymentDate" required
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white">
-                                            </div>
-
-                                            <!-- Método Pagamento -->
-                                            <div>
-                                                <label
-                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Método</label>
-                                                <select x-model="paymentMethod" required
-                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white">
-                                                    <option value="pix">Pix</option>
-                                                    <option value="boleto">Boleto</option>
-                                                    <option value="transferencia">Transferência</option>
-                                                    <option value="credito">Cartão de Crédito</option>
-                                                    <option value="dinheiro">Dinheiro</option>
-                                                </select>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 dark:bg-gray-800">
-                                <button type="submit" :disabled="loading"
-                                    class="inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 sm:ml-3 sm:w-auto disabled:opacity-50">
-                                    <span x-show="!loading">Confirmar Baixa</span>
-                                    <span x-show="loading">Processando...</span>
-                                </button>
-                                <button type="button" @click="open = false"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto dark:bg-gray-700 dark:text-gray-300 dark:ring-gray-600 dark:hover:bg-gray-600">
-                                    Cancelar
-                                </button>
-                            </div>
-                        </form>
+        {{-- ── SECTION 2: GRÁFICOS ── --}}
+        <div class="fd-pnl">
+            <div class="fd-pnl-hd">
+                <span class="fd-pnl-hd-icon">📉</span>
+                <h2 class="fd-pnl-hd-title">Análise Gráfica</h2>
+                <span class="fd-pnl-hd-badge">Últimos 6 meses</span>
+            </div>
+            <div class="fd-pnl-bd">
+                <div class="fd-ch-g">
+                    <div>
+                        <p class="fd-ch-ttl">📊 Receitas vs Despesas — por Mês</p>
+                        <div class="fd-ch-wrap"><canvas id="chart-monthly"></canvas></div>
+                    </div>
+                    <div>
+                        <p class="fd-ch-ttl">💳 Formas de Pagamento</p>
+                        <div class="fd-ch-wrap"><canvas id="chart-payment"></canvas></div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <script>
-                // Global function called by DataGrid button
-                function openQuickPay(id) {
-                    window.dispatchEvent(new CustomEvent('open-quick-pay', { detail: { id: id } }));
-                }
+        {{-- ── SECTION 3: INDICADORES DE DESEMPENHO ── --}}
+        <div class="fd-pnl">
+            <div class="fd-pnl-hd">
+                <span class="fd-pnl-hd-icon">🎯</span>
+                <h2 class="fd-pnl-hd-title">Indicadores de Desempenho</h2>
+            </div>
+            <div class="fd-pnl-bd">
+                <div class="fd-pf-g">
+                    @php $cr = $collectionRate; @endphp
+                    <div class="fd-pf">
+                        <p class="fd-pf-lb">Taxa de Recebimento</p>
+                        <p class="fd-pf-vl" style="color:{{ $cr >= 80 ? '#16a34a' : ($cr >= 50 ? '#d97706' : '#dc2626') }}">{{ number_format($cr, 1, ',', '.') }}%</p>
+                        <div class="fd-bar" style="margin-top:8px"><div class="fd-bar-f" style="width:{{ min(100,$cr) }}%;background:{{ $cr >= 80 ? '#16a34a' : ($cr >= 50 ? '#d97706' : '#dc2626') }}"></div></div>
+                        <p class="fd-pf-ht">Receitas pagas / total receitas</p>
+                    </div>
+                    @php $d = $dso; @endphp
+                    <div class="fd-pf">
+                        <p class="fd-pf-lb">Prazo Médio de Recebimento (DSO)</p>
+                        <p class="fd-pf-vl" style="color:{{ $d <= 30 ? '#16a34a' : ($d <= 60 ? '#d97706' : '#dc2626') }}">{{ number_format($d, 0, ',', '.') }} dias</p>
+                        <p class="fd-pf-ht">{{ $d <= 30 ? '✅ Ótimo' : ($d <= 60 ? '⚠️ Atenção' : '🔴 Crítico') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                // Alpine.js Component Definition
-                document.addEventListener('alpine:init', () => {
-                    Alpine.data('quickPayModal', () => ({
-                        open: false,
-                        id: null,
-                        loading: false,
-                        paymentDate: '{{ date("Y-m-d") }}',
-                        paymentMethod: 'pix',
+        {{-- ── SECTION 4: AGING ── --}}
+        <div class="fd-pnl">
+            <div class="fd-pnl-hd">
+                <span class="fd-pnl-hd-icon">🕐</span>
+                <h2 class="fd-pnl-hd-title">Aging de Recebíveis</h2>
+                <span class="fd-pnl-hd-badge">por faixa</span>
+            </div>
+            <div class="fd-pnl-bd">
+                <div class="fd-ag-g">
+                    <div class="fd-ag" style="background:#ecfdf5;border-color:#a7f3d0">
+                        <span class="fd-ag-tg" style="background:#bbf7d0;color:#14532d">0 – 30 dias</span>
+                        <span class="fd-ag-vl" style="color:#15803d">R$ {{ number_format($aging['0_30'] ?? 0, 2, ',', '.') }}</span>
+                        <span class="fd-ag-sb" style="color:#166534">Correntes</span>
+                    </div>
+                    <div class="fd-ag" style="background:#fffbeb;border-color:#fde68a">
+                        <span class="fd-ag-tg" style="background:#fde68a;color:#78350f">31 – 60 dias</span>
+                        <span class="fd-ag-vl" style="color:#b45309">R$ {{ number_format($aging['31_60'] ?? 0, 2, ',', '.') }}</span>
+                        <span class="fd-ag-sb" style="color:#92400e">Atenção</span>
+                    </div>
+                    <div class="fd-ag" style="background:#fff7ed;border-color:#fed7aa">
+                        <span class="fd-ag-tg" style="background:#fed7aa;color:#7c2d12">61 – 90 dias</span>
+                        <span class="fd-ag-vl" style="color:#c2410c">R$ {{ number_format($aging['61_90'] ?? 0, 2, ',', '.') }}</span>
+                        <span class="fd-ag-sb" style="color:#c2410c">Risco</span>
+                    </div>
+                    <div class="fd-ag" style="background:#fff1f2;border-color:#fecdd3">
+                        <span class="fd-ag-tg" style="background:#fecdd3;color:#7f1d1d">&gt; 90 dias</span>
+                        <span class="fd-ag-vl" style="color:#b91c1c">R$ {{ number_format($aging['over_90'] ?? 0, 2, ',', '.') }}</span>
+                        <span class="fd-ag-sb" style="color:#b91c1c">Crítico</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                        openModal(id) {
-                            this.id = id;
-                            this.open = true;
-                            this.loading = false;
+    </div>
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        // Wait for Vue to finish mounting, then draw charts
+        window.addEventListener("load", function () {
+            setTimeout(() => {
+                const ctxBar = document.getElementById('chart-monthly');
+                const ctxPie = document.getElementById('chart-payment');
+
+                // Bar Chart
+                const monthlyData = @json($monthlyData);
+                if (ctxBar && monthlyData && monthlyData.length > 0) {
+                    new Chart(ctxBar, {
+                        type: 'bar',
+                        data: {
+                            labels: monthlyData.map(d => d.month),
+                            datasets: [
+                                { label:'Receitas', data:monthlyData.map(d=>d.receitas), backgroundColor:'rgba(134,239,172,.8)', borderColor:'#16a34a', borderWidth:1.5, borderRadius:6 },
+                                { label:'Despesas', data:monthlyData.map(d=>d.despesas), backgroundColor:'rgba(252,165,165,.8)', borderColor:'#dc2626', borderWidth:1.5, borderRadius:6 }
+                            ]
                         },
-
-                        async submitQuickPay() {
-                            if (this.loading) return; // Prevent double-submit
-                            this.loading = true;
-
-                            try {
-                                const formData = new FormData();
-                                formData.append('payment_date', this.paymentDate);
-                                formData.append('payment_method', this.paymentMethod);
-
-                                const url = "{{ route('admin.lawfirm.financial.quick_pay', 'REPLACE_ID') }}".replace('REPLACE_ID', this.id);
-                                const response = await fetch(url, {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value
-                                            || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-                                            || '',
-                                        'Accept': 'application/json',
-                                    },
-                                    body: formData
-                                });
-
-                                const data = await response.json();
-
-                                this.loading = false;
-                                this.open = false;
-
-                                // Show success message
-                                alert(data.message || 'Baixa realizada com sucesso!');
-
-                                // Reload page to refresh grid
-                                location.reload();
-
-                            } catch (error) {
-                                console.error('Error:', error);
-                                this.loading = false;
-                                alert('Erro ao realizar baixa. Veja console.');
+                        options: {
+                            responsive:true, maintainAspectRatio:false,
+                            plugins: {
+                                legend: { position:'top', labels:{ usePointStyle:true, padding:16, font:{size:11} } },
+                                tooltip: { callbacks: { label: c=>' R$ '+c.raw.toLocaleString('pt-BR',{minimumFractionDigits:2}) } }
+                            },
+                            scales: {
+                                x: { grid:{display:false}, ticks:{font:{size:10}} },
+                                y: { beginAtZero:true, grid:{color:'rgba(0,0,0,.05)'}, ticks:{ font:{size:10}, callback:v=>'R$ '+v.toLocaleString('pt-BR') } }
                             }
                         }
-                    }));
-                });
-
-                // Direct WhatsApp Messaging
-                function sendWhatsappBilling(id) {
-                    if (!confirm('Deseja enviar a cobrança via WhatsApp agora?')) {
-                        return;
-                    }
-
-                    // Find the button to add a loading state (optional UX improvement)
-                    const btn = document.querySelector(`button[onclick="sendWhatsappBilling(${id})"]`);
-                    const originalHtml = btn ? btn.innerHTML : '';
-                    if (btn) {
-                        btn.disabled = true;
-                        btn.innerHTML = '<span class="icon-loader animate-spin"></span> ...';
-                    }
-
-                    const url = "{{ route('admin.lawfirm.financial.send_whatsapp', 'REPLACE_ID') }}".replace('REPLACE_ID', id);
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value
-                                || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-                                || '',
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                        .then(response => response.json().then(data => ({ status: response.status, body: data })))
-                        .then(({ status, body }) => {
-                            if (btn) {
-                                btn.disabled = false;
-                                btn.innerHTML = originalHtml;
-                            }
-
-                            if (status >= 400 || !body.success) {
-                                alert(body.message || 'Erro ao enviar WhatsApp.');
-                            } else {
-                                alert(body.message || 'Mensagem enviada com sucesso!');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('WhatsApp Error:', error);
-                            if (btn) {
-                                btn.disabled = false;
-                                btn.innerHTML = originalHtml;
-                            }
-                            alert('Erro de conexão ao tentar enviar a mensagem.');
-                        });
+                    });
+                } else if (ctxBar) {
+                    ctxBar.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:.8rem;font-style:italic">Nenhum dado nos últimos 6 meses.</div>';
                 }
-            </script>
-        @endpush
+
+                // Doughnut
+                const paymentData = @json($paymentDistribution);
+                const pLabels = Object.keys(paymentData);
+                const pValues = Object.values(paymentData);
+                if (ctxPie && pLabels.length > 0) {
+                    new Chart(ctxPie, {
+                        type: 'doughnut',
+                        data: {
+                            labels: pLabels,
+                            datasets: [{ data:pValues, backgroundColor:['#818cf8','#34d399','#fb923c','#fbbf24','#f472b6','#a78bfa','#94a3b8'].slice(0,pLabels.length), borderWidth:2, borderColor:'#fff', hoverOffset:10 }]
+                        },
+                        options: { responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{ position:'bottom', labels:{ usePointStyle:true, padding:14, font:{size:11} }} }}
+                    });
+                } else if (ctxPie) {
+                    ctxPie.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:.8rem;font-style:italic">Nenhuma cobrança registrada.</div>';
+                }
+            }, 300);
+        });
+    </script>
+    @endpush
+
 </x-admin::layouts>

@@ -2,6 +2,7 @@
     $financeiros = isset($processo) ? $processo->financeiros : collect([]);
     $categoriasReceita = [
         'honorario' => 'Honorários',
+        'honorario_exito' => 'Honorários Èxito',
         'sucumbencia' => 'Sucumbência',
         'reembolso' => 'Reembolso',
         'consultoria' => 'Consultoria'
@@ -12,7 +13,7 @@
         'taxas' => 'Taxas',
         'diligencias' => 'Diligências'
     ];
-    $formasPagamento = ['boleto' => 'Boleto', 'pix' => 'PIX', 'transferencia' => 'Transferência', 'cartao' => 'Cartão'];
+    $formasPagamento = ['boleto' => 'Boleto', 'pix' => 'PIX', 'transferencia' => 'Transferência', 'cartao' => 'Cartão', 'dinheiro' => 'Dinheiro'];
     $startClosed = $startClosed ?? false;
     $readOnly = $readOnly ?? false;
 
@@ -165,8 +166,9 @@
                         <th class="px-4 py-3 min-w-[200px]">Descrição</th>
                         <th class="px-4 py-3 min-w-[120px]">Valor</th>
                         <th class="px-4 py-3 w-[140px]">Vencimento</th>
+                        <th class="px-4 py-3 w-[120px]">Forma Pgto</th>
                         <th class="px-4 py-3 w-[120px]">Status</th>
-                        <th class="px-4 py-3 w-[130px]">Pgto.</th>
+                        <th class="px-4 py-3 w-[90px] text-center">Asaas</th>
                         @if(!$readOnly)
                             <th class="px-4 py-3 w-[50px] text-center"></th>
                         @endif
@@ -220,6 +222,18 @@
                                 class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm">
                         </td>
 
+                        {{-- Forma de Pagamento --}}
+                        <td class="px-2 py-2" data-label="Forma Pgto">
+                            <select data-field="payment_method"
+                                onchange="window.lfFinOnPaymentMethodChange(this)"
+                                class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm">
+                                <option value="">- Selecione -</option>
+                                @foreach($formasPagamento as $pmKey => $pmLabel)
+                                    <option value="{{ $pmKey }}" {{ $fin->payment_method === $pmKey ? 'selected' : '' }}>{{ $pmLabel }}</option>
+                                @endforeach
+                            </select>
+                        </td>
+
                         {{-- Status --}}
                         <td class="px-2 py-2" data-label="Status">
                             <select data-field="status" onchange="window.lfFinOnStatusChange(this)"
@@ -234,21 +248,18 @@
                             </select>
                         </td>
 
-                        {{-- Pagamento --}}
-                        <td class="px-2 py-2" data-label="Pagamento">
-                            <div class="flex flex-col gap-1">
-                                <select data-field="payment_method"
-                                    class="w-full rounded-md border border-gray-300 px-1 py-1 text-xs"
-                                    {{ $fin->status !== 'pago' ? 'disabled' : '' }}>
-                                    <option value="">- Método -</option>
-                                    @foreach($formasPagamento as $pmKey => $pmLabel)
-                                        <option value="{{ $pmKey }}" {{ $fin->payment_method === $pmKey ? 'selected' : '' }}>{{ $pmLabel }}</option>
-                                    @endforeach
-                                </select>
-                                <input type="date" data-field="payment_date"
-                                    value="{{ $fin->payment_date ? \Carbon\Carbon::parse($fin->payment_date)->format('Y-m-d') : '' }}"
-                                    class="w-full rounded-md border border-gray-300 px-1 py-1 text-xs"
-                                    {{ $fin->status !== 'pago' ? 'disabled' : '' }}>
+                        {{-- Asaas Checkbox --}}
+                        <td class="px-2 py-2 text-center" data-label="Asaas">
+                            @php
+                                $isReceita = $fin->tipo === 'receita';
+                                $isAsaasMethod = in_array($fin->payment_method, ['pix', 'boleto', 'cartao']);
+                                $canAsaas = $isReceita && $isAsaasMethod;
+                            @endphp
+                            <div class="lf-asaas-check-wrap">
+                                <label class="flex items-center justify-center gap-1 cursor-pointer {{ $canAsaas ? '' : 'opacity-30 pointer-events-none' }}" title="Emitir cobrança via Asaas">
+                                    <input type="checkbox" data-field="emit_asaas" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4" {{ $canAsaas ? '' : 'disabled' }}>
+                                    <span class="text-[10px] text-gray-500">Asaas</span>
+                                </label>
                             </div>
                         </td>
 
@@ -329,7 +340,6 @@
         }).join('');
 
         tr.innerHTML =
-        tr.innerHTML =
             '<td class="px-2 py-2" data-label="Tipo">' +
                 '<select data-field="tipo" onchange="window.lfFinOnTipoChange(this)" class="w-full rounded-md border px-2 py-1.5 text-sm text-green-700 bg-green-50 border-green-200">' +
                 '<option value="receita" selected>Receita</option><option value="despesa">Despesa</option></select></td>' +
@@ -358,16 +368,19 @@
                     '</div>' +
                 '</div>' +
             '</td>' +
+            '<td class="px-2 py-2" data-label="Forma Pgto">' +
+                '<select data-field="payment_method" onchange="window.lfFinOnPaymentMethodChange(this)" class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm">' +
+                '<option value="">- Selecione -</option>' + pmOptions + '</select></td>' +
             '<td class="px-2 py-2" data-label="Status"><select data-field="status" onchange="window.lfFinOnStatusChange(this)" class="w-full rounded-md border px-2 py-1.5 text-sm font-medium bg-yellow-50 text-yellow-700 border-yellow-200">' +
                 '<option value="pendente" selected>Pendente</option><option value="pago">Pago</option><option value="cancelado">Cancelado</option></select></td>' +
-            '<td class="px-2 py-2" data-label="Pagamento"><div class="flex flex-col gap-1">' +
-                '<select data-field="payment_method" class="w-full rounded-md border border-gray-300 px-1 py-1 text-xs" disabled>' +
-                '<option value="">- Método -</option>' + pmOptions + '</select>' +
-                '<input type="date" data-field="payment_date" value="" class="w-full rounded-md border border-gray-300 px-1 py-1 text-xs" disabled></div></td>' +
-            '<td class="px-2 py-2 text-center" data-label="Ações">' +
-            '<input type="hidden" data-field="id" value="">' +
-            '<button type="button" onclick="window.lfFinDeleteRow(this)" class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors">' +
-            '<span class="icon-delete text-xl"></span></button></td>';
+            '<td class="px-2 py-2 text-center" data-label="Asaas">' +
+                '<div class="lf-asaas-check-wrap">' +
+                    '<label class="flex items-center justify-center gap-1 cursor-pointer opacity-30 pointer-events-none" title="Emitir cobrança via Asaas">' +
+                        '<input type="checkbox" data-field="emit_asaas" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4" disabled>' +
+                        '<span class="text-[10px] text-gray-500">Asaas</span>' +
+                    '</label>' +
+                '</div></td>' +
+            actionsCell;
 
         // Prepend to top instead of append
         if (tbody.firstChild) {
@@ -421,6 +434,9 @@
             valorInput.classList.add(sel.value === 'receita' ? 'text-green-600' : 'text-red-600');
         }
 
+        // Toggle Asaas checkbox visibility
+        lfFinToggleAsaasCheckbox(tr);
+
         window.lfFinUpdateTotals();
     };
 
@@ -435,18 +451,36 @@
         else if (sel.value === 'pago') sel.className += 'bg-green-50 text-green-700 border-green-200';
         else sel.className += 'bg-gray-100 text-gray-500 border-gray-200';
 
-        // Enable/disable payment fields
-        var pmMethod = tr.querySelector('[data-field="payment_method"]');
-        var pmDate = tr.querySelector('[data-field="payment_date"]');
-        if (pmMethod) pmMethod.disabled = sel.value !== 'pago';
-        if (pmDate) pmDate.disabled = sel.value !== 'pago';
-
-        if (sel.value === 'pago' && pmDate && !pmDate.value) {
-            pmDate.value = new Date().toISOString().split('T')[0];
-        }
-
         window.lfFinUpdateTotals();
     };
+
+    // ===================== PAYMENT METHOD CHANGE =====================
+    window.lfFinOnPaymentMethodChange = function(sel) {
+        var tr = sel.closest('tr');
+        if (!tr) return;
+        lfFinToggleAsaasCheckbox(tr);
+    };
+
+    // ===================== ASAAS CHECKBOX TOGGLE =====================
+    function lfFinToggleAsaasCheckbox(tr) {
+        var tipo = (tr.querySelector('[data-field="tipo"]') || {}).value || '';
+        var pm = (tr.querySelector('[data-field="payment_method"]') || {}).value || '';
+        var wrap = tr.querySelector('.lf-asaas-check-wrap');
+        if (!wrap) return;
+        var label = wrap.querySelector('label');
+        var chk = wrap.querySelector('[data-field="emit_asaas"]');
+        if (!label || !chk) return;
+        var asaasMethods = ['pix', 'boleto', 'cartao'];
+        var canAsaas = tipo === 'receita' && asaasMethods.indexOf(pm) !== -1;
+        if (canAsaas) {
+            label.classList.remove('opacity-30', 'pointer-events-none');
+            chk.disabled = false;
+        } else {
+            label.classList.add('opacity-30', 'pointer-events-none');
+            chk.disabled = true;
+            chk.checked = false;
+        }
+    }
 
     // ===================== UPDATE TOTALS =====================
     window.lfFinUpdateTotals = function() {
@@ -541,8 +575,10 @@
                 data_vencimento: (tr.querySelector('[data-field="data_vencimento"]') || {}).value || '',
                 status: (tr.querySelector('[data-field="status"]') || {}).value || 'pendente',
                 payment_method: (tr.querySelector('[data-field="payment_method"]') || {}).value || '',
-                payment_date: (tr.querySelector('[data-field="payment_date"]') || {}).value || '',
                 
+                // Asaas emission flag
+                emit_asaas: (tr.querySelector('[data-field="emit_asaas"]') || {}).checked ? 1 : 0,
+
                 // Installment Fields
                 parcelar: isParcelado,
                 parcelas_qtd: (tr.querySelector('[data-field="parcelas_qtd"]') || {}).value || null,

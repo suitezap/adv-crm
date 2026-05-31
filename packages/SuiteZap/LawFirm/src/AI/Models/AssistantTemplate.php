@@ -44,6 +44,9 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
         'n8n_webhook_url',
         'required_module',
         'is_active',
+        'base_cost_brl',
+        'markup_factor',
+        'price_virtual',
     ];
 
     /**
@@ -52,9 +55,24 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
      * @var array
      */
     protected $casts = [
-        'is_active' => 'boolean',
-        'variables' => 'array',
+        'is_active'      => 'boolean',
+        'variables'      => 'array',
+        'base_cost_brl'  => 'decimal:4',
+        'markup_factor'  => 'decimal:4',
+        'price_virtual'  => 'decimal:4',
     ];
+
+    /**
+     * Retorna o custo do assistente já convertido para SuiteCoins (Ƶ).
+     * Usado exclusivamente na camada de UI/Blade.
+     * DB armazena price_virtual em BRL (paridade 1:1 com suitecoin_balance).
+     */
+    public function getPriceVirtualSuiteCoinsAttribute(): float
+    {
+        return \SuiteZap\LawFirm\SaaS\Services\SuiteCoinService::toVirtual(
+            (float) ($this->attributes['price_virtual'] ?? 0)
+        );
+    }
 
     /**
      * Scope a query to only include templates for the current tenant or global ones.

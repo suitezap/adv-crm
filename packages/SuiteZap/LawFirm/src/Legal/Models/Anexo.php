@@ -4,7 +4,6 @@ namespace SuiteZap\LawFirm\Legal\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class Anexo extends Model
 {
@@ -12,6 +11,7 @@ class Anexo extends Model
 
     protected $fillable = [
         'processo_id',
+        'caso_id',
         'path',
         'nome_original',
         'tipo_mime',
@@ -28,7 +28,8 @@ class Anexo extends Model
 
     /**
      * Get a secure signed URL for the file.
-     * Uses Storage::temporaryUrl() for private bucket access with 15min expiration.
+     * Retorna rota de proxy interno para evitar "SignatureDoesNotMatch" no MinIO com Reverse Proxy.
+     * (Storage::temporaryUrl() removido — usa route() via proxy do backend, Regra 2.2)
      */
     public function getUrlAttribute(): string
     {

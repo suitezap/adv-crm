@@ -8,9 +8,13 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
+use SuiteZap\LawFirm\AI\Models\LeadTriagem;
 use SuiteZap\LawFirm\AI\Models\AssistantHistory;
 use SuiteZap\LawFirm\AI\Services\N8nService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
+use SuiteZap\LawFirm\SaaS\Models\SaasTransaction;
+use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use SuiteZap\LawFirm\AI\Jobs\ProcessAiAssistant;
 use Webkul\Lead\Models\Lead;
 
@@ -85,9 +89,9 @@ class AssistantController extends Controller
      */
     public function generate(Request $request, $slug)
     {
-        // Guard: Check AI balance before allowing generation
+        // 1. Guard: saldo e custo
         $subscription = MotherShipService::getCurrentSubscription();
-        $aiBalance = $subscription ? (float) ($subscription->ai_tokens_balance ?? 0) : 0;
+        $aiBalance = $subscription ? (float) ($subscription->suitecoin_balance ?? 0) : 0;
         if ($aiBalance <= 0) {
             return response()->json([
                 'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.'
@@ -95,19 +99,42 @@ class AssistantController extends Controller
         }
 
         $template = AssistantTemplate::where('slug', $slug)->firstOrFail();
+        $cost     = (float) ($template->price_virtual ?? 0);
 
-        // Get form inputs
+        if ($cost > 0 && !SuiteCoinService::hasSufficientBalance($aiBalance, $cost)) {
+            return response()->json([
+                'error' => SuiteCoinService::insufficientBalanceMessage($aiBalance, $cost),
+            ], 402);
+        }
+
+        // 2. Get form inputs
         $inputs = $request->except(['_token']);
 
-        // Build the prompt by replacing variables
+        // 3. Build prompt
         $generatedPrompt = $template->prompt_structure;
-
         foreach ($inputs as $key => $value) {
-            // Replace {{variable}} with actual value
             $generatedPrompt = str_replace('{{' . $key . '}}', $value, $generatedPrompt);
         }
 
-        // Save to history
+        // 4. Debitar saldo (apenas se custo > 0)
+        if ($cost > 0 && $subscription) {
+            $tenantId = MotherShipService::getTenantId();
+            $subscription->decrement('suitecoin_balance', $cost);
+            SaasTransaction::create([
+                'tenant_id'      => $tenantId,
+                'user_id'        => auth()->guard('user')->id(),
+                'type'           => 'debit',
+                'amount'         => $cost,
+                'balance_after'  => $subscription->suitecoin_balance,
+                'currency'       => SuiteCoinService::CURRENCY_CODE,
+                'service_type'   => 'AI_ASSISTANT',
+                'description'    => "Assistente: {$template->title} — " . SuiteCoinService::format(SuiteCoinService::toVirtual($cost)),
+                'reference_type' => 'assistant_template',
+                'reference_id'   => $template->id,
+            ]);
+        }
+
+        // 5. Salvar histórico
         $history = AssistantHistory::create([
             'user_id'           => auth()->guard('user')->id(),
             'lead_id'           => $request->input('lead_id') ?: null,
@@ -119,14 +146,15 @@ class AssistantController extends Controller
         ]);
 
         Log::info('Assistant Prompt Generated', [
-            'template' => $template->title,
+            'template'   => $template->title,
             'history_id' => $history->id,
+            'cost_brl'   => $cost,
         ]);
 
         return response()->json([
-            'success' => true,
+            'success'          => true,
             'generated_prompt' => $generatedPrompt,
-            'history_id' => $history->id,
+            'history_id'       => $history->id,
         ]);
     }
 
@@ -135,33 +163,39 @@ class AssistantController extends Controller
      */
     public function execute(Request $request, $slug)
     {
-        // Guard: Check AI balance before allowing execution
+        // 1. Guard: saldo
         $subscription = MotherShipService::getCurrentSubscription();
-        $aiBalance = $subscription ? (float) ($subscription->ai_tokens_balance ?? 0) : 0;
+        $aiBalance = $subscription ? (float) ($subscription->suitecoin_balance ?? 0) : 0;
         if ($aiBalance <= 0) {
             return response()->json([
                 'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.'
             ], 402);
         }
 
-        // 1. Validar e Buscar Template
+        // 2. Validar e Buscar Template
         $template = AssistantTemplate::where('slug', $slug)->firstOrFail();
+        $cost     = (float) ($template->price_virtual ?? 0);
+
+        if ($cost > 0 && !SuiteCoinService::hasSufficientBalance($aiBalance, $cost)) {
+            return response()->json([
+                'error' => SuiteCoinService::insufficientBalanceMessage($aiBalance, $cost),
+            ], 402);
+        }
 
         if (empty($template->n8n_webhook_url)) {
             return response()->json(['error' => 'Este assistente não possui URL de execução configurada.'], 400);
         }
 
-        // 2. Preparar Payload (Dados do Form + Metadados)
+        // 3. Preparar Payload
         $payload = [
-            'inputs' => $request->all(),
-            'user_id' => auth()->guard('user')->id(),
-            'template' => $template->title,
+            'inputs'    => $request->all(),
+            'user_id'   => auth()->guard('user')->id(),
+            'template'  => $template->title,
             'timestamp' => now()->toIso8601String()
         ];
 
-        // 3. Construir URL do Webhook via MotherShipService (Multi-Tenant, Zero .env)
+        // 4. Construir URL do Webhook
         $n8nConfig = MotherShipService::getN8nConfig();
-
         if (!$n8nConfig) {
             Log::warning('AssistantController::execute — N8N não configurado para este Tenant.', [
                 'template_slug' => $slug,
@@ -172,39 +206,51 @@ class AssistantController extends Controller
 
         $route  = $template->n8n_webhook_url;
         $baseUrl = $n8nConfig['url'];
+        $targetUrl = filter_var($route, FILTER_VALIDATE_URL)
+            ? $route
+            : rtrim($baseUrl, '/') . '/' . ltrim($route, '/');
 
-        // Verifica se é URL completa ou rota relativa
-        if (filter_var($route, FILTER_VALIDATE_URL)) {
-            $targetUrl = $route;
-        } else {
-            $targetUrl = rtrim($baseUrl, '/') . '/' . ltrim($route, '/');
-        }
-
-        // Validação Final
         if (empty($targetUrl) || $targetUrl === '/') {
             return response()->json(['error' => 'URL do n8n inválida. Verifique o cadastro do template.'], 500);
         }
 
-        // 4. Salvar Histórico (Status: QUEUED)
+        // 5. Debitar saldo antes de enfileirar (estorno ocorrê no Job se falhar)
+        $tenantId = MotherShipService::getTenantId();
+        if ($cost > 0 && $subscription) {
+            $subscription->decrement('suitecoin_balance', $cost);
+            SaasTransaction::create([
+                'tenant_id'      => $tenantId,
+                'user_id'        => auth()->guard('user')->id(),
+                'type'           => 'debit',
+                'amount'         => $cost,
+                'balance_after'  => $subscription->suitecoin_balance,
+                'currency'       => SuiteCoinService::CURRENCY_CODE,
+                'service_type'   => 'AI_ASSISTANT',
+                'description'    => "Assistente IA: {$template->title} — " . SuiteCoinService::format(SuiteCoinService::toVirtual($cost)),
+                'reference_type' => 'assistant_template',
+                'reference_id'   => $template->id,
+            ]);
+        }
+
+        // 6. Salvar Histórico (Status: QUEUED)
         $history = AssistantHistory::create([
             'user_id'           => auth()->guard('user')->id(),
             'lead_id'           => $request->input('lead_id') ?: null,
             'template_id'       => $template->id,
             'input_data'        => $request->all(),
-            'generated_content' => null, // Will be filled by Job
+            'generated_content' => null,
             'execution_mode'    => 'agent_exec',
             'status'            => 'queued'
         ]);
 
-        // 5. Dispatch Job
+        // 7. Dispatch Job
         ProcessAiAssistant::dispatch($history, $template, $request->all());
 
-        // 6. Retornar JSON para Polling
         return response()->json([
-            'success' => true,
+            'success'    => true,
             'history_id' => $history->id,
-            'status' => 'queued',
-            'message' => 'Solicitação enviada para processamento.'
+            'status'     => 'queued',
+            'message'    => 'Solicitação enviada para processamento.'
         ]);
     }
 
@@ -259,7 +305,7 @@ class AssistantController extends Controller
 
         // Guard: Check AI balance before allowing generation/execution
         $subscription = MotherShipService::getCurrentSubscription();
-        $aiBalance = $subscription ? (float) ($subscription->ai_tokens_balance ?? 0) : 0;
+        $aiBalance = $subscription ? (float) ($subscription->suitecoin_balance ?? 0) : 0;
         if ($aiBalance <= 0) {
             return response()->json([
                 'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.'
@@ -300,7 +346,7 @@ class AssistantController extends Controller
 
         // Guard: Check AI balance before allowing generation/execution
         $subscription = MotherShipService::getCurrentSubscription();
-        $aiBalance = $subscription ? (float) ($subscription->ai_tokens_balance ?? 0) : 0;
+        $aiBalance = $subscription ? (float) ($subscription->suitecoin_balance ?? 0) : 0;
         if ($aiBalance <= 0) {
             return response()->json([
                 'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.'
@@ -447,5 +493,62 @@ class AssistantController extends Controller
                 'error' => 'Falha de conexão com N8N: ' . $e->getMessage()
             ], 503);
         }
+    }
+
+    /**
+     * Slug → lead_triagem column mapping for cross-assistant context.
+     */
+    private const TRIAGEM_SLUG_MAP = [
+        'pre-triagem-lead'      => 'viabilidade',
+        'pre-triagem-checklist' => 'qualificacao',
+        'gerador-proposta'      => 'proposta',
+        'script-vendas'         => 'negociacao',
+    ];
+
+    /**
+     * Save AI assistant output to lead_triagem for cross-context usage.
+     *
+     * POST assistants/lead/{leadId}/triagem/save
+     * Body: { slug: string, content: string }
+     */
+    public function saveTriagem(Request $request, $leadId)
+    {
+        $request->validate([
+            'slug'    => 'required|string',
+            'content' => 'required|string',
+        ]);
+
+        $slug   = $request->input('slug');
+        $column = self::TRIAGEM_SLUG_MAP[$slug] ?? null;
+
+        if (!$column) {
+            return response()->json(['error' => 'Slug não mapeado para triagem.'], 422);
+        }
+
+        LeadTriagem::updateOrCreate(
+            ['lead_id' => $leadId],
+            [$column => $request->input('content')]
+        );
+
+        return response()->json(['success' => true, 'column' => $column]);
+    }
+
+    /**
+     * Return the 4 assistant output fields for a lead.
+     *
+     * GET assistants/lead/{leadId}/triagem
+     */
+    public function getTriagem($leadId)
+    {
+        $triagem = LeadTriagem::where('lead_id', $leadId)
+            ->select(['viabilidade', 'qualificacao', 'proposta', 'negociacao'])
+            ->first();
+
+        return response()->json([
+            'viabilidade' => $triagem?->viabilidade,
+            'qualificacao' => $triagem?->qualificacao,
+            'proposta'    => $triagem?->proposta,
+            'negociacao'  => $triagem?->negociacao,
+        ]);
     }
 }

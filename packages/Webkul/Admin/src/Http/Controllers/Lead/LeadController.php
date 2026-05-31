@@ -159,6 +159,18 @@ class LeadController extends Controller
 
         $data = request()->all();
 
+        if (isset($data['person']['contact_numbers']) && is_array($data['person']['contact_numbers'])) {
+            foreach ($data['person']['contact_numbers'] as &$contact) {
+                if (!empty($contact['value'])) {
+                    $cleaned = preg_replace('/\D/', '', $contact['value']);
+                    if (strlen($cleaned) >= 10 && !str_starts_with($cleaned, '55')) {
+                        $cleaned = '55' . $cleaned;
+                    }
+                    $contact['value'] = $cleaned;
+                }
+            }
+        }
+
         $data['status'] = 1;
 
         if (! empty($data['lead_pipeline_stage_id'])) {
@@ -240,6 +252,18 @@ class LeadController extends Controller
         Event::dispatch('lead.update.before', $id);
 
         $data = $request->all();
+
+        if (isset($data['person']['contact_numbers']) && is_array($data['person']['contact_numbers'])) {
+            foreach ($data['person']['contact_numbers'] as &$contact) {
+                if (!empty($contact['value'])) {
+                    $cleaned = preg_replace('/\D/', '', $contact['value']);
+                    if (strlen($cleaned) >= 10 && !str_starts_with($cleaned, '55')) {
+                        $cleaned = '55' . $cleaned;
+                    }
+                    $contact['value'] = $cleaned;
+                }
+            }
+        }
 
         if (isset($data['lead_pipeline_stage_id'])) {
             $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);

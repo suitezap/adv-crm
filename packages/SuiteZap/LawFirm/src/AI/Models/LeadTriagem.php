@@ -27,6 +27,12 @@ class LeadTriagem extends Model
         'tipo',
         'tipo_agente',
         'objetivo',
+        // AI assistant full output columns (v3.50+)
+        'viabilidade',
+        'qualificacao',
+        'proposta',
+        'negociacao',
+        // Structured fields from Análise de Viabilidade
         'risco',
         'probabilidade',
         'recomendacao',

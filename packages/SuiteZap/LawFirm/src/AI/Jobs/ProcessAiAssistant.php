@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\AI\Models\AssistantHistory;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 
 class ProcessAiAssistant implements ShouldQueue
 {
@@ -48,7 +49,25 @@ class ProcessAiAssistant implements ShouldQueue
             // 1. Update status to processing
             $this->history->update(['status' => 'processing']);
 
-            // 2. Get N8n Config
+            // 0. Validate suitecoin_balance (must have balance >= template cost)
+            $subscription   = MotherShipService::getCurrentSubscription();
+            $balanceBrl     = (float) ($subscription->suitecoin_balance ?? 0.0);
+            $costVirtual    = (float) ($this->template->price_virtual ?? 0.0);
+            $costBrl        = $costVirtual > 0
+                ? SuiteCoinService::toBrl($costVirtual)
+                : 0.0;
+
+            if ($balanceBrl <= 0 || ($costBrl > 0 && $balanceBrl < $costBrl)) {
+                $msg = sprintf(
+                    'Saldo SuiteCoins insuficiente. Disponível: %s | Necessário: %s',
+                    SuiteCoinService::formatFromBrl($balanceBrl),
+                    SuiteCoinService::format($costVirtual)
+                );
+                $this->history->update(['status' => 'failed', 'error_message' => $msg]);
+                Log::error("[ProcessAiAssistant] {$msg} [HistoryID: {$this->history->id}]");
+                return;
+            }
+
             $n8nConfig = MotherShipService::getN8nConfig();
 
             if (!$n8nConfig) {

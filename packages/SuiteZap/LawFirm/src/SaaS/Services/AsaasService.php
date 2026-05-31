@@ -541,9 +541,10 @@ class AsaasService
         $order->markAsPaid($paymentId);
 
         if ($order->type === 'ai_credits') {
-            // Proporção 1:1 — usa o valor da order (fonte da verdade)
-            $creditsToAdd = (float) $order->value;
-            $subscription->ai_tokens_balance += $creditsToAdd;
+            // Converte BRL → SuiteCoins (taxa configurável via MotherShip)
+            $brlAmount = (float) $order->value;
+            $suitecoinsVisual = SuiteCoinService::toVirtual($brlAmount);
+            $subscription->suitecoin_balance += $brlAmount;
             $subscription->save();
 
             $invoiceInfo = '';
@@ -553,17 +554,18 @@ class AsaasService
 
             SaasTransaction::create([
                 'tenant_id'      => $tenantId,
-                'user_id'        => $order->user_id, // ← Rastreio do usuário!
+                'user_id'        => $order->user_id,
                 'type'           => 'credit',
-                'amount'         => $creditsToAdd,
-                'balance_after'  => $subscription->ai_tokens_balance,
+                'amount'         => $brlAmount,
+                'balance_after'  => $subscription->suitecoin_balance,
+                'currency'       => SuiteCoinService::CURRENCY_CODE,
                 'service_type'   => 'asaas_checkout',
-                'description'    => "Recarga de R$ " . number_format($creditsToAdd, 2, ',', '.') . " em Créditos de IA via Asaas ({$paymentId}){$invoiceInfo}",
+                'description'    => "Recarga de " . SuiteCoinService::format($suitecoinsVisual) . " via Asaas ({$paymentId}){$invoiceInfo}",
                 'reference_id'   => $paymentId,
                 'reference_type' => 'asaas_payment',
             ]);
 
-            Log::info("AsaasService: +R$ {$creditsToAdd} créditos → tenant {$tenantId}, user #{$order->user_id}. Saldo: {$subscription->ai_tokens_balance}");
+            Log::info("AsaasService: +" . SuiteCoinService::format($suitecoinsVisual) . " (R$ {$brlAmount}) → tenant {$tenantId}, user #{$order->user_id}. Saldo DB(BRL): {$subscription->suitecoin_balance}");
 
         } elseif ($order->type === 'subscription') {
             $subscription->status = 'active';
@@ -613,8 +615,9 @@ class AsaasService
         $paymentId = $payment['id'];
 
         if ($type === 'credit') {
-            $creditsToAdd = (float) $valueStr;
-            $subscription->ai_tokens_balance += $creditsToAdd;
+            $brlAmount = (float) $valueStr;
+            $suitecoinsVisual = SuiteCoinService::toVirtual($brlAmount);
+            $subscription->suitecoin_balance += $brlAmount;
             $subscription->save();
 
             $invoiceInfo = '';
@@ -625,15 +628,16 @@ class AsaasService
             SaasTransaction::create([
                 'tenant_id'      => $tenantId,
                 'type'           => 'credit',
-                'amount'         => $payment['value'] ?? $creditsToAdd,
-                'balance_after'  => $subscription->ai_tokens_balance,
+                'amount'         => $brlAmount,
+                'balance_after'  => $subscription->suitecoin_balance,
+                'currency'       => SuiteCoinService::CURRENCY_CODE,
                 'service_type'   => 'asaas_checkout',
-                'description'    => "Recarga de {$creditsToAdd} Créditos de IA via Asaas ({$paymentId}){$invoiceInfo} - Legado",
+                'description'    => "Recarga de " . SuiteCoinService::format($suitecoinsVisual) . " via Asaas ({$paymentId}){$invoiceInfo} - Legado",
                 'reference_id'   => $paymentId,
                 'reference_type' => 'asaas_payment',
             ]);
 
-            Log::info("AsaasService::sync (legado): +{$creditsToAdd} créditos sincronizados para tenant {$tenantId}.");
+            Log::info("AsaasService::sync (legado): +" . SuiteCoinService::format($suitecoinsVisual) . " sincronizados para tenant {$tenantId}.");
             Cache::forget("tenant_{$tenantId}_subscription");
             Cache::forget("tenant_{$tenantId}_available_assistants");
         }

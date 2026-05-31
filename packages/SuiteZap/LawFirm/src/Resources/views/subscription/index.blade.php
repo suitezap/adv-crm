@@ -283,14 +283,15 @@
                     </div>
 
                     @php
-                        $aiBalance = $subscription->ai_tokens_balance ?? 0;
-                        $aiBalanceBrl = number_format((float)$aiBalance, 2, ',', '.');
-                        $aiHasBalance = $aiBalance > 0;
+                        $aiBalanceBrl    = (float) ($subscription->suitecoin_balance ?? 0);
+                        $aiBalanceVirtual = \SuiteZap\LawFirm\SaaS\Services\SuiteCoinService::toVirtual($aiBalanceBrl);
+                        $aiBalanceFmt    = number_format($aiBalanceVirtual, 2, ',', '.');
+                        $aiHasBalance    = $aiBalanceBrl > 0;
                     @endphp
 
                     <div>
-                        <p class="text-xl font-bold {{ $aiHasBalance ? 'dark:text-gray-300' : 'text-red-500 dark:text-red-400' }}">
-                            R$ {{ $aiBalanceBrl }}
+                        <p class="text-xl font-bold {{ $aiHasBalance ? 'dark:text-gray-300' : 'text-red-500 dark:text-red-400' }}" title="{{ \SuiteZap\LawFirm\SaaS\Services\SuiteCoinService::tooltip() }}">
+                            Ƶ {{ $aiBalanceFmt }}
                         </p>
                         <p class="text-xs text-gray-500 mt-0.5">
                             @if($aiHasBalance)
@@ -373,7 +374,7 @@
                                     Gerar
                                 </button>
                             </div>
-                            <p class="text-[10.5px] text-gray-400 mt-1.5 dark:text-gray-500"><i class="icon-info"></i> Taxa: R$ 1,00 = 1 Crédito de IA</p>
+                            <p class="text-[10.5px] text-gray-400 mt-1.5 dark:text-gray-500"><i class="icon-info"></i> Taxa: R$ 1,00 = Ƶ {{ number_format(\SuiteZap\LawFirm\SaaS\Services\SuiteCoinService::getRate(), 0) }},00 SuiteCoins | Mínimo: R$ {{ number_format(\SuiteZap\LawFirm\SaaS\Services\SuiteCoinService::getMinRechargeBrl(), 2, ',', '.') }}</p>
                         </div>
                     </div>
                 </div>

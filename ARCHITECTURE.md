@@ -1,4 +1,4 @@
-# 🏛 LawFirm CRM - Documento de Arquitetura (v3.35 - DDD & SaaS Multi-Tenant)
+# 🏛 LawFirm CRM - Documento de Arquitetura (v3.52.0 - DDD & SaaS Multi-Tenant)
 > [!IMPORTANT]
 > **Manutenção do Documento:** Este arquivo **DEVE** ser atualizado (seção 4.x) e a versão incrementada no cabeçalho sempre que houver mudanças estruturais, novas funcionalidades core ou atualizações na constante de versão em `LawFirmServiceProvider.php`.
 
@@ -12,7 +12,7 @@ O código é estritamente separado por responsabilidade.
 
 | Domínio | Namespace | Responsabilidade | Models Principais |
 | :--- | :--- | :--- | :--- |
-| **Legal** | `SuiteZap\LawFirm\Legal` | Core jurídico (Processos, Prazos, Checklists). | `Processo`, `Prazo`, `CaseChecklist` |
+| **Legal** | `SuiteZap\LawFirm\Legal` | Core jurídico (Casos, Processos, Prazos, Checklists). | `Caso`, `Processo`, `Prazo`, `CaseChecklist` |
 | **Financial**| `SuiteZap\LawFirm\Financial` | Honorários, Custas e Faturamento. | `Financial` |
 | **GED** | `SuiteZap\LawFirm\GED` | Gestão de Arquivos, Anexos e Checklists. | `ProcessDocument`, `Anexo` |
 | **SaaS** | `SuiteZap\LawFirm\SaaS` | Infraestrutura Multi-tenant. | `Tenant`, `Subscription`, `InfrastructureNode`, `SaasOrder` |
@@ -249,6 +249,142 @@ src/
     *   **Segregação de Rotas (`Whatsapp`):** Criado `src/Http/Routes/admin-whatsapp.php` dedicado ao domínio `Whatsapp` (antes as rotas viviam em `admin-saas.php`). Registrado no master loader `routes.php`; bloco duplicado removido de `admin-saas.php`.
     *   **Diretórios Fantasma Deletados:** As pastas `src/Events/`, `src/Observers/`, `src/Rules/`, `src/Listeners/` e `src/Services/` (incluindo `Services/Whatsapp/`) — que persistiam como estruturas vazias desde a v3.14 — foram definitivamente removidas do filesystem.
 
+### 4.32 Security Hardening do ACL (Jurídico + Financeiro) (v3.18)
+*   **Decisão:** Alinhar os módulos Jurídico e Financeiro à hierarquia nativa de Controle de Acesso (Bouncer / ACL) do Krayin CRM, mitigando vulnerabilidades de escalation de privilégios.
+*   **Mudanças:**
+    *   **Hierarquia `acl.php`:** O módulo `financeiro` (antes um nó órfão) foi movido para dentro de `lawfirm`. A hierarquia correta agora permite que o Krayin renderize o checkbox de Financeiro na UI de Configurações de Funções.
+    *   **Proteção de Rotas Faltantes:** As rotas `quick_pay`, `receipt`, `process.store`, e `send_whatsapp` do `FinancialController` foram explicitly mapeadas no array do `acl.php`.
+    *   **Enforcement Granular (Controllers):** Adicionamos proteções `bouncer()->allow(...)` nativas dentro dos métodos de escrita/view nos controllers `ProcessoController`, `PrazoController` e `FinancialController`. Isso cria dupla validação (Middleware + Controller).
+    *   **Scoping por `view_permission` (DataGrids):** Os Grids (`ProcessoDataGrid` e `PrazoDataGrid`) substituíram o bloqueio manual hardcoded (`role_id != 1`) por `bouncer()->getAuthorizedUserIds()`. Com essa mudança, o Krayin processa com segurança os scopes de visualização Nativos: *"Global", "Grupo" ou "Individual"*, respeitando rigorosamente o limite de quem vê o quê.
+    *   **Sincronização de Menus:** O `menu.php` agora referenciar a key correta (`lawfirm.financeiro`) no campo `permission`.
+    *   **Migração de Funções (`Roles`):** Foi executada uma database migration transformando strings antigas de `"financeiro"` para `"lawfirm.financeiro"`, preservando o acesso de todos os clientes sem exigir login/re-save manual em cada Tenant.
+
+### 4.33 Consolidação Top-Level do Módulo Financeiro (v3.45)
+*   **Decisão:** Extrair os submenus "Dashboard Financeiro" e "Cobranças" do menu Jurídico para dar-lhes protagonismo em um novo Menu Pai (`Financeiro`). Além disso, consolida-los...
+*   **Mudanças:**
+    *   **Unified Union DataGrid:** `TenantInvoiceDataGrid` ajustado para compilar resultados simultâneos de `tenant_invoices` (Transações Asaas) e `financials` (Lançamentos Manuais sem link externo) em uma view unificada. Etiquetas condicionais inseridas dependendo da `Origem`.
+    *   **Gráficos no Dashboard (`admin.lawfirm.financial.index`):** Transplante do DataGrid antigo para a página central de Cobranças. O Dashboard passa a focar somente nos KPIs gerenciais acompanhados de Chart.js isolados mostrando divisão via "Pizza" (Formas de pagamento) e comparativo de "Barras" mensais.
+    *   **Emissão Pragmática Assíncrona:** Checkbox "Emitir via Asaas" condicional na Aba Financeiro nos processos; aparece somente em marcações em Receitas marcadas via (PIX, Boleto, Cartão), conectando automaticamente a trigger base no `FinancialController`.
+
+### 4.33 Adoção de Masking via Watchers Vue Resilientes vs Krayin `v-mask` (v3.45)
+*   **Decisão:** Substituir bibliotecas globais de injetamento (v-mask) que conflitam com distribuições fechadas Vee-Validate/Krayin, adotando listeners de JS Puro (`watch`) processando limpeza e reformatação em tempo real diretamente na submissão de componentes dinâmicos no ecossistema e formulários.
+*   **Mudanças:**
+    *   **Fim da Limitação Global Vee-Validate (`vee-validate.js`):** Regra global `phone` teve seu Regex afrouxado de apens `/^\+?\d+$/` (que barraria submissão de valores formatados) para suporte em permissões de espaços, parênteses e hífens.
+    *   **Vigilantes Nativos do Blade (Vue 3 Component Mask):** Components `phone.blade` e `users/index.blade.php` tiveram máscaras dinâmicas de 10 vs 11 dígitos nativas incluídas detectando DDD e convertendo a prop do V-Model nos métodos `watch` sob Lifecycle real-time — assegurando armazenamento constante e legível. 
+    *   **Prefixo Invísivel DB-driven:** Inputs nativos independentes forçam a exclusão do `+` e aplicam higienização limpa (excluindo os chars formatados em endpoints brutos customizados) mas para uso no envio do form Krayin ou API Whatsapp Tester ocultam um "55" invisível no back/front.
+
+### 4.34 Integração Orientada a Identidade: Migração do `whatsapp_responsavel` (v3.45)
+*   **Decisão:** Eliminar redundâncias e desvio de consistência ao remover o controle local manual de telefones dos processos, forçando o módulo inteiro a consumir a variável do próprio advogado já cadastrado (User identity relation).
+*   **Mudanças:**
+    *   O campo legado do model de Processo `whatsapp_responsavel` e seus requests validadores `StoreProcessoRequest/UpdateProcessoRequest` sofreram decape total — garantindo que nenhuma parte do código dependa ou crie a prop antiga.
+    *   Background Jobs como `SendScheduledPrazoNotifications` operam interceptando os envios ao verificar puramente se `$processo->responsavel->whatsapp` existe. 
+    *   Na página de visualização administrativa isolada (`show.blade.php`), a chamada do componente "WhatsApp do Advogado Responsável" puxa automaticamente os dados da tabela `users` do Advogado assinador, sem exigir salvamento manual na interface de "Processos".
+
+### 4.65 Unificação de Status de Entidades Legais (v3.46.1)
+*   **Decisão:** Unificar e padronizar o pipeline de status em 12 etapas (1 ao 12) transversais a toda a plataforma para Caso e Processo, abandonando o modelo anterior de strings de estágio fragmentadas e garantindo coesão absoluta desde "Novo Caso" até "Encerrado".
+*   **Mudanças:**
+    *   **Single Source of Truth (`LegalOrchestrator`):** Mapeou a constante de estágios como fonte central para as instâncias de status que populam formulários, regras de migração e APIs, protegendo o ciclo de vida processual do cliente.
+    *   Extinta a possibilidade do usuário setar stages ad-hoc ou desregulados através da inserção direta; toda API ou interface acionadora filtra forçadamente pela lista unitária aprovada pela orquestração.
+    *   Toda view e datagrid adaptados para espelhar as badges correspondentes.
+
+### 4.66 Organização do Menu Assistentes (v3.47)
+*   **Decisão:** Melhorar a UX agrupando todas as ferramentas inteligentes ("Assistentes IA" e "Assistente Jurídico/Escavador") sob um único menu top-level no CRM, tornando a descoberta mais óbvia e aliviando a barra lateral.
+*   **Mudanças:**
+    *   Um menu raiz unificado ("Assistentes") com o ícone `icon-user text-3xl`.
+    *   Históricos e relatórios internos do escavador ou execuções passadas de IA organizados dentro de sub-tópicos nesse novo cluster.
+
+### 4.67 Conversão Escavador para SuiteCoins (v3.48)
+*   **Decisão:** Ampliar a adoção da moeda virtual (Ƶ) abarcando também os fluxos de consulta inteligente de dados do Escavador, para não assustar o usuário com conversões flutuantes em BRL puro no HUD jurídico.
+*   **Mudanças:**
+    *   `EscavadorController` instruído a retornar os responses injetados com `suitecoin_balance` para consumir padronizado no front.
+    *   Substituição total dos ícones (R$) nas telas V1 e V2 (`escavador-tab.blade.php`) por representativas de SuiteCoins Ƶ x10 (visual display format).
+
+### 4.68 ExchangeRateService e Câmbio Soberano MotherShip (v3.47)
+*   **Decisão:** Eliminar cálculos manuais de PTAX ou Markup internos no LawFirm. A taxa de câmbio soberana (USD→BRL) passa a ser lida exclusivamente do endpoint `api/exchange_rate.php` do MotherShip, via o campo `billing_consensus.consumer_rate`.
+*   **Mudanças:**
+    *   **`MotherShipService::getExchangeRate()` (novo):** Consome o endpoint HTTP do MotherShip com cache de 5 minutos e fallback graceful (defaults 5.75 / ×10) quando o serviço está offline — nunca derruba o CRM (503-safe).
+    *   **`ExchangeRateService` (novo, `Financial/Services/`):** Serviço do domínio financeiro com métodos `getConsumerRate()`, `usdToBrl()`, `brlToSuiteCoins()`, `usdToSuiteCoins()` e formatadores. Delega para `SuiteCoinService` para conversão Ƶ, mantendo o `SuiteCoinService` como única fonte de verdade do multiplicador.
+    *   **`ProcessAiAssistant` (Job):** Validação de `suitecoin_balance` adicionada **antes** do dispatch ao N8N. Saldo insuficiente → `history.status = 'failed'` com mensagem clara em Ƶ, sem consumir nenhum token de IA.
+    *   **`menu.php` (fix):** Chaves dos itens "Criar Monitoramentos" e "Monitoramentos/Robôs" corrigidas de `lawfirm.escavador_monitoramentos*` para `assistants.escavador_monitoramentos*`, fazendo-os aparecer aninhados corretamente sob o menu top-level "Assistentes".
+*   **Segurança .env (Fallback Offline):** O método utiliza a variável `MOTHERSHIP_BASE_URL` declarada localmente. O sistema previne a quebra da aplicação, e caso este Environment não tenha sido criado ou validado no locatário (`env` nulo, vazia, ou servidor MotherShip intermitente), a infraestrutura atua em *Graceful Degradation* (adotando uma tarifa fixa provisória na cotação) preservando o CRM intacto e funcional no dashboard administrativo.
+
+### 4.69 Regras de Cálculo e Exibição de SuiteCoins (v3.48)
+
+> [!IMPORTANT]
+> Esta seção define as **regras canônicas** para conversão, exibição e débito de SuiteCoins (Ƶ) em todo o sistema. Qualquer nova tela ou serviço DEVE seguir estas regras sem exceção.
+
+#### Conceito
+`suitecoin_balance` é armazenado na tabela `subscriptions` (MotherShip) **sempre em BRL (Real Brasileiro)**. A moeda virtual Ƶ é **apenas uma camada de exibição** calculada em runtime — nunca persistida.
+
+#### Fórmula Padrão — Todos os Serviços
+
+Aplicável a: Escavador, Monitoramentos, Assistentes Jurídicos, DataJud e qualquer serviço futuro.
+
+```
+Ƶ_exibido = preço_BRL_bruto × 10 × 1.25
+```
+
+| Componente | Valor | Descrição |
+|:---|:---|:---|
+| `preço_BRL_bruto` | `p` | Custo real da API/serviço lido do MotherShip (`app_config`) |
+| `× 10` | `rate` | Taxa de conversão BRL → Ƶ (`SuiteCoinService::getRate()`) |
+| `× 1.25` | `markup` | Margem de 25% da plataforma (`SuiteCoinService::getMarkup()`) |
+| **Resultado** | `Ƶ_exibido` | Valor exibido ao usuário na interface |
+
+**Implementação no front-end (JavaScript):**
+```javascript
+var pZ = p * 10 * 1.25; // p = preço BRL bruto vindo do MotherShip
+```
+
+**Implementação no back-end (PHP — Escavador/DataJud):**
+```php
+$costBrlWithMarkup = SuiteCoinService::calculateServicePriceBrl($costBrlRaw); // × 1.25
+$subscription->decrement('suitecoin_balance', $costBrlWithMarkup); // débito em BRL
+```
+
+#### ⚠️ Exceção: Painel "Minha Assinatura" — Créditos de IA
+
+Esta é a **única exceção** à fórmula padrão, aplicável exclusivamente à exibição do saldo na tela `subscription/index.blade.php` e na resposta da rota `lawfirm.escavador.saldo_cliente`.
+
+**Regra da Exceção:**
+```
+Ƶ_exibido = suitecoin_balance_BRL × 10   (sem markup)
+```
+
+**Motivação:** Quando o usuário paga R$ 10,00, o sistema deve exibir **Ƶ 100,00** — e não Ƶ 125,00 nem Ƶ 80,00. A percepção de "receber menos do que pagou" deve ser evitada. O markup de 25% é recuperado naturalmente no consumo dos serviços, onde a fórmula completa `× 10 × 1.25` é aplicada.
+
+**Implementação (PHP — Subscription View):**
+```php
+// CORRETO — sem markup na exibição do saldo comprado
+$aiBalanceVirtual = SuiteCoinService::toVirtual($aiBalanceBrl); // apenas × rate(10)
+```
+
+**Implementação (JavaScript — loadBalance):**
+```javascript
+var suitecoinsRate = parseFloat(d.suitecoin_rate || 10);
+currentBalance = balanceBrl * suitecoinsRate; // apenas × 10, sem × 1.25
+```
+
+#### Exemplo Completo com R$ 10,00 de Saldo
+
+| Ponto do Sistema | Valor |
+|:---|:---|
+| Banco (`suitecoin_balance`) | `R$ 10,00` |
+| Exibição em "Minha Assinatura" | **Ƶ 100,00** (× 10, sem markup) |
+| Consulta OAB V2 (custo bruto R$ 4,50) | Exibe **Ƶ 56,25** (× 10 × 1.25) |
+| Débito real após consulta | `– R$ 5,625` do banco |
+| Saldo após consulta | `R$ 4,375` → exibe **Ƶ 43,75** |
+
+#### Fonte de Verdade dos Serviços (SuiteCoinService)
+*   `SuiteCoinService::getRate()` → taxa de conversão (padrão: `10`)
+*   `SuiteCoinService::getMarkup()` → markup da plataforma (padrão: `1.25`)
+*   `SuiteCoinService::toVirtual(float $brl)` → converte BRL → Ƶ (sem markup — para exibição de saldo)
+*   `SuiteCoinService::toBrl(float $virtual)` → converte Ƶ → BRL (para validação de saldo)
+*   `SuiteCoinService::calculateServicePriceBrl(float $raw)` → aplica markup: `$raw × getMarkup()`
+*   `SuiteCoinService::formatFromBrl(float $brl)` → formata saldo BRL como string Ƶ
+
+
+
 ### 4.32 Idempotência do Mothership e Hardening do Deploy Docker (v3.17)
 *   **Decisão:** Tornar o ambiente Docker resiliente a falhas de boot de container e resolver permanentemente o provisionamento de novos tenants no SaaS.
 *   **Problema 1 (Container Crash Loop):** O `entrypoint.sh` rodava `artisan migrate` forçando o caminho `Webkul/Mail`, que havia sido deletado no refactoring anterior, resultando em "Migration path not found" e derrubando a stack imediatamente no Docker Swarm.
@@ -441,6 +577,43 @@ src/
     *   **Model:** Criada a Entidade `LeadTriagem` na pasta `src/AI/Models`, vinculada à tabela `lead_triagem` e relacionando o `lead_id` com o Krayin.
     *   **Isolamento:** A modificação atende aos padrões de Bounded Context do Domínio AI ao focar dados provenientes ou interpretados pelas rotinas automáticas de Triagem.
 
+### 4.54 Refinamento da Tabela de Triagem de Leads (v3.36)
+*   **Decisão:** Separação dos campos avançados num novo arquivo de modelagem (`add_extra_fields...`) garantindo aplicação das colunas (`risco`, `probabilidade`, `cta`, etc.) em ambientes distribuídos.
+
+### 4.55 Controle de Limite de Usuários por Status Ativo (v3.36)
+*   **Decisão:** Desacoplar a criação de contas da verificação de limite do plano. O sistema deve permitir a criação de quantas contas forem necessárias, bloqueando apenas a **ativação** de contas quando o plano atingiu seu limite de usuários ativos (`max_users`).
+*   **Problema:** O `UserObserver` bloqueava a criação de qualquer novo usuário, independentemente do status (`ativo`/`inativo`) pretendido. Não havia verificação no evento de edição (ativação).
+*   **Mudanças:**
+    *   **`UserObserver::creating`:** A guarda passou a ser condicional — o limite só é verificado se `$user->status == 1`. Criação de contas inativas é sempre permitida.
+    *   **`UserObserver::updating` (novo):** Intercepta a edição de um usuário. Se o campo `status` foi alterado (`isDirty('status')`) e o novo valor é `1` (ativo), verifica o limite. Lança `ValidationException` impedindo a reativação caso o plano já esteja no limite.
+    *   **Campo de erro:** Alterado de `email` para `status` para apresentar o aviso de limite próximo ao campo correto no formulário.
+
+### 4.56 Consolidação de Templates WhatsApp (v3.37)
+*   **Decisão:** Harmonizar a estrutura de configuração de templates de mensagens WhatsApp no arquivo `system.php` para coincidir com as chamadas de API de configuração espalhadas pelo código-fonte.
+*   **Problema:** O arquivo `system.php` utilizava grupos descritivos (`processos`, `financeiro`, `juridico`, `agendador`), enquanto os controladores e listeners buscavam sistematicamente sob o grupo genérico `messages` (ex: `lawfirm.whatsapp_templates.messages.new_prazo_client`). Isso causava retorno vazio em consultas críticas e o erro "Template não configurado".
+*   **Mudanças:**
+    *   **Consolidação:** Todas as subseções de templates foram fundidas em um único grupo com a chave `lawfirm.whatsapp_templates.messages`.
+    *   **UI Dinâmica:** A interface de Ajustes agora exibe todos os templates de mensageria em uma única tela unificada ("Templates de Mensagens").
+    *   **Estabilidade:** Garante que qualquer recurso do sistema que dispare WhatsApp consiga resgatar o texto configurado sem disparar erros de template inexistente.
+
+### 4.57 Agenda Jurídica — FullCalendar Vanilla JS (v3.38)
+*   **Decisão:** Criar uma Agenda Jurídica unificada no domínio **Legal** que combina Atividades do Krayin (Reuniões/Ligações da tabela `activities`) com Prazos do LawFirm (tabela `law_processo_prazos`) em uma única interface de calendário interativa, usando FullCalendar v6 em Vanilla JS para evitar conflitos com o Vue.js do Krayin (Regra 6.1).
+*   **Mudanças:**
+    *   **Service (`AgendaService`):** Busca atividades do Krayin (`Activity::where('user_id', auth()->id())`) e prazos do LawFirm (`Prazo::whereHas('processo')`), unificando ambos no formato JSON do FullCalendar com cores diferenciadas (🔵 Atividades, 🔴 Prazos Pendentes, 🟢 Prazos Concluídos, ⚫ Atividades Concluídas). Suporta atualização de datas via drag-and-drop para ambos os tipos.
+    *   **Controller (`AgendaController`):** Skinny controller delegando toda lógica ao `AgendaService`. 3 rotas: `index` (view), `getEventos` (JSON), `updateDragDrop` (POST).
+    *   **View (`Legal/agenda/index.blade.php`):** FullCalendar v6 via CDN (jsdelivr), 4 views (Mês/Semana/Dia/Lista), locale `pt-br`, drag-and-drop com REPLACE_ID Pattern (Regra 6.6), CSRF lido at event time (Regra 6.2), tooltips com nome do processo, e legenda visual com badges coloridos.
+    *   **Menu:** Item "Agenda" adicionado ao menu lateral com `sort => 2` (entre Processos e Prazos), usando `icon-calendar`.
+    *   **ACL:** Grupo `lawfirm.agenda` com permissões granulares `view` (visualizar calendário) e `edit` (drag-and-drop de eventos).
+*   **Imunidade ao Krayin:** O calendário usa bibliotecas independentes (Vanilla JS) e vive em rota protegida sob o domínio Legal. Atualizações do Krayin Core (Vue.js, Pipeline, Calendar) não afetam esta agenda.
+*   **Zero Impacto Mothership:** Nenhuma alteração no banco `mothership` ou em `app_config`. Feature 100% tenant-side.
+
+### 4.58 Harmonização UI/UX de Prazos e Agenda (v3.39)
+*   **Decisão:** Padronizar a seleção de datas e modais complexos no painel de Prazos com o design system do Krayin, abandonando a tag genérica `<input type="date">` e modais iframe instáveis em favor de janelas desacopladas.
+*   **Mudanças:**
+    *   **Flatpickr e Dinamismo Vue.js:** Adotado o componente `<x-admin::flat-picker.datetime>` para inputs de Processos. No formulário de Prazos (injeção dinâmica via `insertAdjacentHTML`), o Laravel não transpila componentes Vue em runtime. Como contorno seguro, injetamos a estrutura visual HTML (wrapper `<span>` e ícone `<i>`) e acionamos manualmente `new window.Flatpickr()` com `setTimeout`, mitigando o ciclo de vida do SPA.
+    *   **Clean Modal Pattern:** Eliminado o modal de iframe para exibir o calendário dentro dos processos. Foi adotado o uso de `window.open` acionando a rota `/admin/juridico/agenda?clean=true`. Esta flag carrega o layout `admin::layouts.anonymous` (desprovido de navbars e menus asides), permitindo total responsividade sem sobreposições.
+    *   **Harmonização Prazos x Atividades:** Prazos passaram a suportar a entrada de **Horas**. O `AgendaService.php` agora serializa prazos com `toIso8601String()` e `allDay: false`. Metadados antes exclusivos das Atividades (`isDone`, `comment` e `processo_id`) foram incluídos nos `extendedProps` e o emoji canônico mapeado como `🏛️ Audiência / Prazos`, tornando ambos isomórficos aos olhos do EventClick da Agenda Jurídica.
+
 ## 5. Auditoria Estrutural e Mapa de Dívida Técnica (v3.23)
 
 O projeto atingiu seu nível máximo de maturidade no isolamento de domínios. Todos os controllers órfãos e arquivos residuais que inflavam artificialmente a raiz foram completamente migrados.
@@ -562,7 +735,7 @@ classDiagram
 *   Idempotência implementada para o ecossistema Asaas visando concorrência atômica nos creditamentos `saas_transactions` (Zero Race Conditions/Double Spend).
 *   Expansão formal do schema `mothership.tenants` para acomodar o `asaas_node_id`, resolvendo infraestruturas fragmentadas em multi-franquia SaaS.
 
-**🟢 Status Atual — Dívida Técnica Zero (v3.35):**
+**🟢 Status Atual — Dívida Técnica Zero (v3.36):**
 A pasta `src/Http/Controllers/` contém **0 arquivos PHP** — todos os Controllers estão dentro de seus respectivos Bounded Contexts. Todos os domínios possuem estrutura `Models/Http/Controllers/Services/DataGrids` completa. Nenhum arquivo de lógica/negócio reside fora de seu domínio. O pacote está preparado para escala SaaS multi-tenant corporativa com escopo e auditorias de usuário robustas.
 
 ## 6. Padrões de Frontend (UI/UX)
@@ -617,3 +790,273 @@ Para modais injetados dinamicamente (ex: Histórico WhatsApp):
 2.  **Ancoragem Forçada (Portal):** No momento do clique (`open`), o JavaScript deve verificar se o ID do modal está no `document.body`. Caso contrário, use `document.body.appendChild(modal)` para "teletransportar" o modal para fora do container do Vue.
 3.  **IDs Únicos:** Use prefixos proprietários (ex: `lf-wa-hist-*`) para evitar colisões com IDs gerados pelo Krayin Core.
 4.  **JSON Wrapping:** Se o controlador retornar HTML para o modal, empacote-o em uma estrutura JSON (`return response()->json(['html' => $html])`). Isso impede que o interceptador global do Krayin receba HTML puro e interprete erroneamente como uma navegação de página cheia.
+
+### 4.59 TenantFinance — Cobranças do Escritório via Asaas (v3.40)
+
+**Propósito:** Módulo add-on que permite ao escritório de advocacia (Tenant) emitir cobranças para seus clientes finais (honorários, custas, mensalidades) usando a API Asaas V3, integrado ao Krayin CRM.
+
+**Separação de Responsabilidades:**
+
+| Aspecto | SaaS Asaas (existente) | TenantFinance (novo) |
+|:---|:---|:---|
+| Quem cobra | Plataforma SuiteZap | Escritório de Advocacia |
+| Quem paga | Tenant (advogado) | Cliente do Tenant |
+| Chaves API | `infrastructure_nodes` (MotherShip) | `tenant_asaas_settings` (Banco do Tenant) |
+| Domínio DDD | `SuiteZap\LawFirm\SaaS` | `SuiteZap\LawFirm\TenantFinance` |
+
+**Novas Tabelas (banco do Tenant):**
+- `tenant_asaas_settings` — Credenciais Asaas do escritório (api_key, environment, webhook_token)
+- `tenant_asaas_customers` — Mapeamento `Person.id` → `asaas_customer_id` (caching local)
+- `tenant_invoices` — Cobranças emitidas (single/installment/subscription) com link de pagamento e PIX QR code
+
+**Ativação (Module Gate):**
+- Controlado via `active_modules` na tabela `subscriptions` do MotherShip.
+- Chave: `TENANT_FINANCE`. Se ausente, o menu e as rotas retornam 403.
+
+**Fluxo de Criação:**
+1. Advogado clica "💳 Cobrar via Asaas" na aba Financeiro do Processo (Portal Dialog Modal)
+2. `InvoiceController` → `TenantAsaasService::createInvoice()`
+3. Service: find/create customer no Asaas (`POST /v3/customers`) → cria pagamento/parcelamento/assinatura
+4. Resposta: `invoice_url` (boleto) e/ou `pix_qrcode` exibidos no modal
+
+**Webhook:** Rota pública `/api/webhooks/tenant-asaas` → `TenantAsaasWebhookController` → atualiza `tenant_invoices.status` e sincroniza `law_financials.status` quando vinculado.
+
+**ACL:** Permissões granulares em `Config/acl.php` sob o grupo `lawfirm.cobrancas.*` (create, view, edit, delete, settings).
+
+### 4.60 Supressão do Menu Orçamentos e Botão de Importação (v3.41.0)
+*   **Decisão (Menu):** Ocultar permanentemente o menu "Orçamentos" (Quotes) das versões futuras SaaS para simplificar a interface e focar no core jurídico.
+*   **Decisão (Importação):** Suprimir o botão "Criar Importação" na tela de transferência de dados (`admin/settings/data_transfer/imports`) para prevenir importações manuais não controladas.
+*   **Implementação:** 
+    1. Filtragem dinâmica no `LawFirmServiceProvider` que remove as chaves `mail` e `quotes` do array de menus.
+    2. Comentado o bloco do botão "Criar" na view `imports/index.blade.php`.
+*   **Liberação:** Estas funcionalidades permanecem ocultas por padrão no bundle SaaS, podendo ser reativadas futuramente via configuração.
+
+### 4.61 Pessoas Jurídicas (Empresas) em Processos (v3.42.0)
+*   **Motivação:** O formulário de Processos só permitia vincular Pessoas Físicas (Contacts). Necessidade de vincular também Pessoas Jurídicas (Organizations, tabela `organizations` do Krayin Core).
+*   **Mudanças no Backend:**
+    *   **Migration:** `2026_05_06_150431_add_organization_id_to_processos_table.php` — adicionou coluna `organization_id` nullable (FK para `organizations` com `onDelete('set null')`).
+    *   **Model (`Processo`):** Incluído `organization_id` em `$fillable` e definido relacionamento `organization()` (`BelongsTo → Webkul\Contact\Models\Organization`).
+    *   **Controller (`ProcessoController`):** Injetado `OrganizationRepository` (Krayin Core). Implementado `searchOrganization()` que segue o mesmo padrão de `searchPerson()`. Métodos `store()` e `update()` incluem fallback `null` para `organization_id` ausente.
+    *   **Form Requests:** `StoreProcessoRequest` e `UpdateProcessoRequest` atualizados para validar `organization_id` como `nullable|integer|exists:organizations,id`.
+    *   **Rota:** `search-organization` registrada em `admin-legal.php`.
+*   **Mudanças na UI (`create.blade.php` e `edit.blade.php`):**
+    *   Os campos Pessoa e Empresa foram organizados em um `grid-cols-2`, side-by-side.
+    *   Ambos são marcados como **(Opcional)** para não quebrar fluxos existentes.
+
+### 4.62 Harmonização UX e Navigation Filter Bar em Processos (v3.43.0)
+*   **Decisão:** Eliminar complicação e rolagem excessiva ("scroll fatigue") na visualização e edição de processos complexos, unificando a identidade visual das abas separadas em uma lógica de "single window" componentizada orientada a cards minimalistas.
+*   **Mudanças na Arquitetura UI:**
+    *   **Navegação Inteligente (Filter Bar):** Introdução de uma barra horizontal fixa de filtros no topo das views `edit` e `show` do domínio Legal/Processos, ordenando visualmente as dependências principais (Dados Oficiais, Info Processo, Prazos, Notas, Documentos, Partes e Financeiro). Ela permite isolar a renderização no display sob os componentes base ocultáveis (`lf-section`), reduzindo drasticamente a carga visual sem corromper envios combinados do AJAX nativo.
+    *   **Persistência de Estado Local:** O script da view ativamente acopla no recurso `localStorage` do navegador salvando incondicionalmente a aba visual da navegação de filtro eleita pelo utilizador (`lf_processo_section_{id}`). A interface de navegação portanto nunca se perde quando ocorre o recarregamento normal local (retorno F5 ou submit the salvamento tradicional). Incluiu-se função especial `⧉ Todos` salvando o override temporário para pesquisa generalizada no arquivo DOM (Find).
+    *   **Design System (`.lf-card`):** Instituição estrita de componentes padronizados enclausurando o visual das dependências de domínios. A diretiva `.lf-card` unifica estéticas: `gap-6` (24px) generalizado para clusters estruturais, borders em `xl` nas laterais do card container, sombras reativas em transição combinadas com topografia `tracking-tight` com separadores em base `border-b` consolidando componentes e harmonizando esteticamente inputs visuais de leitura ou gravação.
+
+> [!IMPORTANT]
+> **Padrão de Lookup com Valor Inicial (`v-lookup-component`) — Lição Aprendida:**
+>
+> O componente de busca/seleção nativo do Krayin (`v-lookup-component`) **NÃO é** registrado por padrão em todas as páginas. Ele é incluído via `@pushOnce('scripts')` dentro do template parcial `x-admin::attributes.edit.lookup`. Se uma Blade view usar `<v-lookup-component>` sem antes incluir este parcial, o Vue não encontrará o componente e os campos ficam inertes (sem pesquisa e sem seleção).
+>
+> **OBRIGATÓRIO:** Antes de qualquer bloco de `<v-lookup-component>`, incluir o gatilho de registro:
+> ```blade
+> {{-- Trigger v-lookup-component registration --}}
+> <x-admin::attributes.edit.lookup />
+> ```
+> O componente tem um guard `@if (isset($attribute))` que previne qualquer renderização visual indesejada quando chamado sem parâmetros — portanto é seguro incluir vazio.
+>
+> **Padrão correto de passagem de valor inicial (edição de entidades existentes):**
+> ```blade
+> @php
+>     $entityLookup = $entityId
+>         ? app('Webkul\Attribute\Repositories\AttributeRepository')
+>             ->getLookUpEntity('persons', $entityId)
+>         : null;
+> @endphp
+>
+> <v-lookup-component
+>     :attribute="{{ json_encode(['code' => 'person_id', 'name' => 'Pessoa', 'lookup_type' => 'persons']) }}"
+>     :value="{{ json_encode($entityLookup) }}"
+>     validations=""
+> ></v-lookup-component>
+> ```
+>
+> **Por que NÃO usar `v-bind:value='...'` ou `v-bind:value="window.xxx"`:**
+> - `v-bind:value='@json($var)'` — o Blade processa `@json` como uma chamada PHP, mas em contexto de atributo de componente Blade anônimo pode resultar em `Call to undefined function json()`.
+> - `v-bind:value='({!! json_encode(...) !!})'` — passa o template Vue, mas o compilador de templates Vue 3 não tem acesso a `window` nem avalia blocos `{}` de objetos já que os chaves são interpretadas como blocos de código em escopo de statement.
+> - `v-bind:value="window.processoData.x"` — Vue 3 sandboxeia o escopo de templates e não expõe o objeto global `window`.
+> - **A solução correta** é passar via atributo HTML `{{ json_encode() }}` diretamente para um elemento nativo (não-Blade-component), como faz o próprio sistema de atributos do Krayin.
+
+### 4.63 Entidade Caso e FK Lookup Customizado (v3.44.0)
+
+*   **Motivação:** Escalar a capacidade do sistema em organizar operações maiores do que os processos em si. Exemplo: Um "Caso de Revisão Criminal" que agrupa múltiplos "Processos Anexos" ou recursos associados a ele.
+*   **Modelagem de Dados e Limitação de Tipagem (`unsignedInteger`):**
+    *   **Importante:** Ao estender as tabelas nativas do Krayin (`users`, `persons`, `organizations`), lembre-se que o Krayin as constrói baseadas em Primary Keys configuradas como **`integer`** (não `bigint`).
+    *   Portanto, as foreign keys na criação de novas tabelas (ex: `law_casos.user_id`) devem ser geradas usando `$table->unsignedInteger()`. Usar `$table->unsignedBigInteger()` ocasionará uma restrição do MySQL 8 de tipos incompatíveis (`General error: 3780 Incompatible type`).
+*   **Decisão de Interface UI (Custom AJAX Lookup Selector):**
+    *   A componentização nativa de Busca do Krayin (`v-lookup-component`) não permite a injestão de tabelas Customizadas do Add-on (ex. `law_casos`) a não ser via hacking do Package Vue e re-build de NPM (`npm run build`). Nós decidimos manter o zero footprint debt da UI e implementamos a Busca dos "Casos Vinculados" como um Componente customizado (AJAX fetch API via JavaScript Vanilla), que pesquisa e insere no Form como um Element Input Hidden normal, garantindo integridade visual com Blade.
+
+### 4.64 LegalOrchestrator e Zero-Copy Documents (v3.45.0)
+
+*   **Decisão:** Centralizar a coordenação transacional da criação hierárquica `Lead → Caso → Processo` em um Domain Service dedicado (`LegalOrchestrator`), e implementar compartilhamento de documentos no nível do Caso sem duplicação física de arquivos (Zero-Copy).
+*   **Mudanças:**
+    *   **`LegalOrchestrator` (Novo, `Legal/Services`):** Método `convertLeadToLegalStructure(Lead $lead)` que executa em `DB::transaction()`: (1) Cria o `Caso` com dados do Lead, (2) Cria o `Processo` vinculado ao `caso_id` recém-criado, (3) Vincula o advogado responsável a ambas as entidades.
+    *   **`LeadWonListener` (Refatorado):** Agora delega ao `LegalOrchestrator` via injeção de dependência em vez de criar `Processo` diretamente. A guarda de duplicidade (verificação `Processo::where('lead_id', ...)->exists()`) permanece no listener.
+    *   **Migration `caso_id` em Documentos:** Adicionada coluna `caso_id` (nullable, indexed, FK → `law_casos`) nas tabelas `law_processo_anexos` e `law_process_documents` para permitir compartilhamento de arquivos entre processos do mesmo caso.
+    *   **`DocumentService.storeFile()` (Atualizado):** Quando o processo pertence a um caso, o path de storage é `casos/{caso_id}/documents/{nome}` em vez de `processos/{id}/{nome}`. O `caso_id` é auto-populado no record `Anexo` criado. Processos sem caso mantêm o path legado (retrocompatibilidade).
+    *   **Zero-Copy Query (View `documents.blade.php`):** A listagem de documentos na aba de Documentos do Processo agora busca `WHERE processo_id = {id} OR caso_id = {caso_id}`, exibindo documentos de todos os processos-irmãos do mesmo caso sem copiar ou mover arquivos no storage.
+*   **Regras de Ouro Garantidas:**
+    *   **Skinny Controllers:** Toda lógica de criação multi-entidade vive no `LegalOrchestrator`, não em Controllers ou Listeners.
+    *   **Atomicidade:** Toda criação Caso → Processo é transacional (`DB::transaction`).
+    *   **Zero-Copy:** Documentos do Caso são acessíveis por todos os processos-filhos sem mover ou copiar arquivos no storage.
+    *   **Tag-Driven Metadata Prioritization:** Uses standard Lead Tags (e.g. `Trabalhista`, `Crítica`) to populate canonical metadata like Área and Prioridade before falling back to `LeadTriagem` AI metrics.
+    *   **Canonical Pipelines (v3.46+):** All Legal Status validation must strictly rely on `LegalOrchestrator::VALID_STATUSES` and avoid hard-coded pipeline matching arrays via `UpdateCasoRequest` rules. The Legal Entity assumes standard 12-stage lifecycles, and Processos fallback to canonical mappings over UI inputs.
+
+### 4.65 Global JS State Injection Pattern (Kanban Data Hydration) (v3.46.0)
+
+*   **Decisão:** Eliminar acessos indiretos e bugs de ciclo-de-vida no Blade ao hidratar dependências Vanilla JS (Tooltips e Modais) com grandes volumes de dados de Banco (ex: Listagem de Processos exibida via hover nos cards de Casos do Kanban).
+*   **Problema (Blade Compilation Scope):** Ao iterar centenas de cards (ex: Kanban) e tentar passar um array JSON por atributo HTML (`data-processos="{{ json_encode(...) }}"`), ocorriam escapes incorretos de aspas. Ao tentar injetar scripts via `@pushOnce('scripts')` no meio do loop, o compilador do Blade executava apenas a primeira iteração e ignorava variáveis de view se compiladas prematuramente, resultando em Null Pointers (`Undefined property: Illuminate\View\Factory::$startPush`) ou `[object Object]` vazio.
+*   **Mudanças:**
+    *   **Controller Batch:** O `LegalKanbanController` consulta todos os dados (ex: `DB::table('processos')`) e formata um único `$tooltipMap` em PHP com índice seguro (array associativo por `caso_id`). O JSON já sai codificado em Server-Side via `json_encode()` como string limpa.
+    *   **Inline Scoped Script (View):** A string JSON é injetada numa tag `<script>` explicitamente ao **final do corpo HTML**, exposta como uma variável global incondicional no browser: `window.__LF_PROCESSOS_MAP = {!! $processosTooltipJson ?? '{}' !!};`.
+    *   **Event Delegation (JS):** O componente visual apenas recebe a key referencial (ex: `<div class="card" data-caso-id="5">`), consumida via Event Listener Vanilla JS: `const procData = window.__LF_PROCESSOS_MAP[casoId]`.
+*   **Performance:** Zerou os problemas N+1 na renderização HTML e diminuiu os KBs totais de payload retornado, segregando estado (State) de apresentação (DOM). A abordagem impede crashes no render do Krayin (Vue), assegurando que o `script` injetado nunca interfira na árvore virtual (Virtual DOM).
+
+### 4.66 Kanban Operacional de Casos e Padronização de Pipeline (v3.46.0)
+
+*   **Decisão:** Introduzir um quadro Kanban visual para `Caso`s, operando com um pipeline rigoroso de 12 estágios operacionais padronizados (do "Novo Caso" ao "Encerrado"), unificando as paletas de cores de Área, Status e Prioridade em todo o sistema.
+*   **Mudanças:**
+    *   **Vanilla JS Kanban:** A UI de Kanban (`kanban/index.blade.php`) foi implementada 100% em Vanilla HTML5 Drag-and-Drop. Devido ao ambiente Krayin onde o Vue.js destrói eventos, listeners foram atrelados tardiamente com injeção explícita de `csrf_token()` nos headers do `fetch()`, mitigando os erros 419 (Page Expired) na interface.
+    *   **Single Source of Truth (`LegalOrchestrator`):** O orquestrador passou a manter a constante `VALID_STATUSES` com os 12 stages canônicos. Validações de requisição em `UpdateCasoRequest` agora dependem destas constantes via `Rule::in()`, impedindo silenciosamente o salvamento de status legados hard-coded e propiciando a edição sem bugs na UI.
+    *   **Lifecycle Assíncrono:** Ao dropar um card em uma nova coluna, JavaScript executa requisição via REPLACE_ID e insere visualmente o Card no topo utilizando `prepend()` ao confirmar sucesso do status 200 via API JSON, sem aguardar recarregamento da página (Zero page Refresh).
+    *   **Orquestração Lead -> Processo (Atualizada):** Ao converter um Lead GANHO, o novo `Caso` entra com status "Novo Caso", enquanto o `Processo` inter-relacionado criado entra condicionalmente em "Em Análise", respeitando a realidade cartorária.
+
+### 4.70 Padronização de Renderização Markdown nos Assistentes de IA (v3.50.0)
+
+*   **Decisão:** Garantir que 100% das respostas dos Assistentes de IA sejam renderizadas em Markdown formatado, eliminando inconsistências visuais onde alguns assistentes retornavam texto plano e outros retornavam HTML estruturado.
+*   **Problema:** Os assistentes `qualificacao_juridica`, `sugestao_proposta` e `analise_viabilidade` não possuíam a instrução de formatação Markdown em seus prompts de sistema. Apenas o assistente `negociacao_conversao` exibia Markdown corretamente, criando inconsistência visual na interface do CRM.
+*   **Mudanças:**
+    *   **Prompts (MotherShip DB):** Os templates dos três assistentes afetados foram atualizados no banco de dados do MotherShip para incluir a instrução explícita de formatação: `SEMPRE formate sua resposta usando Markdown estruturado com cabeçalhos (##), listas e **negrito** para pontos críticos.`
+    *   **Sem mudanças de código:** A camada de renderização (`marked.js` + `DOMPurify`) já estava integrada na view `admin/assistants/index.blade.php` a partir da v3.7 (seção 4.11). A correção requereu apenas atualização dos prompts-fonte no Mothership.
+    *   **Efeito Cascata:** Como os templates são distribuídos dinamicamente para todos os Tenants via `MotherShipService::getTemplates()`, a correção propagou-se automaticamente sem necessidade de deploy por Tenant.
+*   **Teste de Regressão:** Verificado que as quatro views de Assistentes (`index.blade.php`, `show.blade.php`, `lead-tools-panel.blade.php` e o modal de detalhes da execução) renderizam Markdown corretamente via `window.marked.parse()` com sanitização `DOMPurify`.
+
+### 4.71 Manutenção — Docker Hub Update v3.50.0 (v3.50.0)
+
+*   **Decisão:** Atualizar a imagem oficial do Docker Hub (`suitezap/lawfirm`) para refletir as mudanças consolidadas nas versões v3.48, v3.49 e v3.50.
+*   **Mudanças:**
+    *   **`docker/entrypoint.sh` (linha 4):** String de startup atualizada de `LF v3.49.0` para `LF v3.50.0`.
+    *   **`CHANGELOG.md`:** Adicionada entrada da release v3.50.0 com as três mudanças: manutenção de Docker Hub, padronização Markdown de IA e consistência financeira SuiteCoins.
+    *   **Imagens publicadas:** `suitezap/lawfirm:v3.50.0` e `suitezap/lawfirm:latest` atualizadas no Docker Hub Registry.
+*   **Verificação:** Executado `docker run --rm suitezap/lawfirm:v3.50.0` confirmando a string `🚀 Iniciando LawFirm SaaS v6.2 (LF v3.50.0)...` no startup do container.
+
+### 4.72 WhatsApp Messenger — Inbox de Atendimento tipo Whaticket (v3.50.0+)
+
+> [!WARNING]
+> **PROJETO SUSPENSO (29/05/2026):** Esta funcionalidade de Messenger/Inbox (Whaticket) foi colocada em suspensão nesta data e **não fará parte das versões posteriores**. Seus endpoints e controladores foram desativados.
+> As demais funcionalidades de WhatsApp (Envio de faturas, alertas de monitoramento, importação de histórico por processo e agendador de prazos) permanecem 100% ativas e funcionais.
+
+> [!NOTE]
+> Documentação completa e histórico de evolução em **`ARCHITECTURE_whats.md`**.
+
+*   **Contexto:** O LawFirm CRM incorporou um sistema de atendimento via WhatsApp inspirado no projeto open-source Whaticket, permitindo que advogados gerenciem conversas de clientes como "tickets" com ciclo de vida `pending → open → closed`.
+*   **Avaliação de Isolamento:** O módulo é **HÍBRIDO**. Apesar de existir um diretório `packages/SuiteZap/Whaticket/` (com migrations não registradas), a implementação completa vive dentro do domínio `Whatsapp` do pacote `SuiteZap/LawFirm`.
+*   **Pontos de Integração com outros Domínios:**
+    *   **`SaasS/MotherShipService`:** Credenciais da Evolution API obtidas via `getEvolutionConfig()` (sem `.env`). Isolamento multi-tenant via `getTenantId()` em todas as queries.
+    *   **`Legal/persons` (Krayin Core):** `MessengerService::findKrayinPersonId()` tenta auto-vincular o número de telefone do contato WhatsApp a um `Person` existente no CRM, criando um link `whaticket_contacts.person_id`.
+    *   **`core_config`:** Mensagem de despedida configurável por tenant via `lawfirm.whatsapp_templates.messages.farewell_message`.
+*   **Componentes-chave (`LawFirm/src/Whatsapp/`):**
+    *   **`MessengerService`:** Serviço central — `processIncoming()` (idempotente via `evolution_message_id`), `sendText()`, `sendMedia()`, `acceptTicket()`, `closeTicket()`, `getOrCreateTicket()`.
+    *   **`WhatsappChatController`:** Serve a view do Messenger e 8 endpoints JSON (tickets, messages, accept, close, send, sendMedia, uploadMedia, startConversation).
+    *   **`WhatsappWebhookController`:** Receptor público de eventos da Evolution API (`messages.upsert`, `messages.update` para ACK).
+    *   **`SendWhatsappMessageJob`:** Envio assíncrono de mensagens de texto (queued — requer worker ativo).
+    *   **Messenger View (`Whatsapp/messenger.blade.php`):** Interface split-view estilo WhatsApp Web com Vanilla JS, polling a 10s, suporte a mídia e ACK visual.
+*   **Tabelas do Banco (prefixo `whaticket_`, criadas por migrations do LawFirm):**
+    | Tabela | Propósito |
+    |:---|:---|
+    | `whaticket_contacts` | Contatos vinculados (`phone` + `person_id`) |
+    | `whaticket_tickets` | Conversas (`pending` / `open` / `closed`) |
+    | `whaticket_messages` | Mensagens com `evolution_message_id` único e `ack` (0–4) |
+    | `whaticket_queues` (scaffold) | Setores/departamentos (não implementados) |
+    | `whaticket_tags` (scaffold) | Etiquetas (não implementadas) |
+*   **Alerta Crítico:** O pacote `packages/SuiteZap/Whaticket/` contém apenas migrations nunca executadas e não está registrado em nenhum `ServiceProvider`. Deve ser **removido ou formalmente integrado** para evitar confusão.
+
+### 4.73 UX — Compactação de Labels na Navigation Filter Bar de Processos (v3.51.0)
+
+*   **Decisão:** Compactar os rótulos da barra de navegação por seções (`Navigation Filter Bar`) nas telas de **visualização** (`show.blade.php`) e **edição** (`edit.blade.php`) de Processos, sem alterar lógica ou funcionalidade, com objetivo de melhorar a legibilidade em telas menores e reduzir quebras de linha nos filtros.
+*   **Problema:** Os rótulos `Documentos e Anexos` e `Modelos de Docs` causavam overflow visual em viewports de notebook (< 1440px), resultando em quebra de linha na barra de filtros e sobreposição de ícones.
+*   **Mudanças:**
+    *   **`views/admin/processos/show.blade.php`:** Labels da barra de filtros ajustados:
+        *   `Documentos e Anexos` → `Docs e Anexos`
+        *   `Modelos de Docs` → `Model. Docs`
+    *   **`views/admin/processos/edit.blade.php`:** Idem às mesmas labels espelhadas na tela de edição.
+*   **Escopo:** Alteração puramente de UI (string de texto em Blade). Nenhuma lógica PHP, rota ou regra de negócio foi modificada.
+
+### 4.74 Manutenção — Docker Hub Update v3.51.0 (v3.51.0)
+
+*   **Decisão:** Publicar a imagem oficial do Docker Hub (`suitezap/lawfirm`) atualizada para consolidar as melhorias UX da v3.51.0.
+*   **Mudanças:**
+    *   **`LawFirmServiceProvider.php`:** Constante `VERSION` atualizada de `3.50.0` para `3.51.0`.
+    *   **Imagens publicadas:** `suitezap/lawfirm:v3.51.0` e `suitezap/lawfirm:latest` publicadas no Docker Hub Registry.
+        *   Digest: `sha256:36051669679c8444a1ef450945e203e8ab3e4bf06ba61894aad4b6579545795e`
+*   **Verificação:** Push confirmado com sucesso para ambas as tags (`v3.51.0` e `latest`) via `docker push`.
+
+### 4.75 Modelos de Documentos Dinâmicos (v3.52.0)
+*   **Decisão:** Permitir que os advogados criem, gerenciem e renderizem modelos/templates de documentos (Contratos, Petições, Procurações, Notificações e outros) pré-preenchidos dinamicamente com dados do processo e do cliente em tempo de execução.
+*   **Mudanças no Backend:**
+    *   **Migration:** `2026_05_22_000001_create_law_document_templates_table.php` — cria a tabela `law_document_templates` associando cada template a um criador (`user_id` FK unsignedInteger).
+    *   **Model (`DocumentTemplate`):** Criado sob o domínio Legal (`Legal/Models/DocumentTemplate.php`) suportando escopos dinâmicos (`scopeActive()`, `scopeForArea()`).
+    *   **Repository & Service:** Criados `DocumentTemplateRepository` e `DocumentTemplateService` para abstração de consultas e mecanismo de interpolação robusto de variáveis por chaves em formato duplo (`{{variavel}}` e `{{ variavel }}`).
+    *   **Controller:** Criado `DocumentTemplateController` sob o namespace `SuiteZap\LawFirm\Legal\Http\Controllers\Admin`.
+    *   **Rotas dedicadas:** Rotas para CRUD de Modelos de Documentos registradas em `admin-legal.php` sob o prefixo `modelos-documentos`.
+*   **Mudanças na UI & AlpineJS:**
+    *   Criada a nova aba **Model. Docs** (`modelos-tab.blade.php`) na Navigation Filter Bar de Processos.
+    *   Implementado modal flutuante estilizado no padrão folha A4 com editor integrado em textarea livre e botões de ação para rápida cópia de texto (`navigator.clipboard`) e impressão limpa via `@media print`.
+    *   Renderização assíncrona (AJAX JSON) evitando conflitos com o DOM compilado.
+
+### 4.76 Migration de Inicialização Idempotente de Checklists (v3.52.0)
+*   **Decisão:** Resolver o provisionamento de novos ambientes (locais e de produção Swarm) injetando de forma resiliente e 100% automatizada os kits padrão de documentos de checklist para todas as áreas (Trabalhista, Cível, Família, Criminal, Previdenciário, Empresarial e Geral) sem depender de sementes manuais atreladas a `db:seed`.
+*   **Mudanças:**
+    *   **Migration Idempotente:** Criada a migration `2026_05_23_000001_seed_law_checklist_templates.php`. Ela executa uma validação preventiva de existência antes de popular a tabela `law_checklist_templates` com 13 kits mestre de documentos parametrizados no formato JSON no banco local de cada tenant.
+
+
+
+### 4.77 Auditoria Arquitetural DDD/SaaS — Resultado e Correções (v3.52.1)
+
+*   **Data:** 2026-05-29 | **Auditor:** Antigravity Senior Architect
+*   **Escopo:** `packages/SuiteZap/LawFirm/src/` — 9 domínios DDD, v3.40 → v3.52.0
+*   **Motivação:** Validar integridade da arquitetura DDD pós-Great-Migration (v3.36) e garantir que nenhum "bolsão" de código legado tenha surgido nos domínios novos (GED, TenantFinance, Messenger, DocumentTemplates).
+
+#### Score de Conformidade Final
+
+| # | Dimensão | Status | Nota |
+|---|----------|--------|------|
+| 1 | Zero Root Controllers (`src/Http/Controllers/*.php = 0`) | ✅ PASS | 10/10 |
+| 2 | `Storage::` isolation (somente via `SaasFileService`) | ✅ CORRIGIDO | 9/10 |
+| 3 | `env()` banido fora de Config e MotherShipService | ✅ PASS | 9/10 |
+| 4 | `Log::debug` em produção | ✅ CORRIGIDO | 9/10 |
+| 5 | Namespace DDD `SuiteZap\LawFirm\{Domain}\{Type}` | ✅ PASS | 10/10 |
+| 6 | Skinny Controllers (lógica em Services/Orchestrators) | ✅ PASS | 9/10 |
+| 7 | Padrão `abort(503)` para serviços externos | ✅ PASS | 9/10 |
+| 8 | Qualidade de Observers e Listeners | ✅ PASS | 10/10 |
+| 9 | Isolamento multi-tenant (SaasFileService em cascatas) | ✅ PASS | 9/10 |
+| 10 | Suspensão Whaticket (rotas + docs) | ✅ PASS | 10/10 |
+
+**Score Final: 9.5 / 10** *(3 violações corrigidas durante a auditoria)*
+
+#### Violações Corrigidas
+
+1.  **VIO-1 — `Storage::url()` direto** em `Legal/Http/Controllers/PublicPortal/CustomerPortalController.php:52`
+    *   **Antes:** `Storage::url($settings['logo'])`
+    *   **Depois:** `app(SaasFileService::class)->url($settings['logo'])` — Regra 2.2 do SKILL.md atendida.
+
+2.  **VIO-2 — Import `use Storage` não utilizado** em `Legal/Models/Anexo.php:7`
+    *   **Antes:** `use Illuminate\Support\Facades\Storage;` presente (import fantasma após refactor que migrou para `route()`)
+    *   **Depois:** Import removido. Docblock atualizado para refletir implementação real (proxy interno via `route()`).
+
+3.  **VIO-3 — `Log::debug` ativo** em `Whatsapp/Http/Controllers/WhatsappWebhookController.php:57,85`
+    *   **Antes:** `Log::debug('[WhatsappWebhook] Message saved.')` e `Log::debug('[WhatsappWebhook] ACK updated.')`
+    *   **Depois:** `Log::info(...)` — eventos de sucesso visíveis com `LOG_LEVEL=info` padrão de produção.
+
+#### Riscos Residuais (Não Bloqueantes — Backlog)
+
+*   **`ProcessoObserver::forceCleanupCalendarEvent`** — `findWhere(['type'=>'meeting'])` sem filtro de tenant. Risco de performance em instâncias com muitos registros. Recomendação: adicionar filtro por `user_id` antes do loop.
+*   **`auth()->guard('admin')->id() ?? 1`** em `ProcessoObserver::ensureCalendarEvent` — Fallback silencioso para `user_id=1` em contextos sem sessão (ex: jobs em fila). Refatorar para emitir `Log::warning` em vez de usar fallback.
+

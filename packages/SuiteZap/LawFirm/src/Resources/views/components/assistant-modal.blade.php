@@ -113,7 +113,7 @@
 
                 <!-- Footer -->
                 <div
-                    class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 dark:bg-gray-800 border-t dark:border-gray-700">
+                    class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:items-center sm:px-6 dark:bg-gray-800 border-t dark:border-gray-700 gap-2">
                     <button type="button" @click="executeAi()" :disabled="isLoading"
                         class="inline-flex w-full justify-center rounded-md bg-purple-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 sm:ml-3 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed">
                         <span x-show="!isLoading">⚡ Executar Análise</span>
@@ -123,12 +123,32 @@
                         class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:hover:bg-gray-600">
                         Cancelar
                     </button>
+
+                    {{-- Ƶ Cost Badge — mostra custo do assistente de pré-triagem --}}
+                    @php
+                        $modalTemplate = \SuiteZap\LawFirm\AI\Models\AssistantTemplate::where('slug', 'pre-triagem-checklist')->first();
+                        $modalCost = $modalTemplate ? (float)($modalTemplate->price_virtual ?? 0) : 0;
+                    @endphp
+                    <span class="ml-auto text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mr-auto">
+                        Custo por execução:
+                        @if($modalCost > 0)
+                            <span class="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 font-bold text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
+                                  title="R$ {{ number_format($modalCost, 4, ',', '.') }} debitados do saldo SuiteCoins">
+                                Ƶ {{ number_format($modalCost * 10, 2, ',', '.') }}
+                            </span>
+                        @else
+                            <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 font-bold text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                Gratuito
+                            </span>
+                        @endif
+                    </span>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
     function assistantModalHandler() {
         return {

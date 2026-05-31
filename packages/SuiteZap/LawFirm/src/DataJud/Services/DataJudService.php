@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use SuiteZap\LawFirm\SaaS\Models\SaasTransaction;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 
 class DataJudService
 {
@@ -30,27 +31,27 @@ class DataJudService
         }
 
         $prices = MotherShipService::getEscavadorPrices();
-        $cost = $prices['DATAJUD_CONSULTA_PUBLICA'] ?? 0.00;
+        $costBrlRaw = $prices['DATAJUD_CONSULTA_PUBLICA'] ?? 0.00;
+        $costBrlWithMarkup = $costBrlRaw > 0 ? SuiteCoinService::calculateServicePriceBrl($costBrlRaw) : 0.00;
 
         $subscription = Subscription::where('tenant_id', $tenantId)->first();
         if (!$subscription) {
             return ['success' => false, 'error' => 'Assinatura não encontrada para este tenant.'];
         }
 
-        if ($cost > 0) {
-            if ((float) $subscription->ai_tokens_balance < $cost) {
+        if ($costBrlWithMarkup > 0) {
+            if (!SuiteCoinService::hasSufficientBalance((float) $subscription->suitecoin_balance, $costBrlWithMarkup)) {
                 return [
                     'success' => false,
-                    'error' => sprintf(
-                        'Saldo insuficiente. Disponível: R$ %.2f | Necessário: R$ %.2f',
-                        $subscription->ai_tokens_balance,
-                        $cost
+                    'error' => SuiteCoinService::insufficientBalanceMessage(
+                        $subscription->suitecoin_balance,
+                        $costBrlWithMarkup
                     )
                 ];
             }
 
             // Debit upfront
-            $subscription->decrement('ai_tokens_balance', $cost);
+            $subscription->decrement('suitecoin_balance', $costBrlWithMarkup);
         }
 
         // Build the Elasticsearch query according to the consultation type
@@ -68,14 +69,15 @@ class DataJudService
             if ($response->successful()) {
                 $data = $response->json();
 
-                if ($cost > 0) {
+                if ($costBrlWithMarkup > 0) {
                     SaasTransaction::create([
                         'tenant_id' => $tenantId,
                         'type' => 'debit',
-                        'amount' => $cost,
-                        'balance_after' => $subscription->ai_tokens_balance,
+                        'amount' => $costBrlWithMarkup,
+                        'balance_after' => $subscription->suitecoin_balance,
+                        'currency' => SuiteCoinService::CURRENCY_CODE,
                         'service_type' => 'DATAJUD_CNJ',
-                        'description' => "DataJud ({$tribunal}) - {$tipoConsulta}",
+                        'description' => "DataJud ({$tribunal}) - {$tipoConsulta} — " . SuiteCoinService::format(SuiteCoinService::calculateServicePriceVirtual($costBrlRaw)),
                         'user_id' => auth()->id(),
                         'reference_id' => $subscription->id,
                         'reference_type' => 'datajud',
@@ -86,8 +88,8 @@ class DataJudService
             }
 
             // Estorno em caso de falha
-            if ($cost > 0) {
-                $subscription->increment('ai_tokens_balance', $cost);
+            if ($costBrlWithMarkup > 0) {
+                $subscription->increment('suitecoin_balance', $costBrlWithMarkup);
             }
             Log::warning('DataJud API fail', [
                 'tribunal' => $tribunal,
@@ -100,8 +102,8 @@ class DataJudService
             return ['success' => false, 'error' => $errorMsg];
 
         } catch (\Exception $e) {
-            if ($cost > 0) {
-                $subscription->increment('ai_tokens_balance', $cost);
+            if ($costBrlWithMarkup > 0) {
+                $subscription->increment('suitecoin_balance', $costBrlWithMarkup);
             }
             Log::error('DataJud API Exception', ['message' => $e->getMessage()]);
             return ['success' => false, 'error' => 'Erro de conexão com o DataJud: ' . $e->getMessage()];

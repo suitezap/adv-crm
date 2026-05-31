@@ -47,7 +47,8 @@ class MotherShipService
     }
 
     /**
-     * Verifica se pode criar novos usuários
+     * Verifica se pode ativar/criar novos usuários ativos.
+     * Limit 0 ou null = sem limite (ilimitado).
      */
     public static function canCreateUser(): bool
     {
@@ -58,8 +59,14 @@ class MotherShipService
             return false;
         }
 
+        $limit = (int) $subscription->max_users;
+
+        // 0 ou null = sem limite de usuários ativos
+        if ($limit <= 0) {
+            return true;
+        }
+
         $currentCount = \Webkul\User\Models\User::where('status', 1)->count();
-        $limit = $subscription->max_users;
 
         return $currentCount < $limit;
     }
@@ -97,6 +104,55 @@ class MotherShipService
             } catch (\Exception $e) {
                 Log::warning("[MotherShipService] Falha ao ler {$key} de app_config: " . $e->getMessage());
                 return null;
+            }
+        });
+    }
+
+    /**
+     * Consome o endpoint api/exchange_rate.php do MotherShip para obter a taxa
+     * de câmbio soberana (consumer_rate) e o multiplicador de SuiteCoins.
+     *
+     * Retorna defaults seguros se o MotherShip estiver offline (503-safe).
+     *
+     * @return array{consumer_rate: float, suitecoin_multiplier: int, billing_consensus: array}
+     */
+    public static function getExchangeRate(): array
+    {
+        $defaults = [
+            'consumer_rate'       => 5.75,
+            'suitecoin_multiplier' => 10,
+            'billing_consensus'   => [],
+        ];
+
+        return Cache::remember('mothership_exchange_rate', 300, function () use ($defaults) {
+            try {
+                $apiSecret  = self::getAppConfig('api_secret') ?? env('MOTHERSHIP_API_SECRET');
+                $baseUrl    = rtrim(env('MOTHERSHIP_BASE_URL', ''), '/');
+
+                if (empty($baseUrl) || empty($apiSecret)) {
+                    Log::warning('[MotherShipService] getExchangeRate: MOTHERSHIP_BASE_URL ou api_secret não configurados.');
+                    return $defaults;
+                }
+
+                $response = \Illuminate\Support\Facades\Http::timeout(5)
+                    ->withHeaders(['X-Api-Secret' => $apiSecret])
+                    ->get("{$baseUrl}/api/exchange_rate.php");
+
+                if (!$response->successful()) {
+                    Log::warning('[MotherShipService] getExchangeRate: HTTP ' . $response->status());
+                    return $defaults;
+                }
+
+                $data = $response->json();
+
+                return [
+                    'consumer_rate'       => (float) ($data['billing_consensus']['consumer_rate'] ?? $defaults['consumer_rate']),
+                    'suitecoin_multiplier' => (int) ($data['suitecoin_multiplier'] ?? $defaults['suitecoin_multiplier']),
+                    'billing_consensus'   => (array) ($data['billing_consensus'] ?? []),
+                ];
+            } catch (\Throwable $e) {
+                Log::error('[MotherShipService] getExchangeRate falhou: ' . $e->getMessage());
+                return $defaults;
             }
         });
     }
@@ -224,7 +280,7 @@ class MotherShipService
             'filesystems.disks.s3.throw' => false,
         ]);
 
-        Log::debug("SAAS: Storage configurado dinamicamente para nó {$storageNode->id}");
+        Log::info("SAAS: Storage configurado dinamicamente para nó {$storageNode->id}");
     }
 
     /**

@@ -150,4 +150,67 @@ class SaasFileService
             return null;
         }
     }
+
+    /**
+     * Lista todos os arquivos recursivamente no bucket do Tenant.
+     * Permite que Console Commands auditem uso de storage sem chamar Storage:: diretamente.
+     *
+     * @return array<string>
+     */
+    public function listAll(string $directory = '/'): array
+    {
+        try {
+            return $this->getDisk()->allFiles($directory);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('SaasFileService::listAll falhou: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Retorna o tamanho em bytes de um arquivo no bucket do Tenant.
+     */
+    public function size(string $path): int
+    {
+        try {
+            return $this->getDisk()->size($path);
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Verifica conectividade com o bucket do Tenant (diagnóstico).
+     * Cria e apaga um arquivo temporário de teste.
+     */
+    public function testConnection(): array
+    {
+        try {
+            $disk       = $this->getDisk();
+            $diskName   = config('filesystems.default');
+            $testFile   = 'diagnostico/test-connection-' . time() . '.txt';
+            $content    = 'Conexão S3/MinIO OK - ' . now()->toIso8601String();
+
+            $disk->put($testFile, $content);
+            $url       = $disk->url($testFile);
+            $exists    = $disk->exists($testFile);
+            $disk->delete($testFile); // limpa o arquivo de teste
+
+            return [
+                'status'       => 'sucesso',
+                'disk'         => $diskName,
+                'bucket'       => config("filesystems.disks.{$diskName}.bucket") ?? 'N/A',
+                'endpoint'     => config("filesystems.disks.{$diskName}.endpoint") ?? 'N/A',
+                'file_created' => $exists,
+                'url_sample'   => $url,
+                'message'      => 'Bucket configurado e operacional.',
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status'  => 'erro',
+                'message' => $e->getMessage(),
+                'trace'   => app()->hasDebugModeEnabled() ? $e->getTraceAsString() : '[oculto em produção]',
+            ];
+        }
+    }
 }

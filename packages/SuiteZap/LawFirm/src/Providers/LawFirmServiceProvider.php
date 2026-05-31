@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
-use SuiteZap\LawFirm\Events\PrazoCreated;
+use SuiteZap\LawFirm\Legal\Events\PrazoCreated;
 use SuiteZap\LawFirm\Whatsapp\Listeners\SendPrazoWhatsapp;
 
 class LawFirmServiceProvider extends ServiceProvider
@@ -16,7 +16,7 @@ class LawFirmServiceProvider extends ServiceProvider
     /**
      * Versão do pacote LawFirm.
      */
-    public const VERSION = '3.35';
+    public const VERSION = '3.52.0';
 
 
     /**
@@ -102,6 +102,8 @@ class LawFirmServiceProvider extends ServiceProvider
                 \SuiteZap\LawFirm\Console\Commands\PublishAiTemplatesCommand::class,
                 // Robô Agendador de Prazos via WhatsApp
                 \SuiteZap\LawFirm\Whatsapp\Commands\SendScheduledPrazoNotifications::class,
+                // Sincronização de preços de assistentes em SuiteCoins (Ƶ)
+                \SuiteZap\LawFirm\AI\Console\SyncAssistantPricing::class,
             ]);
         }
 
@@ -161,13 +163,24 @@ class LawFirmServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Blade::component('lawfirm::assistant-panel', 'assistant-panel');
 
         // ====================================================================
-        // OCULTAR MENU CORREIO/EMAIL
+        // OCULTAR MENUS CORE (CORREIO/ORÇAMENTO)
         // ====================================================================
-        // Oculta o menu "mail" (E-mail) padrão do Krayin dinamicamente
+        // Oculta os menus "mail" (e sub-itens mail.*) e "quotes" padrão do Krayin
         $menu = config('menu.admin');
         if ($menu) {
             $menu = array_values(array_filter($menu, function ($item) {
-                return isset($item['key']) && !str_starts_with($item['key'], 'mail');
+                if (!isset($item['key'])) {
+                    return false;
+                }
+                // Oculta todos os itens de e-mail (pai e filhos mail.inbox, mail.draft, etc.)
+                if (str_starts_with($item['key'], 'mail')) {
+                    return false;
+                }
+                // Oculta o menu Orçamentos (versões SaaS futuras — a ser reativado via módulo)
+                if ($item['key'] === 'quotes') {
+                    return false;
+                }
+                return true;
             }));
             config(['menu.admin' => $menu]);
         }
@@ -223,6 +236,9 @@ class LawFirmServiceProvider extends ServiceProvider
     {
         \SuiteZap\LawFirm\Legal\Models\Processo::observe(\SuiteZap\LawFirm\Legal\Observers\ProcessoObserver::class);
         \SuiteZap\LawFirm\Legal\Models\Prazo::observe(\SuiteZap\LawFirm\Legal\Observers\PrazoObserver::class);
+
+        // ✅ Sincronização Reversa Krayin -> LawFirm
+        \Webkul\Activity\Models\Activity::observe(\SuiteZap\LawFirm\Legal\Observers\ActivityObserver::class);
 
 
         // ✅ REGISTRO DO OBSERVER SAAS
@@ -348,7 +364,6 @@ class LawFirmServiceProvider extends ServiceProvider
         // ---------------------------------------------------------------------
         Event::listen('admin.leads.view.activities.after', function ($viewRenderEventManager) {
             $viewRenderEventManager->addTemplate('lawfirm::admin.leads.tab_processos');
-            Log::debug('LawFirm: View injetada em admin.leads.view.activities.after');
         });
 
         // ---------------------------------------------------------------------

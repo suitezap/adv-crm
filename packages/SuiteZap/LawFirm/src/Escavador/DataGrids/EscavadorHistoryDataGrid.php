@@ -4,6 +4,7 @@ namespace SuiteZap\LawFirm\Escavador\DataGrids;
 
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
+use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 
 /**
  * EscavadorHistoryDataGrid — Exibe o histórico de requisições aos serviços jurídicos
@@ -112,7 +113,7 @@ class EscavadorHistoryDataGrid extends DataGrid
             'label' => 'Custo',
             'type' => 'string',
             'sortable' => true,
-            'closure' => fn($row) => 'R$ ' . number_format($row->cost, 2, ',', '.'),
+            'closure' => fn($row) => SuiteCoinService::formatFromBrl((float) $row->cost),
         ]);
 
         $this->addColumn([

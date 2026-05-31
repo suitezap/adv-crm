@@ -49,7 +49,7 @@ class EscavadorCacheService
         }
 
         // Não existe: Busca a Capa na V2 (R$ 0,05)
-        $response = $this->apiService->requestService('CAPA_PROCESSO', ['cnj' => $cnjClean], $tenantId, $processoId);
+        $response = $this->apiService->requestService('CAPA_PROCESSO', ['numero' => $cnjClean], $tenantId, $processoId);
 
         if (!$response['success'] || empty($response['data'])) {
             return null;
@@ -83,7 +83,7 @@ class EscavadorCacheService
     {
         $response = $this->apiService->requestService(
             'MOVIMENTACOES_PROCESSO', 
-            ['cnj' => $esqProcesso->numero_cnj], 
+            ['numero' => $esqProcesso->numero_cnj],
             $esqProcesso->tenant_id, 
             $esqProcesso->processo_id
         );
@@ -131,7 +131,7 @@ class EscavadorCacheService
     {
         $response = $this->apiService->requestService(
             'ENVOLVIDOS_PROCESSO', 
-            ['cnj' => $esqProcesso->numero_cnj], 
+            ['numero' => $esqProcesso->numero_cnj],
             $esqProcesso->tenant_id, 
             $esqProcesso->processo_id
         );
@@ -171,7 +171,7 @@ class EscavadorCacheService
     {
         $response = $this->apiService->requestService(
             'DOCUMENTOS_PUBLICOS', 
-            ['cnj' => $esqProcesso->numero_cnj], 
+            ['numero' => $esqProcesso->numero_cnj],
             $esqProcesso->tenant_id, 
             $esqProcesso->processo_id
         );
@@ -218,7 +218,7 @@ class EscavadorCacheService
     {
         $response = $this->apiService->requestService(
             'RESUMO_IA', 
-            ['cnj' => $esqProcesso->numero_cnj], 
+            ['numero' => $esqProcesso->numero_cnj],
             $esqProcesso->tenant_id, 
             $esqProcesso->processo_id
         );
@@ -239,7 +239,7 @@ class EscavadorCacheService
     {
         $response = $this->apiService->requestService(
             'ATUALIZACAO_PROCESSO_PUB', 
-            ['cnj' => $esqProcesso->numero_cnj], 
+            ['numero' => $esqProcesso->numero_cnj],
             $esqProcesso->tenant_id, 
             $esqProcesso->processo_id
         );

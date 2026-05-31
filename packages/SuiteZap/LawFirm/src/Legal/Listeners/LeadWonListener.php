@@ -4,13 +4,21 @@ namespace SuiteZap\LawFirm\Legal\Listeners;
 
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\Legal\Services\LegalOrchestrator;
 use Webkul\Lead\Models\Lead;
 
 class LeadWonListener
 {
+    protected LegalOrchestrator $orchestrator;
+
+    public function __construct(LegalOrchestrator $orchestrator)
+    {
+        $this->orchestrator = $orchestrator;
+    }
+
     /**
      * Handle the lead.update.after event.
-     * When a lead is moved to the "won" stage, auto-create a Processo.
+     * When a lead is moved to the "won" stage, auto-create a Caso + Processo.
      *
      * @param  Lead  $lead
      * @return void
@@ -38,24 +46,17 @@ class LeadWonListener
 
         // Ensure lead has a person_id (required by Processo)
         if (!$lead->person_id) {
-            Log::warning("LeadWonListener: Lead #{$lead->id} has no person_id, cannot auto-create Processo.");
+            Log::warning("LeadWonListener: Lead #{$lead->id} has no person_id, cannot auto-create Caso/Processo.");
             return;
         }
 
         try {
-            $processo = Processo::create([
-                'titulo' => $lead->title,
-                'descricao' => $lead->description,
-                'person_id' => $lead->person_id,
-                'lead_id' => $lead->id,
-                'valor_causa' => $lead->lead_value ?? 0,
-                'user_id' => auth()->guard('user')->id() ?? $lead->user_id,
-                'status' => 'Ativo',
-            ]);
+            $result = $this->orchestrator->convertLeadToLegalStructure($lead);
 
-            Log::info("LeadWonListener: Processo #{$processo->id} auto-created for Lead #{$lead->id} (titulo: {$lead->title})");
+            Log::info("LeadWonListener: Caso #{$result['caso']->id} + Processo #{$result['processo']->id} auto-created for Lead #{$lead->id}");
         } catch (\Exception $e) {
-            Log::error("LeadWonListener: Failed to create Processo for Lead #{$lead->id}: " . $e->getMessage());
+            Log::error("LeadWonListener: Failed to create Caso/Processo for Lead #{$lead->id}: " . $e->getMessage());
         }
     }
 }
+

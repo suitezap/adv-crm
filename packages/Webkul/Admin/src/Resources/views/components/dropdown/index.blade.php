@@ -104,9 +104,9 @@
             },
 
             mounted() {
-                this.toggleBlockWidth = this.$refs.toggleBlock.clientWidth;
+                this.toggleBlockWidth = this.$refs.toggleBlock?.clientWidth ?? 0;
 
-                this.toggleBlockHeight = this.$refs.toggleBlock.clientHeight;
+                this.toggleBlockHeight = this.$refs.toggleBlock?.clientHeight ?? 0;
             },
 
             beforeDestroy() {

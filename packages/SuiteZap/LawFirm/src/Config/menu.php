@@ -1,99 +1,199 @@
 <?php
 
+/**
+ * LawFirm Menu Configuration
+ *
+ * Each menu item's 'permission' key MUST match an ACL key from acl.php.
+ * Krayin's sidebar renderer checks bouncer()->hasPermission($permission)
+ * before showing the menu item.
+ *
+ * Hierarchical keys MUST follow the pattern: parent.child.grandchild
+ * to appear correctly nested in the sidebar.
+ */
+
 return [
-    // Parent Menu: Jurídico
+
+    // ══════════════════════════════════════════════════════════
+    // TOP-LEVEL: Jurídico
+    // ══════════════════════════════════════════════════════════
     [
-        'key' => 'lawfirm',
-        'name' => 'Jurídico',
-        'route' => 'admin.processos.index',
-        'sort' => 2,
+        'key'        => 'lawfirm',
+        'name'       => 'Jurídico',
+        'route'      => 'admin.processos.index',
+        'sort'       => 2,
         'icon-class' => 'icon-note',
-        'permission' => 'lawfirm', // Keep parent generic or update if needed, usually parent is just container
+        'permission' => 'lawfirm',
     ],
 
-    // Child 1: Processos
+    // ─── Kanban ──────────────────────────────────────────────
     [
-        'key' => 'lawfirm.processos',
-        'name' => 'Processos',
-        'route' => 'admin.processos.index',
-        'sort' => 1,
+        'key'        => 'lawfirm.kanban',
+        'name'       => 'Kanban',
+        'route'      => 'admin.lawfirm.legal.kanban.index',
+        'sort'       => 1,
+        'icon-class' => 'icon-pipeline',
+        'permission' => 'lawfirm.kanban.view',
+    ],
+
+    // ─── Casos ────────────────────────────────────────────────
+    [
+        'key'        => 'lawfirm.casos',
+        'name'       => 'Casos',
+        'route'      => 'admin.lawfirm.casos.index',
+        'sort'       => 2,
+        'icon-class' => '',
+        'permission' => 'lawfirm.casos.view',
+    ],
+
+    // ─── Processos ───────────────────────────────────────────
+    [
+        'key'        => 'lawfirm.processos',
+        'name'       => 'Processos',
+        'route'      => 'admin.processos.index',
+        'sort'       => 3,
         'icon-class' => '',
         'permission' => 'lawfirm.processos.view',
     ],
 
-    // Child 2: Prazos
+    // ─── Tarefas ─────────────────────────────────────────────
     [
-        'key' => 'lawfirm.prazos',
-        'name' => 'Prazos',
-        'route' => 'admin.prazos.index',
-        'sort' => 2,
-        'icon-class' => 'icon-calendar',
+        'key'        => 'lawfirm.tarefas',
+        'name'       => 'Tarefas',
+        'route'      => 'admin.activities.index',
+        'sort'       => 3.5,
+        'icon-class' => 'icon-activity',
+        'permission' => 'lawfirm.tarefas.view',
+    ],
+
+    // ─── Modelos de Documentos ──────────────────────────────
+    [
+        'key'        => 'lawfirm.modelos',
+        'name'       => 'Modelos de Docs',
+        'route'      => 'admin.modelos.index',
+        'sort'       => 4.5,
+        'icon-class' => '',
+        'permission' => 'lawfirm.modelos.view',
+    ],
+
+    // ─── Prazos ──────────────────────────────────────────────
+    [
+        'key'        => 'lawfirm.prazos',
+        'name'       => 'Prazos',
+        'route'      => 'admin.prazos.index',
+        'sort'       => 4,
+        'icon-class' => '',
         'permission' => 'lawfirm.prazos.view',
     ],
 
-    // Child 3: Financeiro
+    // ─── Agenda ──────────────────────────────────────────────
     [
-        'key' => 'lawfirm.financial',
-        'name' => 'Dashboard Financeiro',
-        'route' => 'admin.lawfirm.financial.index',
-        'sort' => 3,
-        'icon-class' => 'icon-dashboard',
-        'permission' => 'lawfirm.financial.view',
+        'key'        => 'lawfirm.agenda',
+        'name'       => 'Agenda',
+        'route'      => 'admin.lawfirm.agenda.index',
+        'sort'       => 5,
+        'icon-class' => 'icon-calendar',
+        'permission' => 'lawfirm.agenda.view',
     ],
 
-    // Child 4: Assistentes IA
+    // ═══════════════════════════════════════════════════════════
+    // TOP-LEVEL: Financeiro
+    // ═══════════════════════════════════════════════════════════
     [
-        'key' => 'lawfirm.assistants',
-        'name' => 'Assistentes IA',
-        'route' => 'lawfirm.assistants.index',
-        'sort' => 4,
+        'key'        => 'financeiro',
+        'name'       => 'Financeiro',
+        'route'      => 'admin.lawfirm.financial.index',
+        'sort'       => 5.1,
+        'icon-class' => 'icon-quote text-2xl',
+        'permission' => 'lawfirm.financeiro',
+    ],
+
+    // Sub-item: Dashboard
+    [
+        'key'        => 'financeiro.dashboard',
+        'name'       => 'Dashboard',
+        'route'      => 'admin.lawfirm.financial.index',
+        'sort'       => 1,
+        'icon-class' => 'icon-dashboard',
+        'permission' => 'lawfirm.financeiro.view',
+    ],
+
+    // Sub-item: Cobranças
+    [
+        'key'        => 'financeiro.cobrancas',
+        'name'       => 'Cobranças / Movimentações',
+        'route'      => 'admin.lawfirm.tenant_finance.index',
+        'sort'       => 2,
+        'icon-class' => 'icon-revenue',
+        'permission' => 'lawfirm.financeiro.cobrancas.view',
+    ],
+
+    // ═══════════════════════════════════════════════════════════
+    // TOP-LEVEL: Assistentes
+    // ═══════════════════════════════════════════════════════════
+    [
+        'key'        => 'assistants',
+        'name'       => 'Assistentes',
+        'route'      => 'lawfirm.assistants.index',
+        'sort'       => 4,
+        'icon-class' => 'icon-user',
+        'permission' => 'lawfirm.assistants',
+    ],
+
+    // ═══════════════════════════════════════════════════════════
+    // Assistentes IA
+    // ═══════════════════════════════════════════════════════════
+    [
+        'key'        => 'assistants.ia',
+        'name'       => 'Assistentes IA',
+        'route'      => 'lawfirm.assistants.index',
+        'sort'       => 1,
         'icon-class' => 'icon-dashboard',
         'permission' => 'lawfirm.assistants',
     ],
 
-    // Child 5: Histórico IA
+    // Histórico IA
     [
-        'key' => 'lawfirm.ai_history',
-        'name' => 'Histórico Assist. IA',
-        'route' => 'lawfirm.assistants.history.index',
-        'sort' => 5,
-        'icon-class' => 'icon-dashboard', // Ensure it has a recognizable icon
-        'permission' => 'lawfirm.assistants', // Shared permissions
+        'key'        => 'assistants.ai_history',
+        'name'       => 'Histórico Assist. IA',
+        'route'      => 'lawfirm.assistants.history.index',
+        'sort'       => 2,
+        'icon-class' => 'icon-dashboard',
+        'permission' => 'lawfirm.assistants.view',
     ],
 
-    // Child 6: Assistente Jurídico (Escavador API)
+    // ═══════════════════════════════════════════════════════════
+    // Assistente Jurídico (Escavador)
+    // ═══════════════════════════════════════════════════════════
     [
-        'key' => 'lawfirm.escavador',
-        'name' => 'Assistente Jurídico',
-        'route' => 'lawfirm.escavador.index',
-        'sort' => 6,
+        'key'        => 'assistants.escavador',
+        'name'       => 'Assistente Jurídico',
+        'route'      => 'lawfirm.escavador.index',
+        'sort'       => 3,
         'icon-class' => 'icon-note',
         'permission' => 'lawfirm.escavador',
     ],
-
-    // Child: Histórico dos Assistentes Jurídicos
     [
-        'key' => 'lawfirm.escavador_history',
-        'name' => 'Histórico Assist. Jurídico',
-        'route' => 'lawfirm.escavador.history',
-        'sort' => 7,
+        'key'        => 'assistants.escavador_history',
+        'name'       => 'Histórico Assist. Jurídico',
+        'route'      => 'lawfirm.escavador.history',
+        'sort'       => 4,
         'icon-class' => 'icon-clock',
-        'permission' => 'lawfirm.escavador',
+        'permission' => 'lawfirm.escavador.view',
     ],
     [
-        'key' => 'lawfirm.escavador_monitoramentos',
-        'name' => 'Monitoramentos / Robôs',
-        'route' => 'lawfirm.escavador.monitoramentos.index',
-        'sort' => 99,
+        'key'        => 'assistants.escavador_monitoramentos_create',
+        'name'       => 'Criar Monitoramentos',
+        'route'      => 'lawfirm.escavador.monitoramentos.create',
+        'sort'       => 6,
         'icon-class' => '',
-        'permission' => 'lawfirm.escavador',
+        'permission' => 'lawfirm.escavador.create',
     ],
     [
-        'key' => 'lawfirm.escavador_monitoramentos_create',
-        'name' => 'Criar Monitoramentos',
-        'route' => 'lawfirm.escavador.monitoramentos.create',
-        'sort' => 98,
+        'key'        => 'assistants.escavador_monitoramentos',
+        'name'       => 'Monitoramentos / Robôs',
+        'route'      => 'lawfirm.escavador.monitoramentos.index',
+        'sort'       => 7,
         'icon-class' => '',
-        'permission' => 'lawfirm.escavador',
+        'permission' => 'lawfirm.escavador.view',
     ],
 ];

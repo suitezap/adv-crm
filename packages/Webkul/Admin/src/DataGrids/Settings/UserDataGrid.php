@@ -20,6 +20,7 @@ class UserDataGrid extends DataGrid
                 'id',
                 'name',
                 'email',
+                'whatsapp',
                 'image',
                 'status',
                 'created_at'
@@ -67,6 +68,31 @@ class UserDataGrid extends DataGrid
             'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'whatsapp',
+            'label'      => 'WhatsApp',
+            'type'       => 'string',
+            'sortable'   => true,
+            'searchable' => true,
+            'filterable' => true,
+            'closure'    => function ($row) {
+                if (!$row->whatsapp) return '--';
+                
+                $num = preg_replace('/\D/', '', $row->whatsapp);
+                if (str_starts_with($num, '55')) {
+                    $num = substr($num, 2);
+                }
+
+                if (strlen($num) === 11) {
+                    return preg_replace('/(\d{2})(\d{5})(\d{4})/', '($1) $2-$3', $num);
+                } elseif (strlen($num) === 10) {
+                    return preg_replace('/(\d{2})(\d{4})(\d{4})/', '($1) $2-$3', $num);
+                }
+                
+                return $row->whatsapp;
+            }
         ]);
 
         $this->addColumn([

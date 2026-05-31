@@ -5,6 +5,7 @@ namespace SuiteZap\LawFirm\SaaS\DataGrids;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 
 /**
  * SaasTransactionsDataGrid — Exibe o extrato de movimentações financeiras (débitos/créditos)
@@ -94,6 +95,10 @@ class SaasTransactionsDataGrid extends DataGrid
             'type'       => 'string',
             'sortable'   => false,
             'searchable' => true,
+            'closure'    => function ($row) {
+                // Remove o sufixo de custo unitário: " — Ƶ X,XX" ou " — Custo: Ƶ X,XX"
+                return preg_replace('/\s*[—\-]{1,2}\s*(Custo:\s*)?[Ƶ#]?\s*[\d.,]+\s*$/u', '', $row->description);
+            },
         ]);
 
         $this->addColumn([
@@ -101,18 +106,25 @@ class SaasTransactionsDataGrid extends DataGrid
             'label'    => 'Valor',
             'type'     => 'string',
             'sortable' => true,
-            'closure'  => fn($row) => 'R$ ' . number_format($row->amount, 2, ',', '.'),
+            'closure'  => function ($row) {
+                if ($row->type === 'credit') {
+                    // Depósito: exibe o valor real pago em R$
+                    return 'R$ ' . number_format((float) $row->amount, 2, ',', '.');
+                }
+                // Débito de consumo: exibe em Ƶ
+                return SuiteCoinService::formatFromBrl((float) $row->amount);
+            },
         ]);
 
         $this->addColumn([
             'index'    => 'balance_after',
-            'label'    => 'Saldo Após',
+            'label'    => 'Saldo (Ƶ)',
             'type'     => 'string',
             'sortable' => false,
             'closure'  => function ($row) {
                 if ($row->balance_after === null)
                     return '—';
-                return 'R$ ' . number_format($row->balance_after, 2, ',', '.');
+                return SuiteCoinService::formatFromBrl((float) $row->balance_after);
             },
         ]);
 

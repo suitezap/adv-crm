@@ -53,18 +53,23 @@ class DocumentService
         $extension = strtolower($file->getClientOriginalExtension());
         $finalName = "{$processId}-{$randomHash}_{$cleanName}.{$extension}";
 
-        // 3. Store File (Updated to use SaasFileService)
-        // O caminho completo é construído aqui para garantir controle
-        $fullPath = 'processos/' . $processId . '/' . $finalName;
+        // 3. Store File — Zero-Copy Hierarchy (v3.45)
+        // Se o processo pertence a um caso, centralizar na pasta do Caso para compartilhamento.
+        if ($processo->caso_id) {
+            $fullPath = 'casos/' . $processo->caso_id . '/documents/' . $finalName;
+        } else {
+            $fullPath = 'processos/' . $processId . '/' . $finalName;
+        }
 
         $path = $this->fileService->store($file, $fullPath);
 
-        // 4. Create Record
+        // 4. Create Record (with caso_id for Zero-Copy visibility)
         $anexo = $processo->anexos()->create([
-            'path' => $path,
+            'path'          => $path,
             'nome_original' => $file->getClientOriginalName(),
-            'tipo_mime' => $file->getMimeType(),
-            'tamanho' => $fileSize,
+            'tipo_mime'     => $file->getMimeType(),
+            'tamanho'       => $fileSize,
+            'caso_id'       => $processo->caso_id,
         ]);
 
         // 5. Increment Usage

@@ -87,8 +87,8 @@ class SendScheduledPrazoNotifications extends Command
             // ─── Coleta dados para o resumo diário ──────────────────────────
             if ($diasRestantes === 0) {
                 $advogado = $processo->responsavel;
-                if ($advogado && !empty($processo->whatsapp_responsavel)) {
-                    $chave = $processo->whatsapp_responsavel;
+                if ($advogado && !empty($advogado->whatsapp)) {
+                    $chave = $advogado->whatsapp;
                     if (!isset($resumoDiario[$chave])) {
                         $resumoDiario[$chave] = [
                             'nome'   => $advogado->name ?? 'Advogado(a)',
@@ -96,7 +96,7 @@ class SendScheduledPrazoNotifications extends Command
                         ];
                     }
                     $cnj = $processo->numero_cnj ?? '—';
-                    $resumoDiario[$chave]['linhas'][] = "📌 CNJ {$cnj} — {$processo->titulo} (Cliente: " . ($processo->person->name ?? '?') . ")";
+                    $resumoDiario[$chave]['linhas'][] = "📌.{$cnj} — {$processo->titulo} (Cliente: " . ($processo->person->name ?? '?') . ")";
                 }
             }
 
@@ -190,8 +190,8 @@ class SendScheduledPrazoNotifications extends Command
         }
 
         // ── Notificação para o ADVOGADO RESPONSÁVEL ──────────────────────────
-        if ($advogado && !empty($processo->whatsapp_responsavel)) {
-            $phone    = $this->normalizePhone($processo->whatsapp_responsavel);
+        if ($advogado && !empty($advogado->whatsapp)) {
+            $phone    = $this->normalizePhone($advogado->whatsapp);
             $template = core()->getConfigData("lawfirm.whatsapp_templates.messages.{$janela}_advogado");
             if ($template) {
                 $msg = str_replace(

@@ -30,7 +30,7 @@ class DeadlineService
         $prazo = $processo->prazos()->create([
             'titulo' => $data['titulo'],
             'data_vencimento' => $vencimento,
-            'tipo' => $data['tipo'] ?? 'comum',
+            'tipo' => $data['tipo'] ?? 'prazo',
             'descricao' => $data['descricao'] ?? null,
             'status' => 'pendente',
             'activity_id' => $data['activity_id'] ?? null,
@@ -223,9 +223,9 @@ class DeadlineService
             Log::info("DeadlineService: Updated audiência prazo ID {$existing->id} for processo {$processo->id}");
         } else {
             $prazo = $processo->prazos()->create([
-                'titulo'          => '📅 Audiência',
+                'titulo'          => '🏛️ Audiência',
                 'data_vencimento' => $vencimento,
-                'tipo'            => 'fatal',
+                'tipo'            => 'prazo',
                 'status'          => 'pendente',
                 'descricao'       => 'Prazo criado automaticamente a partir da Data da Audiência.',
             ]);

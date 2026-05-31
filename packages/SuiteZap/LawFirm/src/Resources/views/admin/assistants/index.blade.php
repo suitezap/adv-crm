@@ -140,25 +140,25 @@
                     display: inline-flex;
                     align-items: center;
                     gap: 0.3rem;
-                    padding: 0.3rem 0.85rem;
+                    padding: 0.35rem 0.85rem;
                     font-size: 0.8rem;
-                    font-weight: 600;
-                    border-radius: 9999px;
-                    border: 1.5px solid #e5e7eb;
-                    background: #fff;
+                    font-weight: 500;
+                    border-radius: 0.5rem;
+                    border: 1px solid transparent;
+                    background: transparent;
                     color: #6b7280;
                     cursor: pointer;
-                    transition: all 0.15s;
+                    transition: all 150ms;
                     white-space: nowrap;
                 }
 
                 .lf-area-btn:hover {
-                    border-color: #7c3aed;
-                    color: #7c3aed;
-                    background: #f5f3ff;
+                    background: #f3f4f6;
+                    color: #111827;
                 }
 
                 .lf-area-btn.active {
+                    font-weight: 600;
                     background: linear-gradient(135deg, #7c3aed, #9d4edd);
                     border-color: transparent;
                     color: #fff;
@@ -166,15 +166,15 @@
                 }
 
                 .dark .lf-area-btn {
-                    background: #1f2937;
-                    border-color: #374151;
+                    background: transparent;
+                    border-color: transparent;
                     color: #9ca3af;
                 }
 
                 .dark .lf-area-btn:hover {
-                    border-color: #7c3aed;
-                    color: #a78bfa;
-                    background: rgba(124, 58, 237, 0.12);
+                    background: #1f2937;
+                    color: #f9fafb;
+                    border-color: transparent;
                 }
 
                 .dark .lf-area-btn.active {
@@ -617,21 +617,16 @@
 
             {{-- ── AREA FILTER BAR (filtra por required_module = IA-*) ── --}}
             @if($areas->isNotEmpty())
-                <div class="rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">⚖️ Filtrar
-                            por Área:</span>
-                        <div class="lf-area-filter-bar">
-                            <button type="button" class="lf-area-btn active"
-                                onclick="window.lfFilterByArea('todas', this)">Todas</button>
-                            @foreach($areas as $modKey)
-                                {{-- Mostra 'IA-Trabalhista' como 'Trabalhista' --}}
-                                @php $label = Str::after($modKey, 'IA-'); @endphp
-                                <button type="button" class="lf-area-btn" data-module="{{ $modKey }}"
-                                    onclick="window.lfFilterByArea('{{ $modKey }}', this)">{{ $label }}</button>
-                            @endforeach
-                        </div>
-                    </div>
+                <div class="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900 overflow-x-auto">
+                    <button type="button" class="lf-area-btn active"
+                        onclick="window.lfFilterByArea('todas', this)">Todas</button>
+                    @foreach($areas as $modKey)
+                        <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
+                        {{-- Mostra 'IA-Trabalhista' como 'Trabalhista' --}}
+                        @php $label = Str::after($modKey, 'IA-'); @endphp
+                        <button type="button" class="lf-area-btn" data-module="{{ $modKey }}"
+                            onclick="window.lfFilterByArea('{{ $modKey }}', this)">{{ $label }}</button>
+                    @endforeach
                 </div>
             @endif
 
@@ -671,8 +666,8 @@
                                     @endif
                                 </div>
 
-                                {{-- Action button --}}
-                                <div class="mt-4 border-t border-gray-100 pt-3 dark:border-gray-800">
+                                {{-- Action button + cost badge --}}
+                                <div class="mt-4 border-t border-gray-100 pt-3 dark:border-gray-800 flex justify-end">
                                     <button type="button" class="lf-btn-primary"
                                         onclick="window.lfAssistants.open({{ $template->id }}, '{{ addslashes($template->title) }}', '{{ $template->slug }}', {{ json_encode($template->prompt_structure) }}, {{ $template->n8n_webhook_url ? 'true' : 'false' }})">
                                         ✨ Usar Assistente

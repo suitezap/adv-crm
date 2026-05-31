@@ -1,3 +1,28 @@
+## **LF v3.52.0 (Maio 2026)** - *Release*
+
+* [fixed] Correção de erros críticos do VueJS (TypeError: Cannot read properties of null (reading 'toLowerCase')) ao buscar nos componentes Lookup, Inline Lookup e Email View.
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.52.0.
+
+## **LF v3.51.0 (Maio 2026)** - *Release*
+
+* [feature] Integração oficial com o módulo Whaticket (WhatsApp).
+* [enhancement] Refatoração do módulo Messenger com suporte a mídias (foto, áudio, vídeo, docs).
+* [enhancement] Melhorias de isolamento multi-tenant para dados do Messenger.
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.51.0.
+
+## **LF v3.50.0 (Maio 2026)** - *Release*
+
+
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.50.0.
+* [feature] Padronização de renderização Markdown nos Assistentes de IA.
+* [fixed] Consistência financeira no cálculo de SuiteCoins (Ƶ = BRL × 10 × 1.25).
+
+## **LF v3.49.0 (Maio 2026)** - *Release*
+
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.49.0.
+* [enhancement] Refatoração arquitetural para conformidade com o padrão MotherShip.
+* [fixed] Melhorias na gestão de saldo SuiteCoin e integração financeira.
+
 ## **LF v3.21 (Abril 2026)** - *Refatoração Orders SaaS*
 
 * [critical-fix] Bug no cálculo de créditos: `Math.floor(price * 100)` no frontend inflava cobranças em 100x no Asaas (R$ 5 → R$ 500).

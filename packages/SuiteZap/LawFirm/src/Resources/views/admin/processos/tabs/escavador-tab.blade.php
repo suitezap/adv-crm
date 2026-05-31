@@ -1,4 +1,4 @@
-<div class="hidden" id="escavador-tab-content">
+<div class="" id="escavador-tab-content">
     <div class="flex flex-col gap-4">
         <!-- Dashboard / Capa -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -42,7 +42,8 @@
                     <i class="icon-info text-4xl text-gray-300 dark:text-gray-600 mb-2"></i>
                     <p class="text-sm text-gray-500 mb-4">Para importar ou atualizar os dados deste processo, sincronize com a base de Dados Oficiais.</p>
                     <button type="button" class="primary-button" onclick="EscavadorTab.sync()">
-                        <i class="icon-refresh mr-1"></i> Sincronizar Capa (R$ 0,05)
+                        <i class="icon-refresh mr-1"></i> Sincronizar Capa
+                        <span class="ml-1 inline-flex items-center rounded-full bg-teal-50 border border-teal-200 px-1.5 py-0 text-xs font-bold text-teal-700">Ƶ 0,63</span>
                     </button>
                     <p class="text-xs text-gray-400 mt-2" id="escavador-saldo-display">Carregando saldo...</p>
                 </div>
@@ -62,7 +63,8 @@
 
                 <div class="mt-4 pt-4 border-t border-primary-100/50 dark:border-primary-800/20 flex justify-end">
                      <button type="button" id="btn-request-ia" class="secondary-button" onclick="EscavadorTab.requestResumoIa()" disabled>
-                        Gerar / Atualizar IA (R$ 0,08)
+                        Gerar / Atualizar IA
+                        <span class="ml-1 inline-flex items-center rounded-full bg-violet-50 border border-violet-200 px-1.5 py-0 text-xs font-bold text-violet-700">Ƶ 1,00</span>
                     </button>
                 </div>
             </div>
@@ -149,7 +151,11 @@
                 .then(r => r.json())
                 .then(r => {
                     if (r.success) {
-                        document.getElementById('escavador-saldo-display').innerHTML = `Saldo atual: <strong>R$ ${r.ai_tokens_balance.toFixed(2)}</strong>`;
+                        // suitecoin_balance em BRL — display Ƶ = ×10
+                        const balBrl = r.suitecoin_balance ?? r.ai_tokens_balance ?? 0;
+                        const balZ   = balBrl * 10;
+                        document.getElementById('escavador-saldo-display').innerHTML =
+                            `Saldo: <strong class="text-violet-700">Ƶ ${balZ.toFixed(2).replace('.', ',')}</strong>`;
                     }
                 });
 
@@ -174,7 +180,7 @@
                 return;
             }
 
-            if (!confirm('Deseja iniciar a sincronização com os Dados Oficiais? Será debitado R$ 0,05 de seu saldo de IA.')) return;
+            if (!confirm('Deseja iniciar a sincronização com os Dados Oficiais?\nCusto: Ƶ 0,63 debitados do seu saldo SuiteCoins.')) return;
             
             const btn = document.querySelector('#escavador-sync-state button');
             const originalText = btn.innerHTML;
@@ -209,7 +215,7 @@
 
         requestResumoIa() {
              if (!this.escProcessoId) return;
-             if(!confirm('Deseja solicitar um Resumo Inteligente por E R$ 0,08? Isso levará alguns minutos.')) return;
+             if(!confirm('Deseja solicitar um Resumo Inteligente por IA?\nCusto: Ƶ 1,00 do seu saldo SuiteCoins. Isso levará alguns minutos.')) return;
 
              fetch('{{ route('lawfirm.escavador.servico') }}', {
                 method: 'POST',
@@ -231,7 +237,7 @@
 
         requestAtualizacao() {
              if (!this.escProcessoId) return;
-             if(!confirm('Deseja solicitar uma busca quente no Tribunal por R$ 0,10? Isso forçará o robô a ir na fonte.')) return;
+             if(!confirm('Deseja solicitar uma busca quente no Tribunal?\nCusto: Ƶ 1,25 do seu saldo SuiteCoins. Isso forçará o robô a ir na fonte.')) return;
 
              fetch('{{ route('lawfirm.escavador.atualizar_tribunal') }}', {
                 method: 'POST',

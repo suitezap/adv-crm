@@ -1466,7 +1466,7 @@
                      */
                     persons() {
                         return this.searchedResults.filter(item =>
-                            item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
+                            (item.name ?? '').toLowerCase().includes((this.searchTerm ?? '').toLowerCase())
                         );
                     }
                 },
@@ -1630,7 +1630,7 @@
                      */
                     leads() {
                         return this.searchedResults.filter(item =>
-                            item.title.toLowerCase().includes(this.searchTerm.toLowerCase())
+                            (item.title ?? '').toLowerCase().includes((this.searchTerm ?? '').toLowerCase())
                         );
                     },
                 },

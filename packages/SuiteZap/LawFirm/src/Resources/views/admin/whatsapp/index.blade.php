@@ -85,10 +85,10 @@
                     
                     <form id="test-form" onsubmit="sendTestMessage(event)" class="flex flex-col gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone (com DDI)</label>
-                            <input type="text" id="test-phone" placeholder="5511999999999" required
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone / WhatsApp</label>
+                            <input type="text" id="test-phone" placeholder="(11) 99999-9999" required
                                 class="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white px-3 py-2">
-                            <span class="text-xs text-gray-400 mt-1">Ex: 55 seguido do DDD e número.</span>
+                            <span class="text-xs text-gray-400 mt-1">Insira seu DDD e número celular.</span>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mensagem</label>
@@ -109,10 +109,29 @@
     @push('scripts')
     @if($isConfigured)
     <script>
-        // Financial Tab Pattern (Vanilla JS)
         document.addEventListener("DOMContentLoaded", function () {
             // Inicializa a UI
             loadStatusOrQr();
+            
+            // Mask pro form test
+            const phoneInput = document.getElementById('test-phone');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', (e) => {
+                    let v = e.target.value.replace(/\D/g, "");
+                    // Limpa DDI se coado repetidamente
+                    if (v.startsWith('55') && v.length > 11) {
+                         v = v.substring(2);
+                    }
+                    if (v.length <= 10) {
+                        v = v.replace(/(\d{2})(\d)/, "($1) $2");
+                        v = v.replace(/(\d{4})(\d)/, "$1-$2");
+                    } else {
+                        v = v.replace(/(\d{2})(\d)/, "($1) $2");
+                        v = v.replace(/(\d{5})(\d)/, "$1-$2");
+                    }
+                    e.target.value = v.substring(0, 15);
+                });
+            }
         });
 
         // Variaveis Globais do Escopo
@@ -252,7 +271,10 @@
             e.preventDefault();
             if (!isConnectedGlobal) return alert("O WhatsApp precisa estar conectado!");
 
-            const phone = document.getElementById('test-phone').value;
+            let phone = document.getElementById('test-phone').value.replace(/\D/g, "");
+            if (phone.length && !phone.startsWith('55')) {
+                phone = '55' + phone;
+            }
             const message = document.getElementById('test-message').value;
             const btn = document.getElementById('btn-test');
 

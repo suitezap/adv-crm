@@ -43,71 +43,101 @@
                             <x-admin::form.control-group.error control-name="titulo" />
                         </x-admin::form.control-group>
 
-                        {{-- Pessoa (Cliente) --}}
-                        @php
-                            $personId = old('person_id');
-                            $personLookupData = $personId ? app('Webkul\Attribute\Repositories\AttributeRepository')->getLookUpEntity('persons', $personId) : null;
-                            $personJson = $personLookupData ? ['id' => $personLookupData->id, 'name' => $personLookupData->name] : null;
-                        @endphp
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('lawfirm::app.processos.form.person')
-                            </x-admin::form.control-group.label>
-                            <x-admin::lookup src="{{ route('admin.contacts.persons.search') }}" name="person_id"
-                                rules="required"
-                                v-bind:value="{{ json_encode($personJson) }}"
-                                :placeholder="trans('lawfirm::app.processos.form.search-client')" />
-                            <x-admin::form.control-group.error control-name="person_id" />
-                        </x-admin::form.control-group>
+                        {{-- Trigger v-lookup-component registration --}}
+                        <x-admin::attributes.edit.lookup />
 
-                        {{-- Status --}}
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('lawfirm::app.processos.form.status')
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="select" name="status" rules="required"
-                                :label="trans('lawfirm::app.processos.form.status')">
-                                @foreach(['Ativo', 'Suspenso', 'Arquivado', 'Encerrado'] as $s)
-                                    <option value="{{ $s }}" {{ old('status') == $s ? 'selected' : '' }}>
-                                        {{ trans('lawfirm::app.processos.status-options.' . strtolower($s)) }}
-                                    </option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
-                            <x-admin::form.control-group.error control-name="status" />
-                        </x-admin::form.control-group>
+                        {{-- Cliente e Empresa --}}
+                        <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
 
-                        {{-- Responsável Interno --}}
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                Responsável Interno
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="select" name="user_id"
-                                label="Responsável Interno"
-                                :value="old('user_id', auth()->id())">
-                                <option value="">@lang('lawfirm::app.processos.form.select-choose')</option>
-                                @foreach($userRepository->all() as $user)
-                                    <option value="{{ $user->id }}" {{ (int)old('user_id', auth()->id()) === (int)$user->id ? 'selected' : '' }}>
-                                        {{ $user->name }}
-                                    </option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
-                            <x-admin::form.control-group.error control-name="user_id" />
-                        </x-admin::form.control-group>
+                            {{-- Pessoa (Cliente) --}}
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    @lang('lawfirm::app.processos.form.person') (Opcional)
+                                </x-admin::form.control-group.label>
+                                <v-lookup-component
+                                    :attribute="{{ json_encode(['code' => 'person_id', 'name' => 'Pessoa', 'lookup_type' => 'persons']) }}"
+                                    :value="null"
+                                    validations=""
+                                ></v-lookup-component>
+                                <x-admin::form.control-group.error control-name="person_id" />
+                            </x-admin::form.control-group>
 
-                        {{-- WhatsApp do Advogado Responsável (Robô Agendador) --}}
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                📱 WhatsApp do Advogado Responsável
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control
-                                type="text"
-                                name="whatsapp_responsavel"
-                                :value="old('whatsapp_responsavel')"
-                                label="WhatsApp do Advogado Responsável"
-                                placeholder="55 (99) 99999-9999" />
-                            <x-admin::form.control-group.error control-name="whatsapp_responsavel" />
-                            <p class="text-xs text-gray-400 mt-1">Usado pelo Robô Agendador para envio de lembretes de prazo. Ex: 55 (11) 99999-9999</p>
-                        </x-admin::form.control-group>
+                            {{-- Empresa --}}
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Empresa (Opcional)
+                                </x-admin::form.control-group.label>
+                                <v-lookup-component
+                                    :attribute="{{ json_encode(['code' => 'organization_id', 'name' => 'Empresa', 'lookup_type' => 'organizations']) }}"
+                                    :value="null"
+                                    validations=""
+                                ></v-lookup-component>
+                                <x-admin::form.control-group.error control-name="organization_id" />
+                            </x-admin::form.control-group>
+
+                        </div>
+
+                        {{-- Status e Responsável --}}
+                        <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                            {{-- Status --}}
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('lawfirm::app.processos.form.status')
+                                </x-admin::form.control-group.label>
+                                <x-admin::form.control-group.control type="select" name="status" rules="required"
+                                    :label="trans('lawfirm::app.processos.form.status')">
+                                    @foreach(\SuiteZap\LawFirm\Legal\Services\LegalOrchestrator::VALID_STATUSES as $s)
+                                        <option value="{{ $s }}" {{ old('status', 'Novo Caso') == $s ? 'selected' : '' }}>
+                                            {{ $s }}
+                                        </option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.error control-name="status" />
+                            </x-admin::form.control-group>
+
+
+                            {{-- Responsável Interno --}}
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Responsável Interno
+                                </x-admin::form.control-group.label>
+                                <x-admin::form.control-group.control type="select" name="user_id"
+                                    label="Responsável Interno"
+                                    :value="old('user_id', auth()->id())">
+                                    <option value="">@lang('lawfirm::app.processos.form.select-choose')</option>
+                                    @foreach($userRepository->all() as $user)
+                                        <option value="{{ $user->id }}" {{ (int)old('user_id', auth()->id()) === (int)$user->id ? 'selected' : '' }}>
+                                            {{ $user->name }}
+                                        </option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.error control-name="user_id" />
+                            </x-admin::form.control-group>
+                        </div>
+
+                        {{-- Caso Vinculado (Select AJAX) --}}
+                        <div class="mt-2" id="lf-caso-selector-wrapper">
+                            <label class="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                📂 Caso Vinculado (Opcional)
+                            </label>
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    id="lf-caso-search"
+                                    placeholder="Digite para buscar um caso..."
+                                    autocomplete="off"
+                                    class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                />
+                                <input type="hidden" name="caso_id" id="lf-caso-id" value="{{ old('caso_id', request('caso_id')) }}" />
+                                <div id="lf-caso-results" class="absolute z-50 mt-1 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 max-h-48 overflow-y-auto"></div>
+                            </div>
+                            <div id="lf-caso-selected" class="mt-1 hidden">
+                                <span class="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                    📂 <span id="lf-caso-selected-label"></span>
+                                    <button type="button" onclick="lfClearCaso()" class="ml-1 text-blue-400 hover:text-red-500">&times;</button>
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
                     {{-- Card: Datas e Observações --}}
@@ -192,7 +222,7 @@
                                 id="field_area_direito"
                                 :value="old('area_direito')"
                                 :label="trans('lawfirm::app.processos.form.area')"
-                                placeholder="Ex: Civil, Trabalhista, Indenização por Dano Moral..." />
+                                placeholder="Ex: Cível, Trabalhista, Consumidor, Familiar..." />
                             <x-admin::form.control-group.error control-name="area_direito" />
                         </x-admin::form.control-group>
 
@@ -379,6 +409,93 @@
                     input.maxLength = type === 'PF' ? 14 : 18;
                 }
                 function toggleMask() { document.getElementById('opposing_party_document').value = ''; }
+            </script>
+
+            {{-- ── Caso AJAX Selector Logic ────────────────────────── --}}
+            <script>
+                (function() {
+                    const searchInput = document.getElementById('lf-caso-search');
+                    const hiddenInput = document.getElementById('lf-caso-id');
+                    const resultsBox = document.getElementById('lf-caso-results');
+                    const selectedBox = document.getElementById('lf-caso-selected');
+                    const selectedLabel = document.getElementById('lf-caso-selected-label');
+                    const searchUrl = "{{ route('admin.processos.search_caso') }}";
+                    let debounceTimer = null;
+
+                    // Debounced search on keyup
+                    searchInput.addEventListener('input', function() {
+                        clearTimeout(debounceTimer);
+                        const query = this.value.trim();
+                        if (query.length < 2) { resultsBox.classList.add('hidden'); return; }
+
+                        debounceTimer = setTimeout(function() {
+                            fetch(searchUrl + '?query=' + encodeURIComponent(query))
+                                .then(r => r.json())
+                                .then(data => {
+                                    const items = data.data || data;
+                                    if (!items.length) {
+                                        resultsBox.innerHTML = '<div class="px-3 py-2 text-xs text-gray-400 italic">Nenhum caso encontrado</div>';
+                                    } else {
+                                        resultsBox.innerHTML = items.map(c =>
+                                            `<div class="lf-caso-item px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                                  data-id="${c.id}" data-titulo="${c.titulo}">
+                                                <span class="font-medium">#${c.id}</span> — ${c.titulo}
+                                                ${c.area ? '<span class="text-xs text-gray-400 ml-1">(' + c.area + ')</span>' : ''}
+                                            </div>`
+                                        ).join('');
+                                    }
+                                    resultsBox.classList.remove('hidden');
+
+                                    // Bind click events
+                                    resultsBox.querySelectorAll('.lf-caso-item').forEach(el => {
+                                        el.addEventListener('click', function() {
+                                            lfSelectCaso(this.dataset.id, this.dataset.titulo);
+                                        });
+                                    });
+                                })
+                                .catch(() => { resultsBox.classList.add('hidden'); });
+                        }, 300);
+                    });
+
+                    // Close dropdown on outside click
+                    document.addEventListener('click', function(e) {
+                        if (!e.target.closest('#lf-caso-selector-wrapper')) {
+                            resultsBox.classList.add('hidden');
+                        }
+                    });
+
+                    // Select a caso
+                    window.lfSelectCaso = function(id, titulo) {
+                        hiddenInput.value = id;
+                        selectedLabel.textContent = '#' + id + ' — ' + titulo;
+                        selectedBox.classList.remove('hidden');
+                        searchInput.value = '';
+                        searchInput.classList.add('hidden');
+                        resultsBox.classList.add('hidden');
+                    };
+
+                    // Clear selection
+                    window.lfClearCaso = function() {
+                        hiddenInput.value = '';
+                        selectedBox.classList.add('hidden');
+                        searchInput.classList.remove('hidden');
+                        searchInput.value = '';
+                        searchInput.focus();
+                    };
+
+                    // Pre-load if caso_id is set (from query param or old input)
+                    const presetId = hiddenInput.value;
+                    if (presetId) {
+                        fetch(searchUrl + '?query=')
+                            .then(r => r.json())
+                            .then(data => {
+                                const items = data.data || data;
+                                const match = items.find(c => String(c.id) === String(presetId));
+                                if (match) lfSelectCaso(match.id, match.titulo);
+                            })
+                            .catch(() => {});
+                    }
+                })();
             </script>
         @endpush
 

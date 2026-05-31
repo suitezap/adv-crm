@@ -112,6 +112,9 @@
                             <!-- Users Email -->
                             <p class="truncate">@{{ record.email }}</p>
 
+                            <!-- Users WhatsApp -->
+                            <p class="truncate">@{{ record.whatsapp }}</p>
+
                             <!-- Users Status -->
                             <span
                                 :class="record.status == 1 ? 'label-active' : 'label-inactive'"
@@ -286,6 +289,24 @@
                             </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.users.index.form.email.after') !!}
+
+                            <!-- WhatsApp -->
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    WhatsApp
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="text"
+                                    id="whatsapp"
+                                    name="whatsapp"
+                                    v-model="user.whatsapp"
+                                    label="WhatsApp"
+                                    placeholder="(11) 99999-9999"
+                                />
+
+                                <x-admin::form.control-group.error control-name="whatsapp" />
+                            </x-admin::form.control-group>
 
                             {!! view_render_event('admin.settings.users.index.form.password.before') !!}
 
@@ -522,6 +543,25 @@
                     @endif
                 },
 
+                watch: {
+                    'user.whatsapp'(newVal) {
+                        if (newVal) {
+                            let v = newVal.replace(/\D/g, "");
+                            if (v.length <= 10) {
+                                v = v.replace(/(\d{2})(\d)/, "($1) $2");
+                                v = v.replace(/(\d{4})(\d)/, "$1-$2");
+                            } else {
+                                v = v.replace(/(\d{2})(\d)/, "($1) $2");
+                                v = v.replace(/(\d{5})(\d)/, "$1-$2");
+                            }
+                            let formatted = v.substring(0, 15);
+                            if (this.user.whatsapp !== formatted) {
+                                this.user.whatsapp = formatted;
+                            }
+                        }
+                    }
+                },
+
                 methods: {
                     handleToggle(state) {
                         if (state.isActive) {
@@ -578,6 +618,10 @@
                         this.$axios.get(url)
                             .then(response => {
                                 this.user = response.data.data;
+
+                                if (this.user.whatsapp && this.user.whatsapp.startsWith('55')) {
+                                    this.user.whatsapp = this.user.whatsapp.substring(2);
+                                }
 
                                 this.user.groups = this.user.groups.map(group => group.id);
 

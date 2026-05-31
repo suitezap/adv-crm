@@ -292,9 +292,13 @@ class EscavadorController extends Controller
         $subscription = Subscription::where('tenant_id', $tenantId)->first();
 
         return response()->json([
-            'success' => (bool) $subscription,
-            'ai_tokens_balance' => $subscription ? (float) $subscription->ai_tokens_balance : 0.0,
-            'tenant_id' => $tenantId,
+            'success'           => (bool) $subscription,
+            'suitecoin_balance' => $subscription ? (float) $subscription->suitecoin_balance : 0.0,
+            // legacy key — mantido para compatibilidade (remover em v4.x)
+            'ai_tokens_balance' => $subscription ? (float) $subscription->suitecoin_balance : 0.0,
+            // taxa de conversão BRL→Ƶ para cálculo no front-end
+            'suitecoin_rate'    => \SuiteZap\LawFirm\SaaS\Services\SuiteCoinService::getRate(),
+            'tenant_id'         => $tenantId,
         ]);
     }
 

@@ -51,11 +51,6 @@ class FinancialController extends Controller
      */
     public function index(Request $request)
     {
-        // Handle AJAX request for DataGrid
-        if ($request->ajax()) {
-            return app(FinancialDataGrid::class)->process();
-        }
-
         // Filtros (Datas e Responsável)
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
@@ -66,7 +61,11 @@ class FinancialController extends Controller
         // Obtém todas as métricas do Service
         $metrics = $this->dashboardService->getAllMetrics($startDate, $endDate);
 
-        return view('lawfirm::Financial.index', [
+        // ── Chart Data delegada ao Service (Sincronizada com ACL) ──
+        $monthlyData = $this->dashboardService->getMonthlyTrend();
+        $paymentDistribution = $this->dashboardService->getPaymentDistribution();
+
+        return view('lawfirm::financial.index', [
             'totalReceitas' => $metrics['totalReceitas'],
             'totalDespesas' => $metrics['totalDespesas'],
             'saldoLiquido' => $metrics['saldoLiquido'],
@@ -78,6 +77,8 @@ class FinancialController extends Controller
             'startDate' => $startDate,
             'endDate' => $endDate,
             'users' => $users,
+            'monthlyData' => $monthlyData,
+            'paymentDistribution' => $paymentDistribution,
         ]);
     }
 
@@ -90,6 +91,8 @@ class FinancialController extends Controller
      */
     public function quickPay(Request $request, $id)
     {
+        abort_if(!bouncer()->hasPermission('lawfirm.financeiro.edit'), 401, 'This action is unauthorized');
+
         $validated = $request->validate([
             'payment_date' => 'required|date',
             'payment_method' => 'required|string',
@@ -116,6 +119,8 @@ class FinancialController extends Controller
      */
     public function downloadReceipt($id)
     {
+        abort_if(!bouncer()->hasPermission('lawfirm.financeiro.view'), 401, 'This action is unauthorized');
+
         $transaction = \SuiteZap\LawFirm\Financial\Models\Financial::with('processo.person')->findOrFail($id);
 
         // 1. Busca as Configurações Globais do Escritório
@@ -159,6 +164,8 @@ class FinancialController extends Controller
      */
     public function storeProcessFinancials(Request $request, $processId)
     {
+        abort_if(!bouncer()->hasPermission('lawfirm.financeiro.create'), 401, 'This action is unauthorized');
+
         $validated = $request->validate([
             'financeiros' => 'nullable|array',
             'financeiros.*.id' => 'nullable|integer',
@@ -174,11 +181,87 @@ class FinancialController extends Controller
             'financeiros.*.parcelar' => 'nullable|boolean',
             'financeiros.*.parcelas_qtd' => 'nullable|integer|min:2|max:60',
             'financeiros.*.parcelas_frequencia' => 'nullable|integer',
+            'financeiros.*.emit_asaas' => 'nullable|boolean',
         ]);
 
-        $processo = \SuiteZap\LawFirm\Legal\Models\Processo::findOrFail($processId);
+        $processo = \SuiteZap\LawFirm\Legal\Models\Processo::with('person')->findOrFail($processId);
 
         $this->financialService->syncFinancials($processo, $request->input('financeiros', []));
+
+        // ── Asaas Integration: emit invoices for items marked with emit_asaas ──
+        $asaasService = app(\SuiteZap\LawFirm\TenantFinance\Services\TenantAsaasService::class);
+
+        if ($asaasService->isConfigured()) {
+            $financeiros = $request->input('financeiros', []);
+
+            foreach ($financeiros as $item) {
+                if (empty($item['emit_asaas'])) continue;
+                if ($item['tipo'] !== 'receita') continue;
+                if (empty($item['payment_method'])) continue;
+
+                // Map payment_method to Asaas billing_type
+                $billingTypeMap = [
+                    'pix' => 'PIX',
+                    'boleto' => 'BOLETO',
+                    'cartao' => 'CREDIT_CARD',
+                ];
+                $billingType = $billingTypeMap[$item['payment_method']] ?? null;
+                if (!$billingType) continue;
+
+                // Resolve person data for customer creation
+                $person = $processo->person;
+                if (!$person) {
+                    Log::warning('[FinancialAsaas] Processo sem contato vinculado, pulando Asaas.', ['processo_id' => $processId]);
+                    continue;
+                }
+
+                // Fetch CPF/CNPJ from person_details or organization_details
+                $cpfCnpj = '';
+                $personDetail = \Illuminate\Support\Facades\DB::table('law_person_details')
+                    ->where('person_id', $person->id)
+                    ->first();
+                if ($personDetail && !empty($personDetail->cpf)) {
+                    $cpfCnpj = preg_replace('/\D/', '', $personDetail->cpf);
+                } else {
+                    $orgDetail = \Illuminate\Support\Facades\DB::table('law_organization_details')
+                        ->where('organization_id', $person->organization_id ?? 0)
+                        ->first();
+                    if ($orgDetail && !empty($orgDetail->cnpj)) {
+                        $cpfCnpj = preg_replace('/\D/', '', $orgDetail->cnpj);
+                    }
+                }
+
+                try {
+                    $invoice = $asaasService->createInvoice([
+                        'person_id' => $person->id,
+                        'person_data' => [
+                            'name' => $person->name,
+                            'cpfCnpj' => $cpfCnpj,
+                            'email' => collect($person->emails ?? [])->pluck('value')->first(),
+                            'phone' => collect($person->contact_numbers ?? [])->pluck('value')->first(),
+                        ],
+                        'processo_id' => $processId,
+                        'type' => 'single',
+                        'value' => (float) $item['valor'],
+                        'due_date' => $item['data_vencimento'],
+                        'billing_type' => $billingType,
+                        'description' => $item['nome'] ?? 'Cobrança do Processo #' . $processId,
+                    ]);
+
+                    if ($invoice) {
+                        Log::info('[FinancialAsaas] Cobrança criada com sucesso.', [
+                            'invoice_id' => $invoice->id,
+                            'asaas_payment_id' => $invoice->asaas_payment_id,
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('[FinancialAsaas] Erro ao criar cobrança Asaas: ' . $e->getMessage(), [
+                        'processo_id' => $processId,
+                        'item' => $item['nome'] ?? 'N/A',
+                    ]);
+                }
+            }
+        }
 
         session()->flash('success', 'Financeiro atualizado com sucesso!');
 
@@ -205,6 +288,8 @@ class FinancialController extends Controller
      */
     public function sendWhatsappBilling($id, EvolutionService $evolutionService)
     {
+        abort_if(!bouncer()->hasPermission('lawfirm.financeiro.edit'), 401, 'This action is unauthorized');
+
         try {
             $financial = Financial::with(['processo.person'])->findOrFail($id);
 

@@ -9,6 +9,7 @@ use SuiteZap\LawFirm\SaaS\Models\SaasTransaction;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use SuiteZap\LawFirm\SaaS\Services\AsaasService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 
@@ -188,8 +189,9 @@ class AsaasWebhookController extends Controller
 
         try {
             if ($type === 'credit') {
-                $creditsToAdd = (float) $valueStr;
-                $subscription->ai_tokens_balance += $creditsToAdd;
+                $brlAmount = (float) $valueStr;
+                $suitecoinsVisual = SuiteCoinService::toVirtual($brlAmount);
+                $subscription->suitecoin_balance += $brlAmount;
                 $subscription->save();
 
                 $invoiceInfo = '';
@@ -200,15 +202,16 @@ class AsaasWebhookController extends Controller
                 SaasTransaction::create([
                     'tenant_id' => $tenantId,
                     'type' => 'credit',
-                    'amount' => $payment['value'] ?? $creditsToAdd,
-                    'balance_after' => $subscription->ai_tokens_balance,
+                    'amount' => $brlAmount,
+                    'balance_after' => $subscription->suitecoin_balance,
+                    'currency' => SuiteCoinService::CURRENCY_CODE,
                     'service_type' => 'asaas_webhook',
-                    'description' => "Recarga de {$creditsToAdd} Créditos de IA via Asaas ({$payment['id']}){$invoiceInfo} - Legado",
+                    'description' => "Recarga de " . SuiteCoinService::format($suitecoinsVisual) . " via Asaas ({$payment['id']}){$invoiceInfo} - Legado",
                     'reference_id' => $payment['id'],
                     'reference_type' => 'asaas_payment',
                 ]);
 
-                Log::info("AsaasWebhook (legado): +{$creditsToAdd} créditos → tenant {$tenantId}. Saldo: {$subscription->ai_tokens_balance}");
+                Log::info("AsaasWebhook (legado): +" . SuiteCoinService::format($suitecoinsVisual) . " (R$ {$brlAmount}) → tenant {$tenantId}. Saldo DB(BRL): {$subscription->suitecoin_balance}");
 
             } elseif ($type === 'subscription') {
                 $subscription->status = 'active';

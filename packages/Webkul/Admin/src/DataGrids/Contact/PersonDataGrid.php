@@ -83,7 +83,19 @@ class PersonDataGrid extends DataGrid
             'sortable'   => true,
             'filterable' => true,
             'searchable' => true,
-            'closure'    => fn ($row) => collect(json_decode($row->contact_numbers, true) ?? [])->pluck('value')->join(', '),
+            'closure'    => function ($row) {
+                return collect(json_decode($row->contact_numbers, true) ?? [])->pluck('value')->map(function ($val) {
+                    if (str_starts_with($val, '55')) {
+                        $val = substr($val, 2);
+                    }
+                    if (strlen($val) === 11) {
+                        return preg_replace('/(\d{2})(\d{5})(\d{4})/', '($1) $2-$3', $val);
+                    } elseif (strlen($val) === 10) {
+                        return preg_replace('/(\d{2})(\d{4})(\d{4})/', '($1) $2-$3', $val);
+                    }
+                    return $val;
+                })->join(', ');
+            },
         ]);
 
         $this->addColumn([

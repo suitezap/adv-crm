@@ -226,45 +226,45 @@
                     display: inline-flex;
                     align-items: center;
                     gap: 0.3rem;
-                    padding: 0.3rem 0.85rem;
+                    padding: 0.35rem 0.85rem;
                     font-size: 0.8rem;
-                    font-weight: 600;
-                    border-radius: 9999px;
-                    border: 1.5px solid #e5e7eb;
-                    background: #fff;
+                    font-weight: 500;
+                    border-radius: 0.5rem;
+                    border: 1px solid transparent;
+                    background: transparent;
                     color: #6b7280;
                     cursor: pointer;
-                    transition: all 0.15s;
+                    transition: all 150ms;
                     white-space: nowrap;
                 }
 
                 .lf-area-btn:hover {
-                    border-color: #3b82f6;
-                    color: #3b82f6;
-                    background: #eff6ff;
+                    background: #f3f4f6;
+                    color: #111827;
                 }
 
                 .lf-area-btn.active {
-                    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+                    font-weight: 600;
+                    background: linear-gradient(135deg, #0d9488, #0284c7);
                     border-color: transparent;
                     color: #fff;
-                    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+                    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25);
                 }
 
                 .dark .lf-area-btn {
-                    background: #1f2937;
-                    border-color: #374151;
+                    background: transparent;
+                    border-color: transparent;
                     color: #9ca3af;
                 }
 
                 .dark .lf-area-btn:hover {
-                    border-color: #3b82f6;
-                    color: #93c5fd;
-                    background: rgba(59, 130, 246, 0.12);
+                    background: #1f2937;
+                    color: #f9fafb;
+                    border-color: transparent;
                 }
 
                 .dark .lf-area-btn.active {
-                    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+                    background: linear-gradient(135deg, #0d9488, #0284c7);
                     color: #fff;
                     border-color: transparent;
                 }
@@ -772,30 +772,34 @@
             </div>
 
             {{-- ── AREA FILTER BAR ── --}}
-            <div class="rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-                <div class="flex items-center gap-3 flex-wrap">
-                    <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">⚖️ Filtrar
-                        por Categoria:</span>
+                <div class="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900 overflow-x-auto">
+                    <button type="button" class="lf-area-btn active"
+                        onclick="window.lfFilterByArea('todas', this)">Todas</button>
+                    <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
 
-                    <div class="lf-area-filter-bar flex gap-2 w-full mt-2 lg:mt-0 flex-wrap">
-                        <button type="button" class="lf-area-btn active"
-                            onclick="window.lfFilterByArea('todas', this)">Todas</button>
+                    <button type="button" class="lf-area-btn" data-module="processo"
+                        onclick="window.lfFilterByArea('processo', this)">Processo</button>
+                    <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
 
-                        <div class="border-l border-gray-300 dark:border-gray-700 mx-1 h-6 self-center"></div>
-                        <button type="button" class="lf-area-btn" data-module="processo"
-                            onclick="window.lfFilterByArea('processo', this)">Processo</button>
+                    <button type="button" class="lf-area-btn" data-module="advogado"
+                        onclick="window.lfFilterByArea('advogado', this)">Advogado(a)</button>
+                    <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
+                    
+                    <button type="button" class="lf-area-btn" data-module="jurisprudencia"
+                        onclick="window.lfFilterByArea('jurisprudencia', this)">Jurisprudência</button>
+                    <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
+                    
+                    <button type="button" class="lf-area-btn" data-module="legislacao"
+                        onclick="window.lfFilterByArea('legislacao', this)">Legislações</button>
+                    <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
 
-                        <button type="button" class="lf-area-btn" data-module="advogado"
-                            onclick="window.lfFilterByArea('advogado', this)">Advogado(a)</button>
-                        <button type="button" class="lf-area-btn" data-module="jurisprudencia"
-                            onclick="window.lfFilterByArea('jurisprudencia', this)">Jurisprudência</button>
-                        <button type="button" class="lf-area-btn" data-module="legislacao"
-                            onclick="window.lfFilterByArea('legislacao', this)">Legislações</button>
-                        <button type="button" class="lf-area-btn" data-module="pessoa_empresa"
-                            onclick="window.lfFilterByArea('pessoa_empresa', this)">Pessoa / Empresa</button>
-                    </div>
+                    <button type="button" class="lf-area-btn" data-module="pessoa_empresa"
+                        onclick="window.lfFilterByArea('pessoa_empresa', this)">Pessoa / Empresa</button>
+                    <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
+
+                    <button type="button" class="lf-area-btn" data-module="diario"
+                        onclick="window.lfFilterByArea('diario', this)">Diários Oficiais</button>
                 </div>
-            </div>
 
             {{-- ── 36 UNIFIED CARDS GRID ─────────────────────────────────────── --}}
             <div v-pre style="margin-top: 24px;">
@@ -882,11 +886,15 @@
                                             Grátis
                                         </span>
                                     @else
+                                        @php
+                                            $rawBrl   = (float) ($prices[$card[0]] ?? 0.00);
+                                            // Ƶ = BRL × suitecoin_rate (10) × markup (1.25) — arredondado 2 casas
+                                            $dispZ = round($rawBrl * 10 * 1.25, 2);
+                                        @endphp
                                         <span
-                                            class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                                            💰
+                                            class="bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-300 px-2.5 py-0.5 rounded-full text-xs font-semibold">
                                             {{ $card[2] == 'v2' && strpos($card[0], 'ATUALIZACAO') !== false && $card[0] !== 'ATUALIZAR_PROCESSO' ? 'Min ' : ($card[0] === 'ATUALIZAR_PROCESSO' ? 'Min ' : '') }}
-                                            R$ {{ number_format($prices[$card[0]] ?? 0.00, 2, ',', '.') }}{{ $card[7] ?? '' }}
+                                            Ƶ {{ number_format($dispZ, 2, ',', '.') }}{{ $card[7] ?? '' }}
                                         </span>
                                     @endif
                                 </div>
@@ -990,13 +998,13 @@
                         },
                         // === V1 ===
                         'API_V1_DOWNLOADDOPDFDAPGINADODIRIOOFICIAL': {
-                            label: '📄 Download do PDF da página do Diário Oficial', price: 'R$ 3,00', fields: [
+                            label: '📄 Download do PDF da página do Diário Oficial', price: 'Ƶ 37,50', fields: [
                                 { name: 'id', label: 'ID da Publicação', type: 'number', min: 1, required: true },
                                 { name: 'pagina', label: 'Número da Página', type: 'number', min: 1, required: true }
                             ]
                         },
                         'API_V1_PAGINA_DIARIO': {
-                            label: '📄 Página do Diário Oficial', price: 'R$ 3,00', fields: [
+                            label: '📄 Página do Diário Oficial', price: 'Ƶ 37,50', fields: [
                                 { name: 'id', label: 'ID do Diário Oficial', type: 'number', min: 1, required: true },
                                 { name: 'page', label: 'Página', type: 'number', min: 1, required: false }
                             ]
@@ -1004,7 +1012,7 @@
 
 
                         'BUSCA_PROC_DIARIO_NUM': {
-                            label: '📋 Buscar processos dos Diários Oficiais por número', price: 'R$ 3,00', fields: [
+                            label: '📋 Buscar processos dos Diários Oficiais por número', price: 'Ƶ 37,50', fields: [
                                 { name: 'numero', label: 'Número do Processo', placeholder: '0000000-00.0000.0.00.0000', required: false },
                                 { name: 'match_exato', label: 'Busca Exata?', type: 'select', options: ['0|Não', '1|Sim'], required: false }
                             ]
@@ -1013,37 +1021,37 @@
 
                         // === JURISPRUDÊNCIA E LEGISLAÇÃO ===
                         'BUSCA_JURIS': {
-                            label: '⚖️ Busca por Jurisprudências', price: 'R$ 0,02', fields: [
+                            label: '⚖️ Busca por Jurisprudências', price: 'Ƶ 0,25', fields: [
                                 { name: 'q', label: 'Termo de Busca', required: true, placeholder: 'Ex: "danos morais"' },
                                 { name: 'page', label: 'Página', type: 'number', min: 1, required: false }
                             ]
                         },
                         'DOC_JURIS': {
-                            label: '📄 Documento de Jurisprudência', price: 'R$ 0,04', fields: [
+                            label: '📄 Documento de Jurisprudência', price: 'Ƶ 0,50', fields: [
                                 { name: 'tipo_documento', label: 'Tipo de Documento', type: 'select', options: ['acordao|Acórdão', 'sumula|Súmula', 'decisao-monocratica|Decisão Monocrática', 'sentenca|Sentença', 'voto|Voto'], required: true },
                                 { name: 'id_documento', label: 'ID do Documento', type: 'number', min: 1, required: true }
                             ]
                         },
                         'PDF_JURIS': {
-                            label: '🖨️ PDF de uma Jurisprudência', price: 'R$ 0,07', fields: [
+                            label: '🖨️ PDF de uma Jurisprudência', price: 'Ƶ 0,88', fields: [
                                 { name: 'tipo_documento', label: 'Tipo de Documento', type: 'select', options: ['acordao|Acórdão', 'sumula|Súmula', 'decisao-monocratica|Decisão Monocrática', 'sentenca|Sentença', 'voto|Voto'], required: true },
                                 { name: 'id_documento', label: 'ID do Documento', type: 'number', min: 1, required: true }
                             ]
                         },
                         'BUSCA_LEGIS': {
-                            label: '📜 Busca por Legislação', price: 'R$ 0,03', fields: [
+                            label: '📜 Busca por Legislação', price: 'Ƶ 0,38', fields: [
                                 { name: 'q', label: 'Termo de Busca', required: true, placeholder: 'Ex: "código penal"' },
                                 { name: 'page', label: 'Página', type: 'number', min: 1, required: false }
                             ]
                         },
                         'DOC_LEGIS': {
-                            label: '📄 Documento de Legislação', price: 'R$ 0,03', fields: [
+                            label: '📄 Documento de Legislação', price: 'Ƶ 0,38', fields: [
                                 { name: 'tipo_documento', label: 'Tipo de Documento', type: 'select', options: ['lei|Lei', 'decreto|Decreto', 'portaria|Portaria', 'resolucao|Resolução', 'instrucao-normativa|Instrução Normativa'], required: true },
                                 { name: 'id_documento', label: 'ID do Documento', type: 'number', min: 1, required: true }
                             ]
                         },
                         'FRAG_LEGIS': {
-                            label: '📑 Fragmentos da Legislação', price: 'R$ 0,03', fields: [
+                            label: '📑 Fragmentos da Legislação', price: 'Ƶ 0,38', fields: [
                                 { name: 'tipo_documento', label: 'Tipo de Documento', type: 'select', options: ['lei|Lei', 'decreto|Decreto', 'portaria|Portaria', 'resolucao|Resolução', 'instrucao-normativa|Instrução Normativa'], required: true },
                                 { name: 'id_documento', label: 'ID do Documento', type: 'number', min: 1, required: true },
                                 { name: 'page', label: 'Página', type: 'number', min: 1, required: false }
@@ -1058,7 +1066,7 @@
                             ]
                         },
                         'API_V2_RESUMO_ENVOLVIDO': {
-                            label: '👥 Resumo de Processos do envolvido por Nome ou CPF/CNPJ', price: 'R$ 3,00', fields: [
+                            label: '👥 Resumo de Processos do envolvido por Nome ou CPF/CNPJ', price: 'Ƶ 37,50', fields: [
                                 { name: 'cpf_cnpj', label: 'CPF, CNPJ ou Nome Completo', required: true, placeholder: 'Ex: João da Silva ou 000.000.000-00' }
                             ]
                         },
@@ -1070,39 +1078,39 @@
                             ]
                         },
                         'API_V2_RESUMO_OAB': {
-                            label: '💼 Resumo de processos do advogado por OAB', price: 'R$ 3,00', fields: [
+                            label: '💼 Resumo de processos do advogado por OAB', price: 'Ƶ 37,50', fields: [
                                 { name: 'estado', label: 'UF', type: 'select', options: UF_OPTIONS, required: true },
                                 { name: 'numero_oab', label: 'Número OAB', required: true, placeholder: 'Ex: 123456' }
                             ]
                         },
                         'API_V2_PROCESSOPORNUMERAOCNJCAPA': {
-                            label: '📋 Processo por numeração CNJ', price: 'R$ 3,00', fields: [
+                            label: '📋 Processo por numeração CNJ', price: 'Ƶ 37,50', fields: [
                                 { name: 'numero', label: 'Número CNJ do Processo', required: true, placeholder: '0000000-00.0000.0.00.0000' }
                             ]
                         },
                         'API_V2_MOVIMENTAESDEUMPROCESSO': {
-                            label: '📋 Movimentações de um processo', price: 'R$ 3,00', fields: [
+                            label: '📋 Movimentações de um processo', price: 'Ƶ 37,50', fields: [
                                 { name: 'numero', label: 'Número CNJ do Processo', required: true, placeholder: '0000000-00.0000.0.00.0000' },
                                 { name: 'limit', label: 'Limite de Movimentações', type: 'select', options: ['50|50 (padrão)', '100|100', '500|500'], required: false }
                             ]
                         },
                         'API_V2_ENVOLVIDOS_PROCESSO': {
-                            label: '📋 Envolvidos de um processo', price: 'R$ 0,05', fields: [
+                            label: '📋 Envolvidos de um processo', price: 'Ƶ 0,63', fields: [
                                 { name: 'numero', label: 'Número CNJ do Processo', required: true, placeholder: '0000000-00.0000.0.00.0000' }
                             ]
                         },
                         'API_V2_DOCS_PUBLICOS': {
-                            label: '📄 Documentos públicos de um processo', price: 'R$ 0,06', fields: [
+                            label: '📄 Documentos públicos de um processo', price: 'Ƶ 0,75', fields: [
                                 { name: 'numero', label: 'Número CNJ do Processo', required: true, placeholder: '0000000-00.0000.0.00.0000' }
                             ]
                         },
                         'API_V2_AUTOS_PROCESSO': {
-                            label: '📄 Autos do processo (públicos e restritos)', price: 'R$ 0,18', fields: [
+                            label: '📄 Autos do processo (públicos e restritos)', price: 'Ƶ 2,25', fields: [
                                 { name: 'numero', label: 'Número CNJ do Processo', required: true, placeholder: '0000000-00.0000.0.00.0000' }
                             ]
                         },
                         'API_V2_RESUMO_IA_PROCESSO': {
-                            label: '🤖 Solicita a geração/atualização do resumo inteligente', price: 'R$ 0,08', fields: [
+                            label: '🤖 Solicita a geração/atualização do resumo inteligente', price: 'Ƶ 1,00', fields: [
                                 { name: 'numero', label: 'Número CNJ do Processo', required: true, placeholder: '0000000-00.0000.0.00.0000' }
                             ]
                         },
@@ -1797,7 +1805,7 @@
                                         escCard('Valor da Causa', valorCausa || '-') +
                                     '</div>' +
                                     escSection('📌 Assunto', '<div style="font-size:0.82rem;color:#1f2937;font-weight:500;padding:8px 12px;background:#f9fafb;border-radius:6px;" class="dark:bg-gray-900/40 dark:text-gray-200">' + assunto + '</div>') +
-                                    (audHtml ? escSection('📅 Audiências', '<div style="display:flex;flex-wrap:wrap;gap:4px;">' + audHtml + '</div>') : '') +
+                                    (audHtml ? escSection('🏛️ Audiências', '<div style="display:flex;flex-wrap:wrap;gap:4px;">' + audHtml + '</div>') : '') +
                                     (envolvidosHtml ? escSection('👥 Envolvidos (' + envolvidos.length + ')', envolvidosHtml) : '') +
                                 '</div>' +
                             '</div>';
@@ -2124,11 +2132,14 @@
                         fetch(ROUTE_SALDO, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                             .then(function (r) { return r.json(); })
                             .then(function (d) {
-                                currentBalance = d.ai_tokens_balance || 0;
-                                document.getElementById('lf-svc-saldo-display').textContent = '💰 Saldo: R$ ' + currentBalance.toFixed(2).replace('.', ',');
+                                // suitecoin_balance está em BRL — converter para Ƶ (× suitecoin_rate = 10)
+                                var balanceBrl = parseFloat(d.suitecoin_balance || d.ai_tokens_balance || 0);
+                                var suitecoinsRate = parseFloat(d.suitecoin_rate || 10);
+                                currentBalance = balanceBrl * suitecoinsRate;
+                                document.getElementById('lf-svc-saldo-display').textContent = 'Ƶ ' + currentBalance.toFixed(2).replace('.', ',');
                             })
                             .catch(function () {
-                                document.getElementById('lf-svc-saldo-display').textContent = '💰 Saldo: indisponível';
+                                document.getElementById('lf-svc-saldo-display').textContent = 'Ƶ indisponível';
                             });
                     }
 
@@ -2146,7 +2157,9 @@
                         // Dynamically set price from backend (fixes hardcoded 3,00 issue)
                         if (PRICES_DB[type] !== undefined) {
                             var p = parseFloat(PRICES_DB[type]);
-                            info.price = (p <= 0) ? 'Grátis' : 'R$ ' + p.toFixed(2).replace('.', ',');
+                            // Converter BRL → Ƶ para exibição (× 10, com markup 1.25 já incluso no valor BRL)
+                            var pZ = p * 10 * 1.25;
+                            info.price = (p <= 0) ? 'Grátis' : 'Ƶ ' + pZ.toFixed(2).replace('.', ',');
                         }
 
                         // DataJud must always be free
@@ -2156,7 +2169,7 @@
 
                         document.getElementById('lf-svc-modal-title').textContent = info.label;
                         document.getElementById('lf-svc-price-badge').textContent = '💰 ' + info.price;
-                        document.getElementById('lf-svc-balance').textContent = 'Seu saldo: R$ ' + currentBalance.toFixed(2).replace('.', ',');
+                        document.getElementById('lf-svc-balance').textContent = 'Saldo: Ƶ ' + currentBalance.toFixed(2).replace('.', ',');
 
                         document.getElementById('lf-svc-error').style.display = 'none';
                         document.getElementById('lf-svc-success').style.display = 'none';
@@ -2331,8 +2344,8 @@
                             return;
                         }
 
-                        if (info.price !== 'Grátis' && info.price !== 'R$ 0,00') {
-                            if (!confirm("Esta operação consumirá " + info.price + " do seu saldo. Saldo atual: R$ " + currentBalance.toFixed(2).replace('.', ',') + ".\n\nDeseja continuar?")) {
+                        if (info.price !== 'Grátis' && info.price !== 'Ƶ 0,00') {
+                            if (!confirm("Esta operação consumirá " + info.price + " do seu saldo SuiteCoins.\nSaldo atual: Ƶ " + currentBalance.toFixed(2).replace('.', ',') + ".\n\nDeseja continuar?")) {
                                 return;
                             }
                         }
@@ -2501,7 +2514,7 @@
                             <div
                                 style="font-size:.72rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;">
                                 Custo do Serviço</div>
-                            <div id="lf-svc-price-badge" style="font-size:1.3rem;font-weight:800;color:#0d9488;">R$ 0,00
+                            <div id="lf-svc-price-badge" style="font-size:1.3rem;font-weight:800;color:#0d9488;">Ƶ 0,00
                             </div>
                         </div>
                         <div style="text-align:right;">
@@ -2509,7 +2522,7 @@
                                 style="font-size:.72rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;">
                                 Saldo Disponível</div>
                             <div id="lf-svc-balance" style="font-size:.95rem;font-weight:700;color:#374151;"
-                                class="dark:text-gray-200">R$ 0,00</div>
+                                class="dark:text-gray-200">Ƶ 0,00</div>
                         </div>
                     </div>
 

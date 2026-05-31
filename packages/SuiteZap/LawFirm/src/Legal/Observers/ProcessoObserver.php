@@ -106,7 +106,8 @@ class ProcessoObserver
      */
     private function ensureCalendarEvent(Processo $processo)
     {
-        $userId = auth()->guard('user')->id() ?? $processo->user_id;
+        // Check for process owner, then admin guard, then user guard, then fallback to 1
+        $userId = $processo->user_id ?? auth()->guard('admin')->id() ?? auth()->guard('user')->id() ?? 1;
 
         if (!$userId) {
             return;
@@ -116,7 +117,6 @@ class ProcessoObserver
 
         $activities = $this->activityRepository->findWhere([
             'type' => 'meeting',
-            'is_done' => 0,
             'user_id' => $userId
         ]);
 
@@ -124,7 +124,7 @@ class ProcessoObserver
             return str_contains($activity->comment ?? '', $tag);
         });
 
-        $isActive = strtolower(trim($processo->status)) === 'ativo';
+        $isActive = strtolower(trim($processo->status)) !== 'encerrado';
         $hasDate = !empty($processo->data_audiencia);
 
         if (!$isActive || !$hasDate) {

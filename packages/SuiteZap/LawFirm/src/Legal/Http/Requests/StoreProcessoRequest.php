@@ -30,8 +30,10 @@ class StoreProcessoRequest extends FormRequest
             'numero_cnj' => ['nullable', 'string', 'unique:processos,numero_cnj', new ValidarCNJ],
             'protocolo_distribuicao' => 'nullable|string|max:255',
             'status' => 'required|string|max:255',
-            'person_id' => 'required|exists:persons,id',
+            'person_id' => 'nullable|exists:persons,id',
+            'organization_id' => 'nullable|exists:organizations,id',
             'lead_id' => 'nullable|exists:leads,id',
+            'caso_id' => 'nullable|integer|exists:law_casos,id',
             'tribunal' => 'nullable|string|max:255',
             'comarca' => 'nullable|string|max:255',
             'vara' => 'nullable|string|max:255',
@@ -64,7 +66,7 @@ class StoreProcessoRequest extends FormRequest
             'area_direito' => 'nullable|string|max:255',
             'probabilidade_exito' => 'nullable|string|max:255',
             'data_distribuicao' => 'nullable|date',
-            'data_audiencia' => 'nullable|date',
+            'data_audiencia' => 'nullable|date|after_or_equal:today',
             'valor_causa' => 'nullable|string|max:255',
             'descricao' => 'nullable|string',
             'tipo_parte' => 'nullable|in:autor,reu',
@@ -75,13 +77,14 @@ class StoreProcessoRequest extends FormRequest
             'email_advogado_contrario' => 'nullable|email:rfc,dns|max:255',
             'subarea_direito'              => 'nullable|string|max:255',
             'user_id'                      => 'nullable|exists:users,id',
-            'whatsapp_responsavel'         => ['nullable', 'string', 'max:50', 'regex:/^\d{2,3}\s?\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/'],
+
             'envolvidos_escavador'         => 'nullable|string',
 
             // PRAZOS ARRAY (Permitir campos essenciais para Sync não serem capados no request->validated())
             'prazos' => 'nullable|array',
             'prazos.*.id' => 'nullable|integer',
             'prazos.*.titulo' => 'required_unless:prazos.*.should_delete,1|nullable|string|max:255',
+            'prazos.*.tipo' => 'nullable|string|in:prazo,tarefa',
             'prazos.*.data_vencimento' => 'required_unless:prazos.*.should_delete,1|nullable|date',
             'prazos.*.status' => 'required_unless:prazos.*.should_delete,1|nullable|in:pendente,concluido',
             'prazos.*.descricao' => 'nullable|string',
@@ -104,7 +107,7 @@ class StoreProcessoRequest extends FormRequest
     {
         return [
             'whatsapp_advogado_contrario.regex' => 'O formato do WhatsApp é inválido. Use: (99) 99999-9999.',
-            'whatsapp_responsavel.regex' => 'O formato do WhatsApp é inválido. Ex: 55 (99) 99999-9999.',
+
             'prazos.*.titulo.required' => 'O título do prazo é obrigatório.',
             'prazos.*.data_vencimento.required' => 'A data de vencimento do prazo é obrigatória.',
             'anexos.*.mimes' => 'Tipo de arquivo não permitido. Aceitos: PDF, Imagens, Office, Texto (txt, log, md, csv).',

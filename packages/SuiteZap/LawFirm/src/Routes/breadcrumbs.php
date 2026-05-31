@@ -3,6 +3,30 @@
 use Diglactic\Breadcrumbs\Breadcrumbs;
 use Diglactic\Breadcrumbs\Generator as BreadcrumbTrail;
 
+// Dashboard > Casos
+Breadcrumbs::for('lawfirm.casos.index', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Casos', route('admin.lawfirm.casos.index'));
+});
+
+// Dashboard > Casos > Create
+Breadcrumbs::for('lawfirm.casos.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('lawfirm.casos.index');
+    $trail->push('Novo Caso', route('admin.lawfirm.casos.create'));
+});
+
+// Dashboard > Casos > Edit
+Breadcrumbs::for('lawfirm.casos.edit', function (BreadcrumbTrail $trail, $caso) {
+    $trail->parent('lawfirm.casos.index');
+    $trail->push('Editar Caso', route('admin.lawfirm.casos.edit', $caso->id));
+});
+
+// Dashboard > Casos > View
+Breadcrumbs::for('lawfirm.casos.show', function (BreadcrumbTrail $trail, $caso) {
+    $trail->parent('lawfirm.casos.index');
+    $trail->push($caso->titulo, route('admin.lawfirm.casos.show', $caso->id));
+});
+
 // Dashboard > Processos
 Breadcrumbs::for('lawfirm.processos.index', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');

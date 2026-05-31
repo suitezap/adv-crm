@@ -126,9 +126,10 @@
             <button onclick="window.lfToolsPanel.close()" class="lf-modal-close-btn">✕</button>
         </div>
 
-        {{-- Body: Two Columns --}}
+        {{-- Body: Form | Result --}}
         <div class="lf-modal-body">
-            {{-- LEFT: Form --}}
+
+            {{-- FORM: Lead data --}}
             <div class="lf-modal-form">
                 <h4 class="lf-section-title">Dados do Lead</h4>
 
@@ -139,7 +140,7 @@
 
                 <div class="lf-field">
                     <label class="lf-label">Descrição</label>
-                    <textarea id="lf-form-description" rows="5"
+                    <textarea id="lf-form-description" rows="10"
                         class="lf-input lf-textarea lf-input-editable"></textarea>
                 </div>
 
@@ -188,25 +189,64 @@
                     <div id="lf-result-content" style="display:none;" class="ai-result-box"></div>
                 </div>
             </div>
-        </div>
+        </div>{{-- /lf-modal-body --}}
 
-        {{-- Footer --}}
+        {{-- Footer: context left | actions right --}}
         <div class="lf-modal-footer">
-            @if($isTrial)
-                <button id="lf-btn-generate" type="button" onclick="alert('Na versão Trial essa opção não está disponível, para maiores detalhes contate o Suporte.')" class="secondary-button" style="border-color:#fbd38d; color:#dd6b20; background-color:#fffaf0;" title="Na versão Trial essa opção não está disponível">
-                    <span id="lf-gen-text">🚫 Gerar Prompt (Trial)</span>
-                    <span id="lf-gen-loading" style="display:none;">⏳ Gerando...</span>
+            {{-- LEFT: cross-assistant context buttons --}}
+            <div class="lf-ctx-group">
+                <span class="lf-ctx-bar-label">Contexto:</span>
+                <button id="lf-sidebar-viabilidade" type="button" class="lf-sidebar-btn"
+                    title="Sem resultado salvo ainda"
+                    onclick="window.lfToolsPanel.viewAssistant('viabilidade')">🧠</button>
+                <button id="lf-sidebar-qualificacao" type="button" class="lf-sidebar-btn"
+                    title="Sem resultado salvo ainda"
+                    onclick="window.lfToolsPanel.viewAssistant('qualificacao')">📋</button>
+                <button id="lf-sidebar-proposta" type="button" class="lf-sidebar-btn"
+                    title="Sem resultado salvo ainda"
+                    onclick="window.lfToolsPanel.viewAssistant('proposta')">📄</button>
+                <button id="lf-sidebar-negociacao" type="button" class="lf-sidebar-btn"
+                    title="Sem resultado salvo ainda"
+                    onclick="window.lfToolsPanel.viewAssistant('negociacao')">💬</button>
+                <label class="lf-ctx-label"
+                    title="Injeta resultados dos assistentes anteriores na descrição enviada para a IA">
+                    <input type="checkbox" id="lf-ctx-checkbox">
+                    <span>Injetar contexto</span>
+                </label>
+            </div>
+
+            {{-- RIGHT: action buttons --}}
+            <div class="lf-action-group">
+                @if($isTrial)
+                    <button id="lf-btn-generate" type="button" onclick="alert('Na versão Trial essa opção não está disponível, para maiores detalhes contate o Suporte.')" class="secondary-button" style="border-color:#fbd38d; color:#dd6b20; background-color:#fffaf0;" title="Na versão Trial essa opção não está disponível">
+                        <span id="lf-gen-text">🚫 Gerar Prompt (Trial)</span>
+                        <span id="lf-gen-loading" style="display:none;">⏳ Gerando...</span>
+                    </button>
+                @else
+                    <button id="lf-btn-generate" onclick="window.lfToolsPanel.generate()" class="secondary-button">
+                        <span id="lf-gen-text">📝 Gerar Prompt</span>
+                        <span id="lf-gen-loading" style="display:none;">⏳ Gerando...</span>
+                    </button>
+                @endif
+                <button id="lf-btn-execute" onclick="window.lfToolsPanel.execute()" class="primary-button">
+                    <span id="lf-exec-text">✨ Executar com IA</span>
+                    <span id="lf-exec-loading" style="display:none;">🧠 Processando...</span>
                 </button>
-            @else
-                <button id="lf-btn-generate" onclick="window.lfToolsPanel.generate()" class="secondary-button">
-                    <span id="lf-gen-text">📝 Gerar Prompt</span>
-                    <span id="lf-gen-loading" style="display:none;">⏳ Gerando...</span>
-                </button>
-            @endif
-            <button id="lf-btn-execute" onclick="window.lfToolsPanel.execute()" class="primary-button">
-                <span id="lf-exec-text">✨ Executar com IA</span>
-                <span id="lf-exec-loading" style="display:none;">🧠 Processando...</span>
-            </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ============ VIEWER MODAL (cross-assistant context) ============ --}}
+<div id="lf-viewer-modal" style="display:none;">
+    <div class="lf-modal-overlay" onclick="window.lfToolsPanel.closeViewer()"></div>
+    <div class="lf-modal-dialog" style="max-width:1200px;">
+        <div class="lf-modal-header">
+            <h3 id="lf-viewer-title" class="lf-modal-title">Contexto</h3>
+            <button onclick="window.lfToolsPanel.closeViewer()" class="lf-modal-close-btn">✕</button>
+        </div>
+        <div style="padding:24px;">
+            <div id="lf-viewer-content" class="ai-result-box" style="max-height:75vh;overflow-y:auto;"></div>
         </div>
     </div>
 </div>
@@ -323,7 +363,7 @@
             color: #fff;
         }
 
-        /* Body */
+        /* Body — 2-col: form | result */
         .lf-modal-body {
             display: grid;
             grid-template-columns: 1fr 1.5fr;
@@ -336,6 +376,57 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* ── Context bar: horizontal icon buttons at modal bottom ── */
+        .lf-modal-ctx-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 24px;
+            border-top: 1px solid #e5e7eb;
+            background: #f9fafb;
+        }
+        .dark .lf-modal-ctx-bar { border-color: #374151; background: #111827; }
+        .lf-ctx-bar-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #9ca3af;
+            white-space: nowrap;
+            margin-right: 4px;
+        }
+        .lf-sidebar-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 7px;
+            border: 1.5px solid #d1d5db;
+            background: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.45;
+        }
+        .lf-sidebar-btn:hover { border-color: #7c3aed; background: #f5f3ff; opacity: 1; }
+        .lf-sidebar-btn--active { border-color: #22c55e; background: #f0fdf4; opacity: 1; box-shadow: 0 0 0 2px rgba(34,197,94,.2); }
+        .dark .lf-sidebar-btn { background: #1f2937; border-color: #4b5563; }
+        .dark .lf-sidebar-btn--active { border-color: #22c55e; background: rgba(34,197,94,.1); }
+        .lf-ctx-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 8px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: #6b7280;
+            white-space: nowrap;
+        }
+        .lf-ctx-label input[type="checkbox"] { width: 14px; height: 14px; accent-color: #7c3aed; cursor: pointer; }
+        .dark .lf-ctx-label { color: #9ca3af; }
 
         /* Form Section */
         .lf-modal-form {
@@ -537,18 +628,33 @@
             }
         }
 
-        /* Footer */
+        /* Footer: context left | actions right */
         .lf-modal-footer {
             display: flex;
             align-items: center;
-            justify-content: flex-end;
+            justify-content: space-between;
             gap: 12px;
-            padding: 16px 24px;
+            padding: 12px 24px;
             border-top: 1px solid #e5e7eb;
+            flex-wrap: wrap;
         }
 
         .dark .lf-modal-footer {
             border-color: #374151;
+        }
+
+        .lf-ctx-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .lf-action-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
         }
 
         /* Krayin Standard Buttons (from assistant show.blade.php) */
@@ -699,342 +805,386 @@
             'use strict';
 
             var LEAD_TITLE = @json($lead->title ?? '');
-            var LEAD_DESC = @json($lead->description ?? 'Sem descrição.');
-            var TENANT_ID = @json($tenantId);
-            var LEAD_ID = @json($leadId);
+            var LEAD_DESC  = @json($lead->description ?? 'Sem descrição.');
+            var TENANT_ID  = @json($tenantId);
+            var LEAD_ID    = @json($leadId);
             var CSRF_TOKEN = @json(csrf_token());
 
+            // ── Routes ──────────────────────────────────────────────────────────
             var ROUTES = {
-                generate: "{{ route('lawfirm.assistants.generate', '__SLUG__') }}",
-                execute: "{{ route('lawfirm.assistants.execute', '__SLUG__') }}",
-                status: "{{ route('lawfirm.assistants.check_status', '__ID__') }}",
-                saveNote: "{{ route('admin.activities.store') }}",
-                stageUpdate: "{{ route('admin.leads.stage.update', $leadId) }}"
+                generate:    "{{ route('lawfirm.assistants.generate', '__SLUG__') }}",
+                execute:     "{{ route('lawfirm.assistants.execute', '__SLUG__') }}",
+                status:      "{{ route('lawfirm.assistants.check_status', '__ID__') }}",
+                saveNote:    "{{ route('admin.activities.store') }}",
+                stageUpdate: "{{ route('admin.leads.stage.update', $leadId) }}",
+                triagemGet:  "{{ route('lawfirm.assistants.triagem.get',  'REPLACE_LEAD_ID') }}",
+                triagemSave: "{{ route('lawfirm.assistants.triagem.save', 'REPLACE_LEAD_ID') }}"
             };
 
-            // State
-            var activeSlug = '';
+            // ── State ────────────────────────────────────────────────────────────
+            var activeSlug    = '';
             var activeStageId = null;
-            var rawResult = '';
+            var rawResult     = '';
+            var triagemData   = { viabilidade: null, qualificacao: null, proposta: null, negociacao: null };
 
-            // -------------------------------------------------------------------------
-            // AUTO-RELOAD ON STAGE CHANGE (WON/LOST)
-            // -------------------------------------------------------------------------
-            // Since Krayin uses Vue to update stages without reload, we watch the DOM
-            // for the specific classes applied to the Won/Lost dropdown toggle.
-            // If detected, we reload to apply the PHP-side visibility logic.
-            // -------------------------------------------------------------------------
-            var stageObserver = new MutationObserver(function (mutations) {
-                // We target the LAST stage item (Won/Lost dropdown) which has 'rounded-r-lg'.
-                // Need to escape the exclamation mark in the class name for querySelector.
-                var wonIndicator = document.querySelector('.rounded-r-lg.\\!bg-green-500');
+            // ── Triagem helpers ──────────────────────────────────────────────────
+            function fetchTriagem() {
+                var url = ROUTES.triagemGet.replace('REPLACE_LEAD_ID', LEAD_ID);
+                fetch(url)
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        triagemData = {
+                            viabilidade: data.viabilidade || null,
+                            qualificacao: data.qualificacao || null,
+                            proposta:     data.proposta     || null,
+                            negociacao:   data.negociacao   || null
+                        };
+                        updateSidebarButtons();
+                    })
+                    .catch(function () {});
+            }
+
+            function updateSidebarButtons() {
+                ['viabilidade', 'qualificacao', 'proposta', 'negociacao'].forEach(function (f) {
+                    var btn = document.getElementById('lf-sidebar-' + f);
+                    if (!btn) return;
+                    var has = !!triagemData[f];
+                    btn.classList.toggle('lf-sidebar-btn--active', has);
+                    btn.title = has ? 'Ver resultado salvo' : 'Sem resultado salvo ainda';
+                });
+            }
+
+            function doSaveTriagem(content) {
+                if (!activeSlug || !content) return;
+                var url = ROUTES.triagemSave.replace('REPLACE_LEAD_ID', LEAD_ID);
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': CSRF_TOKEN
+                    },
+                    body: JSON.stringify({ slug: activeSlug, content: content })
+                }).then(function (r) { return r.json(); })
+                  .then(function (d) {
+                      if (d.success && d.column) {
+                          triagemData[d.column] = content;
+                          updateSidebarButtons();
+                      }
+                  }).catch(function () {});
+            }
+
+            // Returns prior assistants' context to prepend when checkbox is checked
+            function buildContextForSlug(slug) {
+                var parts = [];
+                var needsViab = (slug === 'pre-triagem-checklist' || slug === 'gerador-proposta' || slug === 'script-vendas');
+                var needsQual = (slug === 'gerador-proposta' || slug === 'script-vendas');
+                var needsProp = (slug === 'script-vendas');
+                if (needsViab && triagemData.viabilidade)  parts.push('## ANÁLISE DE VIABILIDADE\n' + triagemData.viabilidade);
+                if (needsQual && triagemData.qualificacao)  parts.push('## QUALIFICAÇÃO JURÍDICA\n'  + triagemData.qualificacao);
+                if (needsProp && triagemData.proposta)       parts.push('## SUGESTÃO DE PROPOSTA\n'   + triagemData.proposta);
+                return parts.join('\n\n');
+            }
+
+            // ── Stage observer (Won/Lost page reload) ────────────────────────────
+            var stageObserver = new MutationObserver(function () {
+                var wonIndicator  = document.querySelector('.rounded-r-lg.\\!bg-green-500');
                 var lostIndicator = document.querySelector('.rounded-r-lg.\\!bg-red-500');
-                var panelVisible = document.getElementById('lf-tools-panel');
-
-                // Helper to verify it's the dropdown toggle (has arrow icon)
-                // This prevents false positives in RTL where first stage might be rounded-r-lg
+                var panelVisible  = document.getElementById('lf-tools-panel');
                 var isDropdown = function (el) {
                     return el && (el.querySelector('.icon-down-arrow') || el.querySelector('.icon-up-arrow'));
                 };
-
-                // If we see a Won/Lost indicator AND the panel is still visible
                 if (panelVisible && ((wonIndicator && isDropdown(wonIndicator)) || (lostIndicator && isDropdown(lostIndicator)))) {
                     console.log('LF Tools Panel: Stage change detected (Won/Lost). Reloading...');
                     window.location.reload();
                 }
             });
-
-            // Start observing the body for class changes (subtree)
-            // narrowed to .lead-stages if possible, but body is safer for the Vue mount
             var observerTarget = document.body;
             if (observerTarget) {
-                stageObserver.observe(observerTarget, {
-                    attributes: true,
-                    subtree: true,
-                    attributeFilter: ['class']
-                });
+                stageObserver.observe(observerTarget, { attributes: true, subtree: true, attributeFilter: ['class'] });
             }
 
-            // DOM Refs (populated after DOMContentLoaded)
+            // ── DOM Refs ────────────────────────────────────────────────────────
             var modal, modalTitle, formTitle, formDesc, formTenant, formObservacoes;
             var resultPlaceholder, resultLoading, resultContent, resultActions;
-            var btnGenerate, btnExecute, saveNoteBtn;
-            var genText, genLoading, execText, execLoading;
+            var btnGenerate, btnExecute, genText, genLoading, execText, execLoading;
 
             document.addEventListener('DOMContentLoaded', function () {
-                // Move modal to body to escape Vue
+                // Move modals to <body> to escape Krayin Vue scope
                 modal = document.getElementById('lf-tools-modal');
                 if (modal) document.body.appendChild(modal);
+                var viewer = document.getElementById('lf-viewer-modal');
+                if (viewer) document.body.appendChild(viewer);
 
-                modalTitle = document.getElementById('lf-modal-title');
-                formTitle = document.getElementById('lf-form-title');
-                formDesc = document.getElementById('lf-form-description');
-                formTenant = document.getElementById('lf-form-tenant');
-                formObservacoes = document.getElementById('lf-form-observacoes');
+                modalTitle        = document.getElementById('lf-modal-title');
+                formTitle         = document.getElementById('lf-form-title');
+                formDesc          = document.getElementById('lf-form-description');
+                formTenant        = document.getElementById('lf-form-tenant');
+                formObservacoes   = document.getElementById('lf-form-observacoes');
                 resultPlaceholder = document.getElementById('lf-result-placeholder');
-                resultLoading = document.getElementById('lf-result-loading');
-                resultContent = document.getElementById('lf-result-content');
-                resultActions = document.getElementById('lf-result-actions');
-                btnGenerate = document.getElementById('lf-btn-generate');
-                 btnExecute = document.getElementById('lf-btn-execute');
-                    genText = document.getElementById('lf-gen-text');
-                    genLoading = document.getElementById('lf-gen-loading');
-                    execText = document.getElementById('lf-exec-text');
-                    execLoading = document.getElementById('lf-exec-loading');
+                resultLoading     = document.getElementById('lf-result-loading');
+                resultContent     = document.getElementById('lf-result-content');
+                resultActions     = document.getElementById('lf-result-actions');
+                btnGenerate       = document.getElementById('lf-btn-generate');
+                btnExecute        = document.getElementById('lf-btn-execute');
+                genText           = document.getElementById('lf-gen-text');
+                genLoading        = document.getElementById('lf-gen-loading');
+                execText          = document.getElementById('lf-exec-text');
+                execLoading       = document.getElementById('lf-exec-loading');
 
-                    function showModal() { if (modal) modal.style.display = ''; }
-                    function hideModal() { if (modal) modal.style.display = 'none'; }
+                // Load saved triagem data to pre-colour sidebar buttons
+                fetchTriagem();
 
-                    function showState(state) {
-                        resultPlaceholder.style.display = state === 'placeholder' ? '' : 'none';
-                        resultLoading.style.display = state === 'loading' ? '' : 'none';
-                        resultContent.style.display = state === 'result' ? '' : 'none';
-                        resultActions.style.display = state === 'result' ? '' : 'none';
+                function showModal() { if (modal) modal.style.display = ''; }
+                function hideModal() { if (modal) modal.style.display = 'none'; }
 
-                        // Buttons
-                        btnGenerate.disabled = state === 'loading';
-                        btnExecute.disabled = state === 'loading';
-                        genText.style.display = state === 'loading' ? 'none' : '';
-                        genLoading.style.display = state === 'loading' ? '' : 'none';
-                        execText.style.display = state === 'loading' ? 'none' : '';
-                        execLoading.style.display = state === 'loading' ? '' : 'none';
+                function showState(state) {
+                    resultPlaceholder.style.display = state === 'placeholder' ? '' : 'none';
+                    resultLoading.style.display     = state === 'loading'     ? '' : 'none';
+                    resultContent.style.display     = state === 'result'      ? '' : 'none';
+                    resultActions.style.display     = state === 'result'      ? '' : 'none';
+                    btnGenerate.disabled = state === 'loading';
+                    btnExecute.disabled  = state === 'loading';
+                    genText.style.display    = state === 'loading' ? 'none' : '';
+                    genLoading.style.display = state === 'loading' ? '' : 'none';
+                    execText.style.display   = state === 'loading' ? 'none' : '';
+                    execLoading.style.display = state === 'loading' ? '' : 'none';
+                }
+
+                function renderMd(text) {
+                    if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+                        try { return marked.parse(String(text)); } catch (e) { return String(text); }
                     }
+                    return String(text).replace(/\n/g, '<br>');
+                }
 
-                    function renderMd(text) {
-                        if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
-                            try { return marked.parse(text); } catch (e) { return text; }
-                        }
-                        return text.replace(/\n/g, '<br>');
-                    }
+                // ── Public API ────────────────────────────────────────────────
+                window.lfToolsPanel = {
 
-                    window.lfToolsPanel = {
-                        open: function (slug, title, stageId) {
-                            activeSlug = slug;
-                            activeStageId = (stageId && stageId !== 'null' && stageId !== '') ? stageId : null;
-                            rawResult = '';
-                            modalTitle.textContent = '🤖 ' + title;
-                            formTitle.value = LEAD_TITLE;
-                            formDesc.value = LEAD_DESC;
-                            formTenant.value = TENANT_ID;
-                            formObservacoes.value = '';
-                            resultContent.innerHTML = '';
+                    open: function (slug, title, stageId) {
+                        activeSlug    = slug;
+                        activeStageId = (stageId && stageId !== 'null' && stageId !== '') ? stageId : null;
+                        rawResult     = '';
+                        modalTitle.textContent  = '🤖 ' + title;
+                        formTitle.value         = LEAD_TITLE;
+                        formDesc.value          = LEAD_DESC;
+                        formTenant.value        = TENANT_ID;
+                        formObservacoes.value   = '';
+                        resultContent.innerHTML = '';
+                        var cb = document.getElementById('lf-ctx-checkbox');
+                        if (cb) cb.checked = false;
+                        showState('placeholder');
+                        showModal();
+                        console.log('LF Tools Panel: opened slug=' + slug);
+                    },
+
+                    close: function () { hideModal(); window.location.reload(); },
+
+                    generate: async function () {
+                        showState('loading');
+                        try {
+                            var url = ROUTES.generate.replace('__SLUG__', activeSlug);
+                            var res = await fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': CSRF_TOKEN
+                                },
+                                body: JSON.stringify({
+                                    title:       formTitle.value,
+                                    description: formDesc.value,
+                                    observacoes: formObservacoes.value,
+                                    tenant_id:   TENANT_ID,
+                                    lead_id:     LEAD_ID
+                                })
+                            });
+                            var data = await res.json();
+                            if (data.generated_prompt) {
+                                rawResult = data.generated_prompt;
+                                resultContent.innerHTML = renderMd(rawResult);
+                                showState('result');
+                                doSaveTriagem(rawResult); // persist for cross-context
+                            } else {
+                                alert('Erro: ' + JSON.stringify(data));
+                                showState('placeholder');
+                            }
+                        } catch (e) {
+                            alert('Erro: ' + e.message);
                             showState('placeholder');
-                            showModal();
-                            console.log('LF Tools Panel: opened slug=' + slug + ' stageId=' + stageId);
-                        },
+                        }
+                    },
 
-                        close: function () {
-                            hideModal();
-                        },
-
-                        generate: async function () {
-                            showState('loading');
-                            try {
-                                var url = ROUTES.generate.replace('__SLUG__', activeSlug);
-                                var res = await fetch(url, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Accept': 'application/json',
-                                        'X-CSRF-TOKEN': CSRF_TOKEN
-                                    },
-                                    body: JSON.stringify({
-                                        title: formTitle.value,
-                                        description: formDesc.value,
-                                        observacoes: formObservacoes.value,
-                                        tenant_id: TENANT_ID,
-                                        lead_id: LEAD_ID
-                                    })
-                                });
-                                var data = await res.json();
-                                if (data.generated_prompt) {
-                                    rawResult = data.generated_prompt;
-                                    resultContent.innerHTML = renderMd(rawResult);
-                                    showState('result');
-                                } else {
-                                    alert('Erro: ' + JSON.stringify(data));
-                                    showState('placeholder');
+                    execute: async function () {
+                        showState('loading');
+                        try {
+                            // Optionally inject prior assistants' context into description
+                            var descValue = formDesc.value;
+                            var cb = document.getElementById('lf-ctx-checkbox');
+                            if (cb && cb.checked) {
+                                var ctx = buildContextForSlug(activeSlug);
+                                if (ctx) {
+                                    descValue = ctx + '\n\n---\n\nINFORMAÇÕES DO LEAD:\n' + descValue;
                                 }
-                            } catch (e) {
-                                alert('Erro: ' + e.message);
-                                showState('placeholder');
                             }
-                        },
 
-                        execute: async function () {
-                            showState('loading');
-                            try {
-                                var url = ROUTES.execute.replace('__SLUG__', activeSlug);
-                                var res = await fetch(url, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Accept': 'application/json',
-                                        'X-CSRF-TOKEN': CSRF_TOKEN
-                                    },
-                                    body: JSON.stringify({
-                                        title: formTitle.value,
-                                        description: formDesc.value,
-                                        observacoes: formObservacoes.value,
-                                        tenant_id: TENANT_ID,
-                                        lead_id: LEAD_ID
-                                    })
-                                });
-
-                                if (!res.ok) {
-                                    var err = await res.json();
-                                    throw new Error(err.error || 'Erro na execução');
-                                }
-
-                                var data = await res.json();
-                                console.log('LF Tools Panel: execute response', data);
-
-                                // Update pipeline stage if configured
-                                if (activeStageId) {
-                                    updatePipelineStage(activeStageId);
-                                }
-
-                                if (data.status === 'queued' && data.history_id) {
-                                    pollStatus(data.history_id);
-                                } else {
-                                    throw new Error('Resposta inesperada');
-                                }
-                            } catch (e) {
-                                alert('Erro: ' + e.message);
-                                showState('placeholder');
+                            var url = ROUTES.execute.replace('__SLUG__', activeSlug);
+                            var res = await fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': CSRF_TOKEN
+                                },
+                                body: JSON.stringify({
+                                    title:       formTitle.value,
+                                    description: descValue,
+                                    observacoes: formObservacoes.value,
+                                    tenant_id:   TENANT_ID,
+                                    lead_id:     LEAD_ID
+                                })
+                            });
+                            if (!res.ok) {
+                                var err = await res.json();
+                                throw new Error(err.error || 'Erro na execução');
                             }
-                        },
+                            var data = await res.json();
+                            console.log('LF Tools Panel: execute response', data);
+                            if (activeStageId) updatePipelineStage(activeStageId);
+                            if (data.status === 'queued' && data.history_id) {
+                                pollStatus(data.history_id);
+                            } else {
+                                throw new Error('Resposta inesperada');
+                            }
+                        } catch (e) {
+                            alert('Erro: ' + e.message);
+                            showState('placeholder');
+                        }
+                    },
 
-                        copy: function () {
-                            if (!rawResult) return;
-                            var ta = document.createElement('textarea');
-                            ta.value = rawResult;
-                            document.body.appendChild(ta);
-                            ta.select();
-                            document.execCommand('copy');
-                            document.body.removeChild(ta);
+                    copy: function () {
+                        if (!rawResult) return;
+                        var ta = document.createElement('textarea');
+                        ta.value = rawResult;
+                        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                        var btn = document.getElementById('lf-copy-btn');
+                        var old = btn.innerHTML;
+                        btn.innerHTML = '✅ Copiado!';
+                        setTimeout(function () { btn.innerHTML = old; }, 2000);
+                    },
 
-                            var btn = document.getElementById('lf-copy-btn');
-                            var oldText = btn.innerHTML;
-                            btn.innerHTML = '✅ Copiado!';
-                            setTimeout(function () { btn.innerHTML = oldText; }, 2000);
-                        },
+                    pdf: function () {
+                        if (!rawResult) return;
+                        var w = window.open('', '', 'height=600,width=800');
+                        w.document.write('<html><head><title>Resultado IA</title><style>body{font-family:Arial,sans-serif;padding:20px;line-height:1.6;color:#333}h1,h2,h3{color:#111}</style></head><body>');
+                        w.document.write(renderMd(rawResult));
+                        w.document.write('</body></html>');
+                        w.document.close(); w.focus();
+                        setTimeout(function () { w.print(); }, 250);
+                    },
 
-                        pdf: function () {
-                            if (!rawResult) return;
-                            var printWindow = window.open('', '', 'height=600,width=800');
-                            printWindow.document.write('<html><head><title>Resultado IA</title>');
-                            printWindow.document.write('<style>body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; color: #333; } h1, h2, h3 { color: #111; }</style>');
-                            printWindow.document.write('</head><body>');
-                            printWindow.document.write(renderMd(rawResult));
-                            printWindow.document.write('</body></html>');
-                            printWindow.document.close();
-                            printWindow.focus();
-                            setTimeout(function() {
-                                printWindow.print();
-                            }, 250);
-                        },
-
-                        saveAsNote: async function (btn) {
-                            if (!rawResult) return;
-                            btn.disabled = true;
-                            btn.innerHTML = '⏳ Salvando...';
-
-                            try {
-                                var formData = new FormData();
-                                formData.append('_token', CSRF_TOKEN);
-                                formData.append('type', 'note');
-                                formData.append('comment', rawResult);
-                                formData.append('lead_id', LEAD_ID);
-
-                                var res = await fetch(ROUTES.saveNote, {
-                                    method: 'POST',
-                                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                                    body: formData
-                                });
-
-                                if (!res.ok) throw new Error('Erro ao salvar nota');
-
-                                var data = await res.json();
-                                btn.innerHTML = '✅ Nota Salva!';
-                                console.log('LF Tools Panel: note saved', data);
-
-                                setTimeout(function () {
-                                    btn.innerHTML = '<span class="icon-note"></span> Salvar como Nota';
-                                    btn.disabled = false;
-                                }, 2000);
-
-                            } catch (e) {
-                                alert('Erro ao salvar nota: ' + e.message);
+                    saveAsNote: async function (btn) {
+                        if (!rawResult) return;
+                        btn.disabled = true; btn.innerHTML = '⏳ Salvando...';
+                        try {
+                            var fd = new FormData();
+                            fd.append('_token', CSRF_TOKEN); fd.append('type', 'note');
+                            fd.append('comment', rawResult); fd.append('lead_id', LEAD_ID);
+                            var res = await fetch(ROUTES.saveNote, {
+                                method: 'POST',
+                                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                body: fd
+                            });
+                            if (!res.ok) throw new Error('Erro ao salvar nota');
+                            btn.innerHTML = '✅ Nota Salva!';
+                            setTimeout(function () {
                                 btn.innerHTML = '<span class="icon-note"></span> Salvar como Nota';
                                 btn.disabled = false;
-                            }
+                            }, 2000);
+                        } catch (e) {
+                            alert('Erro ao salvar nota: ' + e.message);
+                            btn.innerHTML = '<span class="icon-note"></span> Salvar como Nota';
+                            btn.disabled = false;
                         }
-                    };
+                    },
 
-                    // Update lead pipeline stage (fire-and-forget)
-                    function updatePipelineStage(stageId) {
-                        var formData = new FormData();
-                        formData.append('_method', 'PUT');
-                        formData.append('_token', CSRF_TOKEN); // Alternativa robusta
-                        formData.append('lead_pipeline_stage_id', stageId);
+                    // Opens a viewer modal with the stored content of a given assistant
+                    viewAssistant: function (field) {
+                        var LABELS = {
+                            viabilidade: '🧠 Análise de Viabilidade',
+                            qualificacao: '📋 Qualificação Jurídica',
+                            proposta:     '📄 Sugestão de Proposta',
+                            negociacao:   '💬 Negociação & Conversão'
+                        };
+                        var content = triagemData[field];
+                        if (!content) {
+                            alert('Nenhum resultado salvo para este assistente ainda.\nExecute o assistente correspondente primeiro.');
+                            return;
+                        }
+                        var vm = document.getElementById('lf-viewer-modal');
+                        var vt = document.getElementById('lf-viewer-title');
+                        var vc = document.getElementById('lf-viewer-content');
+                        if (!vm) return;
+                        vt.textContent = LABELS[field] || field;
+                        vc.innerHTML = renderMd(content);
+                        vm.style.display = '';
+                    },
 
-                        fetch(ROUTES.stageUpdate, {
-                            method: 'POST', // Mudado de PUT para POST (Spoofing)
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': CSRF_TOKEN
-                            },
-                            body: formData
-
-                        }).then(function (res) {
-                            if (res.ok) {
-                                console.log('LF Tools Panel: pipeline stage updated to ' + stageId);
-                            } else {
-                                console.warn('LF Tools Panel: failed to update stage', res.status);
-                            }
-                        }).catch(function (e) {
-                            console.warn('LF Tools Panel: stage update error', e);
-                        });
+                    closeViewer: function () {
+                        var vm = document.getElementById('lf-viewer-modal');
+                        if (vm) vm.style.display = 'none';
                     }
+                };
 
-                    function pollStatus(historyId) {
-                        var attempts = 0;
-                        var maxAttempts = 60;
-                        var interval = setInterval(async function () {
-                            attempts++;
-                            try {
-                                var url = ROUTES.status.replace('__ID__', historyId);
-                                var res = await fetch(url);
-                                var data = await res.json();
+                // ── Pipeline stage (fire-and-forget) ─────────────────────────
+                function updatePipelineStage(stageId) {
+                    var fd = new FormData();
+                    fd.append('_method', 'PUT');
+                    fd.append('_token', CSRF_TOKEN);
+                    fd.append('lead_pipeline_stage_id', stageId);
+                    fetch(ROUTES.stageUpdate, {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+                        body: fd
+                    }).then(function (r) {
+                        if (r.ok) console.log('LF Tools Panel: stage updated to ' + stageId);
+                        else console.warn('LF Tools Panel: stage update failed', r.status);
+                    }).catch(function (e) { console.warn('stage update error', e); });
+                }
 
-                                console.log('Poll Status:', data.status, 'Attempt:', attempts);
-
-                                if (data.status === 'completed') {
-                                    clearInterval(interval);
-                                    rawResult = data.generated_content;
-                                    resultContent.innerHTML = renderMd(rawResult);
-                                    showState('result');
-                                } else if (data.status === 'failed') {
-                                    clearInterval(interval);
-                                    alert('Erro: ' + (data.error_message || 'Falha desconhecida'));
-                                    showState('placeholder');
-                                } else if (attempts >= maxAttempts) {
-                                    clearInterval(interval);
-                                    alert('Tempo limite excedido.');
-                                    showState('placeholder');
-                                }
-                            } catch (e) {
-                                if (attempts >= maxAttempts) {
-                                    clearInterval(interval);
-                                    showState('placeholder');
-                                }
+                // ── Polling ──────────────────────────────────────────────────
+                function pollStatus(historyId) {
+                    var attempts = 0, maxAttempts = 60;
+                    var interval = setInterval(async function () {
+                        attempts++;
+                        try {
+                            var url  = ROUTES.status.replace('__ID__', historyId);
+                            var res  = await fetch(url);
+                            var data = await res.json();
+                            console.log('Poll Status:', data.status, 'Attempt:', attempts);
+                            if (data.status === 'completed') {
+                                clearInterval(interval);
+                                rawResult = data.generated_content;
+                                resultContent.innerHTML = renderMd(rawResult);
+                                showState('result');
+                                doSaveTriagem(rawResult); // persist for cross-context
+                            } else if (data.status === 'failed') {
+                                clearInterval(interval);
+                                alert('Erro: ' + (data.error_message || 'Falha desconhecida'));
+                                showState('placeholder');
+                            } else if (attempts >= maxAttempts) {
+                                clearInterval(interval);
+                                alert('Tempo limite excedido.');
+                                showState('placeholder');
                             }
-                        }, 2000);
-                    }
+                        } catch (e) {
+                            if (attempts >= maxAttempts) { clearInterval(interval); showState('placeholder'); }
+                        }
+                    }, 2000);
+                }
 
-                }); // Fim do DOMContentLoaded listener
+            }); // end DOMContentLoaded
 
-            })();
-        </script>
+        })();
+    </script>
 @endpush

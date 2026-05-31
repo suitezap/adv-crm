@@ -167,7 +167,7 @@ class Core
      *
      * @return string
      */
-    public function formatDate($date, $format = 'd M Y h:iA')
+    public function formatDate($date, $format = 'd/m/Y H:i')
     {
         return Carbon::parse($date)->format($format);
     }

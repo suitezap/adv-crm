@@ -35,10 +35,10 @@ class PrazoObserver
         }
 
         // Build title: "PRAZO: {titulo} ({processo->titulo})"
-        $title = "PRAZO: {$prazo->titulo} ({$processo->titulo})";
+        $title = "Prazo: {$prazo->titulo} ({$processo->titulo})";
 
-        // Determine user_id: processo->user_id or logged user
-        $userId = $processo->user_id ?? auth()->guard('user')->id() ?? 1;
+        // Determine user_id: processo->user_id, or logged admin/user, or fallback 1
+        $userId = $processo->user_id ?? auth()->guard('admin')->id() ?? auth()->guard('user')->id() ?? 1;
 
         // Schedule: data_vencimento from 08:00 to 18:00
         $scheduleDate = Carbon::parse($prazo->data_vencimento)->startOfDay();
@@ -89,10 +89,10 @@ class PrazoObserver
         }
 
         // Build title
-        $title = "PRAZO: {$prazo->titulo} ({$processo->titulo})";
+        $title = "Prazo: {$prazo->titulo} ({$processo->titulo})";
 
-        // Determine user_id
-        $userId = $processo->user_id ?? auth()->guard('user')->id() ?? 1;
+        // Determine user_id: processo->user_id, or logged admin/user, or fallback 1
+        $userId = $processo->user_id ?? auth()->guard('admin')->id() ?? auth()->guard('user')->id() ?? 1;
 
         // Schedule dates
         $scheduleDate = Carbon::parse($prazo->data_vencimento)->startOfDay();

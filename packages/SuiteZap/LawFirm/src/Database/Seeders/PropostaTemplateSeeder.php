@@ -30,6 +30,8 @@ Caso:
 Área: {{title}}
 Resumo: {{description}}
 Observações: {{observacoes}}
+
+**OBRIGATÓRIO:** Formate toda a sua resposta em **Markdown**, usando `##` para subtítulos de cada item, **negrito** nos termos técnicos e listas (`-`) para enumerar pontos. Não retorne texto simples.
 PROMPT;
 
         $variables = [

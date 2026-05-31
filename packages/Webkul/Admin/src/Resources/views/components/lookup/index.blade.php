@@ -210,7 +210,7 @@
                  */
                 filteredResults() {
                     return this.searchedResults.filter(item =>
-                        item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
+                        (item.name ?? '').toLowerCase().includes((this.searchTerm ?? '').toLowerCase())
                     );
                 }
             },

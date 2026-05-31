@@ -23,10 +23,6 @@
                     💬 Histórico WhatsApp
                 </button>
 
-                <button type="button" class="secondary-button text-xs bg-primary-50 text-primary-700 border-primary-200 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-400 dark:border-primary-800" onclick="window.lfToggleEscavadorTab()">
-                    <i class="icon-legal-document"></i> Dados Oficiais (IA)
-                </button>
-
                 <button type="submit" form="processo-form" class="primary-button">
                     @lang('lawfirm::app.processos.save-btn')
                 </button>
@@ -36,30 +32,74 @@
             </div>
         </div>
 
-        {{-- ── TABS: Prazos, Notas, Financeiro, Documentos, Escavador ────────── --}}
-        <div class="flex flex-col gap-4">
+        {{-- ── FILTER BAR ─────────────────────────────────────────────── --}}
+        <div class="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-gray-900 overflow-x-auto">
+            <button type="button" class="lf-filter-btn" data-section="todos" onclick="lfShowAll()">&#10697; Todos</button>
+            <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
+            <button type="button" class="lf-filter-btn" data-section="info" onclick="lfSwitchSection('info')">&#128203; Info. Processo</button>
+            <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
+            <button type="button" class="lf-filter-btn" data-section="prazos" onclick="lfSwitchSection('prazos')">&#9878;&#65039; Prazos e Tarefas</button>
+            <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
+            <button type="button" class="lf-filter-btn" data-section="notas" onclick="lfSwitchSection('notas')">&#128221; Notas</button>
+            <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
+            <button type="button" class="lf-filter-btn" data-section="docs" onclick="lfSwitchSection('docs')">&#128206; Docs e Anexos</button>
+            <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
+            <button type="button" class="lf-filter-btn" data-section="modelos" onclick="lfSwitchSection('modelos')">📄 Model. Docs</button>
+            <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
+            <button type="button" class="lf-filter-btn" data-section="escavador" onclick="lfSwitchSection('escavador')">&#128220; Dados Oficiais (IA)</button>
+            <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
+            <button type="button" class="lf-filter-btn" data-section="partes" onclick="lfSwitchSection('partes')">&#128101; Partes e Advogados</button>
+            <span class="text-gray-200 dark:text-gray-700 select-none px-1">|</span>
+            <button type="button" class="lf-filter-btn" data-section="financeiro" onclick="lfSwitchSection('financeiro')">&#128176; Financeiro</button>
+        </div>
+
+
+        {{-- ── SECTION: Dados Oficiais ──────────────────────────────── --}}
+        <div id="section-escavador" class="lf-section hidden">
             @include('lawfirm::admin.processos.tabs.escavador-tab', ['processo' => $processo])
+        </div>
+
+        {{-- ── SECTION: Gestão de Prazos e Tarefas ──────────────────── --}}
+        <div id="section-prazos" class="lf-section hidden flex flex-col gap-4">
             @include('lawfirm::Legal.processos.tabs.prazos')
-            @include('lawfirm::Legal.processos.tabs.notas', ['processo' => $processo, 'startClosed' => true])
-            @include('lawfirm::Financial.processos.tabs.financial', ['startClosed' => true])
+        </div>
+
+        {{-- ── SECTION: Notas ─────────────────────────────────────────── --}}
+        <div id="section-notas" class="lf-section hidden">
+            @include('lawfirm::Legal.processos.tabs.notas', ['processo' => $processo, 'startClosed' => false])
+        </div>
+
+        {{-- ── SECTION: Gestão Financeira ────────────────────────────── --}}
+        <div id="section-financeiro" class="lf-section hidden">
+            @include('lawfirm::financial.processos.tabs.financial', ['startClosed' => false])
+        </div>
+
+        {{-- ── SECTION: Documentos (dentro de Info. Processo) ────────── --}}
+        <div id="section-docs" class="lf-section hidden flex flex-col gap-6">
             @include('lawfirm::GED.processos.tabs.documents', ['processo' => $processo])
         </div>
 
-        {{-- ── MAIN FORM ───────────────────────────────────── --}}
+        {{-- ── SECTION: Modelos de Documentos ────────────────────────── --}}
+        <div id="section-modelos" class="lf-section hidden flex flex-col gap-6">
+            @include('lawfirm::Legal.processos.tabs.modelos-tab', ['processo' => $processo])
+        </div>
+
+        {{-- ── SECTION: Info. Processo (form) ────────────────────────── --}}
         <x-admin::form id="processo-form" :action="route('admin.processos.update', $processo->id)" method="PUT" enctype="multipart/form-data" onsubmit="window.appendExternalTabs(event, this)">
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-6">
+            <div id="section-info" class="lf-section flex flex-col gap-6">
 
                 {{-- ── ROW 1: INÍCIO + DATAS ──────────────── --}}
-                <div class="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
+                <div class="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
 
                     {{-- Card: Informações Básicas --}}
-                    <div class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <div class="flex justify-between items-center">
-                            <p class="text-lg font-bold text-gray-800 dark:text-white">Informações Básicas</p>
+                    <div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-gray-800">
+                            <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight">Informações Básicas</p>
                             @if($processo->lead)
                                 <a href="{{ route('admin.leads.view', $processo->lead->id) }}"
-                                    class="text-sm text-blue-600 hover:underline inline-flex items-center gap-1" target="_blank">
-                                    🔗 Lead: #{{ $processo->lead->id }} - {{ $processo->lead->title }}
+                                    class="text-xs text-blue-600 hover:underline inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md" target="_blank">
+                                    🔗 Lead #{{ $processo->lead->id }}
                                 </a>
                             @endif
                         </div>
@@ -77,24 +117,51 @@
                             <x-admin::form.control-group.error control-name="titulo" />
                         </x-admin::form.control-group>
 
-                        {{-- Pessoa (Cliente) --}}
-                        @php
-                            $personId = old('person_id') ?? optional($processo->person)->id;
-                            $personLookupData = app('Webkul\Attribute\Repositories\AttributeRepository')->getLookUpEntity('persons', $personId);
-                            $personJson = $personLookupData ? ['id' => $personLookupData->id, 'name' => $personLookupData->name] : null;
-                        @endphp
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('lawfirm::app.processos.form.person')
-                            </x-admin::form.control-group.label>
-                            <x-admin::lookup
-                                src="{{ route('admin.contacts.persons.search') }}"
-                                name="person_id"
-                                rules="required"
-                                v-bind:value="{{ json_encode($personJson) }}"
-                                :placeholder="trans('lawfirm::app.processos.form.search-client')" />
-                            <x-admin::form.control-group.error control-name="person_id" />
-                        </x-admin::form.control-group>
+                        {{-- Trigger v-lookup-component registration --}}
+                        <x-admin::attributes.edit.lookup />
+
+                        {{-- Cliente e Empresa --}}
+                        <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+
+                            {{-- Pessoa (Cliente) --}}
+                            @php
+                                $personId = optional($processo->person)->id;
+                                $personLookup = $personId ? app('Webkul\Attribute\Repositories\AttributeRepository')->getLookUpEntity('persons', $personId) : null;
+                            @endphp
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    @lang('lawfirm::app.processos.form.person') (Opcional)
+                                </x-admin::form.control-group.label>
+                                <v-lookup-component
+                                    :attribute="{{ json_encode(['code' => 'person_id', 'name' => 'Pessoa', 'lookup_type' => 'persons']) }}"
+                                    :value="{{ json_encode($personLookup) }}"
+                                    validations=""
+                                    @lookup-removed="handleLookupAdded"
+                                    @lookup-added="handleLookupAdded"
+                                ></v-lookup-component>
+                                <x-admin::form.control-group.error control-name="person_id" />
+                            </x-admin::form.control-group>
+
+                            {{-- Empresa --}}
+                            @php
+                                $orgId = optional($processo->organization)->id;
+                                $orgLookup = $orgId ? app('Webkul\Attribute\Repositories\AttributeRepository')->getLookUpEntity('organizations', $orgId) : null;
+                            @endphp
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Empresa (Opcional)
+                                </x-admin::form.control-group.label>
+                                <v-lookup-component
+                                    :attribute="{{ json_encode(['code' => 'organization_id', 'name' => 'Empresa', 'lookup_type' => 'organizations']) }}"
+                                    :value="{{ json_encode($orgLookup) }}"
+                                    validations=""
+                                    @lookup-removed="handleLookupAdded"
+                                    @lookup-added="handleLookupAdded"
+                                ></v-lookup-component>
+                                <x-admin::form.control-group.error control-name="organization_id" />
+                            </x-admin::form.control-group>
+
+                        </div>
 
                         {{-- Lead de Origem --}}
                         <div class="space-y-1">
@@ -112,59 +179,75 @@
                             </p>
                         </div>
 
-                        {{-- Status --}}
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('lawfirm::app.processos.form.status')
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control
-                                type="select" name="status" rules="required"
-                                :value="old('status', $processo->status)"
-                                :label="trans('lawfirm::app.processos.form.status')">
-                                @foreach(['Ativo', 'Suspenso', 'Arquivado', 'Encerrado'] as $s)
-                                    <option value="{{ $s }}" {{ old('status', $processo->status) == $s ? 'selected' : '' }}>
-                                        {{ trans('lawfirm::app.processos.status-options.' . strtolower($s)) }}
-                                    </option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
-                            <x-admin::form.control-group.error control-name="status" />
-                        </x-admin::form.control-group>
+                        {{-- Caso Vinculado (Select AJAX) --}}
+                        <div class="mt-2" id="lf-caso-selector-wrapper">
+                            <label class="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                📂 Caso Vinculado (Opcional)
+                            </label>
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    id="lf-caso-search"
+                                    placeholder="Digite para buscar um caso..."
+                                    autocomplete="off"
+                                    class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                />
+                                <input type="hidden" name="caso_id" id="lf-caso-id" value="{{ old('caso_id', $processo->caso_id) }}" />
+                                <div id="lf-caso-results" class="absolute z-50 mt-1 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 max-h-48 overflow-y-auto"></div>
+                            </div>
+                            <div id="lf-caso-selected" class="mt-1 {{ $processo->caso_id ? '' : 'hidden' }}">
+                                <span class="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                    📂 <span id="lf-caso-selected-label">{{ $processo->caso ? '#' . $processo->caso->id . ' — ' . $processo->caso->titulo : '' }}</span>
+                                    <button type="button" onclick="lfClearCaso()" class="ml-1 text-blue-400 hover:text-red-500">&times;</button>
+                                </span>
+                            </div>
+                        </div>
 
-                        {{-- Responsável Interno --}}
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>Responsável Interno</x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control
-                                type="select" name="user_id" label="Responsável Interno"
-                                :value="old('user_id', $processo->user_id)">
-                                <option value="">@lang('lawfirm::app.processos.form.select-choose')</option>
-                                @foreach($userRepository->all() as $user)
-                                    <option value="{{ $user->id }}" {{ (int)old('user_id', $processo->user_id) === (int)$user->id ? 'selected' : '' }}>
-                                        {{ $user->name }}
-                                    </option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
-                            <x-admin::form.control-group.error control-name="user_id" />
-                        </x-admin::form.control-group>
+                        {{-- Status e Responsável --}}
+                        <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mt-4">
+                            {{-- Status --}}
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('lawfirm::app.processos.form.status')
+                                </x-admin::form.control-group.label>
+                                <x-admin::form.control-group.control
+                                    type="select" name="status" rules="required"
+                                    :value="old('status', $processo->status)"
+                                    :label="trans('lawfirm::app.processos.form.status')">
+                                    @foreach(\SuiteZap\LawFirm\Legal\Services\LegalOrchestrator::VALID_STATUSES as $s)
+                                        <option value="{{ $s }}" {{ old('status', $processo->status) == $s ? 'selected' : '' }}>
+                                            {{ $s }}
+                                        </option>
+                                    @endforeach
+                                    {{-- Legacy fallback so existing records don't lose their value --}}
+                                    @if($processo->status && !in_array($processo->status, \SuiteZap\LawFirm\Legal\Services\LegalOrchestrator::VALID_STATUSES))
+                                        <option value="{{ $processo->status }}" selected>(legado) {{ $processo->status }}</option>
+                                    @endif
+                                </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.error control-name="status" />
+                            </x-admin::form.control-group>
 
-                        {{-- WhatsApp do Advogado Responsável (Robô Agendador) --}}
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                📱 WhatsApp do Advogado Responsável
-                            </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control
-                                type="text"
-                                name="whatsapp_responsavel"
-                                :value="old('whatsapp_responsavel', $processo->whatsapp_responsavel)"
-                                label="WhatsApp do Advogado Responsável"
-                                placeholder="55 (99) 99999-9999" />
-                            <x-admin::form.control-group.error control-name="whatsapp_responsavel" />
-                            <p class="text-xs text-gray-400 mt-1">Usado pelo Robô Agendador para envio de lembretes de prazo. Ex: 55 (11) 99999-9999</p>
-                        </x-admin::form.control-group>
+                            {{-- Responsável Interno --}}
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>Responsável Interno</x-admin::form.control-group.label>
+                                <x-admin::form.control-group.control
+                                    type="select" name="user_id" label="Responsável Interno"
+                                    :value="old('user_id', $processo->user_id)">
+                                    <option value="">@lang('lawfirm::app.processos.form.select-choose')</option>
+                                    @foreach($userRepository->all() as $user)
+                                        <option value="{{ $user->id }}" {{ (int)old('user_id', $processo->user_id) === (int)$user->id ? 'selected' : '' }}>
+                                            {{ $user->name }}
+                                        </option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.error control-name="user_id" />
+                            </x-admin::form.control-group>
+                        </div>
                     </div>
 
                     {{-- Card: Datas e Observações --}}
-                    <div class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <p class="text-lg font-bold text-gray-800 dark:text-white">Datas e Observações</p>
+                    <div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight pb-3 border-b border-gray-100 dark:border-gray-800">Datas e Observações</p>
 
                         <div class="grid grid-cols-2 gap-4">
                             {{-- Data Distribuição --}}
@@ -179,15 +262,18 @@
                                 <x-admin::form.control-group.error control-name="data_distribuicao" />
                             </x-admin::form.control-group>
 
-                            {{-- Data Audiência --}}
+                            {{-- Data Audiência — Componente nativo do Krayin (Flatpickr) --}}
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label>
                                     @lang('lawfirm::app.processos.form.data_audiencia')
                                 </x-admin::form.control-group.label>
                                 <x-admin::form.control-group.control
-                                    type="datetime" name="data_audiencia"
-                                    :value="old('data_audiencia', $processo->data_audiencia ? \Carbon\Carbon::parse($processo->data_audiencia)->format('Y-m-d\TH:i') : '')"
-                                    :label="trans('lawfirm::app.processos.form.data_audiencia')" />
+                                    type="datetime"
+                                    name="data_audiencia"
+                                    id="field_data_audiencia"
+                                    :value="old('data_audiencia', $processo->data_audiencia ? \Carbon\Carbon::parse($processo->data_audiencia)->format('Y-m-d H:i:s') : '')"
+                                    :label="trans('lawfirm::app.processos.form.data_audiencia')"
+                                />
                                 <x-admin::form.control-group.error control-name="data_audiencia" />
                             </x-admin::form.control-group>
                         </div>
@@ -199,7 +285,7 @@
                             </x-admin::form.control-group.label>
                             <x-admin::form.control-group.control
                                 type="textarea" name="descricao"
-                                class="min-h-[120px]" rows="5"
+                                class="min-h-[120px]" rows="15"
                                 :value="old('descricao', $processo->descricao)"
                                 :label="trans('lawfirm::app.processos.form.desc')"
                                 placeholder="Informe aqui suas observações" />
@@ -209,9 +295,9 @@
                 </div>
 
                 {{-- ── ROW 2: DETALHES DO PROCESSO (full width) ── --}}
-                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                    <div class="flex items-center justify-between mb-4">
-                        <p class="text-lg font-bold text-gray-800 dark:text-white">Detalhes do Processo</p>
+                <div class="lf-card rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div class="flex items-center justify-between pb-3 mb-5 border-b border-gray-100 dark:border-gray-800">
+                        <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight">Detalhes do Processo</p>
                         {{-- Botão de preenchimento automático via dados do Escavador --}}
                         <button type="button"
                             onclick="LFSyncFromEscavador()"
@@ -258,7 +344,7 @@
                                 id="field_area_direito"
                                 :value="old('area_direito', $processo->area_direito)"
                                 :label="trans('lawfirm::app.processos.form.area')"
-                                placeholder="Ex: Civil, Trabalhista, Indenização por Dano Moral..." />
+                                placeholder="Ex: Cível, Trabalhista, Consumidor, Familiar..." />
                             <x-admin::form.control-group.error control-name="area_direito" />
                         </x-admin::form.control-group>
 
@@ -322,11 +408,11 @@
                 </div>
 
                 {{-- ── ROW 3: ESTRATÉGICO + PARTE CONTRÁRIA ── --}}
-                <div class="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
+                <div class="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
 
                     {{-- Card: Dados Estratégicos --}}
-                    <div class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <p class="text-lg font-bold text-gray-800 dark:text-white">Dados Estratégicos</p>
+                    <div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight pb-3 border-b border-gray-100 dark:border-gray-800">Dados Estratégicos</p>
 
                         <div class="grid grid-cols-2 gap-4">
                             <x-admin::form.control-group>
@@ -361,8 +447,8 @@
                     </div>
 
                     {{-- Card: Parte Contrária --}}
-                    <div class="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <p class="text-lg font-bold text-gray-800 dark:text-white">Parte Contrária (Oponente)</p>
+                    <div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight pb-3 border-b border-gray-100 dark:border-gray-800">Parte Contrária (Oponente)</p>
 
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label>Nome / Razão Social</x-admin::form.control-group.label>
@@ -399,33 +485,44 @@
                     </div>
                 </div>
 
-                {{-- ── ROW 4: ENVOLVIDOS DO ESCAVADOR ── --}}
-                <div class="rounded-lg border border-primary-100 bg-primary-50/30 p-4 dark:border-primary-900/30 dark:bg-primary-900/10">
-                    <div class="flex items-center justify-between mb-3">
+            </div>{{-- end #section-info --}}
+
+            {{-- ── SECTION: Partes e Advogados ──────────────────────── --}}
+            <div id="section-partes" class="lf-section hidden flex flex-col gap-4">
+
+                {{-- Card: Partes e Advogados --}}
+                <div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
                         <div>
-                            <p class="text-base font-bold text-primary-800 dark:text-primary-300">
-                                ⚖️ Partes e Advogados (Importado de Dados Oficiais)
-                            </p>
+                            <p class="text-lg font-bold text-gray-800 dark:text-white">⚖️ Partes e Advogados</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                Dados extraídos da Capa Oficial do processo. Clique em "Preencher com Dados Oficiais" para importar.
+                                Dados extraídos da Capa Oficial do processo. Clique em "Dados Oficiais (IA)" para importar.
                             </p>
                         </div>
+                        <button type="button"
+                            onclick="lfSwitchSection('escavador')"
+                            class="secondary-button text-xs flex items-center gap-1 bg-primary-50 text-primary-700 border-primary-200 hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-400 dark:border-primary-800">
+                            📥 Importar de Dados Oficiais
+                        </button>
                     </div>
-                    <x-admin::form.control-group>
+                    <x-admin::form.control-group class="mt-4">
                         <x-admin::form.control-group.control
                             type="textarea"
                             name="envolvidos_escavador"
                             id="field_envolvidos_escavador"
-                            class="font-mono text-sm min-h-[120px]"
-                            rows="6"
+                            class="font-mono text-sm min-h-[200px]"
+                            rows="8"
                             :value="old('envolvidos_escavador', $processo->envolvidos_escavador)"
                             label="Partes e Advogados"
-                            placeholder="Os dados serão preenchidos automaticamente ao clicar em 'Preencher com Dados Oficiais'..." />
+                            placeholder="Os dados serão preenchidos automaticamente ao clicar em 'Importar de Dados Oficiais'..." />
                         <x-admin::form.control-group.error control-name="envolvidos_escavador" />
                     </x-admin::form.control-group>
                 </div>
 
-            </div>
+            </div>{{-- end #section-partes --}}
+
+            </div>{{-- end flex wrapper --}}
+
         </x-admin::form>
 
         {{-- Whatsapp Modals --}}
@@ -434,6 +531,103 @@
     </div>
 
     @push('scripts')
+        <style>
+            /* ╔══════════════════════════════════════════════════════════════╗
+               ║  PROCESSOS — UX HARMONIZAÇÃO  (edit)                        ║
+               ╚══════════════════════════════════════════════════════════════╝ */
+
+            /* — Section spacing override (ensures gap-6 is applied) ––––––– */
+            #section-info,
+            #section-partes,
+            #section-prazos,
+            #section-notas,
+            #section-financeiro,
+            #section-docs,
+            #section-modelos,
+            #section-escavador { gap: 1.5rem; }
+
+            /* — Partes section: breathing room from the filter bar ––––––––– */
+            #section-partes:not(.hidden) { margin-top: 0; }
+
+            /* — Card field-group spacing (breathing room between inputs) ––– */
+            .lf-card .control-group,
+            .lf-card [class*="control-group"] { margin-bottom: 0; }
+
+            /* — Field label refinement –––––––––––––––––––––––––––––––––––– */
+            .lf-card label {
+                font-size: 0.75rem;
+                font-weight: 600;
+                letter-spacing: 0.025em;
+                text-transform: uppercase;
+                color: #6b7280;
+            }
+            .dark .lf-card label { color: #9ca3af; }
+
+            /* — Form input refinement ––––––––––––––––––––––––––––––––––––– */
+            .lf-card input:not([type="checkbox"]):not([type="radio"]),
+            .lf-card select,
+            .lf-card textarea {
+                border-radius: 0.5rem;
+                font-size: 0.875rem;
+            }
+
+            /* — Card shadow on hover (Tailwind hover:shadow-md complement) — */
+            .lf-card {
+                transition: box-shadow 200ms ease, border-color 200ms ease;
+            }
+            .lf-card:hover { border-color: #e5e7eb; }
+            .dark .lf-card:hover { border-color: #374151; }
+
+            /* — Filter bar polish ––––––––––––––––––––––––––––––––––––––––– */
+            .lf-filter-btn {
+                white-space: nowrap;
+                padding: 0.35rem 0.85rem;
+                border-radius: 0.5rem;
+                font-size: 0.8rem;
+                font-weight: 500;
+                color: #6b7280;
+                border: 1px solid transparent;
+                transition: all 150ms;
+                cursor: pointer;
+                background: transparent;
+            }
+            .lf-filter-btn:hover { background: #f3f4f6; color: #111827; }
+            .dark .lf-filter-btn:hover { background: #1f2937; color: #f9fafb; }
+            .lf-filter-btn.active {
+                background: #eff6ff;
+                color: #1d4ed8;
+                border-color: #bfdbfe;
+                font-weight: 600;
+            }
+            .dark .lf-filter-btn.active {
+                background: #1e3a5f;
+                color: #93c5fd;
+                border-color: #1d4ed8;
+            }
+        </style>
+        <script>
+            window.lfSwitchSection = function(name) {
+                document.querySelectorAll('.lf-section').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.lf-filter-btn').forEach(el => el.classList.remove('active'));
+                const target = document.getElementById('section-' + name);
+                if (target) target.classList.remove('hidden');
+                const btn = document.querySelector('[data-section="' + name + '"]');
+                if (btn) btn.classList.add('active');
+                localStorage.setItem('lf_processo_section_{{ $processo->id }}', name);
+            };
+            window.lfShowAll = function() {
+                document.querySelectorAll('.lf-section').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.lf-filter-btn').forEach(el => el.classList.remove('active'));
+                const btn = document.querySelector('[data-section="todos"]');
+                if (btn) btn.classList.add('active');
+                localStorage.setItem('lf_processo_section_{{ $processo->id }}', 'todos');
+            };
+            window.lfToggleEscavadorTab = function() { lfSwitchSection('escavador'); };
+            window.addEventListener('DOMContentLoaded', function() {
+                const saved = localStorage.getItem('lf_processo_section_{{ $processo->id }}') || 'info';
+                if (saved === 'todos') { lfShowAll(); } else { lfSwitchSection(saved); }
+            });
+        </script>
         <script>
             window.appendExternalTabs = function(event, form) {
                 // Prevent duplicate appending
@@ -577,6 +771,79 @@
             }
             function toggleMask() { document.getElementById('opposing_party_document').value = ''; }
             window.addEventListener('load', function () { applyMask(); });
+        </script>
+
+        {{-- ── Caso AJAX Selector Logic ────────────────────────── --}}
+        <script>
+            (function() {
+                const searchInput = document.getElementById('lf-caso-search');
+                const hiddenInput = document.getElementById('lf-caso-id');
+                const resultsBox = document.getElementById('lf-caso-results');
+                const selectedBox = document.getElementById('lf-caso-selected');
+                const selectedLabel = document.getElementById('lf-caso-selected-label');
+                const searchUrl = "{{ route('admin.processos.search_caso') }}";
+                let debounceTimer = null;
+
+                // If already selected, hide search input
+                if (hiddenInput.value) {
+                    searchInput.classList.add('hidden');
+                }
+
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(debounceTimer);
+                    const query = this.value.trim();
+                    if (query.length < 2) { resultsBox.classList.add('hidden'); return; }
+
+                    debounceTimer = setTimeout(function() {
+                        fetch(searchUrl + '?query=' + encodeURIComponent(query))
+                            .then(r => r.json())
+                            .then(data => {
+                                const items = data.data || data;
+                                if (!items.length) {
+                                    resultsBox.innerHTML = '<div class="px-3 py-2 text-xs text-gray-400 italic">Nenhum caso encontrado</div>';
+                                } else {
+                                    resultsBox.innerHTML = items.map(c =>
+                                        `<div class="lf-caso-item px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                              data-id="${c.id}" data-titulo="${c.titulo}">
+                                            <span class="font-medium">#${c.id}</span> — ${c.titulo}
+                                            ${c.area ? '<span class="text-xs text-gray-400 ml-1">(' + c.area + ')</span>' : ''}
+                                        </div>`
+                                    ).join('');
+                                }
+                                resultsBox.classList.remove('hidden');
+                                resultsBox.querySelectorAll('.lf-caso-item').forEach(el => {
+                                    el.addEventListener('click', function() {
+                                        lfSelectCaso(this.dataset.id, this.dataset.titulo);
+                                    });
+                                });
+                            })
+                            .catch(() => { resultsBox.classList.add('hidden'); });
+                    }, 300);
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('#lf-caso-selector-wrapper')) {
+                        resultsBox.classList.add('hidden');
+                    }
+                });
+
+                window.lfSelectCaso = function(id, titulo) {
+                    hiddenInput.value = id;
+                    selectedLabel.textContent = '#' + id + ' — ' + titulo;
+                    selectedBox.classList.remove('hidden');
+                    searchInput.value = '';
+                    searchInput.classList.add('hidden');
+                    resultsBox.classList.add('hidden');
+                };
+
+                window.lfClearCaso = function() {
+                    hiddenInput.value = '';
+                    selectedBox.classList.add('hidden');
+                    searchInput.classList.remove('hidden');
+                    searchInput.value = '';
+                    searchInput.focus();
+                };
+            })();
         </script>
     @endpush
 

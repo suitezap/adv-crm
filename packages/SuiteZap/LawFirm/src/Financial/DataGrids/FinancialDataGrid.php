@@ -50,19 +50,15 @@ class FinancialDataGrid extends DataGrid
                 'law_financials.data_vencimento as raw_data_vencimento',
                 'law_financials.status',
                 'law_financials.status as raw_status',
+                'law_financials.payment_method',
                 'persons.name as person_name',
                 'persons.contact_numbers'
             );
 
         // Security / ACL Scope - Filter by User Permissions
-        // -------------------------------------------------------------------------
-        $user = auth()->guard('user')->user();
-
-        // Check 1: Skip filtering if user is administrator (role_id = 1 in Krayin)
-        if ($user && $user->role_id != 1) {
-            $queryBuilder->where('processos.user_id', $user->id);
+        if ($userIds = bouncer()->getAuthorizedUserIds()) {
+            $queryBuilder->whereIn('processos.user_id', $userIds);
         }
-        // -------------------------------------------------------------------------
 
         $this->addFilter('id', 'law_financials.id');
         $this->addFilter('tipo', 'law_financials.tipo');
@@ -70,6 +66,7 @@ class FinancialDataGrid extends DataGrid
         $this->addFilter('valor', 'law_financials.valor');
         $this->addFilter('data_vencimento', 'law_financials.data_vencimento');
         $this->addFilter('status', 'law_financials.status');
+        $this->addFilter('payment_method', 'law_financials.payment_method');
         $this->addFilter('processo_titulo', 'processos.titulo');
 
         // Custom Sorting: Pendente (1) > Others (2) | Then Due Date Ascending
@@ -164,6 +161,37 @@ class FinancialDataGrid extends DataGrid
                     return '-';
                 }
                 return \Carbon\Carbon::parse($row->data_vencimento)->format('d/m/Y');
+            },
+        ]);
+
+        $this->addColumn([
+            'index' => 'payment_method',
+            'label' => 'Forma Pgto',
+            'type' => 'string',
+            'sortable' => true,
+            'filterable' => true,
+            'filterable_type' => 'dropdown',
+            'filterable_options' => [
+                ['label' => 'PIX', 'value' => 'pix'],
+                ['label' => 'Boleto', 'value' => 'boleto'],
+                ['label' => 'Cartão', 'value' => 'cartao'],
+                ['label' => 'Transferência', 'value' => 'transferencia'],
+                ['label' => 'Dinheiro', 'value' => 'dinheiro'],
+            ],
+            'width' => '110px',
+            'closure' => function ($row) {
+                $labels = [
+                    'pix' => ['PIX', 'bg-emerald-100 text-emerald-800'],
+                    'boleto' => ['Boleto', 'bg-blue-100 text-blue-800'],
+                    'cartao' => ['Cartão', 'bg-violet-100 text-violet-800'],
+                    'transferencia' => ['Transf.', 'bg-amber-100 text-amber-800'],
+                    'dinheiro' => ['Dinheiro', 'bg-gray-100 text-gray-700'],
+                ];
+                $pm = $row->payment_method ?? '';
+                if (isset($labels[$pm])) {
+                    return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold ' . $labels[$pm][1] . '">' . $labels[$pm][0] . '</span>';
+                }
+                return '<span class="text-gray-400 text-xs">—</span>';
             },
         ]);
 

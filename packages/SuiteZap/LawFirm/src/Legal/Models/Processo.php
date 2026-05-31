@@ -38,8 +38,10 @@ class Processo extends Model
         'status',
         'link_acesso',
         'person_id',
+        'organization_id',
         'user_id',
         'lead_id',
+        'caso_id',
         'data_distribuicao',
         'data_audiencia',
         'area_direito',
@@ -57,7 +59,7 @@ class Processo extends Model
         'link_audiencia', // hearing_link identified in view
         'advogado_responsavel_nome',
         'advogado_responsavel_oab',
-        'whatsapp_responsavel',
+
         'envolvidos_escavador',
     ];
 
@@ -139,6 +141,26 @@ class Processo extends Model
     public function person(): BelongsTo
     {
         return $this->belongsTo(\Webkul\Contact\Models\Person::class);
+    }
+
+    /**
+     * Get the organization (company) associated with the processo.
+     *
+     * @return BelongsTo
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(\Webkul\Contact\Models\Organization::class);
+    }
+
+    /**
+     * Get the caso (case) this processo belongs to.
+     *
+     * @return BelongsTo
+     */
+    public function caso(): BelongsTo
+    {
+        return $this->belongsTo(Caso::class);
     }
 
     /**
@@ -266,10 +288,10 @@ class Processo extends Model
             return $defaultClass;
         }
 
-        // Only apply alerts if status is active or suspended
-        // Doing case-insensitive check to be safe
-        $status = strtolower($this->status);
-        if ($status !== 'ativo' && $status !== 'suspenso') {
+        // Only apply alerts for non-closed processes.
+        // Any pipeline stage other than 'Encerrado' is considered active.
+        $status = $this->status;
+        if (strcasecmp($status, 'Encerrado') === 0) {
             return $defaultClass;
         }
 

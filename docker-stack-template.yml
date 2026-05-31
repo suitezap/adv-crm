@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   app:
-    image: suitezap/lawfirm:v1.8.1
+    image: suitezap/lawfirm:v3.52.0
     hostname: adv
 
     deploy:
@@ -95,7 +95,6 @@ services:
       - MAIL_ENCRYPTION=tls
       - MAIL_FROM_ADDRESS=sac@suitezap.com.br
       - MAIL_FROM_NAME=SuiteZap
-
       # ⚠️ REGRA LAWFIRM: Variáveis de S3 (FILESYSTEM_DISK, AWS_*),
       # APIs de IA (N8N_*) e WhatsApp (EVOLUTION_*) não devem figurar aqui!
       # São injetados pelo MotherShipService::configureTenantStorage() (v3.17+)
