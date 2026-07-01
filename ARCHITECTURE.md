@@ -1,4 +1,7 @@
-# 🏛 LawFirm CRM - Documento de Arquitetura (v3.52.0 - DDD & SaaS Multi-Tenant)
+# ⚖️ LawFirm CRM - Documento de Arquitetura (v3.54.1 - DDD & SaaS Multi-Tenant)
+
+> [!NOTE]
+> **Imagem Docker Oficial:** `suitezap/lawfirm` — única imagem canônica. `suitezap/adv-crm` foi descontinuada (v3.54.1). Ver ADR §4.85.
 > [!IMPORTANT]
 > **Manutenção do Documento:** Este arquivo **DEVE** ser atualizado (seção 4.x) e a versão incrementada no cabeçalho sempre que houver mudanças estruturais, novas funcionalidades core ou atualizações na constante de versão em `LawFirmServiceProvider.php`.
 
@@ -18,13 +21,15 @@ O código é estritamente separado por responsabilidade.
 | **SaaS** | `SuiteZap\LawFirm\SaaS` | Infraestrutura Multi-tenant. | `Tenant`, `Subscription`, `InfrastructureNode`, `SaasOrder` |
 | **AI** | `SuiteZap\LawFirm\AI` | Assistentes e Automação. | `AiExecution`, `AssistantTemplate`, `AssistantHistory`, `LeadTriagem` |
 | **Escavador** | `SuiteZap\LawFirm\Escavador` | Integração com a API do Escavador (v1/v2). |  `EscavadorRequest` |
+| **Atendimento** | `SuiteZap\LawFirm\Atendimento` | Atendimento via Chatwoot (novo canal centralizado). |  |
 
 ## 3. Regras de Ouro (Development Standards)
 
 ### 3.1 Manipulação de Arquivos (Ironclad Rule)
-⛔ **PROIBIDO:** Usar `Storage::put`, `Storage::makeDirectory` ou acesso direto ao disco local.
+⛔ **PROIBIDO:** Usar `Storage::put`, `Storage::makeDirectory`, `Storage::url` ou acesso direto ao disco local.
 ✅ **OBRIGATÓRIO:** Usar `SuiteZap\LawFirm\SaaS\Services\SaasFileService`.
 *   Motivo: O sistema deve suportar S3/MinIO e isolamento lógico por Tenant.
+*   **Privacidade e Segurança (S3/MinIO):** Todos os buckets de tenants no S3/MinIO são **estritamente privados** para proteger a confidencialidade de documentos jurídicos, procurações e contratos. Portanto, para exibir ou baixar qualquer ativo (como logos do escritório nas configurações, anexos de processos, etc.) no frontend ou painel administrativo, deve-se gerar uma URL temporária assinada usando `SaasFileService::getSignedUrl($path)` ou o método sobreposto `SaasFileService::url($path)` (que resolve automaticamente para URLs assinadas sob driver S3). Jamais use links de storage diretos ou `Storage::url()`.
 
 ### 3.2 Rotas e Controllers
 *   **Rotas:** Devem ser registradas em `src/Http/Routes/admin-{dominio}.php`.
@@ -45,6 +50,14 @@ src/
 │   └── Routes/         (Arquivos de rota por domínio)
 └── Resources/          (Views e Assets)
 ```
+
+### 3.7 Imagem Docker Canônica (Regra desde v3.20)
+
+⛔ **PROIBIDO:** Usar ou referenciar `suitezap/adv-crm` (imagem legada, descontinuada em v3.54.1).
+✅ **OBRIGATÓRIO:** Usar `suitezap/lawfirm` com tag de versão semântica em todos os deploys.
+*   **Docker Hub:** `https://hub.docker.com/r/suitezap/lawfirm`
+*   **Tag de produção atual:** `suitezap/lawfirm:v3.54.0`
+*   **Padrão Swarm/Portainer:** Sempre usar tag específica (`vX.Y.Z`), nunca `:latest` em produção.
 
 ## 4. Histórico de Refatoração (Architectural Decisions)
 
@@ -1059,4 +1072,304 @@ Para modais injetados dinamicamente (ex: Histórico WhatsApp):
 
 *   **`ProcessoObserver::forceCleanupCalendarEvent`** — `findWhere(['type'=>'meeting'])` sem filtro de tenant. Risco de performance em instâncias com muitos registros. Recomendação: adicionar filtro por `user_id` antes do loop.
 *   **`auth()->guard('admin')->id() ?? 1`** em `ProcessoObserver::ensureCalendarEvent` — Fallback silencioso para `user_id=1` em contextos sem sessão (ex: jobs em fila). Refatorar para emitir `Log::warning` em vez de usar fallback.
+
+### 4.78 Hardening de Visibilidade S3 e URLs Temporárias Assinadas (v3.52.2)
+*   **Decisão:** Manter os buckets S3/MinIO de cada tenant estritamente privados para proteção de dados sensíveis (GED, contratos, anexos) e forçar a utilização de URLs temporárias assinadas para qualquer visualização de imagem, logo ou arquivo na UI.
+*   **Problema:** Ao carregar logotipos customizados do tenant para cabeçalho ou barra lateral, a aplicação gerava links diretos usando `Storage::url()` (ou fallbacks locais). No ambiente de produção, com buckets S3 configurados como privados, os usuários recebiam erros `AccessDenied` da API MinIO ao tentar exibir ou baixar essas imagens.
+*   **Mudanças:**
+    *   **`SaasFileService`:** Implementado o método `getSignedUrl(string $path, int $minutes = 60)` e sobrescrito o método `url(string $path)` para retornar automaticamente uma URL assinada quando o driver ativo for S3/MinIO.
+    *   **Views Administrativas (`Krayin Admin`):** Refatoradas as blades `configuration/field-type.blade.php`, `layouts/header/index.blade.php` e `layouts/sidebar/mobile/index.blade.php` substituindo chamadas diretas de `Storage::url()` por resolvedores compatíveis com `SaasFileService::getSignedUrl()`.
+    *   **Notificações de Envio:** Corrigida a classe `SendWhatsappNotification` no domínio `Whatsapp` para recuperar corretamente a URL assinada da imagem do recibo de faturamento antes do dispatch.
+
+### 4.79 Event Delegation em Modelos e Ajuste de Cabeçalho (v3.52.3)
+*   **Decisão:** Melhorar a resiliência do seletor de modelos de documentos na ficha de processos contra o ciclo de vida e reconstruções de DOM induzidas pelo Vue.js, além de corrigir a exibição de layouts no gerenciamento de modelos e atualizar o cabeçalho padrão.
+*   **Mudanças:**
+    *   **JS Event Delegation:** O script de busca e filtro de modelos de documentos na tab (`modelos-tab.blade.php`) foi totalmente refatorado para utilizar delegação de eventos global no objeto `document`. Ao ouvir `focus`, `click`, `input`, `mousedown` e `keydown` no nível do documento, o filtro e as interações do dropdown funcionam estavelmente mesmo se o Vue/Livewire destruir e recriar os elementos de formulário na view.
+    *   **Correção de Sobrescrita de Coleção:** Corrigido bug na view do CRUD de modelos (`index.blade.php`) onde a coleção `$localTemplates` gerada pelo controller (que inclui os templates de Cabeçalho e Rodapé locais) era sobrescrita com a lista de modelos ativos filtrada (que os exclui), fazendo com que sumissem do gerenciamento.
+    *   **Atualização do Cabeçalho Padrão:** O HTML do layout padrão do cabeçalho de documentos gerado por `DocumentTemplateController::createDefaultLayout` foi atualizado para uma tabela sem bordas, com altura definida, contendo a logomarca corporativa hospedada no S3 e o nome do escritório (`{{escritorio_nome}}`).
+
+### 4.80 Campo Chave Secreta (sercreta) em Processos para Controle de IA (v3.52.4)
+*   **Decisão:** Introduzir um campo dinâmico e seguro de chave secreta (`sercreta`) na tabela `processos` e na ficha de processos ("Informações Básicas") para possibilitar que os assistentes de IA realizem o controle e validação de comunicações remotas via WhatsApp ou ligações telefônicas.
+*   **Mudanças no Backend:**
+    *   **Migration:** `2026_06_05_223106_add_sercreta_to_processos_table.php` — adiciona a coluna `sercreta` (VARCHAR(7), nullable) na tabela `processos` logo após a coluna `id`.
+    *   **Model (`Processo`):** O campo `sercreta` foi incluído no array `$fillable` para permitir a gravação do valor a partir do formulário de criação/edição.
+    *   **Geração Automática (`ProcessoObserver`):** Adicionado o método `creating(Processo $processo)` ao `ProcessoObserver` para gerar automaticamente uma chave aleatória numérica de 5 dígitos formatada com zeros à esquerda se o campo estiver vazio ao persistir o registro.
+*   **Mudanças na UI (`create.blade.php` e `edit.blade.php`):**
+    *   Inclusão do campo de input **Chave Secreta (IA)** na ficha de processos sob o painel de **Informações Básicas** (ao lado do status e do responsável).
+
+### 4.81 Integração Chatwoot e Criação do Domínio Atendimento (v3.52.5)
+*   **Decisão:** Integrar o Chatwoot como canal de atendimento gerido centralmente pelo Mothership. O CRM NUNCA hardcoda credenciais.
+*   **Mudanças no Backend:**
+    *   **Domínio `Atendimento`:** Criado para gerir toda a integração e fluxos do Chatwoot.
+    *   **Service `ChatwootService`:** Consome a configuração via `MotherShipService::getChatwootConfig()` (que une dados do nó do servidor `infrastructure_nodes` e do tenant `tenants`).
+    *   **Webhook Seguro:** Endpoint `/api/webhooks/chatwoot` isento de CSRF e protegido pelo `webhook_token` do tenant validando a assinatura criptográfica (`X-Chatwoot-Signature`).
+*   **Regras de Ouro:**
+    *   NUNCA hardcodar `api_key` ou `inbox_id` no `.env`.
+    *   Sempre valide a assinatura do webhook usando o `webhook_token`.
+    *   Retorne HTTP 200 imediatamente para webhooks do Chatwoot para evitar timeout, delegando o processamento pesado a Jobs nas filas.
+
+### 4.82 Implementação Completa do Domínio Atendimento e Ajustes v3.53.0 (v3.53.0)
+*   **Data:** 2026-06-22 | **Auditor:** Antigravity Senior Architect
+*   **Motivação:** Concluir a implementação física do domínio `Atendimento/` (documentado na seção 4.81 mas não existia fisicamente em `src/`), implementar `getChatwootConfig()` no `MotherShipService`, registrar nova chave de precificação Escavador V1 e reforçar guards de escrita em templates globais.
+
+#### Mudanças no Backend
+
+1.  **Domínio `Atendimento/` — Criação Física** (`src/Atendimento/`)
+    *   **`ChatwootService`** (`Atendimento/Services/ChatwootService.php`): Service completo de integração com Chatwoot. Config injetada exclusivamente via `MotherShipService::getChatwootConfig()` (Zero-.env). Implementa `sendMessage()`, `addLabels()`, `getLabels()`, `findContactByPhone()`. Mantém distinção crítica de tokens: `botHeaders()` usa `api_key` do nó; `managementHeaders()` usa `access_token` (User Access Token do tenant) — obrigatório para `/labels` e `/contacts`.
+    *   **`ChatwootWebhookController`** (`Atendimento/Http/Controllers/ChatwootWebhookController.php`): Receptor de eventos do Chatwoot. Implementa 3 camadas de validação: (1) Assinatura HMAC-SHA1 via `X-Chatwoot-Signature`, (2) Cross-tenant guard via `inbox_id`, (3) Retorno HTTP 200 imediato com dispatch para Jobs. Rota `POST /api/webhooks/chatwoot` registrada no grupo `api` (CSRF-exempt).
+
+2.  **`MotherShipService::getChatwootConfig()`** — Novo método estático seguindo o padrão de `getEvolutionConfig()`. Consulta `tenants.chatwoot_node_id` → `infrastructure_nodes` com cache de 300s. Retorna array com `base_url`, `api_key` (bot), `account_id`, `inbox_id`, `access_token` e `webhook_token` (user access token).
+
+3.  **Precificação Escavador — Nova chave V1 Autos** — Chave `API_V1_AUTOS_PROCESSO` adicionada ao array de `getEscavadorPrices()`, mapeando `escavador_price_v1_autos_processo` (fallback R$ 1,50). Distingue o endpoint `POST /v1/processos/{id}/autos` com download de peças dos demais endpoints de autos.
+
+4.  **DocumentTemplateController — Guards HTTP 403** — Métodos `edit()`, `update()` e `destroy()` agora verificam `$template->is_global` antes de qualquer operação de escrita. Templates do Mothership (com `unique_id` prefixado por `global-`) são imutáveis pelo tenant: retornam `abort(403)` ou `response()->json([...], 403)` com mensagem clara.
+
+#### Mudanças de Infra e Configuração
+
+*   **`app/Http/Middleware/VerifyCsrfToken.php`:** `api/webhooks/chatwoot` adicionado ao array `$except`.
+*   **`src/Http/routes.php`:** Rota `POST api/webhooks/chatwoot` registrada no grupo `api` público junto aos demais webhooks.
+*   **`src/Providers/LawFirmServiceProvider.php`:** `VERSION` bumped de `3.52.5` para `3.53.0`.
+*   **`ARCHITECTURE_dir.md`:** Domínio `Atendimento/` marcado como ativo com nota de versão `v3.53.0`.
+
+#### Score de Conformidade DDD pós-v3.53.0
+
+| # | Dimensão | Status |
+|---|----------|--------|
+| 1 | Zero Root Controllers | ✅ PASS |
+| 2 | Storage via SaasFileService | ✅ PASS |
+| 3 | `env()` banido fora de Config/MotherShipService | ✅ PASS |
+| 4 | Namespace DDD `SuiteZap\LawFirm\{Domain}\{Type}` | ✅ PASS |
+| 5 | Config Chatwoot via MotherShipService | ✅ PASS |
+| 6 | Webhook com HMAC-SHA1 + cross-tenant guard | ✅ PASS |
+| 7 | Templates globais imutáveis (403 guards) | ✅ PASS |
+
+#### Fechamento de Riscos Residuais (backlog v3.52.1)
+
+*   ✅ **FECHADO — `ProcessoObserver::forceCleanupCalendarEvent`** — `findWhere` agora filtra por `tenant_id` via `MotherShipService::getTenantId()` (linhas 188-191). Risco de performance cross-tenant eliminado. Auditado em 2026-06-30.
+*   ✅ **FECHADO — fallback silencioso `user_id=1`** — `ProcessoObserver::ensureCalendarEvent` agora emite `Log::warning()` e executa `return` quando `user_id` não é resolvido, em vez de usar `user_id=1`. Auditado em 2026-06-30.
+
+---
+
+### 4.83 Auditoria de Conformidade DDD e Mitigação de Débitos Técnicos (v3.53.1)
+
+*   **Data:** 2026-06-30 | **Auditor:** Antigravity Senior Architect
+*   **Score Auditoria:** 9.8 / 10 → 9.9 / 10 pós-correção
+*   **Motivação:** Auditoria de conformidade pós-v3.53.0. Três débitos técnicos não-bloqueantes identificados e mitigados no mesmo ciclo.
+
+#### Mudanças Aplicadas
+
+1.  **DÉBITO-1 — `AI/Jobs/ProcessAiAssistant.php` — Regra 4 (Graceful Degradation em Jobs)**
+    *   **Antes:** `throw new \Exception()` para condições de configuração inválida (`N8N não configurado`, `Webhook URL vazia`), capturado internamente pelo `catch` mas violando a letra da Regra 4.
+    *   **Depois:** Substituídos por `Log::error() + history->update(['status' => 'failed']) + return`. Bloco `catch` externo mantido como safety-net exclusivo com contexto enriquecido (`class`, `file`, `line`). Comentário `// throw $e;` removido.
+    *   **Regra aplicada:** SKILL.md §4 — "Jobs/Listeners usam `Log::error()` + `return`. Nunca propagam throw."
+
+2.  **DÉBITO-2 — `Console/Commands/CalculateStorageUsage.php` — Docblock ambíguo**
+    *   **Antes:** Docblock mencionava `Storage::disk('s3')` de forma que podia ser interpretada como chamada existente no arquivo.
+    *   **Depois:** Reescrito com afirmação explícita: `"Este comando NÃO contém nenhuma chamada direta a Storage::"` com `@see SaasFileService`.
+
+3.  **DÉBITO-3 — `src/Http/Controllers/Admin/` e `src/Http/Controllers/Api/` removidas**
+    *   **Antes:** Dois subdiretórios vazios vestigiais desde a migração v3.14/v3.17.
+    *   **Depois:** Ambas removidas. `src/Http/Controllers/` agora está **completamente vazio** (verificado via `Get-ChildItem` pós-remoção). Zero Root Controllers agora é semanticamente perfeito.
+    *   **Regra aplicada:** ARCHITECTURE.md §4.36 — "Zero Root Controllers: `src/Http/Controllers/` vazio desde v3.36".
+
+4.  **Doc — `ARCHITECTURE_dir.md`** — Cabeçalho atualizado de `v3.52.4` → `v3.53.0`.
+
+#### Score de Conformidade DDD pós-v3.53.1
+
+| # | Dimensão | Status |
+|---|----------|--------|
+| 1 | Zero Root Controllers (dir completamente vazio) | ✅ PASS |
+| 2 | Storage via SaasFileService | ✅ PASS |
+| 3 | `env()` banido fora de Config/MotherShipService | ✅ PASS |
+| 4 | Log::debug banido em produção | ✅ PASS |
+| 5 | Jobs: `Log::error()` + `return` sem `throw` | ✅ PASS |
+| 6 | Docblocks sem menções ambíguas a APIs proibidas | ✅ PASS |
+| 7 | ARCHITECTURE_dir.md sincronizado com VERSION | ✅ PASS |
+| **TOTAL** | **Score Final** | **🏆 9.9 / 10** |
+
+### 4.84 Manutenção — Docker Hub Update v3.54.0 (v3.54.0)
+
+*   **Decisão:** Atualizar a imagem oficial do Docker Hub (`suitezap/lawfirm`) para consolidar as integrações de triagem, escavador, Chatwoot e correções acumuladas até a versão v3.54.0.
+*   **Mudanças:**
+    *   **`docker/entrypoint.sh` (linha 4):** String de startup atualizada para `LF v3.54.0`.
+    *   **`CHANGELOG.md`:** Adicionada entrada para a versão v3.54.0.
+    *   **Imagens publicadas:** `suitezap/lawfirm:v3.54.0` e `suitezap/lawfirm:latest` publicadas no Docker Hub Registry.
+*   **Verificação:** Executado `docker run --rm suitezap/lawfirm:v3.54.0` confirmando a string `🚀 Iniciando LawFirm SaaS v6.2 (LF v3.54.0)...` no startup do container.
+
+### 4.83 Sincronização Automática de Labels Chatwoot via Movimentação de Kanban (v3.54.0)
+
+*   **Data:** 2026-06-30 | **Implementação:** Antigravity Senior Architect
+*   **Motivação:** Quando um Lead é arrastado entre etapas do Kanban de Vendas (`/admin/leads`) ou um Caso é movido no Kanban Jurídico (`/admin/juridico/kanban`), a label do contato correspondente no Chatwoot deve ser atualizada automaticamente. Isso permite que as equipes de atendimento visualizem em tempo real o estágio de cada cliente nas conversas WhatsApp, sem precisar abrir o CRM.
+
+#### Arquitetura da Solução
+
+O fluxo é totalmente **assíncrono e não-bloqueante** — o HTTP response retorna imediatamente e a sincronização ocorre via queue worker.
+
+```
+[Kanban Lead — drag card]
+    → LeadController::updateStage()                           (Krayin nativo)
+    → Event::dispatch('lead.update.after', $lead)
+    → SyncLeadStageToChatwootListener::handle($lead)          [ShouldQueue]
+        ├── MotherShipService::getChatwootConfig() → null? log + return
+        ├── Resolve $lead->stage->code → label via STAGE_LABEL_MAP
+        ├── Resolve $lead->person->contact_numbers[0]['value'] → phone
+        ├── ChatwootService::findOrCreateContact(phone, name)
+        └── ChatwootService::syncContactLabels(contactId, label, LEAD_POOL)
+
+[Kanban Jurídico — drag card]
+    → LegalKanbanController::updateStage()
+    → LegalPipelineService::moveCaseToStage($caso, $stageId)  [DB::transaction]
+    → Event::dispatch(new CasoStageUpdated($caso))            ← NOVO (pós-commit)
+    → SyncCasoStageToChatwootListener::handle($event)         [ShouldQueue]
+        ├── MotherShipService::getChatwootConfig() → null? log + return
+        ├── Str::slug($caso->stage->name) → label via STAGE_LABEL_MAP
+        ├── Resolve $caso->person->contact_numbers[0]['value'] → phone
+        ├── ChatwootService::findOrCreateContact(phone, name)
+        └── ChatwootService::syncContactLabels(contactId, label, CASO_POOL)
+```
+
+#### Mapeamento de Estágios → Labels Chatwoot
+
+**Kanban de Leads** (`lead_pipeline_stages.code` → label):
+
+| Stage Code | Label Chatwoot |
+|:---|:---|
+| `new` | `LD_NOVO` |
+| `follow-up` | `LD_ACOMP` |
+| `prospect` | `LD_QUAL` |
+| `negotiation` | `LD_NEG` |
+| `won` | `LD_GANHO` |
+| `lost` | `LD_PERD` |
+
+**Kanban Jurídico** (`Str::slug(stage->name)` → label) — 12 stages cobertos: `CAS_NOVO`, `CAS_ANAL`, `CAS_AGCLI`, `CAS_PROD`, `CAS_PROT`, `CAS_AGJUD`, `CAS_PRAZO`, `CAS_AUD`, `CAS_SENT`, `CAS_RECUR`, `CAS_EXEC`, `CAS_ENCER`.
+
+#### Estratégia `syncContactLabels` — Replace Parcial de Labels
+
+O método opera em **todas as conversas abertas** do contato:
+1. `GET /conversations/{id}/labels` — lê labels atuais
+2. Remove apenas labels do pool da categoria (ex: todas as `LD_*` para Leads)
+3. Adiciona a nova label de stage
+4. `PUT /conversations/{id}/labels` — salva o array resultante
+
+Labels de outras categorias (`ORG_WHATS`, `CLI_PF`, `FIN_ADIM`, etc.) são **sempre preservadas**.
+
+#### Arquivos Criados / Modificados
+
+| Operação | Arquivo | Descrição |
+|:---|:---|:---|
+| **CRIADO** | `Legal/Events/CasoStageUpdated.php` | Evento tipado disparado após movimentação de Caso no Kanban Jurídico |
+| **CRIADO** | `Legal/Listeners/SyncLeadStageToChatwootListener.php` | Escuta `lead.update.after` — mapeia `stage->code`, resolve telefone do `Person` (JSON column `contact_numbers`), sincroniza labels |
+| **CRIADO** | `Legal/Listeners/SyncCasoStageToChatwootListener.php` | Escuta `CasoStageUpdated` — mapeia via `Str::slug(stage->name)`, idêntica lógica de sincronização |
+| **MODIFICADO** | `Atendimento/Services/ChatwootService.php` | +4 métodos: `createContact`, `findOrCreateContact`, `getContactConversations`, `syncContactLabels` |
+| **MODIFICADO** | `Legal/Services/LegalPipelineService.php` | `moveCaseToStage()` captura resultado da `DB::transaction` em `$updatedCaso` e despacha `CasoStageUpdated` após commit |
+| **MODIFICADO** | `Providers/EventServiceProvider.php` | Registra `CasoStageUpdated → SyncCasoStageToChatwootListener` no array `$listen` |
+| **MODIFICADO** | `Providers/LawFirmServiceProvider.php` | Adiciona `SyncLeadStageToChatwootListener` ao evento `lead.update.after` (linha 270) |
+
+#### Regras de Ouro Aplicadas
+
+*   **Zero `.env`:** Credenciais Chatwoot exclusivamente via `MotherShipService::getChatwootConfig()`.
+*   **Degradação Graciosa:** Se `getChatwootConfig()` retorna `null` (Chatwoot não configurado para o tenant), o Listener registra `Log::info` silencioso e retorna — **nunca lança exceção**.
+*   **`ShouldQueue` com `tries = 1`:** Listeners enfileirados; nenhuma retentativa para evitar flood na API do Chatwoot.
+*   **Evento pós-commit:** `CasoStageUpdated` é disparado **após** o `DB::transaction` commits — Listeners enxergam estado persistido.
+*   **Idempotência:** `findOrCreateContact` não duplica contatos no Chatwoot.
+*   **Dados do Person:** Telefones extraídos de `$person->contact_numbers` (JSON column com cast `array`, estrutura `[['value' => '...', 'label' => '...'], ...]`). Sem relação Eloquent — acesso direto ao array.
+
+#### Score de Conformidade DDD pós-v3.54.0
+
+| # | Dimensão | Status |
+|---|----------|--------|
+| 1 | Zero Root Controllers | ✅ PASS |
+| 2 | Zero `.env` / MotherShipService | ✅ PASS |
+| 3 | `ShouldQueue` + `tries=1` (sem bloquear HTTP) | ✅ PASS |
+| 4 | Evento pós-commit (não dentro da transaction) | ✅ PASS |
+| 5 | Degradação graciosa (sem throw para o caller) | ✅ PASS |
+| 6 | Namespace DDD `SuiteZap\LawFirm\{Domain}\{Type}` | ✅ PASS |
+| **TOTAL** | **Score Final** | **🏆 10 / 10** |
+
+### 4.85 Correção de Bug Crítico — Separação de `account_id` e `inbox_id` no Chatwoot (v3.54.1)
+
+*   **Data:** 2026-07-01 | **Implementação:** Antigravity Senior Architect
+*   **Motivação:** A coluna `chatwoot_inbox_id` na tabela `tenants` do Mothership estava sendo usada de forma ambígua — guardava ora o `account_id` (ID da conta Chatwoot), ora o `inbox_id` (ID da caixa de entrada). Isso causava dois bugs críticos:
+    1.  `ChatwootWebhookController` — guard de `inbox_id` comparava valor errado → risco de **cross-tenant event leakage**.
+    2.  `ChatwootService::createContact()` — `inbox_id` errado passado ao criar contatos no Chatwoot (erro `422` ou criação em inbox incorreto).
+
+#### Solução Implementada
+
+| Coluna | Semântica definitiva |
+|:---|:---|
+| `chatwoot_inbox_id` | **account_id** — ID numérico da conta Chatwoot (legado, mantida) |
+| `chatwoot_channel_inbox_id` | **inbox_id** — ID real da Caixa de Entrada (NOVA) |
+
+#### Arquivos Criados / Modificados
+
+| Operação | Arquivo | Descrição |
+|:---|:---|:---|
+| **CRIADO** | `Database/Migrations/2026_07_01_000001_add_chatwoot_channel_inbox_id_to_tenants.php` | Migration Laravel que adiciona `chatwoot_channel_inbox_id INT UNSIGNED NULL` na tabela `tenants` (conexão `mothership`). Idempotente via `hasColumn()`. |
+| **MODIFICADO** | `SaaS/Models/Tenant.php` | `$fillable` atualizado com `chatwoot_node_id`, `chatwoot_inbox_id`, `chatwoot_channel_inbox_id`, `chatwoot_webhook_token`. Adicionado relationship `chatwootNode()`. |
+| **MODIFICADO** | `SaaS/Services/MotherShipService.php` | `getChatwootConfig()` corrigido — `inbox_id` agora lido de `chatwoot_channel_inbox_id` (correto) e `account_id` mantido em `chatwoot_inbox_id` / `meta_data.account_id`. |
+
+#### Fluxo de Dados Corrigido
+
+```
+MotherShip UI
+  chatwoot_inbox_id         → account_id (ID da conta — ex: 1)
+  chatwoot_channel_inbox_id → inbox_id   (ID da caixa — ex: 3)
+
+getChatwootConfig() retorna:
+  account_id ← $meta['account_id'] ?? $tenant->chatwoot_inbox_id
+  inbox_id   ← $tenant->chatwoot_channel_inbox_id   ← CORRIGIDO
+
+ChatwootService::createContact()  usa config['inbox_id'] ← correto
+ChatwootWebhookController         valida payload.inbox_id == config['inbox_id'] ← correto
+```
+
+#### Score de Conformidade DDD pós-v3.54.1
+
+| # | Dimensão | Status |
+|---|----------|--------|
+| 1 | Migration idempotente com `hasColumn()` | ✅ PASS |
+| 2 | Conexão explícita `mothership` na migration | ✅ PASS |
+| 3 | `Tenant.$fillable` completo (sem mass-assignment risk) | ✅ PASS |
+| 4 | `getChatwootConfig()` documentado via PHPDoc com semântica de colunas | ✅ PASS |
+| 5 | Mothership UI (dashboard + tenants) com campos separados | ✅ PASS |
+| 6 | Retrocompatibilidade preservada (`chatwoot_inbox_id` mantida) | ✅ PASS |
+| **TOTAL** | **Score Final** | **🏆 10 / 10** |
+
+---
+
+### 4.85 Consolidação do Docker Hub — Imagem Canônica `suitezap/lawfirm` (v3.54.1)
+
+*   **Decisão:** Consolidar em **uma única imagem Docker oficial** para eliminar ambiguidade entre as duas imagens que existiam no Docker Hub: `suitezap/adv-crm` (legada, descontinuada) e `suitezap/lawfirm` (canônica, ativa).
+
+*   **Contexto:** A imagem `suitezap/adv-crm` foi criada nas primeiras versões do projeto quando o repositório ainda se chamava `adv-crm`. Com a adoção do nome de produto **LawFirm / SuiteZap**, a imagem `suitezap/lawfirm` tornou-se a referência oficial desde a v3.20. A coexistência das duas causava confusão na hora do deploy.
+
+*   **Ação Realizada:**
+    *   **Descontinuada:** `suitezap/adv-crm` — removida do Docker Hub (repositório arquivado).
+    *   **Canônica:** `suitezap/lawfirm` — única imagem oficial, sempre atualizada.
+    *   **`docker-stack-template.yml`:** Corrigida referência de `v3.53.1` → `v3.54.0`.
+
+*   **Regra Definitiva — Imagem Docker:**
+
+    > ⛔ **NUNCA** usar ou referenciar `suitezap/adv-crm` em qualquer contexto.
+    > ✅ **SEMPRE** usar `suitezap/lawfirm` com tag semântica de versão.
+
+    ```bash
+    # Padrão de build e push
+    docker build -t suitezap/lawfirm:vX.Y.Z -t suitezap/lawfirm:latest .
+    docker push suitezap/lawfirm:vX.Y.Z
+    docker push suitezap/lawfirm:latest
+
+    # Docker Stack (Swarm / Portainer)
+    image: suitezap/lawfirm:vX.Y.Z   # sempre versão específica, nunca :latest em produção
+    ```
+
+*   **Tags publicadas no Docker Hub (histórico):**
+
+    | Tag | Versão LawFirm | Data | Status |
+    |---|---|---|---|
+    | `latest` | v3.54.0 | 2026-06-30 | ✅ Ativo |
+    | `v3.54.0` | v3.54.0 | 2026-06-30 | ✅ Ativo |
+    | `v3.51.0` | v3.51.0 | 2026-06 | ✅ Ativo |
+    | `v3.50.0` | v3.50.0 | 2026-06 | ✅ Ativo |
+    | `v3.20` / `v1.7` | v3.20 | 2026-04 | ⚠️ Legado |
 

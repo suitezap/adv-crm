@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   app:
-    image: suitezap/lawfirm:v3.52.0
+    image: suitezap/lawfirm:v3.54.0
     hostname: adv
 
     deploy:
