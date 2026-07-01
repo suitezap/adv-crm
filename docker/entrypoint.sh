@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Iniciando LawFirm SaaS v6.2 (LF v3.52.0)..."
+echo "🚀 Iniciando LawFirm SaaS v6.2 (LF v3.54.1)..."
 
 # 1. Setup Inicial
 cd /var/www/html
@@ -83,8 +83,7 @@ php artisan migrate --force \
     --path=packages/Webkul/DataGrid/src/Database/Migrations \
     --path=packages/Webkul/Marketing/src/Database/Migrations \
     --path=packages/Webkul/DataTransfer/src/Database/Migrations \
-    --path=packages/SuiteZap/LawFirm/src/Database/Migrations \
-    --path=packages/SuiteZap/Whaticket/src/Database/Migrations
+    --path=packages/SuiteZap/LawFirm/src/Database/Migrations
 
 # Seed apenas no PRIMEIRO deploy (quando não há dados essenciais)
 # O PipelineSeeder é destrutivo (DELETE + INSERT), então não pode rodar em todo boot.

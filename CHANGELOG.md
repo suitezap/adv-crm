@@ -1,3 +1,41 @@
+## **LF v3.54.1 (Julho 2026)** - *Patch Release*
+
+* [feature] Novo domínio `TenantFinance`: faturamento e integração Asaas por tenant (InvoiceController, TenantAsaasWebhookController, TenantAsaasSettingsController, modelos, service, datagrid).
+* [feature] Expansão do domínio `Whatsapp`: WhatsappChatController, WhatsappTemplatesController, WhatsappWebhookController, MessengerService, modelos Contact/Message/Ticket.
+* [feature] Expansão do domínio `Legal`: CasoController, AgendaController, LegalKanbanController, CustomerPortalController, LegalOrchestrator, LegalPipelineService, 12+ views.
+* [feature] `SuiteCoinService` para gestão de créditos de IA por tenant.
+* [fixed] `SyncLeadStageToChatwootListener` — import de namespace corrigido.
+* [maintenance] Consolidação da imagem Docker: `suitezap/adv-crm` descontinuada. Imagem canônica única: `suitezap/lawfirm`.
+* [maintenance] Formatação completa do `src/` via Laravel Pint (line_ending, single_quote, trailing_comma, etc.).
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.54.1.
+
+## **LF v3.54.0 (Julho 2026)** - *Release*
+
+* [feature] Integração de Triagem de Leads, Monitoramentos do Escavador e Template de WhatsApp.
+* [feature] Integração oficial e sincronização de estágios de Leads com o Chatwoot.
+* [fixed] Correção de segurança e nulidade em propriedades computadas de busca/lookup no admin do Webkul.
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.54.0.
+
+## **LF v3.52.4 (Junho 2026)** - *Patch Release*
+
+* [feature] Adição do campo `sercreta` (Chave Secreta IA) na ficha de processos (Informações Básicas).
+* [fixed] Autogeração de chave secreta de 5 dígitos via `ProcessoObserver@creating` caso o campo esteja vazio.
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.52.4.
+
+## **LF v3.52.3 (Junho 2026)** - *Patch Release*
+
+* [fixed] Correção do seletor de modelos de documentos na ficha de processos, implementando delegação de eventos global no JS para garantir a busca e filtragem em tempo real independente do ciclo de vida e re-renderizações do Vue.js/Livewire.
+* [fixed] Correção na exibição de modelos de layout (Cabeçalho/Rodapé) na tabela "Meus Modelos Locais" da tela de gerenciamento de Modelos de Documentos, removendo sobrescrita indevida de coleção na view blade.
+* [enhancement] Atualização do código HTML padrão do Cabeçalho para incluir a logomarca corporativa e formatação otimizada para tabelas sem borda.
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.52.3.
+
+## **LF v3.52.2 (Junho 2026)** - *Patch Release*
+
+
+* [fixed] Correção de erros críticos na exibição de logotipos e imagens quando configuradas no S3/MinIO privado, forçando URLs temporárias assinadas via SaasFileService.
+* [fixed] Correção de bug de visibilidade do recibo no envio de notificações de WhatsApp.
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.52.2.
+
 ## **LF v3.52.0 (Maio 2026)** - *Release*
 
 * [fixed] Correção de erros críticos do VueJS (TypeError: Cannot read properties of null (reading 'toLowerCase')) ao buscar nos componentes Lookup, Inline Lookup e Email View.
