@@ -17,6 +17,10 @@ Route::middleware(['api'])->group(function () {
     Route::post('api/webhooks/tenant-asaas', [\SuiteZap\LawFirm\TenantFinance\Http\Controllers\TenantAsaasWebhookController::class, 'handle'])
         ->name('webhooks.tenant_asaas');
 
+    // ── Chatwoot Atendimento Webhook (CSRF-exempt — receives Chatwoot callbacks) ──
+    Route::post('api/webhooks/chatwoot', [\SuiteZap\LawFirm\Atendimento\Http\Controllers\ChatwootWebhookController::class, 'handle'])
+        ->name('webhooks.chatwoot');
+
     // ── WhatsApp Messenger Inbox Webhook (CSRF-exempt — receives Evolution API callbacks) ──
     Route::post('api/webhooks/whatsapp-messenger/{tenantId}', [\SuiteZap\LawFirm\Whatsapp\Http\Controllers\WhatsappWebhookController::class, 'handle'])
         ->name('webhooks.whatsapp_messenger');
@@ -33,7 +37,6 @@ Route::middleware(['web'])->group(function () {
     Route::post('portal/processo/{id}/upload', [\SuiteZap\LawFirm\Legal\Http\Controllers\PublicPortal\CustomerPortalController::class, 'upload'])
         ->name('lawfirm.public.portal.upload');
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -54,7 +57,7 @@ Route::middleware(['web'])->group(function () {
 // ============================================================================
 if (app()->environment('local')) {
     Route::middleware(['web'])
-        ->prefix(config('app.admin_path', 'admin') . '/lawfirm')
+        ->prefix(config('app.admin_path', 'admin').'/lawfirm')
         ->group(function () {
             Route::get('debug-status', function () {
                 return response('LawFirm Package is ACTIVE', 200)
@@ -84,15 +87,15 @@ Route::middleware(['web', 'admin_locale', 'user'])
 // MAIN ROUTES — /admin/juridico
 // ============================================================================
 Route::middleware(['web', 'admin_locale', 'user'])
-    ->prefix(config('app.admin_path', 'admin') . '/juridico')
+    ->prefix(config('app.admin_path', 'admin').'/juridico')
     ->group(function () {
-        require __DIR__ . '/Routes/admin-legal.php';
-        require __DIR__ . '/Routes/admin-ged.php';
-        require __DIR__ . '/Routes/admin-saas.php';
-        require __DIR__ . '/Routes/admin-whatsapp.php';
-        require __DIR__ . '/Routes/admin-escavador.php';
-        require __DIR__ . '/Routes/admin-datajud.php';
-        require __DIR__ . '/Routes/admin-tenant-finance.php';
+        require __DIR__.'/Routes/admin-legal.php';
+        require __DIR__.'/Routes/admin-ged.php';
+        require __DIR__.'/Routes/admin-saas.php';
+        require __DIR__.'/Routes/admin-whatsapp.php';
+        require __DIR__.'/Routes/admin-escavador.php';
+        require __DIR__.'/Routes/admin-datajud.php';
+        require __DIR__.'/Routes/admin-tenant-finance.php';
     });
 
 // ============================================================================
@@ -108,26 +111,29 @@ Route::middleware(['web', 'user'])
         })->name('admin.lawfirm.index');
 
         // Financial (loaded from domain file)
-        require __DIR__ . '/Routes/admin-financial.php';
+        require __DIR__.'/Routes/admin-financial.php';
 
         // Debug routes — only in local environment
         if (app()->environment('local')) {
             Route::get('debug-view', function () {
                 $viewName = 'lawfirm::contacts.persons.edit-extension';
+
                 return response()->json([
                     'view_name' => $viewName,
-                    'exists' => \Illuminate\Support\Facades\View::exists($viewName),
-                    'hints' => app('view')->getFinder()->getHints(),
+                    'exists'    => \Illuminate\Support\Facades\View::exists($viewName),
+                    'hints'     => app('view')->getFinder()->getHints(),
                 ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
             })->name('admin.lawfirm.debug_view');
 
             Route::get('debug-permissions', function () {
                 $user = auth()->guard('user')->user();
-                if (!$user)
+                if (! $user) {
                     return response('Usuário não logado.', 401);
+                }
+
                 return [
-                    'user_name' => $user->name,
-                    'role_name' => $user->role->name,
+                    'user_name'   => $user->name,
+                    'role_name'   => $user->role->name,
                     'permissions' => $user->role->permissions,
                 ];
             })->name('admin.lawfirm.debug_permissions');

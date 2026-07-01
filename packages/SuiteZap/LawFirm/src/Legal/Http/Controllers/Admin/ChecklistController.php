@@ -48,26 +48,26 @@ class ChecklistController extends Controller
             ->first();
 
         // Se não existe, retornar indicação para o frontend mostrar seleção de área
-        if (!$checklist) {
+        if (! $checklist) {
             return response()->json([
-                'status' => 'new_lead', // Frontend handles this as "show area selection"
-                'available_types' => ChecklistTemplates::getAvailableTypes(),
-                'is_won' => $isWon,
-                'lead_status_label' => $statusLabel,
+                'status'             => 'new_lead', // Frontend handles this as "show area selection"
+                'available_types'    => ChecklistTemplates::getAvailableTypes(),
+                'is_won'             => $isWon,
+                'lead_status_label'  => $statusLabel,
                 'viability_template' => $viabilityTemplate,
-                'context' => $context,
+                'context'            => $context,
             ]);
         }
 
         // Se existe, retornar dados + template correspondente
         return response()->json([
-            'status' => 'success',
-            'data' => $checklist,
-            'steps' => ChecklistTemplates::getTemplate($checklist->type),
-            'is_won' => $isWon,
-            'lead_status_label' => $statusLabel,
+            'status'             => 'success',
+            'data'               => $checklist,
+            'steps'              => ChecklistTemplates::getTemplate($checklist->type),
+            'is_won'             => $isWon,
+            'lead_status_label'  => $statusLabel,
             'viability_template' => $viabilityTemplate,
-            'context' => $context,
+            'context'            => $context,
         ]);
     }
 
@@ -88,28 +88,28 @@ class ChecklistController extends Controller
         if ($context === 'processo') {
             $existing = $this->checklistRepository->getByProcessoId($id);
             $dataToCreate = [
-                'processo_id' => $id,
-                'type' => $type,
+                'processo_id'  => $id,
+                'type'         => $type,
                 'current_step' => 1,
-                'step_data' => [],
-                'status' => 'draft',
-                'created_by' => auth()->guard('user')->id(),
+                'step_data'    => [],
+                'status'       => 'draft',
+                'created_by'   => auth()->guard('user')->id(),
             ];
         } else {
             $existing = $this->checklistRepository->getByLeadId($id);
             $dataToCreate = [
-                'lead_id' => $id,
-                'type' => $type,
+                'lead_id'      => $id,
+                'type'         => $type,
                 'current_step' => 1,
-                'step_data' => [],
-                'status' => 'draft',
-                'created_by' => auth()->guard('user')->id(),
+                'step_data'    => [],
+                'status'       => 'draft',
+                'created_by'   => auth()->guard('user')->id(),
             ];
         }
 
         if ($existing) {
             return response()->json([
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => 'Checklist já existe para este registro.',
             ], 400);
         }
@@ -118,10 +118,10 @@ class ChecklistController extends Controller
         $checklist = $this->checklistRepository->create($dataToCreate);
 
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'Checklist inicializado com sucesso.',
-            'data' => $checklist,
-            'steps' => $steps,
+            'data'    => $checklist,
+            'steps'   => $steps,
         ]);
     }
 
@@ -138,7 +138,7 @@ class ChecklistController extends Controller
             $checklist = $this->checklistRepository->getByLeadId($id);
         }
 
-        if (!$checklist) {
+        if (! $checklist) {
             abort(404, 'Checklist not found.');
         }
 
@@ -179,10 +179,10 @@ class ChecklistController extends Controller
         $this->checklistRepository->update($checklist->toArray(), $checklist->id);
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Progresso salvo com sucesso.',
-            'next_step' => $checklist->current_step,
-            'current_data' => $checklist->step_data
+            'status'       => 'success',
+            'message'      => 'Progresso salvo com sucesso.',
+            'next_step'    => $checklist->current_step,
+            'current_data' => $checklist->step_data,
         ]);
     }
 
@@ -196,15 +196,15 @@ class ChecklistController extends Controller
 
         // Mock de resposta para desenvolvimento do Frontend
         return response()->json([
-            'status' => 'ok',
+            'status'      => 'ok',
             'ai_feedback' => [
-                'risco' => 'medio',
+                'risco'          => 'medio',
                 'pontos_atencao' => [
                     'Verificar prescrição bienal (data de saída vs hoje)',
-                    'Falta documento RG ou CNH legível'
+                    'Falta documento RG ou CNH legível',
                 ],
-                'mensagem' => 'A análise preliminar indica risco de prescrição se a ação não for ajuizada em 30 dias.'
-            ]
+                'mensagem' => 'A análise preliminar indica risco de prescrição se a ação não for ajuizada em 30 dias.',
+            ],
         ]);
     }
 
@@ -216,7 +216,7 @@ class ChecklistController extends Controller
     {
         $request->validate([
             'template_id' => 'required|integer',
-            'data' => 'required|array',
+            'data'        => 'required|array',
         ]);
 
         $templateId = $request->input('template_id');
@@ -227,27 +227,27 @@ class ChecklistController extends Controller
             ->where('id', $templateId)
             ->first();
 
-        if (!$template) {
+        if (! $template) {
             return response()->json([
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => 'Template não encontrado.',
             ], 404);
         }
 
         // Log for debugging (URL construction simulation)
         \Log::info('AI Template Execution', [
-            'lead_id' => $leadId,
-            'template_id' => $templateId,
+            'lead_id'       => $leadId,
+            'template_id'   => $templateId,
             'template_slug' => $template->slug ?? 'N/A',
-            'form_data' => $formData,
-            'webhook_url' => $template->n8n_webhook_url ?? 'N/A',
+            'form_data'     => $formData,
+            'webhook_url'   => $template->n8n_webhook_url ?? 'N/A',
         ]);
 
         // TODO: Real integration with n8n/MotherShipService
         // For now, return mock success response
         return response()->json([
-            'status' => 'success',
-            'message' => 'Solicitação enviada para IA',
+            'status'        => 'success',
+            'message'       => 'Solicitação enviada para IA',
             'mock_response' => 'Análise simulada: Risco Médio. Recomenda-se verificar documentação antes de prosseguir.',
             'template_used' => $template->title ?? 'Template de Triagem',
         ]);

@@ -3,9 +3,9 @@
 namespace SuiteZap\LawFirm\AI\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Webkul\User\Models\User;
-use Webkul\Lead\Models\Lead;
 use SuiteZap\LawFirm\Contracts\AssistantHistory as AssistantHistoryContract;
+use Webkul\Lead\Models\Lead;
+use Webkul\User\Models\User;
 
 class AssistantHistory extends Model implements AssistantHistoryContract
 {
@@ -44,7 +44,7 @@ class AssistantHistory extends Model implements AssistantHistoryContract
     protected $casts = [
         'input_data' => 'array',
         'total_cost' => 'decimal:4',
-        'real_cost' => 'decimal:4',
+        'real_cost'  => 'decimal:4',
     ];
 
     /**

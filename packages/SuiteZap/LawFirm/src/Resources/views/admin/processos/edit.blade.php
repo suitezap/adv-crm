@@ -13,6 +13,9 @@
                 <div class="flex cursor-pointer items-center gap-2">
                     <x-admin::breadcrumbs name="lawfirm.processos.edit" :entity="$processo" />
                 </div>
+                <div class="text-xl font-bold dark:text-white">
+                    Editar Processo: <span class="text-gray-500">{{ $processo->titulo }}</span>
+                </div>
             </div>
             <div class="flex items-center gap-x-2.5">
                 <button type="button" class="secondary-button text-xs" onclick="window.lfOpenWhatsappImportModal()">
@@ -243,6 +246,17 @@
                                 <x-admin::form.control-group.error control-name="user_id" />
                             </x-admin::form.control-group>
                         </div>
+
+                        {{-- Chave Secreta (IA) --}}
+                        <div class="mt-2">
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>Chave Secreta (IA)</x-admin::form.control-group.label>
+                                <x-admin::form.control-group.control type="text" name="sercreta"
+                                    :value="old('sercreta', $processo->sercreta)" label="Chave Secreta (IA)"
+                                    placeholder="Gerado automaticamente se vazio" maxlength="7" />
+                                <x-admin::form.control-group.error control-name="sercreta" />
+                            </x-admin::form.control-group>
+                        </div>
                     </div>
 
                     {{-- Card: Datas e Observações --}}
@@ -285,6 +299,8 @@
                             </x-admin::form.control-group.label>
                             <x-admin::form.control-group.control
                                 type="textarea" name="descricao"
+                                id="descricao"
+                                tinymce="true"
                                 class="min-h-[120px]" rows="15"
                                 :value="old('descricao', $processo->descricao)"
                                 :label="trans('lawfirm::app.processos.form.desc')"

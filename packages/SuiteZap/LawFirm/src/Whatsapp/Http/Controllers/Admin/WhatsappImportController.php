@@ -2,12 +2,12 @@
 
 namespace SuiteZap\LawFirm\Whatsapp\Http\Controllers\Admin;
 
-use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Legal\Models\WhatsappImport;
-use SuiteZap\LawFirm\Whatsapp\Jobs\ImportProcessoWhatsappMessages;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\Whatsapp\Jobs\ImportProcessoWhatsappMessages;
 
 class WhatsappImportController extends Controller
 {
@@ -20,7 +20,7 @@ class WhatsappImportController extends Controller
             $request->validate([
                 'remote_jid' => 'required|string',
                 'start_date' => 'nullable|date',
-                'end_date' => 'nullable|date|after_or_equal:start_date',
+                'end_date'   => 'nullable|date|after_or_equal:start_date',
             ]);
 
             $processo = Processo::findOrFail($processoId);
@@ -29,9 +29,9 @@ class WhatsappImportController extends Controller
             $tenantId = MotherShipService::getTenantId();
 
             $remoteJid = preg_replace('/\D/', '', $request->input('remote_jid'));
-            
+
             if (strpos($remoteJid, '55') !== 0 && strlen($remoteJid) >= 10) {
-                $remoteJid = '55' . $remoteJid;
+                $remoteJid = '55'.$remoteJid;
             }
             if (strpos($remoteJid, '@s.whatsapp.net') === false) {
                 $remoteJid .= '@s.whatsapp.net';
@@ -48,18 +48,18 @@ class WhatsappImportController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Importação agendada com sucesso. Você será notificado no WhatsApp ao final do processo.'
+                'message' => 'Importação agendada com sucesso. Você será notificado no WhatsApp ao final do processo.',
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'error' => 'Erro de validação: ' . collect($e->errors())->flatten()->first()
+                'error'   => 'Erro de validação: '.collect($e->errors())->flatten()->first(),
             ], 422);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage() . ' no arquivo ' . $e->getFile() . ' linha ' . $e->getLine()
+                'error'   => $e->getMessage().' no arquivo '.$e->getFile().' linha '.$e->getLine(),
             ], 500);
         }
     }
@@ -112,7 +112,7 @@ class WhatsappImportController extends Controller
 
         return response()->json([
             'success' => true,
-            'html' => $html
+            'html'    => $html,
         ]);
     }
 
@@ -140,14 +140,13 @@ class WhatsappImportController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'error' => 'Importação não encontrada.',
+                'error'   => 'Importação não encontrada.',
             ], 404);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'error' => 'Erro ao remover: ' . $e->getMessage(),
+                'error'   => 'Erro ao remover: '.$e->getMessage(),
             ], 500);
         }
     }
 }
-

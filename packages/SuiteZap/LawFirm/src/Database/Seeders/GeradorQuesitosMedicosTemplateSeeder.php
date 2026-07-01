@@ -16,45 +16,45 @@ class GeradorQuesitosMedicosTemplateSeeder extends Seeder
 
         $variables = [
             [
-                'key' => 'doenca_cid',
-                'label' => 'Doença (CID)',
-                'type' => 'text',
+                'key'         => 'doenca_cid',
+                'label'       => 'Doença (CID)',
+                'type'        => 'text',
                 'placeholder' => 'Ex: M51.1 - Transtornos de discos lombares e de outros discos intervertebrais com radiculopatia',
             ],
             [
-                'key' => 'profissao_habitual',
-                'label' => 'Profissão Habitual',
-                'type' => 'text',
+                'key'         => 'profissao_habitual',
+                'label'       => 'Profissão Habitual',
+                'type'        => 'text',
                 'placeholder' => 'Ex: Pedreiro, Motorista, Auxiliar Administrativo',
             ],
             [
-                'key' => 'idade',
-                'label' => 'Idade',
-                'type' => 'text',
+                'key'         => 'idade',
+                'label'       => 'Idade',
+                'type'        => 'text',
                 'placeholder' => 'Ex: 55 anos',
             ],
             [
-                'key' => 'tenant_id',
-                'label' => 'Tenant ID',
-                'type' => 'hidden',
+                'key'         => 'tenant_id',
+                'label'       => 'Tenant ID',
+                'type'        => 'hidden',
                 'placeholder' => '',
-            ]
+            ],
         ];
 
         AssistantTemplate::updateOrCreate(
             ['slug' => 'gerador-quesitos-medicos'],
             [
-                'tenant_id' => null,
-                'category' => 'pecas',
-                'area' => 'Previdenciário',
-                'title' => 'Gerador de Quesitos Médicos',
-                'description' => 'Gera requisitos técnicos para perícia médica evidenciando incapacidade para o trabalho.',
-                'icon' => '🩺',
+                'tenant_id'        => null,
+                'category'         => 'pecas',
+                'area'             => 'Previdenciário',
+                'title'            => 'Gerador de Quesitos Médicos',
+                'description'      => 'Gera requisitos técnicos para perícia médica evidenciando incapacidade para o trabalho.',
+                'icon'             => '🩺',
                 'prompt_structure' => $promptStructure,
-                'variables' => $variables,
-                'n8n_webhook_url' => 'ai-gerador-quesitos-medicos',
-                'required_module' => 'IA-Previdenciario',
-                'is_active' => true,
+                'variables'        => $variables,
+                'n8n_webhook_url'  => 'ai-gerador-quesitos-medicos',
+                'required_module'  => 'IA-Previdenciario',
+                'is_active'        => true,
             ]
         );
 

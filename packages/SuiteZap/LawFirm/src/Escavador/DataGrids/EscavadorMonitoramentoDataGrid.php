@@ -8,7 +8,9 @@ use Webkul\DataGrid\DataGrid;
 class EscavadorMonitoramentoDataGrid extends DataGrid
 {
     protected $primaryColumn = 'id';
+
     protected $sortColumn = 'id';
+
     protected $sortOrder = 'desc';
 
     public function prepareQueryBuilder()
@@ -38,67 +40,68 @@ class EscavadorMonitoramentoDataGrid extends DataGrid
     public function prepareColumns()
     {
         $this->addColumn([
-            'index' => 'id',
-            'label' => '#',
-            'type' => 'integer',
-            'sortable' => true,
+            'index'      => 'id',
+            'label'      => '#',
+            'type'       => 'integer',
+            'sortable'   => true,
             'searchable' => true,
         ]);
 
         $this->addColumn([
-            'index' => 'type',
-            'label' => 'Tipo',
-            'type' => 'string',
-            'sortable' => true,
+            'index'      => 'type',
+            'label'      => 'Tipo',
+            'type'       => 'string',
+            'sortable'   => true,
             'searchable' => true,
-            'closure' => function ($row) {
+            'closure'    => function ($row) {
                 return ucfirst($row->type);
             },
         ]);
 
         $this->addColumn([
-            'index' => 'query_value',
-            'label' => 'Termo / Processo Monitorado',
-            'type' => 'string',
-            'sortable' => true,
+            'index'      => 'query_value',
+            'label'      => 'Termo / Processo Monitorado',
+            'type'       => 'string',
+            'sortable'   => true,
             'searchable' => true,
         ]);
 
         $this->addColumn([
-            'index' => 'frequency',
-            'label' => 'Frequência',
-            'type' => 'string',
-            'sortable' => true,
+            'index'      => 'frequency',
+            'label'      => 'Frequência',
+            'type'       => 'string',
+            'sortable'   => true,
             'searchable' => true,
-            'closure' => function ($row) {
+            'closure'    => function ($row) {
                 $freq = $row->frequency ? ucfirst(strtolower($row->frequency)) : 'N/A';
-                return '<span class="badge badge-round badge-secondary">' . $freq . '</span>';
+
+                return '<span class="badge badge-round badge-secondary">'.$freq.'</span>';
             },
         ]);
 
         $this->addColumn([
-            'index' => 'notify_whatsapp',
-            'label' => 'Aler. WhatsApp',
-            'type' => 'boolean',
+            'index'    => 'notify_whatsapp',
+            'label'    => 'Aler. WhatsApp',
+            'type'     => 'boolean',
             'sortable' => true,
-            'closure' => function ($row) {
+            'closure'  => function ($row) {
                 $checked = $row->notify_whatsapp ? 'checked' : '';
                 $url = route('lawfirm.escavador.monitoramentos.toggle_whatsapp', $row->id);
-                
+
                 return '<label class="switch">
-                            <input type="checkbox" ' . $checked . ' 
-                                   onchange="toggleWhatsappNotification(' . $row->id . ', this, \'' . $url . '\')">
+                            <input type="checkbox" '.$checked.' 
+                                   onchange="toggleWhatsappNotification('.$row->id.', this, \''.$url.'\')">
                             <span class="slider round"></span>
                         </label>';
             },
         ]);
 
         $this->addColumn([
-            'index' => 'created_at',
-            'label' => 'Criado Em',
-            'type' => 'datetime',
+            'index'    => 'created_at',
+            'label'    => 'Criado Em',
+            'type'     => 'datetime',
             'sortable' => true,
-            'closure' => fn($row) => core()->formatDate($row->created_at, 'd/m/Y H:i'),
+            'closure'  => fn ($row) => core()->formatDate($row->created_at, 'd/m/Y H:i'),
         ]);
     }
 

@@ -15,15 +15,15 @@ class DeadlineResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'id' => $this->id,
-            'processo_id' => $this->processo_id,
-            'titulo' => $this->titulo,
-            'descricao' => $this->descricao,
+            'id'              => $this->id,
+            'processo_id'     => $this->processo_id,
+            'titulo'          => $this->titulo,
+            'descricao'       => $this->descricao,
             'data_vencimento' => $this->data_vencimento ? $this->data_vencimento->format('Y-m-d H:i:s') : null,
-            'concluido_em' => $this->concluido_em ? $this->concluido_em->format('Y-m-d H:i:s') : null,
-            'tipo' => $this->tipo,
-            'status' => $this->status,
-            'is_atrasado' => $this->is_atrasado,
+            'concluido_em'    => $this->concluido_em ? $this->concluido_em->format('Y-m-d H:i:s') : null,
+            'tipo'            => $this->tipo,
+            'status'          => $this->status,
+            'is_atrasado'     => $this->is_atrasado,
 
             // Context
             'processo_titulo' => $this->processo ? $this->processo->titulo : null,

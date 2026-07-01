@@ -2,9 +2,9 @@
 
 namespace SuiteZap\LawFirm\Escavador\Http\Controllers\Admin;
 
-use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\Escavador\DataGrids\EscavadorHistoryDataGrid;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorRequest;
+use Webkul\Admin\Http\Controllers\Controller;
 
 class EscavadorHistoryController extends Controller
 {

@@ -10,13 +10,14 @@ use SuiteZap\LawFirm\Legal\Models\Processo;
 class ProcessDocument extends Model
 {
     protected $table = 'law_process_documents';
+
     protected $fillable = [
         'processo_id',
         'caso_id',
         'name',
         'status',
         'file_path',
-        'notes'
+        'notes',
     ];
 
     public function process(): BelongsTo

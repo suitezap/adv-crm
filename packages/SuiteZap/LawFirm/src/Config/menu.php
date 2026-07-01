@@ -128,71 +128,95 @@ return [
     ],
 
     // ═══════════════════════════════════════════════════════════
-    // TOP-LEVEL: Assistentes
+    // TOP-LEVEL: Assistentes de IA
     // ═══════════════════════════════════════════════════════════
     [
         'key'        => 'assistants',
-        'name'       => 'Assistentes',
+        'name'       => 'Assistentes de IA',
         'route'      => 'lawfirm.assistants.index',
         'sort'       => 4,
         'icon-class' => 'icon-user',
         'permission' => 'lawfirm.assistants',
     ],
 
-    // ═══════════════════════════════════════════════════════════
-    // Assistentes IA
-    // ═══════════════════════════════════════════════════════════
+    // 0 ─── Assistentes IA (hub principal) ────────────────────
     [
         'key'        => 'assistants.ia',
         'name'       => 'Assistentes IA',
         'route'      => 'lawfirm.assistants.index',
-        'sort'       => 1,
+        'sort'       => 0,
         'icon-class' => 'icon-dashboard',
         'permission' => 'lawfirm.assistants',
     ],
 
-    // Histórico IA
-    [
-        'key'        => 'assistants.ai_history',
-        'name'       => 'Histórico Assist. IA',
-        'route'      => 'lawfirm.assistants.history.index',
-        'sort'       => 2,
-        'icon-class' => 'icon-dashboard',
-        'permission' => 'lawfirm.assistants.view',
-    ],
-
-    // ═══════════════════════════════════════════════════════════
-    // Assistente Jurídico (Escavador)
-    // ═══════════════════════════════════════════════════════════
+    // 1 ─── Assistentes Jurídicos ──────────────────────────────
     [
         'key'        => 'assistants.escavador',
-        'name'       => 'Assistente Jurídico',
+        'name'       => 'Assistentes Jurídicos',
         'route'      => 'lawfirm.escavador.index',
-        'sort'       => 3,
+        'sort'       => 1,
         'icon-class' => 'icon-note',
         'permission' => 'lawfirm.escavador',
     ],
-    [
-        'key'        => 'assistants.escavador_history',
-        'name'       => 'Histórico Assist. Jurídico',
-        'route'      => 'lawfirm.escavador.history',
-        'sort'       => 4,
-        'icon-class' => 'icon-clock',
-        'permission' => 'lawfirm.escavador.view',
-    ],
+
+    // 2 ─── Criar Monitoramentos ───────────────────────────────
     [
         'key'        => 'assistants.escavador_monitoramentos_create',
         'name'       => 'Criar Monitoramentos',
         'route'      => 'lawfirm.escavador.monitoramentos.create',
-        'sort'       => 6,
+        'sort'       => 2,
         'icon-class' => '',
         'permission' => 'lawfirm.escavador.create',
     ],
+
+    // 3 ─── EscavAI ────────────────────────────────────────────
+    [
+        'key'        => 'assistants.escavai',
+        'name'       => 'EscavAI',
+        'route'      => 'lawfirm.assistants.escavai',
+        'sort'       => 3,
+        'icon-class' => 'icon-user',
+        'permission' => 'lawfirm.assistants.escavai',
+    ],
+
+    // ═══════════════════════════════════════════════════════════
+    // TOP-LEVEL: SAC
+    // ═══════════════════════════════════════════════════════════
+    [
+        'key'        => 'sac',
+        'name'       => 'SAC',
+        'route'      => 'lawfirm.assistants.chatwoot',
+        'sort'       => 4.5,
+        'icon-class' => 'icon-settings-webhooks',
+        'permission' => 'sac',
+    ],
+
+    // 4 ─── Históricos Assist. IA ──────────────────────────────
+    [
+        'key'        => 'assistants.ai_history',
+        'name'       => 'Históricos Assist. IA',
+        'route'      => 'lawfirm.assistants.history.index',
+        'sort'       => 4,
+        'icon-class' => 'icon-dashboard',
+        'permission' => 'lawfirm.assistants.view',
+    ],
+
+    // 5 ─── Históricos Assist. Jurídico ────────────────────────
+    [
+        'key'        => 'assistants.escavador_history',
+        'name'       => 'Históricos Assist. Jurídico',
+        'route'      => 'lawfirm.escavador.history',
+        'sort'       => 5,
+        'icon-class' => 'icon-clock',
+        'permission' => 'lawfirm.escavador.view',
+    ],
+
+    // 6 ─── Monitoramentos / Robôs ─────────────────────────────
     [
         'key'        => 'assistants.escavador_monitoramentos',
         'name'       => 'Monitoramentos / Robôs',
         'route'      => 'lawfirm.escavador.monitoramentos.index',
-        'sort'       => 7,
+        'sort'       => 6,
         'icon-class' => '',
         'permission' => 'lawfirm.escavador.view',
     ],

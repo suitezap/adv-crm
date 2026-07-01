@@ -4,18 +4,17 @@ namespace SuiteZap\LawFirm\AI\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
-use Webkul\Admin\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\AI\Jobs\ProcessAiAssistant;
+use SuiteZap\LawFirm\AI\Models\AssistantHistory;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 use SuiteZap\LawFirm\AI\Models\LeadTriagem;
-use SuiteZap\LawFirm\AI\Models\AssistantHistory;
 use SuiteZap\LawFirm\AI\Services\N8nService;
+use SuiteZap\LawFirm\SaaS\Models\SaasTransaction;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
-use SuiteZap\LawFirm\SaaS\Models\SaasTransaction;
-use SuiteZap\LawFirm\SaaS\Models\Subscription;
-use SuiteZap\LawFirm\AI\Jobs\ProcessAiAssistant;
+use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Lead\Models\Lead;
 
 class AssistantController extends Controller
@@ -44,7 +43,7 @@ class AssistantController extends Controller
         //    a `ai_templates_cache_version` é incrementada, tornando esta key obsoleta.
         //    Na próxima visita, o cache é reconstruído com os dados novos do Mothership.
         $cacheVersion = (int) Cache::get('ai_templates_cache_version', 1);
-        $cacheKey = 'ai_templates:' . $tenantId . ':' . md5(implode(',', $allowedModules)) . ':v' . $cacheVersion;
+        $cacheKey = 'ai_templates:'.$tenantId.':'.md5(implode(',', $allowedModules)).':v'.$cacheVersion;
 
         $templates = Cache::remember($cacheKey, 3600, function () use ($allowedModules) {
             return AssistantTemplate::forTenant()
@@ -64,7 +63,7 @@ class AssistantController extends Controller
         // 3. Extrair módulos de área únicos (IA-Trabalhista, IA-Civil, etc.) para o filtro
         $areas = $templates
             ->pluck('required_module')
-            ->filter(fn($m) => $m && str_starts_with((string) $m, 'IA-'))
+            ->filter(fn ($m) => $m && str_starts_with((string) $m, 'IA-'))
             ->unique()
             ->sort()
             ->values();
@@ -94,14 +93,14 @@ class AssistantController extends Controller
         $aiBalance = $subscription ? (float) ($subscription->suitecoin_balance ?? 0) : 0;
         if ($aiBalance <= 0) {
             return response()->json([
-                'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.'
+                'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.',
             ], 402);
         }
 
         $template = AssistantTemplate::where('slug', $slug)->firstOrFail();
-        $cost     = (float) ($template->price_virtual ?? 0);
+        $cost = (float) ($template->price_virtual ?? 0);
 
-        if ($cost > 0 && !SuiteCoinService::hasSufficientBalance($aiBalance, $cost)) {
+        if ($cost > 0 && ! SuiteCoinService::hasSufficientBalance($aiBalance, $cost)) {
             return response()->json([
                 'error' => SuiteCoinService::insufficientBalanceMessage($aiBalance, $cost),
             ], 402);
@@ -113,7 +112,7 @@ class AssistantController extends Controller
         // 3. Build prompt
         $generatedPrompt = $template->prompt_structure;
         foreach ($inputs as $key => $value) {
-            $generatedPrompt = str_replace('{{' . $key . '}}', $value, $generatedPrompt);
+            $generatedPrompt = str_replace('{{'.$key.'}}', $value, $generatedPrompt);
         }
 
         // 4. Debitar saldo (apenas se custo > 0)
@@ -128,7 +127,7 @@ class AssistantController extends Controller
                 'balance_after'  => $subscription->suitecoin_balance,
                 'currency'       => SuiteCoinService::CURRENCY_CODE,
                 'service_type'   => 'AI_ASSISTANT',
-                'description'    => "Assistente: {$template->title} — " . SuiteCoinService::format(SuiteCoinService::toVirtual($cost)),
+                'description'    => "Assistente: {$template->title} — ".SuiteCoinService::format(SuiteCoinService::toVirtual($cost)),
                 'reference_type' => 'assistant_template',
                 'reference_id'   => $template->id,
             ]);
@@ -168,15 +167,15 @@ class AssistantController extends Controller
         $aiBalance = $subscription ? (float) ($subscription->suitecoin_balance ?? 0) : 0;
         if ($aiBalance <= 0) {
             return response()->json([
-                'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.'
+                'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.',
             ], 402);
         }
 
         // 2. Validar e Buscar Template
         $template = AssistantTemplate::where('slug', $slug)->firstOrFail();
-        $cost     = (float) ($template->price_virtual ?? 0);
+        $cost = (float) ($template->price_virtual ?? 0);
 
-        if ($cost > 0 && !SuiteCoinService::hasSufficientBalance($aiBalance, $cost)) {
+        if ($cost > 0 && ! SuiteCoinService::hasSufficientBalance($aiBalance, $cost)) {
             return response()->json([
                 'error' => SuiteCoinService::insufficientBalanceMessage($aiBalance, $cost),
             ], 402);
@@ -191,24 +190,25 @@ class AssistantController extends Controller
             'inputs'    => $request->all(),
             'user_id'   => auth()->guard('user')->id(),
             'template'  => $template->title,
-            'timestamp' => now()->toIso8601String()
+            'timestamp' => now()->toIso8601String(),
         ];
 
         // 4. Construir URL do Webhook
         $n8nConfig = MotherShipService::getN8nConfig();
-        if (!$n8nConfig) {
+        if (! $n8nConfig) {
             Log::warning('AssistantController::execute — N8N não configurado para este Tenant.', [
                 'template_slug' => $slug,
                 'tenant_id'     => MotherShipService::getTenantId(),
             ]);
+
             return response()->json(['error' => 'Serviço N8N não configurado para sua conta. Contate o suporte.'], 503);
         }
 
-        $route  = $template->n8n_webhook_url;
+        $route = $template->n8n_webhook_url;
         $baseUrl = $n8nConfig['url'];
         $targetUrl = filter_var($route, FILTER_VALIDATE_URL)
             ? $route
-            : rtrim($baseUrl, '/') . '/' . ltrim($route, '/');
+            : rtrim($baseUrl, '/').'/'.ltrim($route, '/');
 
         if (empty($targetUrl) || $targetUrl === '/') {
             return response()->json(['error' => 'URL do n8n inválida. Verifique o cadastro do template.'], 500);
@@ -226,7 +226,7 @@ class AssistantController extends Controller
                 'balance_after'  => $subscription->suitecoin_balance,
                 'currency'       => SuiteCoinService::CURRENCY_CODE,
                 'service_type'   => 'AI_ASSISTANT',
-                'description'    => "Assistente IA: {$template->title} — " . SuiteCoinService::format(SuiteCoinService::toVirtual($cost)),
+                'description'    => "Assistente IA: {$template->title} — ".SuiteCoinService::format(SuiteCoinService::toVirtual($cost)),
                 'reference_type' => 'assistant_template',
                 'reference_id'   => $template->id,
             ]);
@@ -240,7 +240,7 @@ class AssistantController extends Controller
             'input_data'        => $request->all(),
             'generated_content' => null,
             'execution_mode'    => 'agent_exec',
-            'status'            => 'queued'
+            'status'            => 'queued',
         ]);
 
         // 7. Dispatch Job
@@ -250,14 +250,14 @@ class AssistantController extends Controller
             'success'    => true,
             'history_id' => $history->id,
             'status'     => 'queued',
-            'message'    => 'Solicitação enviada para processamento.'
+            'message'    => 'Solicitação enviada para processamento.',
         ]);
     }
 
     /**
      * Check status of an AI execution.
      *
-     * @param int $id History ID
+     * @param  int  $id  History ID
      * @return \Illuminate\Http\JsonResponse
      */
     public function checkStatus($id)
@@ -269,10 +269,10 @@ class AssistantController extends Controller
         }
 
         return response()->json([
-            'id' => $history->id,
-            'status' => $history->status,
+            'id'                => $history->id,
+            'status'            => $history->status,
             'generated_content' => $history->generated_content,
-            'error_message' => $history->error_message
+            'error_message'     => $history->error_message,
         ]);
     }
 
@@ -284,8 +284,8 @@ class AssistantController extends Controller
         // 1. Validação (usa conexão 'mothership' para buscar template)
         $validated = $request->validate([
             'template_id' => 'required|exists:mothership.lawfirm_assistant_templates,id',
-            'data' => 'array',
-            'action' => 'required|in:preview,execute',
+            'data'        => 'array',
+            'action'      => 'required|in:preview,execute',
         ]);
 
         // 2. Carregar Template
@@ -296,9 +296,9 @@ class AssistantController extends Controller
             $subscription = MotherShipService::getCurrentSubscription();
             $allowedModules = $subscription ? ($subscription->active_modules ?? []) : [];
 
-            if (!in_array($template->required_module, $allowedModules)) {
+            if (! in_array($template->required_module, $allowedModules)) {
                 return response()->json([
-                    'error' => 'Módulo não disponível no seu plano.'
+                    'error' => 'Módulo não disponível no seu plano.',
                 ], 403);
             }
         }
@@ -308,7 +308,7 @@ class AssistantController extends Controller
         $aiBalance = $subscription ? (float) ($subscription->suitecoin_balance ?? 0) : 0;
         if ($aiBalance <= 0) {
             return response()->json([
-                'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.'
+                'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.',
             ], 402);
         }
 
@@ -325,7 +325,7 @@ class AssistantController extends Controller
             // Execute: Envia para N8N (se configurado)
             if (empty($template->n8n_webhook_url)) {
                 return response()->json([
-                    'error' => 'Este assistente não possui execução remota configurada.'
+                    'error' => 'Este assistente não possui execução remota configurada.',
                 ], 400);
             }
 
@@ -349,7 +349,7 @@ class AssistantController extends Controller
         $aiBalance = $subscription ? (float) ($subscription->suitecoin_balance ?? 0) : 0;
         if ($aiBalance <= 0) {
             return response()->json([
-                'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.'
+                'error' => 'Atenção⁉️ Não será possível realizar essa operação. Acesse o menu **Minha Assinatura** e consulte seu saldo.',
             ], 402);
         }
 
@@ -358,7 +358,7 @@ class AssistantController extends Controller
 
         // 3. Preparar Dados
         $data = [
-            'title' => $lead->title,
+            'title'       => $lead->title,
             'description' => $lead->description ?? 'Sem descrição.',
         ];
 
@@ -372,7 +372,7 @@ class AssistantController extends Controller
             if ($template->required_module) {
                 $subscription = MotherShipService::getCurrentSubscription();
                 $allowedModules = $subscription ? ($subscription->active_modules ?? []) : [];
-                if (!in_array($template->required_module, $allowedModules)) {
+                if (! in_array($template->required_module, $allowedModules)) {
                     return response()->json(['error' => 'Módulo não disponível.'], 403);
                 }
             }
@@ -380,6 +380,7 @@ class AssistantController extends Controller
             if (empty($template->n8n_webhook_url)) {
                 return response()->json(['error' => 'Execução remota não configurada.'], 400);
             }
+
             return $this->executeRemote($template, $data, $lead->id);
         }
 
@@ -394,23 +395,23 @@ class AssistantController extends Controller
         $generatedPrompt = $template->prompt_structure;
 
         foreach ($data as $key => $value) {
-            $generatedPrompt = str_replace('{{' . $key . '}}', $value ?? '', $generatedPrompt);
+            $generatedPrompt = str_replace('{{'.$key.'}}', $value ?? '', $generatedPrompt);
         }
 
         // Salvar histórico
         AssistantHistory::create([
-            'user_id' => auth()->guard('user')->id(),
-            'lead_id' => $leadId,
-            'template_id' => $template->id,
-            'input_data' => $data,
+            'user_id'           => auth()->guard('user')->id(),
+            'lead_id'           => $leadId,
+            'template_id'       => $template->id,
+            'input_data'        => $data,
             'generated_content' => $generatedPrompt,
-            'execution_mode' => 'local',
-            'status' => 'completed',
+            'execution_mode'    => 'local',
+            'status'            => 'completed',
         ]);
 
         return response()->json([
-            'success' => true,
-            'execution_mode' => 'local',
+            'success'          => true,
+            'execution_mode'   => 'local',
             'generated_prompt' => $generatedPrompt,
         ]);
     }
@@ -422,25 +423,26 @@ class AssistantController extends Controller
     {
         $n8nConfig = MotherShipService::getN8nConfig();
 
-        if (!$n8nConfig) {
+        if (! $n8nConfig) {
             Log::warning('N8N não configurado para este tenant', [
-                'template_id' => $template->id
+                'template_id' => $template->id,
             ]);
+
             return response()->json([
-                'error' => 'Serviço N8N não configurado para sua conta.'
+                'error' => 'Serviço N8N não configurado para sua conta.',
             ], 503);
         }
 
         // Montar URL
-        $targetUrl = rtrim($n8nConfig['url'], '/') . '/' . ltrim($template->n8n_webhook_url, '/');
+        $targetUrl = rtrim($n8nConfig['url'], '/').'/'.ltrim($template->n8n_webhook_url, '/');
 
         // Payload
         $payload = [
-            'inputs' => $data,
-            'user_id' => auth()->guard('user')->id(),
+            'inputs'    => $data,
+            'user_id'   => auth()->guard('user')->id(),
             'tenant_id' => MotherShipService::getTenantId(),
-            'lead_id' => $leadId,
-            'template' => $template->title,
+            'lead_id'   => $leadId,
+            'template'  => $template->title,
             'timestamp' => now()->toIso8601String(),
         ];
 
@@ -448,9 +450,9 @@ class AssistantController extends Controller
         try {
             $httpClient = Http::timeout(60);
 
-            if (!empty($n8nConfig['api_key'])) {
+            if (! empty($n8nConfig['api_key'])) {
                 $httpClient = $httpClient->withHeaders([
-                    'Authorization' => 'Bearer ' . $n8nConfig['api_key'],
+                    'Authorization' => 'Bearer '.$n8nConfig['api_key'],
                 ]);
             }
 
@@ -461,36 +463,36 @@ class AssistantController extends Controller
                 $output = $result['output'] ?? $result['text'] ?? $result['message'] ?? $response->body();
 
                 AssistantHistory::create([
-                    'user_id' => auth()->guard('user')->id(),
-                    'lead_id' => $leadId,
-                    'template_id' => $template->id,
-                    'input_data' => $data,
+                    'user_id'           => auth()->guard('user')->id(),
+                    'lead_id'           => $leadId,
+                    'template_id'       => $template->id,
+                    'input_data'        => $data,
                     'generated_content' => $output,
-                    'execution_mode' => 'n8n_remote',
-                    'status' => 'completed',
+                    'execution_mode'    => 'n8n_remote',
+                    'status'            => 'completed',
                 ]);
 
                 return response()->json([
-                    'success' => true,
-                    'execution_mode' => 'n8n_remote',
+                    'success'          => true,
+                    'execution_mode'   => 'n8n_remote',
                     'generated_prompt' => $output,
                 ]);
             }
 
             Log::error("N8N Error [{$targetUrl}]", [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body'   => $response->body(),
             ]);
 
             return response()->json([
-                'error' => 'Erro no serviço N8N: ' . ($response->json()['message'] ?? $response->status())
+                'error' => 'Erro no serviço N8N: '.($response->json()['message'] ?? $response->status()),
             ], 502);
 
         } catch (\Exception $e) {
             Log::error("N8N Exception [{$targetUrl}]", ['error' => $e->getMessage()]);
 
             return response()->json([
-                'error' => 'Falha de conexão com N8N: ' . $e->getMessage()
+                'error' => 'Falha de conexão com N8N: '.$e->getMessage(),
             ], 503);
         }
     }
@@ -518,10 +520,10 @@ class AssistantController extends Controller
             'content' => 'required|string',
         ]);
 
-        $slug   = $request->input('slug');
+        $slug = $request->input('slug');
         $column = self::TRIAGEM_SLUG_MAP[$slug] ?? null;
 
-        if (!$column) {
+        if (! $column) {
             return response()->json(['error' => 'Slug não mapeado para triagem.'], 422);
         }
 
@@ -545,10 +547,36 @@ class AssistantController extends Controller
             ->first();
 
         return response()->json([
-            'viabilidade' => $triagem?->viabilidade,
+            'viabilidade'  => $triagem?->viabilidade,
             'qualificacao' => $triagem?->qualificacao,
-            'proposta'    => $triagem?->proposta,
-            'negociacao'  => $triagem?->negociacao,
+            'proposta'     => $triagem?->proposta,
+            'negociacao'   => $triagem?->negociacao,
         ]);
+    }
+
+    /**
+     * Exibe o chat do Escavador (EscavAI) em uma janela incorporada.
+     */
+    public function escavai()
+    {
+        return view('lawfirm::admin.assistants.escavai');
+    }
+
+    /**
+     * Exibe o Chatwoot (SAC/Atendimento) em uma janela dedicada.
+     * Injeta credenciais via localStorage para auto-login.
+     */
+    public function chatwoot()
+    {
+        $chatwootUrl = 'https://whats.suitezap.com.br';
+        $user = auth()->guard('user')->user();
+        $sacEmail = $user ? $user->email : 'sac@suitezap.com.br';
+        $sacPassword = 'Eu&m2k2x';
+
+        return view('lawfirm::admin.assistants.chatwoot', compact(
+            'chatwootUrl',
+            'sacEmail',
+            'sacPassword'
+        ));
     }
 }

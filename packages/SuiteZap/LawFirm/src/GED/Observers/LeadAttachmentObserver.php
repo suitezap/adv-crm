@@ -2,9 +2,9 @@
 
 namespace SuiteZap\LawFirm\GED\Observers;
 
-use Webkul\Lead\Models\LeadAttachment;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
+use Webkul\Lead\Models\LeadAttachment;
 
 class LeadAttachmentObserver
 {
@@ -21,7 +21,7 @@ class LeadAttachmentObserver
                     $fileService->delete($attachment->path);
                     Log::info("SAAS FILE CLEANUP: Anexo individual removido: {$attachment->path}");
                 } catch (\Exception $e) {
-                    Log::error("SAAS FILE ERROR: Falha ao apagar anexo {$attachment->path}: " . $e->getMessage());
+                    Log::error("SAAS FILE ERROR: Falha ao apagar anexo {$attachment->path}: ".$e->getMessage());
                 }
             }
         }

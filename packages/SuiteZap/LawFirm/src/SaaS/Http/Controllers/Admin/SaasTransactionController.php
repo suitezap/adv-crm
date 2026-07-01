@@ -2,9 +2,9 @@
 
 namespace SuiteZap\LawFirm\SaaS\Http\Controllers\Admin;
 
-use Webkul\Admin\Http\Controllers\Controller;
-use SuiteZap\LawFirm\SaaS\DataGrids\SaasTransactionsDataGrid;
 use SuiteZap\LawFirm\SaaS\DataGrids\SaasAdditionsDataGrid;
+use SuiteZap\LawFirm\SaaS\DataGrids\SaasTransactionsDataGrid;
+use Webkul\Admin\Http\Controllers\Controller;
 
 class SaasTransactionController extends Controller
 {

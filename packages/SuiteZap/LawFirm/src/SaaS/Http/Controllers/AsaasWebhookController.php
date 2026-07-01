@@ -2,16 +2,16 @@
 
 namespace SuiteZap\LawFirm\SaaS\Http\Controllers;
 
-use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\SaaS\Models\SaasOrder;
 use SuiteZap\LawFirm\SaaS\Models\SaasTransaction;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use SuiteZap\LawFirm\SaaS\Services\AsaasService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * AsaasWebhookController
@@ -37,17 +37,18 @@ class AsaasWebhookController extends Controller
     public function handle(Request $request)
     {
         // ── 1. Autenticação via asaas-access-token ─────────────────────────
-        if (!$this->isAuthorized($request)) {
+        if (! $this->isAuthorized($request)) {
             Log::warning('AsaasWebhook: token inválido ou ausente.', [
                 'ip'     => $request->ip(),
-                'header' => substr($request->header('asaas-access-token', ''), 0, 8) . '...',
+                'header' => substr($request->header('asaas-access-token', ''), 0, 8).'...',
             ]);
+
             // Retorna 200 mesmo em falha de auth para não revelar a rota ao atacante
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 200);
         }
 
         $payload = $request->all();
-        $event   = $payload['event'] ?? null;
+        $event = $payload['event'] ?? null;
         $payment = $payload['payment'] ?? null;
 
         Log::info('AsaasWebhook recebido', [
@@ -79,11 +80,12 @@ class AsaasWebhookController extends Controller
 
         // Se não há webhook_token configurado, aceita sem validar (menos seguro)
         $expectedToken = $config['webhook_token'] ?? null;
-        if (!$expectedToken) {
+        if (! $expectedToken) {
             return true;
         }
 
         $receivedToken = $request->header('asaas-access-token');
+
         return hash_equals($expectedToken, (string) $receivedToken);
     }
 
@@ -98,32 +100,37 @@ class AsaasWebhookController extends Controller
      */
     private function handlePayment(?array $payment): void
     {
-        if (!$payment) return;
+        if (! $payment) {
+            return;
+        }
 
         $paymentId = $payment['id'] ?? null;
-        if (!$paymentId) return;
+        if (! $paymentId) {
+            return;
+        }
 
         $externalReference = $payment['externalReference'] ?? null;
         $tenantId = MotherShipService::getTenantId();
 
         // ── Recupera externalReference do PaymentLink se necessário ──────
-        if (!$externalReference && !empty($payment['paymentLink'])) {
+        if (! $externalReference && ! empty($payment['paymentLink'])) {
             try {
                 $linkData = AsaasService::getPaymentLink($payment['paymentLink']);
                 $externalReference = $linkData['externalReference'] ?? null;
             } catch (\Exception $e) {
-                Log::error("AsaasWebhook: Erro ao buscar dados do PaymentLink {$payment['paymentLink']}: " . $e->getMessage());
+                Log::error("AsaasWebhook: Erro ao buscar dados do PaymentLink {$payment['paymentLink']}: ".$e->getMessage());
             }
         }
 
         // ── ROTA 1 (v3.21): Order-based ("order_{id}") ──────────────────
         if ($externalReference && str_starts_with($externalReference, 'order_')) {
             AsaasService::processOrderBasedPayment($externalReference, $payment, $tenantId);
+
             return;
         }
 
         // ── ROTA 2: Tenta resolver via checkoutSession → SaasOrder ──────
-        if (!$externalReference && !empty($payment['checkoutSession'])) {
+        if (! $externalReference && ! empty($payment['checkoutSession'])) {
             $order = SaasOrder::where('asaas_checkout_session_id', $payment['checkoutSession'])
                 ->where('tenant_id', $tenantId)
                 ->where('status', 'PENDING')
@@ -131,6 +138,7 @@ class AsaasWebhookController extends Controller
 
             if ($order) {
                 AsaasService::processOrderBasedPayment("order_{$order->id}", $payment, $tenantId);
+
                 return;
             }
         }
@@ -138,15 +146,17 @@ class AsaasWebhookController extends Controller
         // ── ROTA 3: Formato legado "{tenantId}|tipo|valor" ──────────────
         if ($externalReference) {
             $this->handleLegacyPayment($externalReference, $payment);
+
             return;
         }
 
         // ── ROTA 4: Fallback definitivo (single-tenant Asaas) ───────────
-        if ($tenantId && !empty($payment['value'])) {
-            $creditsFromValue = (float)$payment['value'];
+        if ($tenantId && ! empty($payment['value'])) {
+            $creditsFromValue = (float) $payment['value'];
             $fakeRef = "{$tenantId}|credit|{$creditsFromValue}";
             Log::info("AsaasWebhook: fallback externalReference criado a partir do valor R$ {$payment['value']} -> {$creditsFromValue} créditos.");
             $this->handleLegacyPayment($fakeRef, $payment);
+
             return;
         }
 
@@ -162,6 +172,7 @@ class AsaasWebhookController extends Controller
         $parts = explode('|', $externalReference);
         if (count($parts) < 3) {
             Log::warning('AsaasWebhook: externalReference mal formatado.', ['ref' => $externalReference]);
+
             return;
         }
 
@@ -171,8 +182,9 @@ class AsaasWebhookController extends Controller
             ->where('tenant_id', $tenantId)
             ->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             Log::error("AsaasWebhook: assinatura não encontrada para tenant {$tenantId}.");
+
             return;
         }
 
@@ -184,6 +196,7 @@ class AsaasWebhookController extends Controller
 
         if ($transactionExists) {
             Log::info("AsaasWebhook: Pagamento {$payment['id']} já processado anteriormente para tenant {$tenantId}.");
+
             return;
         }
 
@@ -195,23 +208,23 @@ class AsaasWebhookController extends Controller
                 $subscription->save();
 
                 $invoiceInfo = '';
-                if (!empty($payment['invoiceNumber'])) {
+                if (! empty($payment['invoiceNumber'])) {
                     $invoiceInfo = " - Fatura Asaas: {$payment['invoiceNumber']}";
                 }
 
                 SaasTransaction::create([
-                    'tenant_id' => $tenantId,
-                    'type' => 'credit',
-                    'amount' => $brlAmount,
-                    'balance_after' => $subscription->suitecoin_balance,
-                    'currency' => SuiteCoinService::CURRENCY_CODE,
-                    'service_type' => 'asaas_webhook',
-                    'description' => "Recarga de " . SuiteCoinService::format($suitecoinsVisual) . " via Asaas ({$payment['id']}){$invoiceInfo} - Legado",
-                    'reference_id' => $payment['id'],
+                    'tenant_id'      => $tenantId,
+                    'type'           => 'credit',
+                    'amount'         => $brlAmount,
+                    'balance_after'  => $subscription->suitecoin_balance,
+                    'currency'       => SuiteCoinService::CURRENCY_CODE,
+                    'service_type'   => 'asaas_webhook',
+                    'description'    => 'Recarga de '.SuiteCoinService::format($suitecoinsVisual)." via Asaas ({$payment['id']}){$invoiceInfo} - Legado",
+                    'reference_id'   => $payment['id'],
                     'reference_type' => 'asaas_payment',
                 ]);
 
-                Log::info("AsaasWebhook (legado): +" . SuiteCoinService::format($suitecoinsVisual) . " (R$ {$brlAmount}) → tenant {$tenantId}. Saldo DB(BRL): {$subscription->suitecoin_balance}");
+                Log::info('AsaasWebhook (legado): +'.SuiteCoinService::format($suitecoinsVisual)." (R$ {$brlAmount}) → tenant {$tenantId}. Saldo DB(BRL): {$subscription->suitecoin_balance}");
 
             } elseif ($type === 'subscription') {
                 $subscription->status = 'active';
@@ -223,7 +236,7 @@ class AsaasWebhookController extends Controller
             $this->invalidateCache($tenantId);
 
         } catch (\Exception $e) {
-            Log::error('AsaasWebhook: falha ao processar pagamento legado: ' . $e->getMessage());
+            Log::error('AsaasWebhook: falha ao processar pagamento legado: '.$e->getMessage());
         }
     }
 

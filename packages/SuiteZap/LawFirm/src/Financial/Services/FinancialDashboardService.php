@@ -15,14 +15,14 @@ class FinancialDashboardService
         $kpis = $this->getKpis($startDate, $endDate);
 
         return [
-            'totalReceitas' => $kpis['totalReceitas'],
-            'totalDespesas' => $kpis['totalDespesas'],
-            'saldoLiquido' => $kpis['saldoLiquido'],
-            'margemPercent' => $kpis['margemPercent'],
+            'totalReceitas'   => $kpis['totalReceitas'],
+            'totalDespesas'   => $kpis['totalDespesas'],
+            'saldoLiquido'    => $kpis['saldoLiquido'],
+            'margemPercent'   => $kpis['margemPercent'],
             'pendenteReceber' => $this->getPendenteReceber($startDate, $endDate),
-            'collectionRate' => $this->getCollectionRate($startDate, $endDate),
-            'dso' => $this->getDso($startDate, $endDate),
-            'aging' => $this->getAgingList(),
+            'collectionRate'  => $this->getCollectionRate($startDate, $endDate),
+            'dso'             => $this->getDso($startDate, $endDate),
+            'aging'           => $this->getAgingList(),
         ];
     }
 
@@ -47,7 +47,7 @@ class FinancialDashboardService
             // Se array, permissão é individual ou grupo (scope restrito)
             $query->whereIn('processos.user_id', $userIds);
         } else {
-            // Se for null, é escopo global/admin (vê tudo). 
+            // Se for null, é escopo global/admin (vê tudo).
             // 2. Aplica Filtro Manual de Responsável apenas se for admin/global
             if ($responsibleId && $responsibleId !== '') {
                 $query->where('processos.user_id', $responsibleId);
@@ -83,7 +83,7 @@ class FinancialDashboardService
         return [
             'totalReceitas' => $totalReceitas,
             'totalDespesas' => $totalDespesas,
-            'saldoLiquido' => $saldoLiquido,
+            'saldoLiquido'  => $saldoLiquido,
             'margemPercent' => $margemPercent,
         ];
     }
@@ -156,8 +156,9 @@ class FinancialDashboardService
             // Data Inicial: Usa issued_at, se nulo usa data_vencimento (due_date)
             $start = $record->issued_at ?? $record->data_vencimento;
 
-            if (!$start)
-                continue; // Should be covered by query, but safe check
+            if (! $start) {
+                continue;
+            } // Should be covered by query, but safe check
 
             $startDateObj = Carbon::parse($start);
             $paymentDateObj = Carbon::parse($record->payment_date);
@@ -192,9 +193,9 @@ class FinancialDashboardService
         $today = Carbon::today();
 
         $aging = [
-            '0_30' => 0,
-            '31_60' => 0,
-            '61_90' => 0,
+            '0_30'    => 0,
+            '31_60'   => 0,
+            '61_90'   => 0,
             'over_90' => 0,
         ];
 
@@ -241,8 +242,8 @@ class FinancialDashboardService
             ->groupByRaw("DATE_FORMAT(law_financials.data_vencimento, '%Y-%m')")
             ->orderBy('month')
             ->get()
-            ->map(fn($row) => [
-                'month' => Carbon::createFromFormat('Y-m', $row->month)->translatedFormat('M/y'),
+            ->map(fn ($row) => [
+                'month'    => Carbon::createFromFormat('Y-m', $row->month)->translatedFormat('M/y'),
                 'receitas' => (float) $row->receitas,
                 'despesas' => (float) $row->despesas,
             ])->toArray();
@@ -262,14 +263,14 @@ class FinancialDashboardService
             ->where('law_financials.status', '!=', 'cancelado')
             ->groupBy('method')
             ->get()
-            ->mapWithKeys(fn($row) => [
-                match($row->method) {
-                    'pix' => 'PIX',
-                    'boleto' => 'Boleto',
-                    'cartao' => 'Cartão',
+            ->mapWithKeys(fn ($row) => [
+                match ($row->method) {
+                    'pix'           => 'PIX',
+                    'boleto'        => 'Boleto',
+                    'cartao'        => 'Cartão',
                     'transferencia' => 'Transferência',
-                    'dinheiro' => 'Dinheiro',
-                    default => 'Outros',
+                    'dinheiro'      => 'Dinheiro',
+                    default         => 'Outros',
                 } => (int) $row->total,
             ])->toArray();
     }

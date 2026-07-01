@@ -2,11 +2,11 @@
 
 namespace SuiteZap\LawFirm\SaaS\Http\Controllers;
 
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use SuiteZap\LawFirm\SaaS\Models\TenantBillingInfo;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
-use Exception;
 
 class TenantBillingController extends Controller
 {
@@ -16,7 +16,7 @@ class TenantBillingController extends Controller
     public function index()
     {
         $tenantId = MotherShipService::getTenantId();
-        
+
         $billingInfo = TenantBillingInfo::on('mothership')
             ->where('tenant_id', $tenantId)
             ->first();
@@ -50,14 +50,14 @@ class TenantBillingController extends Controller
         try {
             $tenantId = MotherShipService::getTenantId();
 
-            if (!$tenantId) {
+            if (! $tenantId) {
                 throw new Exception('O ID do Tenant não está definido no ambiente atual.');
             }
 
             // Preenche automaticamente cpf_cnpj (campo legado) com
             // o CNPJ se for PJ, ou o CPF se for PF, para máxima compatibilidade.
             $cnpjRaw = $request->input('cnpj');
-            $cpfRaw  = $request->input('cpf');
+            $cpfRaw = $request->input('cpf');
             $cpfCnpjLegacy = $cnpjRaw ?: ($cpfRaw ?: $request->input('cpf_cnpj'));
 
             // Atualiza ou Cria usando updateOrCreate para facilitar
@@ -85,10 +85,11 @@ class TenantBillingController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Erro ao salvar: ' . $e->getMessage()
+                    'message' => 'Erro ao salvar: '.$e->getMessage(),
                 ], 500);
             }
-            return redirect()->back()->with('error', 'Falha ao salvar dados do comprador: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Falha ao salvar dados do comprador: '.$e->getMessage());
         }
     }
 }

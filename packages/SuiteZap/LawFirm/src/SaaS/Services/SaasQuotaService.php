@@ -2,7 +2,6 @@
 
 namespace SuiteZap\LawFirm\SaaS\Services;
 
-use Illuminate\Support\Facades\DB;
 use Webkul\User\Repositories\UserRepository;
 
 /**
@@ -23,7 +22,6 @@ class SaasQuotaService
     /**
      * Create a new service instance.
      *
-     * @param UserRepository $userRepository
      * @return void
      */
     public function __construct(UserRepository $userRepository)
@@ -52,8 +50,6 @@ class SaasQuotaService
 
     /**
      * Get the configured user limit.
-     *
-     * @return int
      */
     public function getUserLimit(): int
     {
@@ -64,8 +60,6 @@ class SaasQuotaService
 
     /**
      * Get the current count of users.
-     *
-     * @return int
      */
     public function getUserUsage(): int
     {

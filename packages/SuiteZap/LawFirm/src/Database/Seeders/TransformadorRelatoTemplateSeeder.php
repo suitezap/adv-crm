@@ -40,40 +40,40 @@ PROMPT;
 
         $variables = [
             [
-                'key' => 'tese_juridica',
-                'label' => 'Tese Jurídica',
-                'type' => 'text',
+                'key'         => 'tese_juridica',
+                'label'       => 'Tese Jurídica',
+                'type'        => 'text',
                 'placeholder' => 'Ex: Dano Moral ou Insalubridade',
             ],
             [
-                'key' => 'relato_cliente',
-                'label' => 'Relato do Cliente (Bruto)',
-                'type' => 'textarea',
-                'rows' => 6,
+                'key'         => 'relato_cliente',
+                'label'       => 'Relato do Cliente (Bruto)',
+                'type'        => 'textarea',
+                'rows'        => 6,
                 'placeholder' => 'Cole o texto sujo da entrevista ou WhatsApp',
             ],
             [
-                'key' => 'tenant_id',
-                'label' => 'Tenant ID',
-                'type' => 'hidden',
+                'key'         => 'tenant_id',
+                'label'       => 'Tenant ID',
+                'type'        => 'hidden',
                 'placeholder' => '',
-            ]
+            ],
         ];
 
         AssistantTemplate::updateOrCreate(
             ['slug' => 'transformador-relato'],
             [
-                'tenant_id' => null,
-                'category' => 'pecas',
-                'area' => 'Trabalhista',
-                'title' => 'Transformador de Relato',
-                'description' => 'Transforma relatos informais de clientes em tópicos formais para Petição Inicial Trabalhista.',
-                'icon' => '📝',
+                'tenant_id'        => null,
+                'category'         => 'pecas',
+                'area'             => 'Trabalhista',
+                'title'            => 'Transformador de Relato',
+                'description'      => 'Transforma relatos informais de clientes em tópicos formais para Petição Inicial Trabalhista.',
+                'icon'             => '📝',
                 'prompt_structure' => $promptStructure,
-                'variables' => $variables,
-                'n8n_webhook_url' => 'ai-transformador-relato',
-                'required_module' => 'IA-Trabalhista',
-                'is_active' => true,
+                'variables'        => $variables,
+                'n8n_webhook_url'  => 'ai-transformador-relato',
+                'required_module'  => 'IA-Trabalhista',
+                'is_active'        => true,
             ]
         );
 

@@ -39,8 +39,8 @@ class Anexo extends Model
             return '';
         }
 
-        // Retorna a rota do proxy interno do Laravel para evitar o erro 
-        // "SignatureDoesNotMatch" que ocorre quando o Reverse Proxy no servidor MinIO 
+        // Retorna a rota do proxy interno do Laravel para evitar o erro
+        // "SignatureDoesNotMatch" que ocorre quando o Reverse Proxy no servidor MinIO
         // não avança o cabeçalho 'Host' original. O backend resolve e autentica via SDK.
         return route('admin.processos.download_attachment', $this->id);
     }
@@ -53,14 +53,14 @@ class Anexo extends Model
         $mime = $this->tipo_mime ?? '';
 
         if (str_contains($mime, 'pdf')) {
-            return 'pdf-icon'; // Adjust based on your icon set usage
+            return 'icon-file';
         } elseif (str_contains($mime, 'image')) {
-            return 'image-icon';
+            return 'icon-image';
         } elseif (str_contains($mime, 'word') || str_contains($mime, 'document')) {
-            return 'word-icon';
+            return 'icon-file';
         }
 
-        return 'file-icon';
+        return 'icon-file';
     }
 
     public function getExtensionAttribute()
@@ -69,6 +69,7 @@ class Anexo extends Model
         if (empty($name)) {
             return '';
         }
+
         return strtoupper(pathinfo($name, PATHINFO_EXTENSION));
     }
 }

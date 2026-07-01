@@ -106,7 +106,7 @@
                         </td>
                         @if(!$readOnly)
                             <td class="px-4 py-3 text-center">
-                                <div class="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div class="flex items-center justify-center gap-2">
                                     <a href="{{ $anexo->url }}" target="_blank"
                                         class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors" title="Baixar">
                                         <span class="icon-download text-lg"></span>
@@ -173,6 +173,18 @@
                 </form>
             </div>
         </div>
+
+        {{-- Adicionar Item Individual --}}
+        <div class="flex gap-2 items-center" id="lf-checklist-add-row">
+            <input type="text" id="lf-checklist-new-name"
+                placeholder="Nome do documento (ex: RG, CPF, Comprovante...)"
+                class="flex-1 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm px-3 py-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.lfDocsAddItem(); }" />
+            <button type="button" onclick="window.lfDocsAddItem()"
+                class="px-4 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+                <i class="icon-add text-base"></i> Adicionar Item
+            </button>
+        </div>
     @endif
 
     {{-- Tabela Checklist --}}
@@ -188,8 +200,9 @@
                     @endif
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+            <tbody id="lf-checklist-tbody" class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
                 @forelse($checklistDocs as $doc)
+
                     @php
                         $statusMap = [
                             'pending'  => ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'label' => 'Pendente'],
@@ -199,14 +212,19 @@
                         ];
                         $st = $statusMap[$doc->status] ?? $statusMap['pending'];
                     @endphp
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" id="checklist-row-{{ $doc->id }}">
                         <td class="px-4 py-3">
                             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $st['bg'] }} {{ $st['text'] }}">{{ $st['label'] }}</span>
                         </td>
                         <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                            {{ $doc->name }}
                             @if($doc->file_path)
-                                <i class="icon-attachment text-gray-400 ml-1" title="Anexo vinculado"></i>
+                                <a href="{{ route('admin.lawfirm.ged.download', $doc->id) }}" target="_blank"
+                                    class="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1">
+                                    {{ $doc->name }}
+                                    <i class="icon-attachment text-gray-400" title="Baixar documento vinculado"></i>
+                                </a>
+                            @else
+                                {{ $doc->name }}
                             @endif
                         </td>
                         <td class="px-4 py-3 text-gray-500 truncate max-w-[200px]" title="{{ $doc->notes }}">
@@ -222,6 +240,12 @@
                                         <option value="approved" {{ $doc->status == 'approved' ? 'selected' : '' }}>Aprovado</option>
                                         <option value="rejected" {{ $doc->status == 'rejected' ? 'selected' : '' }}>Rejeitado</option>
                                     </select>
+                                    @if($doc->file_path)
+                                        <a href="{{ route('admin.lawfirm.ged.download', $doc->id) }}" target="_blank"
+                                            class="text-gray-500 hover:text-blue-600 transition-colors p-1" title="Baixar">
+                                            <i class="icon-download text-lg"></i>
+                                        </a>
+                                    @endif
                                     <button type="button" onclick="window.lfDocsDeleteChecklistItem('{{ $doc->id }}')"
                                         class="text-gray-400 hover:text-red-500 transition-colors">
                                         <i class="icon-delete text-lg"></i>
@@ -231,9 +255,9 @@
                         @endif
                     </tr>
                 @empty
-                    <tr>
+                    <tr id="checklist-empty-row">
                         <td colspan="{{ $readOnly ? 3 : 4 }}" class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400 italic">
-                            Nenhum item no checklist. Importe um kit acima.
+                            Nenhum item no checklist. Importe um kit ou adicione itens acima.
                         </td>
                     </tr>
                 @endforelse
@@ -553,7 +577,17 @@
 
             xhr.onload = function () {
                 if (xhr.status >= 200 && xhr.status < 300) {
-                    window.location.reload();
+                    const row = document.getElementById('checklist-row-' + id);
+                    if (row) row.remove();
+                    // Show empty state if no rows left
+                    const tbody = document.querySelector('#lf-checklist-tbody');
+                    if (tbody && !tbody.querySelector('tr[id^="checklist-row-"]')) {
+                        const emptyRow = document.getElementById('checklist-empty-row');
+                        if (!emptyRow) {
+                            const cols = {{ $readOnly ? 3 : 4 }};
+                            tbody.innerHTML = '<tr id="checklist-empty-row"><td colspan="' + cols + '" class="px-4 py-6 text-center text-sm text-gray-500 italic">Nenhum item no checklist. Importe um kit ou adicione itens acima.</td></tr>';
+                        }
+                    }
                 } else {
                     alert('Erro ao remover: ' + xhr.statusText);
                 }
@@ -562,5 +596,89 @@
             xhr.send();
         }
 
+        // Add individual checklist item via AJAX
+        window.lfDocsAddItem = function () {
+            const nameInput = document.getElementById('lf-checklist-new-name');
+            const name = nameInput ? nameInput.value.trim() : '';
+
+            if (!name) {
+                nameInput && nameInput.focus();
+                return;
+            }
+
+            const token = window.lfDocsGetCsrfToken();
+            const url = "{{ route('lawfirm.documents.add_item', $processo->id) }}";
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('_token', token);
+
+            const btn = document.querySelector('#lf-checklist-add-row button');
+            if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', url, true);
+            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.setRequestHeader('Accept', 'application/json');
+
+            xhr.onload = function () {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="icon-add text-base"></i> Adicionar Item'; }
+
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const data = JSON.parse(xhr.responseText);
+                    const doc = data.doc;
+
+                    // Remove empty row if present
+                    const emptyRow = document.getElementById('checklist-empty-row');
+                    if (emptyRow) emptyRow.remove();
+
+                    // Append new row to the checklist table
+                    const tbody = document.querySelector('#lf-checklist-tbody');
+                    if (tbody) {
+                        const tr = document.createElement('tr');
+                        tr.id = 'checklist-row-' + doc.id;
+                        tr.className = 'hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors';
+                        tr.innerHTML = `
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Pendente</span>
+                            </td>
+                            <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">${doc.name}</td>
+                            <td class="px-4 py-3 text-gray-500">-</td>
+                            <td class="px-4 py-3 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <select onchange="window.lfDocsUpdateStatus('${doc.id}', this.value)"
+                                        class="text-xs border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 py-1 pr-6 cursor-pointer">
+                                        <option value="pending" selected>Pendente</option>
+                                        <option value="received">Recebido</option>
+                                        <option value="approved">Aprovado</option>
+                                        <option value="rejected">Rejeitado</option>
+                                    </select>
+                                    <button type="button" onclick="window.lfDocsDeleteChecklistItem('${doc.id}')"
+                                        class="text-gray-400 hover:text-red-500 transition-colors">
+                                        <i class="icon-delete text-lg"></i>
+                                    </button>
+                                </div>
+                            </td>`;
+                        tbody.appendChild(tr);
+                    }
+
+                    // Clear input
+                    if (nameInput) nameInput.value = '';
+                } else {
+                    let msg = 'Erro ao adicionar item.';
+                    try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
+                    alert(msg);
+                }
+            };
+
+            xhr.onerror = function () {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="icon-add text-base"></i> Adicionar Item'; }
+                alert('Erro de rede.');
+            };
+
+            xhr.send(formData);
+        };
+
     </script>
-@endpush
+@endpush

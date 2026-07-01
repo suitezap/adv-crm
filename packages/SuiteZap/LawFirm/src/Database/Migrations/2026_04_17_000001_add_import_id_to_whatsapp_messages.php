@@ -16,9 +16,9 @@ return new class extends Migration
             $table->unsignedBigInteger('import_id')->nullable()->after('processo_id');
 
             $table->foreign('import_id')
-                  ->references('id')
-                  ->on('law_whatsapp_imports')
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on('law_whatsapp_imports')
+                ->onDelete('cascade');
         });
     }
 

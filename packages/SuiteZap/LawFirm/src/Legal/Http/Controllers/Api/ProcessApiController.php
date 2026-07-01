@@ -2,11 +2,11 @@
 
 namespace SuiteZap\LawFirm\Legal\Http\Controllers\Api;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use SuiteZap\LawFirm\Legal\Models\Processo;
-use SuiteZap\LawFirm\Http\Resources\ProcessResource;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use SuiteZap\LawFirm\Http\Resources\ProcessResource;
+use SuiteZap\LawFirm\Legal\Models\Processo;
 
 class ProcessApiController extends Controller
 {
@@ -40,15 +40,14 @@ class ProcessApiController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'titulo' => 'required|string|max:255',
+            'titulo'    => 'required|string|max:255',
             'person_id' => 'required|exists:persons,id',
-            'status' => 'required|string',
+            'status'    => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -59,7 +58,7 @@ class ProcessApiController extends Controller
 
         return response()->json([
             'message' => 'Processo created successfully',
-            'data' => new ProcessResource($processo),
+            'data'    => new ProcessResource($processo),
         ], 201);
     }
 
@@ -73,7 +72,7 @@ class ProcessApiController extends Controller
     {
         $processo = Processo::with('person', 'prazos', 'financeiros')->find($id);
 
-        if (!$processo) {
+        if (! $processo) {
             return response()->json(['message' => 'Processo not found'], 404);
         }
 
@@ -83,7 +82,6 @@ class ProcessApiController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
@@ -91,7 +89,7 @@ class ProcessApiController extends Controller
     {
         $processo = Processo::find($id);
 
-        if (!$processo) {
+        if (! $processo) {
             return response()->json(['message' => 'Processo not found'], 404);
         }
 
@@ -99,7 +97,7 @@ class ProcessApiController extends Controller
 
         return response()->json([
             'message' => 'Processo updated successfully',
-            'data' => new ProcessResource($processo),
+            'data'    => new ProcessResource($processo),
         ]);
     }
 
@@ -113,7 +111,7 @@ class ProcessApiController extends Controller
     {
         $processo = Processo::find($id);
 
-        if (!$processo) {
+        if (! $processo) {
             return response()->json(['message' => 'Processo not found'], 404);
         }
 

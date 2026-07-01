@@ -33,10 +33,9 @@ return [
     | Canonical source: MotherShipService::getEvolutionConfig()
     | Returns: ['base_url', 'instance', 'token'] | null
     */
-    'evolution' => [
-        'api_url'       => env('EVOLUTION_API_URL'),       // dev fallback only
-        'api_key'       => env('EVOLUTION_API_KEY'),       // dev fallback only
-        'instance_name' => env('EVOLUTION_INSTANCE_NAME'), // dev fallback only
-    ],
+    /*
+    | A configuração 'evolution' e seus fallbacks com env() foram removidos.
+    | Todo o ecossistema SaaS DEVE usar MotherShipService::getEvolutionConfig()
+    | para garantir a conformidade multi-tenant em produção.
+    */
 ];
-

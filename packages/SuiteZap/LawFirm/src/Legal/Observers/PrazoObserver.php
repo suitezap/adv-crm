@@ -2,9 +2,9 @@
 
 namespace SuiteZap\LawFirm\Legal\Observers;
 
+use Carbon\Carbon;
 use SuiteZap\LawFirm\Legal\Models\Prazo;
 use Webkul\Activity\Repositories\ActivityRepository;
-use Carbon\Carbon;
 
 class PrazoObserver
 {
@@ -30,7 +30,7 @@ class PrazoObserver
     {
         $processo = $prazo->processo;
 
-        if (!$processo) {
+        if (! $processo) {
             return;
         }
 
@@ -51,13 +51,13 @@ class PrazoObserver
 
         // Create the Activity
         $activity = $this->activityRepository->create([
-            'type' => 'call',
-            'title' => $title,
-            'comment' => $prazo->descricao ?? '',
+            'type'          => 'call',
+            'title'         => $title,
+            'comment'       => $prazo->descricao ?? '',
             'schedule_from' => $scheduleFrom,
-            'schedule_to' => $scheduleTo,
-            'is_done' => $isDone,
-            'user_id' => $userId,
+            'schedule_to'   => $scheduleTo,
+            'is_done'       => $isDone,
+            'user_id'       => $userId,
         ]);
 
         // Link to Lead if exists (defensive check)
@@ -78,13 +78,14 @@ class PrazoObserver
     {
         $processo = $prazo->processo;
 
-        if (!$processo) {
+        if (! $processo) {
             return;
         }
 
         // If no activity_id, create one instead
-        if (!$prazo->activity_id) {
+        if (! $prazo->activity_id) {
             $this->created($prazo);
+
             return;
         }
 
@@ -105,13 +106,13 @@ class PrazoObserver
 
         // Update the Activity
         $this->activityRepository->update([
-            'type' => 'call',
-            'title' => $title,
-            'comment' => $prazo->descricao ?? '',
+            'type'          => 'call',
+            'title'         => $title,
+            'comment'       => $prazo->descricao ?? '',
             'schedule_from' => $scheduleFrom,
-            'schedule_to' => $scheduleTo,
-            'is_done' => $isDone,
-            'user_id' => $userId,
+            'schedule_to'   => $scheduleTo,
+            'is_done'       => $isDone,
+            'user_id'       => $userId,
         ], $prazo->activity_id);
 
         // Re-sync Lead link if needed (defensive)
@@ -130,7 +131,7 @@ class PrazoObserver
      */
     public function deleted(Prazo $prazo): void
     {
-        if (!$prazo->activity_id) {
+        if (! $prazo->activity_id) {
             return;
         }
 

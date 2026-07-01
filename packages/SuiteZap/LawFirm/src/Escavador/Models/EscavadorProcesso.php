@@ -26,8 +26,8 @@ class EscavadorProcesso extends Model
     ];
 
     protected $casts = [
-        'segredo_justica' => 'boolean',
-        'capa_json' => 'array',
+        'segredo_justica'         => 'boolean',
+        'capa_json'               => 'array',
         'data_ultima_verificacao' => 'datetime',
     ];
 
@@ -70,7 +70,7 @@ class EscavadorProcesso extends Model
 
     public function needsRefresh(int $hours = 24): bool
     {
-        if (!$this->data_ultima_verificacao) {
+        if (! $this->data_ultima_verificacao) {
             return true;
         }
 
@@ -79,7 +79,7 @@ class EscavadorProcesso extends Model
 
     public function getResumoExcerpt(int $chars = 200): ?string
     {
-        if (!$this->resumo_ia) {
+        if (! $this->resumo_ia) {
             return null;
         }
 
@@ -87,6 +87,6 @@ class EscavadorProcesso extends Model
             return $this->resumo_ia;
         }
 
-        return mb_substr($this->resumo_ia, 0, $chars) . '...';
+        return mb_substr($this->resumo_ia, 0, $chars).'...';
     }
 }

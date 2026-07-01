@@ -17,43 +17,43 @@ class SafeActivityDataGrid extends CoreActivityDataGrid
     public function prepareColumns(): void
     {
         $this->addColumn([
-            'index' => 'id',
-            'label' => trans('admin::app.activities.index.datagrid.id'),
-            'type' => 'integer',
+            'index'      => 'id',
+            'label'      => trans('admin::app.activities.index.datagrid.id'),
+            'type'       => 'integer',
             'searchable' => true,
             'filterable' => true,
-            'sortable' => true,
+            'sortable'   => true,
         ]);
 
         $this->addColumn([
-            'index' => 'is_done',
-            'label' => trans('admin::app.activities.index.datagrid.is_done'),
-            'type' => 'string',
+            'index'            => 'is_done',
+            'label'            => trans('admin::app.activities.index.datagrid.is_done'),
+            'type'             => 'string',
             'dropdown_options' => $this->getBooleanDropdownOptions('yes_no'),
-            'searchable' => false,
-            'closure' => fn($row) => view('admin::activities.datagrid.is-done', compact('row'))->render(),
+            'searchable'       => false,
+            'closure'          => fn ($row) => view('admin::activities.datagrid.is-done', compact('row'))->render(),
         ]);
 
         $this->addColumn([
-            'index' => 'title',
-            'label' => trans('admin::app.activities.index.datagrid.title'),
-            'type' => 'string',
+            'index'      => 'title',
+            'label'      => trans('admin::app.activities.index.datagrid.title'),
+            'type'       => 'string',
             'searchable' => true,
             'filterable' => true,
-            'sortable' => true,
+            'sortable'   => true,
         ]);
 
         $this->addColumn([
-            'index' => 'created_by_id',
-            'label' => trans('admin::app.activities.index.datagrid.created_by'),
-            'type' => 'string',
-            'searchable' => false,
-            'sortable' => true,
-            'filterable' => true,
-            'filterable_type' => 'searchable_dropdown',
+            'index'              => 'created_by_id',
+            'label'              => trans('admin::app.activities.index.datagrid.created_by'),
+            'type'               => 'string',
+            'searchable'         => false,
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'searchable_dropdown',
             'filterable_options' => [
                 'repository' => UserRepository::class,
-                'column' => [
+                'column'     => [
                     'label' => 'name',
                     'value' => 'name',
                 ],
@@ -64,31 +64,31 @@ class SafeActivityDataGrid extends CoreActivityDataGrid
                 }
                 $route = urldecode(route('admin.settings.users.index', ['id[eq]' => $row->created_by_id]));
 
-                return "<a class='text-brandColor hover:underline' href='" . $route . "'>" . $row->created_by . '</a>';
+                return "<a class='text-brandColor hover:underline' href='".$route."'>".$row->created_by.'</a>';
             },
         ]);
 
         // ✅ CRITICAL FIX: Ensure comment is never null to prevent Vue .length crash
         $this->addColumn([
-            'index' => 'comment',
-            'label' => trans('admin::app.activities.index.datagrid.comment'),
-            'type' => 'string',
+            'index'   => 'comment',
+            'label'   => trans('admin::app.activities.index.datagrid.comment'),
+            'type'    => 'string',
             'closure' => function ($row) {
                 return $row->comment ?? '';
             },
         ]);
 
         $this->addColumn([
-            'index' => 'lead_title',
-            'label' => trans('admin::app.activities.index.datagrid.lead'),
-            'type' => 'string',
-            'searchable' => true,
-            'sortable' => true,
-            'filterable' => true,
-            'filterable_type' => 'searchable_dropdown',
+            'index'              => 'lead_title',
+            'label'              => trans('admin::app.activities.index.datagrid.lead'),
+            'type'               => 'string',
+            'searchable'         => true,
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'searchable_dropdown',
             'filterable_options' => [
                 'repository' => LeadRepository::class,
-                'column' => [
+                'column'     => [
                     'label' => 'title',
                     'value' => 'title',
                 ],
@@ -100,48 +100,48 @@ class SafeActivityDataGrid extends CoreActivityDataGrid
 
                 $route = urldecode(route('admin.leads.view', $row->lead_id));
 
-                return "<a class='text-brandColor hover:underline' target='_blank' href='" . $route . "'>" . $row->lead_title . '</a>';
+                return "<a class='text-brandColor hover:underline' target='_blank' href='".$route."'>".$row->lead_title.'</a>';
             },
         ]);
 
         $this->addColumn([
-            'index' => 'type',
-            'label' => trans('admin::app.activities.index.datagrid.type'),
-            'type' => 'string',
+            'index'      => 'type',
+            'label'      => trans('admin::app.activities.index.datagrid.type'),
+            'type'       => 'string',
             'searchable' => false,
             'filterable' => false,
-            'sortable' => true,
-            'closure' => fn($row) => trans('admin::app.activities.index.datagrid.' . $row->type),
+            'sortable'   => true,
+            'closure'    => fn ($row) => trans('admin::app.activities.index.datagrid.'.$row->type),
         ]);
 
         $this->addColumn([
-            'index' => 'schedule_from',
-            'label' => trans('admin::app.activities.index.datagrid.schedule_from'),
-            'type' => 'date',
-            'sortable' => true,
+            'index'      => 'schedule_from',
+            'label'      => trans('admin::app.activities.index.datagrid.schedule_from'),
+            'type'       => 'date',
+            'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
-            'closure' => fn($row) => core()->formatDate($row->schedule_from),
+            'closure'    => fn ($row) => core()->formatDate($row->schedule_from),
         ]);
 
         $this->addColumn([
-            'index' => 'schedule_to',
-            'label' => trans('admin::app.activities.index.datagrid.schedule_to'),
-            'type' => 'date',
-            'sortable' => true,
+            'index'      => 'schedule_to',
+            'label'      => trans('admin::app.activities.index.datagrid.schedule_to'),
+            'type'       => 'date',
+            'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
-            'closure' => fn($row) => core()->formatDate($row->schedule_to),
+            'closure'    => fn ($row) => core()->formatDate($row->schedule_to),
         ]);
 
         $this->addColumn([
-            'index' => 'created_at',
-            'label' => trans('admin::app.activities.index.datagrid.created_at'),
-            'type' => 'date',
-            'sortable' => true,
+            'index'      => 'created_at',
+            'label'      => trans('admin::app.activities.index.datagrid.created_at'),
+            'type'       => 'date',
+            'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
-            'closure' => fn($row) => core()->formatDate($row->created_at),
+            'closure'    => fn ($row) => core()->formatDate($row->created_at),
         ]);
     }
 }

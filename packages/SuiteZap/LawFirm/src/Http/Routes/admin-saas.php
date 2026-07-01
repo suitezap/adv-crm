@@ -1,9 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use SuiteZap\LawFirm\SaaS\Http\Controllers\SaaSController;
-use SuiteZap\LawFirm\Http\Controllers\ChecklistController;
 use SuiteZap\LawFirm\SaaS\Http\Controllers\Admin\MothershipTemplateController;
+use SuiteZap\LawFirm\SaaS\Http\Controllers\SaaSController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,6 +46,7 @@ Route::get('orders', [\SuiteZap\LawFirm\SaaS\Http\Controllers\SaasOrderControlle
 // -----------------------------------------------
 Route::prefix('assistants')->controller(\SuiteZap\LawFirm\AI\Http\Controllers\Admin\AssistantController::class)->group(function () {
     Route::get('', 'index')->name('lawfirm.assistants.index');
+    Route::get('escavai', 'escavai')->name('lawfirm.assistants.escavai');
 
     // History Routes (must come before {slug})
     Route::prefix('history')->controller(\SuiteZap\LawFirm\AI\Http\Controllers\Admin\AssistantHistoryController::class)->group(function () {
@@ -67,6 +67,12 @@ Route::prefix('assistants')->controller(\SuiteZap\LawFirm\AI\Http\Controllers\Ad
     Route::get('lead/{leadId}/triagem', 'getTriagem')->name('lawfirm.assistants.triagem.get');
     Route::post('lead/{leadId}/triagem/save', 'saveTriagem')->name('lawfirm.assistants.triagem.save');
 });
+
+// -----------------------------------------------
+// SAC (Central de Atendimento)
+// -----------------------------------------------
+Route::get('sac', [\SuiteZap\LawFirm\AI\Http\Controllers\Admin\AssistantController::class, 'chatwoot'])
+    ->name('lawfirm.assistants.chatwoot');
 
 // -----------------------------------------------
 // Mothership Admin API — Gestão de Templates de IA + Cache Sync
@@ -95,4 +101,3 @@ Route::prefix('mothership')->controller(MothershipTemplateController::class)->gr
 // -----------------------------------------------
 Route::get('debug/test-s3', [SaaSController::class, 'testS3Connection'])
     ->name('admin.lawfirm.debug.s3');
-

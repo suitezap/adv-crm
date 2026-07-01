@@ -3,11 +3,10 @@
 namespace SuiteZap\LawFirm\Whatsapp\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Webkul\Admin\Http\Controllers\Controller;
-use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
-use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
+use Webkul\Admin\Http\Controllers\Controller;
 
 class ConnectionController extends Controller
 {
@@ -25,22 +24,22 @@ class ConnectionController extends Controller
     {
         $instanceName = $this->getInstanceName();
 
-        $status  = 'disconnected';
+        $status = 'disconnected';
         $profile = null;
 
         $response = $this->service->fetchInstance($instanceName);
 
         if ($response['success']) {
-            $data      = $response['data'];
+            $data = $response['data'];
             $instances = isset($data[0]) ? $data : [$data];
 
             foreach ($instances as $item) {
-                $instData   = $item['instance'] ?? $item;
-                $instName   = $instData['name'] ?? $instData['instanceName'] ?? null;
+                $instData = $item['instance'] ?? $item;
+                $instName = $instData['name'] ?? $instData['instanceName'] ?? null;
                 $connStatus = $instData['connectionStatus'] ?? $instData['status'] ?? 'close';
 
                 if ($instName === $instanceName && $connStatus === 'open') {
-                    $status  = 'connected';
+                    $status = 'connected';
                     $profile = $instData['profileName'] ?? $instData['ownerJid'] ?? 'Conectado';
                     break;
                 }
@@ -51,7 +50,7 @@ class ConnectionController extends Controller
             ->where('is_active', true)
             ->first();
 
-        $isConfigured = !empty(MotherShipService::getEvolutionConfig()['instance']);
+        $isConfigured = ! empty(MotherShipService::getEvolutionConfig()['instance']);
 
         return view('lawfirm::admin.whatsapp.index', compact('status', 'profile', 'instanceName', 'whatsappAssistant', 'isConfigured'));
     }
@@ -68,7 +67,7 @@ class ConnectionController extends Controller
 
         $connect = $this->service->connectInstance($instanceName);
 
-        if (!$connect['success']) {
+        if (! $connect['success']) {
             return response()->json([
                 'success' => false,
                 'message' => 'Erro ao comunicar com a Evolution API.',
@@ -89,13 +88,13 @@ class ConnectionController extends Controller
     {
         $config = MotherShipService::getEvolutionConfig();
 
-        if (!$config) {
+        if (! $config) {
             return response()->json(['success' => false, 'state' => 'unconfigured']);
         }
 
         $response = $this->service->connectInstance($config['instance']);
 
-        if (!$response || !$response['success']) {
+        if (! $response || ! $response['success']) {
             return response()->json(['success' => false, 'state' => 'error']);
         }
 
@@ -116,7 +115,7 @@ class ConnectionController extends Controller
         } catch (\Exception $e) {
             // Apenas loga o erro, mas NÃO PARA a execução.
             // O objetivo é permitir que o usuário resete o banco local mesmo se a API estiver fora.
-            \Illuminate\Support\Facades\Log::warning("Falha ao desconectar API remota, forçando limpeza local: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('Falha ao desconectar API remota, forçando limpeza local: '.$e->getMessage());
         }
 
         // LIMPEZA LOCAL (Obrigatório acontecer sempre):
@@ -127,6 +126,7 @@ class ConnectionController extends Controller
 
         // Retornar sucesso para o front-end limpar o estado
         session()->flash('success', 'WhatsApp desconectado com sucesso (Local e Remoto).');
+
         return response()->json(['success' => true]);
     }
 
@@ -158,15 +158,10 @@ class ConnectionController extends Controller
     {
         $config = MotherShipService::getEvolutionConfig();
 
-        if ($config && !empty($config['instance'])) {
+        if ($config && ! empty($config['instance'])) {
             return $config['instance'];
         }
 
-        $fallback = config('lawfirm.evolution.instance_name');
-        if (!$fallback) {
-            abort(503, 'WhatsApp não configurado no MotherShip para este escritório.');
-        }
-
-        return $fallback;
+        abort(503, 'WhatsApp não configurado no MotherShip para este escritório.');
     }
 }

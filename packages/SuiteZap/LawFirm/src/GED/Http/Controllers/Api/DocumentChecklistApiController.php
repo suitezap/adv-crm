@@ -2,8 +2,8 @@
 
 namespace SuiteZap\LawFirm\GED\Http\Controllers\Api;
 
-use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use SuiteZap\LawFirm\GED\Models\ProcessDocument;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
@@ -17,14 +17,13 @@ use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
  */
 class DocumentChecklistApiController extends Controller
 {
-    public function __construct(protected SaasFileService $fileService)
-    {
-    }
+    public function __construct(protected SaasFileService $fileService) {}
 
     // GET /api/lawfirm/documents/{processId} → Lista documentos do processo
     public function index($processId)
     {
         $documents = ProcessDocument::where('processo_id', $processId)->get();
+
         return response()->json(['data' => $documents]);
     }
 
@@ -33,7 +32,7 @@ class DocumentChecklistApiController extends Controller
     {
         $request->validate([
             'status' => 'required|in:pending,received,approved,rejected',
-            'notes'  => 'nullable|string'
+            'notes'  => 'nullable|string',
         ]);
 
         $document = ProcessDocument::findOrFail($id);
@@ -50,7 +49,7 @@ class DocumentChecklistApiController extends Controller
     public function uploadFile(Request $request, $id)
     {
         $request->validate([
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:20480' // 20MB
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:20480', // 20MB
         ]);
 
         $document = ProcessDocument::findOrFail($id);
@@ -58,12 +57,12 @@ class DocumentChecklistApiController extends Controller
         // ✅ CORRETO: usa SaasFileService::store() — respeita isolamento do bucket por tenant
         $path = $this->fileService->store(
             $request->file('file'),
-            'checklist/' . $document->processo_id
+            'checklist/'.$document->processo_id
         );
 
         $document->update([
             'file_path' => $path,
-            'status'    => 'received'
+            'status'    => 'received',
         ]);
 
         // ✅ CORRETO: usa SaasFileService::url() — retorna URL pública/assinada correta por tenant

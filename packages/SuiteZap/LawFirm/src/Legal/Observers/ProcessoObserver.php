@@ -3,10 +3,10 @@
 namespace SuiteZap\LawFirm\Legal\Observers;
 
 use Carbon\Carbon;
-use SuiteZap\LawFirm\Legal\Models\Processo;
-use Webkul\Activity\Repositories\ActivityRepository;
-use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
+use Webkul\Activity\Repositories\ActivityRepository;
 
 class ProcessoObserver
 {
@@ -27,9 +27,20 @@ class ProcessoObserver
     }
 
     /**
+     * Handle the Processo "creating" event.
+     *
+     * @return void
+     */
+    public function creating(Processo $processo)
+    {
+        if (empty($processo->sercreta)) {
+            $processo->sercreta = str_pad(mt_rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        }
+    }
+
+    /**
      * Handle the Processo "saved" event (Create or Update).
      *
-     * @param  \SuiteZap\LawFirm\Legal\Models\Processo  $processo
      * @return void
      */
     public function saved(Processo $processo)
@@ -42,7 +53,6 @@ class ProcessoObserver
      * Fires BEFORE the DB row is removed, enabling us to cascade deletions
      * through Eloquent observers (which SQL-CASCADE would bypass entirely).
      *
-     * @param  \SuiteZap\LawFirm\Legal\Models\Processo  $processo
      * @return void
      */
     public function deleting(Processo $processo)
@@ -54,11 +64,11 @@ class ProcessoObserver
 
         // 2. Anexos — delete from S3 via SaasFileService (multi-tenant safe)
         $processo->anexos->each(function ($anexo) {
-            if (!empty($anexo->path)) {
+            if (! empty($anexo->path)) {
                 try {
                     $this->fileService->delete($anexo->path);
                 } catch (\Throwable $e) {
-                    Log::warning("ProcessoObserver: Failed S3 delete for Anexo path [{$anexo->path}]: " . $e->getMessage());
+                    Log::warning("ProcessoObserver: Failed S3 delete for Anexo path [{$anexo->path}]: ".$e->getMessage());
                 }
             }
             $anexo->delete();
@@ -66,11 +76,11 @@ class ProcessoObserver
 
         // 3. ProcessDocuments (GED template docs) — delete from S3 via SaasFileService (multi-tenant safe)
         $processo->documents->each(function ($doc) {
-            if (!empty($doc->file_path)) {
+            if (! empty($doc->file_path)) {
                 try {
                     $this->fileService->delete($doc->file_path);
                 } catch (\Throwable $e) {
-                    Log::warning("ProcessoObserver: Failed S3 delete for ProcessDocument path [{$doc->file_path}]: " . $e->getMessage());
+                    Log::warning("ProcessoObserver: Failed S3 delete for ProcessDocument path [{$doc->file_path}]: ".$e->getMessage());
                 }
             }
             $doc->delete();
@@ -79,7 +89,7 @@ class ProcessoObserver
         // 4. Notas — quick bulk delete (no observer needed)
         $processo->notas()->delete();
 
-        // 5. Financeiros — quick bulk delete  
+        // 5. Financeiros — quick bulk delete
         $processo->financeiros()->delete();
 
         // 6. Clean up the Audiência Calendar Event
@@ -89,7 +99,6 @@ class ProcessoObserver
     /**
      * Handle the Processo "deleted" event.
      *
-     * @param  \SuiteZap\LawFirm\Legal\Models\Processo  $processo
      * @return void
      */
     public function deleted(Processo $processo)
@@ -101,23 +110,24 @@ class ProcessoObserver
      * Ensure calendar event logic: Create, Update OR Delete based on state.
      * Uses [REF:PROC_ID:{id}] tag to strictly identify the event.
      *
-     * @param Processo $processo
      * @return void
      */
     private function ensureCalendarEvent(Processo $processo)
     {
-        // Check for process owner, then admin guard, then user guard, then fallback to 1
-        $userId = $processo->user_id ?? auth()->guard('admin')->id() ?? auth()->guard('user')->id() ?? 1;
+        // Check for process owner, then admin guard, then user guard
+        $userId = $processo->user_id ?? auth()->guard('admin')->id() ?? auth()->guard('user')->id();
 
-        if (!$userId) {
+        if (! $userId) {
+            Log::warning("ProcessoObserver: Failed to resolve user_id for Processo {$processo->id}. Calendar event sync aborted.");
+
             return;
         }
 
         $tag = "[REF:PROC_ID:{$processo->id}]";
 
         $activities = $this->activityRepository->findWhere([
-            'type' => 'meeting',
-            'user_id' => $userId
+            'type'    => 'meeting',
+            'user_id' => $userId,
         ]);
 
         $existingActivity = $activities->first(function ($activity) use ($tag) {
@@ -125,32 +135,33 @@ class ProcessoObserver
         });
 
         $isActive = strtolower(trim($processo->status)) !== 'encerrado';
-        $hasDate = !empty($processo->data_audiencia);
+        $hasDate = ! empty($processo->data_audiencia);
 
-        if (!$isActive || !$hasDate) {
+        if (! $isActive || ! $hasDate) {
             if ($existingActivity) {
                 $this->activityRepository->delete($existingActivity->id);
             }
+
             return;
         }
 
         $scheduledFrom = Carbon::parse($processo->data_audiencia);
         $scheduledTo = $scheduledFrom->copy()->addHour();
-        $title = 'Audiência: ' . $processo->titulo;
+        $title = 'Audiência: '.$processo->titulo;
         $comment = "Audiência gerada automaticamente pelo Processo Nº {$processo->numero_cnj}. {$tag}";
 
         $payload = [
-            'type' => 'meeting',
-            'title' => $title,
-            'comment' => "<p>{$comment}</p>",
+            'type'          => 'meeting',
+            'title'         => $title,
+            'comment'       => "<p>{$comment}</p>",
             'schedule_from' => $scheduledFrom->format('Y-m-d H:i:s'),
-            'schedule_to' => $scheduledTo->format('Y-m-d H:i:s'),
-            'is_done' => 0,
-            'user_id' => $userId,
-            'process_id' => $processo->id,
-            'participants' => [
-                'users' => [$userId]
-            ]
+            'schedule_to'   => $scheduledTo->format('Y-m-d H:i:s'),
+            'is_done'       => 0,
+            'user_id'       => $userId,
+            'process_id'    => $processo->id,
+            'participants'  => [
+                'users' => [$userId],
+            ],
         ];
 
         if ($existingActivity) {
@@ -164,14 +175,19 @@ class ProcessoObserver
      * Force clean up ALL calendar events tagged for a given processo —
      * including is_done=1 entries that the previous cleanup logic missed.
      *
-     * @param Processo $processo
      * @return void
      */
     private function forceCleanupCalendarEvent(Processo $processo)
     {
         $tag = "[REF:PROC_ID:{$processo->id}]";
 
-        $all = $this->activityRepository->findWhere(['type' => 'meeting']);
+        $conditions = ['type' => 'meeting'];
+        $tenantId = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantId();
+        if ($tenantId) {
+            $conditions['tenant_id'] = $tenantId;
+        }
+
+        $all = $this->activityRepository->findWhere($conditions);
 
         $all->filter(function ($activity) use ($tag) {
             return str_contains($activity->comment ?? '', $tag);

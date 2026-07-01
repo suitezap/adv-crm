@@ -3,9 +3,9 @@
 namespace SuiteZap\LawFirm\SaaS\DataGrids;
 
 use Illuminate\Support\Facades\DB;
-use Webkul\DataGrid\DataGrid;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
+use Webkul\DataGrid\DataGrid;
 
 /**
  * SaasTransactionsDataGrid — Exibe o extrato de movimentações financeiras (débitos/créditos)
@@ -17,7 +17,9 @@ use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 class SaasTransactionsDataGrid extends DataGrid
 {
     protected $primaryColumn = 'id';
+
     protected $sortColumn = 'id';
+
     protected $sortOrder = 'desc';
 
     public function prepareQueryBuilder()
@@ -38,15 +40,15 @@ class SaasTransactionsDataGrid extends DataGrid
         }
 
         $queryBuilder->select(
-                'saas_transactions.id',
-                'saas_transactions.type',
-                'saas_transactions.amount',
-                'saas_transactions.balance_after',
-                'saas_transactions.service_type',
-                'saas_transactions.description',
-                'users.name as user_name',
-                'saas_transactions.created_at'
-            );
+            'saas_transactions.id',
+            'saas_transactions.type',
+            'saas_transactions.amount',
+            'saas_transactions.balance_after',
+            'saas_transactions.service_type',
+            'saas_transactions.description',
+            'users.name as user_name',
+            'saas_transactions.created_at'
+        );
 
         $this->addFilter('id', 'saas_transactions.id');
         $this->addFilter('type', 'saas_transactions.type');
@@ -77,6 +79,7 @@ class SaasTransactionsDataGrid extends DataGrid
                 if ($row->type === 'credit') {
                     return '<span class="badge badge-round badge-success">Crédito</span>';
                 }
+
                 return '<span class="badge badge-round badge-danger">Débito</span>';
             },
         ]);
@@ -109,8 +112,9 @@ class SaasTransactionsDataGrid extends DataGrid
             'closure'  => function ($row) {
                 if ($row->type === 'credit') {
                     // Depósito: exibe o valor real pago em R$
-                    return 'R$ ' . number_format((float) $row->amount, 2, ',', '.');
+                    return 'R$ '.number_format((float) $row->amount, 2, ',', '.');
                 }
+
                 // Débito de consumo: exibe em Ƶ
                 return SuiteCoinService::formatFromBrl((float) $row->amount);
             },
@@ -122,8 +126,10 @@ class SaasTransactionsDataGrid extends DataGrid
             'type'     => 'string',
             'sortable' => false,
             'closure'  => function ($row) {
-                if ($row->balance_after === null)
+                if ($row->balance_after === null) {
                     return '—';
+                }
+
                 return SuiteCoinService::formatFromBrl((float) $row->balance_after);
             },
         ]);
@@ -134,7 +140,7 @@ class SaasTransactionsDataGrid extends DataGrid
             'type'       => 'string',
             'sortable'   => true,
             'searchable' => true,
-            'closure'    => fn($row) => $row->user_name ?: '(Sistema)',
+            'closure'    => fn ($row) => $row->user_name ?: '(Sistema)',
         ]);
 
         $this->addColumn([
@@ -142,11 +148,9 @@ class SaasTransactionsDataGrid extends DataGrid
             'label'    => 'Data/Hora',
             'type'     => 'datetime',
             'sortable' => true,
-            'closure'  => fn($row) => core()->formatDate($row->created_at, 'd/m/Y H:i'),
+            'closure'  => fn ($row) => core()->formatDate($row->created_at, 'd/m/Y H:i'),
         ]);
     }
 
-    public function prepareActions()
-    {
-    }
+    public function prepareActions() {}
 }

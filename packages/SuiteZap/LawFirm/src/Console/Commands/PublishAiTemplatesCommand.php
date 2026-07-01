@@ -4,7 +4,6 @@ namespace SuiteZap\LawFirm\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 
 /**
@@ -55,6 +54,7 @@ class PublishAiTemplatesCommand extends Command
 
         $this->info('Use uma das opções: --list, --all, --slug=<slug>, --deactivate=<slug>, --sync-modules');
         $this->line('Rode com --help para mais detalhes.');
+
         return self::SUCCESS;
     }
 
@@ -71,12 +71,13 @@ class PublishAiTemplatesCommand extends Command
 
         if ($templates->isEmpty()) {
             $this->warn('Nenhum template global encontrado.');
+
             return self::SUCCESS;
         }
 
         $this->table(
             ['Slug', 'Título', 'Categoria', 'Área', 'Módulo Req.', 'Ativo', 'Versão'],
-            $templates->map(fn($t) => [
+            $templates->map(fn ($t) => [
                 $t->slug,
                 str($t->title)->limit(40),
                 $t->category,
@@ -88,6 +89,7 @@ class PublishAiTemplatesCommand extends Command
         );
 
         $this->info("Total: {$templates->count()} templates.");
+
         return self::SUCCESS;
     }
 
@@ -98,8 +100,9 @@ class PublishAiTemplatesCommand extends Command
     {
         $template = AssistantTemplate::where('slug', $slug)->whereNull('tenant_id')->first();
 
-        if (!$template) {
+        if (! $template) {
             $this->error("Template '{$slug}' não encontrado no Mothership (global).");
+
             return self::FAILURE;
         }
 
@@ -107,6 +110,7 @@ class PublishAiTemplatesCommand extends Command
         $this->invalidateCache();
 
         $this->info("✅ Template '{$slug}' desativado. Não aparecerá mais para nenhum tenant.");
+
         return self::SUCCESS;
     }
 
@@ -118,8 +122,9 @@ class PublishAiTemplatesCommand extends Command
     {
         $template = AssistantTemplate::where('slug', $slug)->first();
 
-        if (!$template) {
+        if (! $template) {
             $this->error("Template '{$slug}' não encontrado.");
+
             return self::FAILURE;
         }
 
@@ -128,6 +133,7 @@ class PublishAiTemplatesCommand extends Command
         $this->invalidateCache();
 
         $this->info("✅ Template '{$slug}' republicado. Versão: {$template->fresh()->version}");
+
         return self::SUCCESS;
     }
 
@@ -137,7 +143,7 @@ class PublishAiTemplatesCommand extends Command
      */
     protected function republishAll(): int
     {
-        if (!$this->confirm('Isso incrementará a versão de TODOS os templates globais. Confirmar?')) {
+        if (! $this->confirm('Isso incrementará a versão de TODOS os templates globais. Confirmar?')) {
             return self::SUCCESS;
         }
 
@@ -146,6 +152,7 @@ class PublishAiTemplatesCommand extends Command
 
         $this->invalidateCache();
         $this->info("✅ {$count} templates atualizados. Cache invalidado para todos os tenants.");
+
         return self::SUCCESS;
     }
 
@@ -175,7 +182,7 @@ class PublishAiTemplatesCommand extends Command
         }
 
         $this->line("\n💡 Para um tenant receber os cards de um módulo, adicione o módulo ao campo");
-        $this->line("   `active_modules` da sua subscription no banco Mothership:");
+        $this->line('   `active_modules` da sua subscription no banco Mothership:');
         $this->line('   UPDATE subscriptions SET active_modules = JSON_ARRAY("IA-TRABALHISTA", "IA-FAMILIA") WHERE tenant_id = "lawfirm_xxx";');
 
         return self::SUCCESS;
@@ -188,6 +195,6 @@ class PublishAiTemplatesCommand extends Command
     {
         $currentVersion = (int) Cache::get('ai_templates_cache_version', 1);
         Cache::forever('ai_templates_cache_version', $currentVersion + 1);
-        $this->line("🔄 Cache invalidado. Nova versão: " . ($currentVersion + 1));
+        $this->line('🔄 Cache invalidado. Nova versão: '.($currentVersion + 1));
     }
 }

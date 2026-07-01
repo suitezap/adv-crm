@@ -2,13 +2,13 @@
 
 namespace SuiteZap\LawFirm\Escavador\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
+use SuiteZap\LawFirm\Escavador\Models\EscavadorRequest;
 use SuiteZap\LawFirm\SaaS\Models\InfrastructureNode;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
-use SuiteZap\LawFirm\Escavador\Models\EscavadorRequest;
 
 /**
  * EscavadorService — Client para a API do Escavador (V1 & V2).
@@ -21,6 +21,7 @@ use SuiteZap\LawFirm\Escavador\Models\EscavadorRequest;
 class EscavadorService
 {
     private const BASE_URL_V1 = 'https://api.escavador.com/api/v1';
+
     private const BASE_URL_V2 = 'https://api.escavador.com/api/v2';
 
     /**
@@ -29,38 +30,38 @@ class EscavadorService
     public const SERVICE_MAP = [
         // Existentes
         'CAPA_PROCESSO' => ['get', 'processos/numero_cnj/{numero}', 'v2', false],
-        'PDF_DIARIO' => ['get', 'monitoramentos-de-diarios/{id}/publicacao/pdf', 'v1', false],
-        'BUSCA_TERMO' => ['get', 'busca', 'v1', false],
-        'RESUMO_IA' => ['post', 'processos/numero_cnj/{numero}/ia/resumo/solicitar-atualizacao', 'v2', true],
-        
+        'PDF_DIARIO'    => ['get', 'monitoramentos-de-diarios/{id}/publicacao/pdf', 'v1', false],
+        'BUSCA_TERMO'   => ['get', 'busca', 'v1', false],
+        'RESUMO_IA'     => ['post', 'processos/numero_cnj/{numero}/ia/resumo/solicitar-atualizacao', 'v2', true],
+
         // Mapeamentos diretos pro CacheService e Controller
-        'ATUALIZACAO_PROCESSO_PUB' => ['post', 'processos/numero_cnj/{numero}/solicitar-atualizacao', 'v2', true],
+        'ATUALIZACAO_PROCESSO_PUB'   => ['post', 'processos/numero_cnj/{numero}/solicitar-atualizacao', 'v2', true],
         'ATUALIZACAO_PROCESSO_AUTOS' => ['post', 'processos/numero_cnj/{numero}/solicitar-atualizacao', 'v2', true],
-        'MOVIMENTACOES_PROCESSO' => ['get', 'processos/numero_cnj/{numero}/movimentacoes', 'v2', false],
-        'ENVOLVIDOS_PROCESSO' => ['get', 'processos/numero_cnj/{numero}/envolvidos', 'v2', false],
-        'DOCUMENTOS_PUBLICOS' => ['get', 'processos/numero_cnj/{numero}/documentos-publicos', 'v2', false],
+        'MOVIMENTACOES_PROCESSO'     => ['get', 'processos/numero_cnj/{numero}/movimentacoes', 'v2', false],
+        'ENVOLVIDOS_PROCESSO'        => ['get', 'processos/numero_cnj/{numero}/envolvidos', 'v2', false],
+        'DOCUMENTOS_PUBLICOS'        => ['get', 'processos/numero_cnj/{numero}/documentos-publicos', 'v2', false],
 
         // MAPEAMENTO DA UI / ASSISTENTE JURIDICO (V1)
-        'API_V1_BUSCARPORTERMO' => ['get', 'busca', 'v1', false],
+        'API_V1_BUSCARPORTERMO'                     => ['get', 'busca', 'v1', false],
         'API_V1_DOWNLOADDOPDFDAPGINADODIRIOOFICIAL' => ['get', 'diarios/{id}/pdf/pagina/{pagina}/baixar', 'v1', false],
-        'API_V1_OBTERPESSOA' => ['get', 'pessoas/{pessoaId}', 'v1', false],
-        'API_V1_PROCESSOSDEUMAPESSOA' => ['get', 'pessoas/{pessoaId}/processos', 'v1', false],
-        'INFO_INSTITUICAO' => ['get', 'instituicoes/{instituicaoId}', 'v1', false],
-        'PROCESSOS_INSTITUICAO' => ['get', 'instituicoes/{instituicaoId}/processos', 'v1', false],
-        'PESSOAS_INSTITUICAO' => ['get', 'instituicoes/{instituicaoId}/pessoas', 'v1', false],
-        'API_V1_MOVIMENTAESDEUMPROCESSODO' => ['get', 'processos/{processoId}/movimentacoes', 'v1', false],
-        'API_V1_BUSCARPROCESSOSDOSDIRIOSPOROAB' => ['get', 'oab/{estado}/{numero}/processos', 'v1', false],
-        'BUSCA_PROC_DIARIO_NUM' => ['get', 'processos/numero/{numero}', 'v1', false],
-        'API_V1_ENVOLVIDOSDEUMPROCESSO' => ['get', 'processos/{processoId}/envolvidos', 'v1', false],
-        'API_V1_PESQUISARPROCESSONOTRIBUNAL' => ['post', 'processo-tribunal/{numero}/async', 'v1', true],
-        'API_V1_PESQUISARPROCESSOSPORNOME' => ['post', 'tribunal/{origem}/busca-por-nome/async', 'v1', true],
-        'API_V1_PESQUISARPROCESSOSPORCPFOUCNPJ' => ['post', 'tribunal/{origem}/busca-por-documento/async', 'v1', true],
-        'API_V1_PESQUISARPROCESSOSPOROAB' => ['post', 'tribunal/{origem}/busca-por-oab/async', 'v1', true],
+        'API_V1_OBTERPESSOA'                        => ['get', 'pessoas/{pessoaId}', 'v1', false],
+        'API_V1_PROCESSOSDEUMAPESSOA'               => ['get', 'pessoas/{pessoaId}/processos', 'v1', false],
+        'INFO_INSTITUICAO'                          => ['get', 'instituicoes/{instituicaoId}', 'v1', false],
+        'PROCESSOS_INSTITUICAO'                     => ['get', 'instituicoes/{instituicaoId}/processos', 'v1', false],
+        'PESSOAS_INSTITUICAO'                       => ['get', 'instituicoes/{instituicaoId}/pessoas', 'v1', false],
+        'API_V1_MOVIMENTAESDEUMPROCESSODO'          => ['get', 'processos/{processoId}/movimentacoes', 'v1', false],
+        'API_V1_BUSCARPROCESSOSDOSDIRIOSPOROAB'     => ['get', 'oab/{estado}/{numero}/processos', 'v1', false],
+        'BUSCA_PROC_DIARIO_NUM'                     => ['get', 'processos/numero/{numero}', 'v1', false],
+        'API_V1_ENVOLVIDOSDEUMPROCESSO'             => ['get', 'processos/{processoId}/envolvidos', 'v1', false],
+        'API_V1_PESQUISARPROCESSONOTRIBUNAL'        => ['post', 'processo-tribunal/{numero}/async', 'v1', true],
+        'API_V1_PESQUISARPROCESSOSPORNOME'          => ['post', 'tribunal/{origem}/busca-por-nome/async', 'v1', true],
+        'API_V1_PESQUISARPROCESSOSPORCPFOUCNPJ'     => ['post', 'tribunal/{origem}/busca-por-documento/async', 'v1', true],
+        'API_V1_PESQUISARPROCESSOSPOROAB'           => ['post', 'tribunal/{origem}/busca-por-oab/async', 'v1', true],
         'API_V1_PESQUISARPROCESSOADMINISTRATIVONUP' => ['post', 'processo-administrativo/{numero_nup}/async', 'v1', true],
-        'API_V1_RETORNARUMAMOVIMENTAO' => ['get', 'movimentacoes/{movimentaco}', 'v1', false],
-        'TRIBUNAIS_SISTEMAS' => ['get', 'tribunal/origens', 'v1', false],
-        'TRIBUNAIS_DETALHES' => ['get', 'tribunal/origens/{origem}', 'v1', false],
-        'ORGAOS_ADMINISTRATIVOS' => ['get', 'orgao-administrativo/origens', 'v1', false],
+        'API_V1_RETORNARUMAMOVIMENTAO'              => ['get', 'movimentacoes/{movimentaco}', 'v1', false],
+        'TRIBUNAIS_SISTEMAS'                        => ['get', 'tribunal/origens', 'v1', false],
+        'TRIBUNAIS_DETALHES'                        => ['get', 'tribunal/origens/{origem}', 'v1', false],
+        'ORGAOS_ADMINISTRATIVOS'                    => ['get', 'orgao-administrativo/origens', 'v1', false],
 
         // MAPEAMENTO DA UI / ASSISTENTE JURIDICO (V1) — NOVOS
         'API_V1_CONSULTAR_SALDO'         => ['get',    'quantidade-creditos',                              'v1', false],
@@ -100,60 +101,59 @@ class EscavadorService
         'API_V2_CALLBACKS_LISTAR'       => ['get',    'callbacks',                                         'v2', false],
 
         // MAPEAMENTO LEGADO MANTIDO PARA CACHE/TESTES
-        'BUSCA_JURIS' => ['get', 'jurisprudencias/busca', 'v1', false],
-        'BUSCA_DIARIO' => ['get', 'diarios/busca', 'v1', false],
+        'BUSCA_JURIS'    => ['get', 'jurisprudencias/busca', 'v1', false],
+        'BUSCA_DIARIO'   => ['get', 'diarios/busca', 'v1', false],
         'BUSCA_OAB_PAGA' => ['get', 'oab/{estado}/{numero}/processos', 'v1', false],
-        'DOC_JURIS' => ['get', 'jurisprudencias/documento/{tipo_documento}/{id_documento}', 'v1', false],
-        'PDF_JURIS' => ['get', 'jurisprudencias/documento/{tipo_documento}/{id_documento}/pdf', 'v1', false],
-        'BUSCA_LEGIS' => ['get', 'legislacoes/busca', 'v1', false],
-        'DOC_LEGIS' => ['get', 'legislacoes/documento/{tipo_documento}/{id_documento}', 'v1', false],
-        'FRAG_LEGIS' => ['get', 'legislacoes/documento/{tipo_documento}/{id_documento}/fragmentos', 'v1', false],
+        'DOC_JURIS'      => ['get', 'jurisprudencias/documento/{tipo_documento}/{id_documento}', 'v1', false],
+        'PDF_JURIS'      => ['get', 'jurisprudencias/documento/{tipo_documento}/{id_documento}/pdf', 'v1', false],
+        'BUSCA_LEGIS'    => ['get', 'legislacoes/busca', 'v1', false],
+        'DOC_LEGIS'      => ['get', 'legislacoes/documento/{tipo_documento}/{id_documento}', 'v1', false],
+        'FRAG_LEGIS'     => ['get', 'legislacoes/documento/{tipo_documento}/{id_documento}/fragmentos', 'v1', false],
         'AUTOS_DOCS_ESP' => ['get', 'processos/{id}/documentos', 'v1', false],
-        
+
         // === Monitoramentos e Async Base (V1 & V2) ===
-        'ASYNC_RESULTADOS' => ['get', 'async/resultados', 'v1', false],
-        'ASYNC_RESULTADO_ID' => ['get', 'async/resultados/{id}', 'v1', false],
+        'ASYNC_RESULTADOS'           => ['get', 'async/resultados', 'v1', false],
+        'ASYNC_RESULTADO_ID'         => ['get', 'async/resultados/{id}', 'v1', false],
         'CALLBACKS_MARCAR_RECEBIDOS' => ['post', 'callbacks/marcar-recebidos', 'v1', false],
-        'CALLBACKS_LISTAR' => ['get', 'callbacks', 'v1', false],
-        'CALLBACKS_REENVIAR' => ['post', 'callbacks/{id}/reenviar', 'v1', false],
-        'MONITORAMENTOS_LISTAR' => ['get', 'monitoramentos', 'v1', false],
-        'MONITORAMENTOS_ID' => ['get', 'monitoramentos/{monitoramento}', 'v1', false],
-        'MONITORAMENTOS_EDITAR' => ['put', 'monitoramentos/{monitoramento}', 'v1', false],
-        'MONITORAMENTOS_REMOVER' => ['delete', 'monitoramentos/{monitoramento}', 'v1', false],
-        'MONITORAMENTOS_APARICOES' => ['get', 'monitoramentos/{monitoramento}/aparicoes', 'v1', false],
-        'CRIAR_MON_DIARIOS' => ['post', 'monitoramentos', 'v1', false],
-        'CRIAR_MON_TRIBUNAL' => ['post', 'monitoramentos-tribunal', 'v1', false],
+        'CALLBACKS_LISTAR'           => ['get', 'callbacks', 'v1', false],
+        'CALLBACKS_REENVIAR'         => ['post', 'callbacks/{id}/reenviar', 'v1', false],
+        'MONITORAMENTOS_LISTAR'      => ['get', 'monitoramentos', 'v1', false],
+        'MONITORAMENTOS_ID'          => ['get', 'monitoramentos/{monitoramento}', 'v1', false],
+        'MONITORAMENTOS_EDITAR'      => ['put', 'monitoramentos/{monitoramento}', 'v1', false],
+        'MONITORAMENTOS_REMOVER'     => ['delete', 'monitoramentos/{monitoramento}', 'v1', false],
+        'MONITORAMENTOS_APARICOES'   => ['get', 'monitoramentos/{monitoramento}/aparicoes', 'v1', false],
+        'CRIAR_MON_DIARIOS'          => ['post', 'monitoramentos', 'v1', false],
+        'CRIAR_MON_TRIBUNAL'         => ['post', 'monitoramentos-tribunal', 'v1', false],
         'CRIAR_MON_PROCESSO_V2'      => ['post', 'monitoramentos/processos',      'v2', false],
-        'CRIAR_MON_NOVOS_PROCESSO_V2'=> ['post', 'monitoramentos/novos-processos','v2', false],
-        
-        'STATUS_ATUALIZACAO_PROCESSO' => ['get', 'processos/numero_cnj/{numero}/status-atualizacao', 'v2', false],
-        'CALLBACKS_LISTAR_V2' => ['get', 'callbacks', 'v2', false],
-        'CALLBACKS_MARCAR_RECEBIDOS_V2' => ['post', 'callbacks/marcar-recebidos', 'v2', false],
-        'CALLBACKS_REENVIAR_V2' => ['post', 'callbacks/{id}/reenviar', 'v2', false],
-        'MONITORAMENTO_NOVOS_PROCESSO_LISTAR' => ['get', 'monitoramentos/novos-processos', 'v2', false],
-        'MONITORAMENTO_NOVOS_PROCESSO_ID' => ['get', 'monitoramentos/novos-processos/{id}', 'v2', false],
-        'MONITORAMENTO_NOVOS_PROCESSO_REMOVER' => ['delete', 'monitoramentos/novos-processos/{id}', 'v2', false],
+        'CRIAR_MON_NOVOS_PROCESSO_V2'=> ['post', 'monitoramentos/novos-processos', 'v2', false],
+
+        'STATUS_ATUALIZACAO_PROCESSO'             => ['get', 'processos/numero_cnj/{numero}/status-atualizacao', 'v2', false],
+        'CALLBACKS_LISTAR_V2'                     => ['get', 'callbacks', 'v2', false],
+        'CALLBACKS_MARCAR_RECEBIDOS_V2'           => ['post', 'callbacks/marcar-recebidos', 'v2', false],
+        'CALLBACKS_REENVIAR_V2'                   => ['post', 'callbacks/{id}/reenviar', 'v2', false],
+        'MONITORAMENTO_NOVOS_PROCESSO_LISTAR'     => ['get', 'monitoramentos/novos-processos', 'v2', false],
+        'MONITORAMENTO_NOVOS_PROCESSO_ID'         => ['get', 'monitoramentos/novos-processos/{id}', 'v2', false],
+        'MONITORAMENTO_NOVOS_PROCESSO_REMOVER'    => ['delete', 'monitoramentos/novos-processos/{id}', 'v2', false],
         'MONITORAMENTO_NOVOS_PROCESSO_RESULTADOS' => ['get', 'monitoramentos/novos-processos/{id}/resultados', 'v2', false],
-        'MONITORAMENTO_NOVOS_PROCESSO_EDITAR' => ['patch', 'monitoramentos/novos-processos/{id}', 'v2', false],
-        'MONITORAMENTO_PROCESSO_LISTAR' => ['get', 'monitoramentos/processos', 'v2', false],
-        'MONITORAMENTO_PROCESSO_ID' => ['get', 'monitoramentos/processos/{id}', 'v2', false],
-        'MONITORAMENTO_PROCESSO_REMOVER' => ['delete', 'monitoramentos/processos/{id}', 'v2', false],
-        'STATUS_RESUMO_IA' => ['get', 'processos/numero_cnj/{numero}/ia/resumo/status', 'v2', false],
+        'MONITORAMENTO_NOVOS_PROCESSO_EDITAR'     => ['patch', 'monitoramentos/novos-processos/{id}', 'v2', false],
+        'MONITORAMENTO_PROCESSO_LISTAR'           => ['get', 'monitoramentos/processos', 'v2', false],
+        'MONITORAMENTO_PROCESSO_ID'               => ['get', 'monitoramentos/processos/{id}', 'v2', false],
+        'MONITORAMENTO_PROCESSO_REMOVER'          => ['delete', 'monitoramentos/processos/{id}', 'v2', false],
+        'STATUS_RESUMO_IA'                        => ['get', 'processos/numero_cnj/{numero}/ia/resumo/status', 'v2', false],
     ];
 
     /**
      * Retorna a API key para a versão solicitada.
      *
-     * @param string $version 'v1' ou 'v2'
-     * @param bool $playground Se true, usa token de playground (PG)
-     * @return string|null
+     * @param  string  $version  'v1' ou 'v2'
+     * @param  bool  $playground  Se true, usa token de playground (PG)
      */
     public function getApiKey(string $version, bool $playground = false): ?string
     {
         // The user explicitly requested to always use 'LawFimr V1 e V2'
         $name = 'LawFimr V1 e V2';
 
-        $cacheKey = 'escavador_api_key_' . md5($name);
+        $cacheKey = 'escavador_api_key_'.md5($name);
 
         return Cache::remember($cacheKey, 300, function () use ($name) {
             $node = InfrastructureNode::on('mothership')
@@ -168,29 +168,29 @@ class EscavadorService
     /**
      * Executa uma requisição HTTP para a API do Escavador.
      *
-     * @param string $method 'get' ou 'post'
-     * @param string $endpoint Endpoint relativo (ex: '/processos/numero_cnj/...')
-     * @param array $params Query params (GET) ou body (POST)
-     * @param string $version 'v1' ou 'v2'
-     * @param bool $playground Usar token de playground
+     * @param  string  $method  'get' ou 'post'
+     * @param  string  $endpoint  Endpoint relativo (ex: '/processos/numero_cnj/...')
+     * @param  array  $params  Query params (GET) ou body (POST)
+     * @param  string  $version  'v1' ou 'v2'
+     * @param  bool  $playground  Usar token de playground
      * @return array ['success' => bool, 'data' => mixed, 'credits_used' => int|null, 'error' => string|null, 'status_code' => int]
      */
     public function request(string $method, string $endpoint, array $params = [], string $version = 'v2', bool $playground = false): array
     {
         $apiKey = $this->getApiKey($version, $playground);
 
-        if (!$apiKey) {
+        if (! $apiKey) {
             return [
-                'success' => false,
-                'data' => null,
+                'success'      => false,
+                'data'         => null,
                 'credits_used' => null,
-                'error' => "Token da API Escavador ({$version}) não encontrado na infraestrutura. Verifique a tabela infrastructure_nodes.",
-                'status_code' => 0,
+                'error'        => "Token da API Escavador ({$version}) não encontrado na infraestrutura. Verifique a tabela infrastructure_nodes.",
+                'status_code'  => 0,
             ];
         }
 
         $baseUrl = $version === 'v1' ? self::BASE_URL_V1 : self::BASE_URL_V2;
-        $url = rtrim($baseUrl, '/') . '/' . ltrim($endpoint, '/');
+        $url = rtrim($baseUrl, '/').'/'.ltrim($endpoint, '/');
 
         try {
             $http = Http::withToken($apiKey)
@@ -216,11 +216,11 @@ class EscavadorService
 
             if ($response->successful()) {
                 return [
-                    'success' => true,
-                    'data' => $response->json(),
+                    'success'      => true,
+                    'data'         => $response->json(),
                     'credits_used' => $creditsUsed ? (int) $creditsUsed : null,
-                    'error' => null,
-                    'status_code' => $response->status(),
+                    'error'        => null,
+                    'status_code'  => $response->status(),
                 ];
             }
 
@@ -233,32 +233,32 @@ class EscavadorService
             }
 
             Log::warning('Escavador API error', [
-                'url' => $url,
-                'status' => $response->status(),
+                'url'      => $url,
+                'status'   => $response->status(),
                 'response' => $errorBody,
-                'version' => $version,
+                'version'  => $version,
             ]);
 
             return [
-                'success' => false,
-                'data' => $errorBody,
+                'success'      => false,
+                'data'         => $errorBody,
                 'credits_used' => $creditsUsed ? (int) $creditsUsed : null,
-                'error' => $errorMsg,
-                'status_code' => $response->status(),
+                'error'        => $errorMsg,
+                'status_code'  => $response->status(),
             ];
         } catch (\Exception $e) {
             Log::error('Escavador API exception', [
-                'url' => $url ?? 'N/A',
+                'url'     => $url ?? 'N/A',
                 'message' => $e->getMessage(),
                 'version' => $version,
             ]);
 
             return [
-                'success' => false,
-                'data' => null,
+                'success'      => false,
+                'data'         => null,
                 'credits_used' => null,
-                'error' => 'Erro de conexão com a API Escavador: ' . $e->getMessage(),
-                'status_code' => 0,
+                'error'        => 'Erro de conexão com a API Escavador: '.$e->getMessage(),
+                'status_code'  => 0,
             ];
         }
     }
@@ -273,6 +273,7 @@ class EscavadorService
     public function consultarProcessoCnj(string $numeroCnj, bool $playground = false): array
     {
         $numero = trim($numeroCnj);
+
         return $this->request('get', "processos/numero_cnj/{$numero}", [], 'v2', $playground);
     }
 
@@ -282,6 +283,7 @@ class EscavadorService
     public function consultarMovimentacoes(string $numeroCnj, array $filters = [], bool $playground = false): array
     {
         $numero = trim($numeroCnj);
+
         return $this->request('get', "processos/numero_cnj/{$numero}/movimentacoes", $filters, 'v2', $playground);
     }
 
@@ -307,6 +309,7 @@ class EscavadorService
     public function solicitarResumoIa(string $numeroCnj, bool $playground = false): array
     {
         $numero = trim($numeroCnj);
+
         return $this->request('post', "processos/numero_cnj/{$numero}/ia/resumo/solicitar-atualizacao", [], 'v2', $playground);
     }
 
@@ -316,6 +319,7 @@ class EscavadorService
     public function consultarResumoIa(string $numeroCnj, bool $playground = false): array
     {
         $numero = trim($numeroCnj);
+
         return $this->request('get', "processos/numero_cnj/{$numero}/ia/resumo", [], 'v2', $playground);
     }
 
@@ -325,6 +329,7 @@ class EscavadorService
     public function consultarDocumentosPublicos(string $numeroCnj, array $filters = [], bool $playground = false): array
     {
         $numero = trim($numeroCnj);
+
         return $this->request('get', "processos/numero_cnj/{$numero}/documentos-publicos", $filters, 'v2', $playground);
     }
 
@@ -334,6 +339,7 @@ class EscavadorService
     public function consultarEnvolvidosProcesso(string $numeroCnj, array $filters = [], bool $playground = false): array
     {
         $numero = trim($numeroCnj);
+
         return $this->request('get', "processos/numero_cnj/{$numero}/envolvidos", $filters, 'v2', $playground);
     }
 
@@ -412,12 +418,12 @@ class EscavadorService
      *   5. Persiste EscavadorRequest.
      *   6. Em falha: estorna o saldo e marca como 'failed'.
      *
-     * @param string      $serviceType  Um dos tipos em SERVICE_PRICES
-     * @param array       $data         Parâmetros para a API (ex: ['cnj' => '...'])
-     * @param string      $tenantId     ID do tenant dono da requisição
-     * @param int|null    $processoId   FK opcional para law_processes
-     * @param bool        $playground   Usar tokens de playground
-     * @return array  ['success', 'request' => EscavadorRequest, 'data', 'error']
+     * @param  string  $serviceType  Um dos tipos em SERVICE_PRICES
+     * @param  array  $data  Parâmetros para a API (ex: ['cnj' => '...'])
+     * @param  string  $tenantId  ID do tenant dono da requisição
+     * @param  int|null  $processoId  FK opcional para law_processes
+     * @param  bool  $playground  Usar tokens de playground
+     * @return array ['success', 'request' => EscavadorRequest, 'data', 'error']
      */
     public function requestService(
         string $serviceType,
@@ -430,10 +436,10 @@ class EscavadorService
         $serviceType = strtoupper($serviceType);
         $prices = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEscavadorPrices();
 
-        if (!array_key_exists($serviceType, $prices)) {
+        if (! array_key_exists($serviceType, $prices)) {
             return [
                 'success' => false,
-                'error' => "Tipo de serviço inválido: {$serviceType}.",
+                'error'   => "Tipo de serviço inválido: {$serviceType}.",
                 'request' => null,
             ];
         }
@@ -444,18 +450,18 @@ class EscavadorService
         // ── 2. Verificar saldo da Subscription ────────────────────────────
         $subscription = Subscription::where('tenant_id', $tenantId)->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             return [
                 'success' => false,
-                'error' => 'Assinatura não encontrada para o tenant.',
+                'error'   => 'Assinatura não encontrada para o tenant.',
                 'request' => null,
             ];
         }
 
-        if (!SuiteCoinService::hasSufficientBalance((float) $subscription->suitecoin_balance, $costBrlWithMarkup)) {
+        if (! SuiteCoinService::hasSufficientBalance((float) $subscription->suitecoin_balance, $costBrlWithMarkup)) {
             return [
                 'success' => false,
-                'error' => SuiteCoinService::insufficientBalanceMessage(
+                'error'   => SuiteCoinService::insufficientBalanceMessage(
                     $subscription->suitecoin_balance,
                     $costBrlWithMarkup
                 ),
@@ -480,10 +486,10 @@ class EscavadorService
                 return [
                     'success' => true,
                     'request' => $cachedRequest,
-                    'data' => $cachedRequest->payload_response,
-                    'error' => null,
-                    'async' => false,
-                    'cached' => true,
+                    'data'    => $cachedRequest->payload_response,
+                    'error'   => null,
+                    'async'   => false,
+                    'cached'  => true,
                 ];
             }
         }
@@ -495,15 +501,17 @@ class EscavadorService
         [$method, $endpointTemplate, $version, $isAsync] = self::SERVICE_MAP[$serviceType];
 
         $params = $data;
-        
+
         // Substituir placeholders {chave} na URL e remover os valores do array de parâmetros
         $endpoint = preg_replace_callback('/\{([a-zA-Z0-9_]+)\}/', function ($matches) use (&$params) {
             $key = $matches[1];
             if (isset($params[$key]) && $params[$key] !== '') {
-                $val = urlencode(trim((string)$params[$key]));
+                $val = urlencode(trim((string) $params[$key]));
                 unset($params[$key]);
+
                 return $val;
             }
+
             return ''; // Remove o placeholder se não foi passado (cobre parâmetros opcionais de rota)
         }, $endpointTemplate);
 
@@ -531,34 +539,34 @@ class EscavadorService
             $statusRecord = EscavadorRequest::STATUS_FAILED;
 
             Log::warning('EscavadorService::requestService — falha na API', [
-                'service' => $serviceType,
+                'service'   => $serviceType,
                 'tenant_id' => $tenantId,
-                'error' => $apiResult['error'],
+                'error'     => $apiResult['error'],
             ]);
         }
 
         $escavadorRequest = EscavadorRequest::create([
-            'tenant_id' => $tenantId,
-            'processo_id' => $processoId,
-            'external_id' => $externalId,
-            'request_hash' => $requestHash,
-            'endpoint_type' => $serviceType,
-            'status' => $statusRecord,
-            'cost' => $apiResult['success'] ? $costBrlWithMarkup : 0.00,
+            'tenant_id'        => $tenantId,
+            'processo_id'      => $processoId,
+            'external_id'      => $externalId,
+            'request_hash'     => $requestHash,
+            'endpoint_type'    => $serviceType,
+            'status'           => $statusRecord,
+            'cost'             => $apiResult['success'] ? $costBrlWithMarkup : 0.00,
             'payload_response' => $payloadResponse,
         ]);
 
         if ($apiResult['success']) {
             \SuiteZap\LawFirm\SaaS\Models\SaasTransaction::create([
-                'tenant_id' => $tenantId,
-                'type' => 'debit',
-                'amount' => $costBrlWithMarkup,
-                'balance_after' => $subscription->suitecoin_balance,
-                'currency' => SuiteCoinService::CURRENCY_CODE,
-                'service_type' => 'ESCAVADOR_' . $serviceType,
-                'description' => "Escavador: {$serviceType} — Custo: " . SuiteCoinService::format(SuiteCoinService::calculateServicePriceVirtual($costBrlRaw)),
-                'user_id' => auth()->id(),
-                'reference_id' => $escavadorRequest->id,
+                'tenant_id'      => $tenantId,
+                'type'           => 'debit',
+                'amount'         => $costBrlWithMarkup,
+                'balance_after'  => $subscription->suitecoin_balance,
+                'currency'       => SuiteCoinService::CURRENCY_CODE,
+                'service_type'   => 'ESCAVADOR_'.$serviceType,
+                'description'    => "Escavador: {$serviceType} — Custo: ".SuiteCoinService::format(SuiteCoinService::calculateServicePriceVirtual($costBrlRaw)),
+                'user_id'        => auth()->id(),
+                'reference_id'   => $escavadorRequest->id,
                 'reference_type' => EscavadorRequest::class,
             ]);
         }
@@ -566,9 +574,9 @@ class EscavadorService
         return [
             'success' => $apiResult['success'],
             'request' => $escavadorRequest,
-            'data' => $apiResult['data'],
-            'error' => $apiResult['error'] ?? null,
-            'async' => $isAsync && $apiResult['success'],
+            'data'    => $apiResult['data'],
+            'error'   => $apiResult['error'] ?? null,
+            'async'   => $isAsync && $apiResult['success'],
         ];
     }
 
@@ -589,14 +597,14 @@ class EscavadorService
      * Cadastra um novo certificado digital via upload multipart (.pfx / .p12).
      * POST api/v2/certificados-digitais
      *
-     * @param \Illuminate\Http\UploadedFile $file  Arquivo do certificado (.pfx ou .p12)
-     * @param string                         $senha Senha do certificado
+     * @param  \Illuminate\Http\UploadedFile  $file  Arquivo do certificado (.pfx ou .p12)
+     * @param  string  $senha  Senha do certificado
      */
     public function cadastrarCertificadoComArquivo(\Illuminate\Http\UploadedFile $file, string $senha, bool $playground = false): array
     {
         $apiKey = $this->getApiKey('v2', $playground);
 
-        if (!$apiKey) {
+        if (! $apiKey) {
             return [
                 'success'      => false,
                 'data'         => null,
@@ -606,7 +614,7 @@ class EscavadorService
             ];
         }
 
-        $url = rtrim(self::BASE_URL_V2, '/') . '/certificados-digitais';
+        $url = rtrim(self::BASE_URL_V2, '/').'/certificados-digitais';
 
         try {
             $response = \Illuminate\Support\Facades\Http::withToken($apiKey)
@@ -628,7 +636,7 @@ class EscavadorService
             }
 
             $errorBody = $response->json();
-            $errorMsg  = $errorBody['error'] ?? $errorBody['message'] ?? 'Erro desconhecido ao cadastrar certificado.';
+            $errorMsg = $errorBody['error'] ?? $errorBody['message'] ?? 'Erro desconhecido ao cadastrar certificado.';
 
             \Illuminate\Support\Facades\Log::warning('Escavador certificado upload error', [
                 'url'    => $url,
@@ -653,7 +661,7 @@ class EscavadorService
                 'success'      => false,
                 'data'         => null,
                 'credits_used' => null,
-                'error'        => 'Erro de conexão ao enviar certificado: ' . $e->getMessage(),
+                'error'        => 'Erro de conexão ao enviar certificado: '.$e->getMessage(),
                 'status_code'  => 0,
             ];
         }
@@ -663,7 +671,7 @@ class EscavadorService
      * Cadastra um novo certificado digital via JSON (compatibilidade legada).
      * POST api/v2/certificados-digitais
      *
-     * @param array $params Ex.: ['cpf' => '...', 'senha' => '...']
+     * @param  array  $params  Ex.: ['cpf' => '...', 'senha' => '...']
      */
     public function cadastrarCertificado(array $params, bool $playground = false): array
     {

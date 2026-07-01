@@ -33,29 +33,31 @@ class SendScheduledPrazoNotifications extends Command
     public function handle(): int
     {
         $dryRun = $this->option('dry-run');
-        $hoje   = Carbon::today();
+        $hoje = Carbon::today();
 
-        $this->info("🤖 Robô Agendador — " . $hoje->format('d/m/Y'));
+        $this->info('🤖 Robô Agendador — '.$hoje->format('d/m/Y'));
 
         // ─── Verificação de Conexão WhatsApp ────────────────────────────────
         $config = MotherShipService::getEvolutionConfig();
 
-        if (!$config || empty($config['instance'])) {
+        if (! $config || empty($config['instance'])) {
             $this->error('WhatsApp não configurado no MotherShip para este Tenant. Abortando.');
             Log::warning('lawfirm:prazo-notifications: Evolution API não configurada. Abortando.');
+
             return self::FAILURE;
         }
 
         $instanceName = $config['instance'];
 
-        if (!$dryRun) {
+        if (! $dryRun) {
             $status = $this->evolutionService->fetchInstance($instanceName);
             $connected = isset($status['data'][0]['connectionStatus']) &&
                          $status['data'][0]['connectionStatus'] === 'open';
 
-            if (!$connected) {
+            if (! $connected) {
                 $this->warn("WhatsApp ({$instanceName}) não está conectado. Abortando envios.");
                 Log::warning("lawfirm:prazo-notifications: Instância '{$instanceName}' desconectada. Abortando.");
+
                 return self::FAILURE;
             }
 
@@ -77,9 +79,11 @@ class SendScheduledPrazoNotifications extends Command
 
         foreach ($prazos as $prazo) {
             $processo = $prazo->processo;
-            if (!$processo) continue;
+            if (! $processo) {
+                continue;
+            }
 
-            $vencimento  = Carbon::parse($prazo->data_vencimento)->startOfDay();
+            $vencimento = Carbon::parse($prazo->data_vencimento)->startOfDay();
             $diasRestantes = $hoje->diffInDays($vencimento, false); // negativo se atrasado
 
             $this->line("  → Prazo #{$prazo->id} | {$prazo->titulo} | Vence em {$diasRestantes} dias");
@@ -87,51 +91,51 @@ class SendScheduledPrazoNotifications extends Command
             // ─── Coleta dados para o resumo diário ──────────────────────────
             if ($diasRestantes === 0) {
                 $advogado = $processo->responsavel;
-                if ($advogado && !empty($advogado->whatsapp)) {
+                if ($advogado && ! empty($advogado->whatsapp)) {
                     $chave = $advogado->whatsapp;
-                    if (!isset($resumoDiario[$chave])) {
+                    if (! isset($resumoDiario[$chave])) {
                         $resumoDiario[$chave] = [
                             'nome'   => $advogado->name ?? 'Advogado(a)',
                             'linhas' => [],
                         ];
                     }
                     $cnj = $processo->numero_cnj ?? '—';
-                    $resumoDiario[$chave]['linhas'][] = "📌.{$cnj} — {$processo->titulo} (Cliente: " . ($processo->person->name ?? '?') . ")";
+                    $resumoDiario[$chave]['linhas'][] = "📌.{$cnj} — {$processo->titulo} (Cliente: ".($processo->person->name ?? '?').')';
                 }
             }
 
             // ─── Envios por Janela Temporal ──────────────────────────────────
             if ($diasRestantes === 5 && is_null($prazo->ultima_notificacao_5d)) {
                 $this->sendNotification($prazo, 'prazo_5dias', $dryRun, $instanceName);
-                if (!$dryRun) {
+                if (! $dryRun) {
                     $prazo->update(['ultima_notificacao_5d' => Carbon::now()]);
                 }
             }
 
             if ($diasRestantes === 1 && is_null($prazo->ultima_notificacao_1d)) {
                 $this->sendNotification($prazo, 'prazo_vespera', $dryRun, $instanceName);
-                if (!$dryRun) {
+                if (! $dryRun) {
                     $prazo->update(['ultima_notificacao_1d' => Carbon::now()]);
                 }
             }
 
             if ($diasRestantes === 0 && is_null($prazo->ultima_notificacao_0d)) {
                 $this->sendNotification($prazo, 'prazo_hoje', $dryRun, $instanceName);
-                if (!$dryRun) {
+                if (! $dryRun) {
                     $prazo->update(['ultima_notificacao_0d' => Carbon::now()]);
                 }
             }
         }
 
         // ─── Resumo Diário por Advogado ──────────────────────────────────────
-        if (!empty($resumoDiario)) {
-            $this->info("📨 Enviando resumo diário para " . count($resumoDiario) . " advogado(s)...");
+        if (! empty($resumoDiario)) {
+            $this->info('📨 Enviando resumo diário para '.count($resumoDiario).' advogado(s)...');
             $templateResumo = core()->getConfigData('lawfirm.whatsapp_templates.messages.prazo_resumo_diario')
                 ?: "📋 *Resumo — {data_hoje}*\n\nBom dia, Dr(a). {advogado_nome}! Seus compromissos de hoje:\n\n{lista_compromissos}\n\nTenha um excelente dia!";
 
             foreach ($resumoDiario as $phone => $data) {
                 $lista = implode("\n", $data['linhas']);
-                $msg   = str_replace(
+                $msg = str_replace(
                     ['{advogado_nome}', '{data_hoje}', '{lista_compromissos}'],
                     [$data['nome'], $hoje->format('d/m/Y'), $lista],
                     $templateResumo
@@ -142,13 +146,14 @@ class SendScheduledPrazoNotifications extends Command
                     $this->warn("[DRY-RUN] Resumo para {$cleanPhone} (Dr. {$data['nome']}):\n{$msg}");
                 } else {
                     $result = $this->evolutionService->sendMessage($instanceName, $cleanPhone, $msg);
-                    Log::info("lawfirm:prazo-notifications: Resumo enviado para {$cleanPhone}. Resultado: " . json_encode($result));
+                    Log::info("lawfirm:prazo-notifications: Resumo enviado para {$cleanPhone}. Resultado: ".json_encode($result));
                     $this->info("  ✅ Resumo enviado para {$cleanPhone} (Dr. {$data['nome']})");
                 }
             }
         }
 
-        $this->info("🏁 Robô Agendador concluído.");
+        $this->info('🏁 Robô Agendador concluído.');
+
         return self::SUCCESS;
     }
 
@@ -159,11 +164,11 @@ class SendScheduledPrazoNotifications extends Command
     private function sendNotification(Prazo $prazo, string $janela, bool $dryRun, string $instanceName): void
     {
         $processo = $prazo->processo;
-        $person   = $processo->person ?? null;
+        $person = $processo->person ?? null;
         $advogado = $processo->responsavel ?? null;
 
         $prazoData = Carbon::parse($prazo->data_vencimento)->format('d/m/Y');
-        $cnj       = $processo->numero_cnj ?? '—';
+        $cnj = $processo->numero_cnj ?? '—';
 
         // ── Notificação para o CLIENTE ───────────────────────────────────────
         if ($person) {
@@ -180,7 +185,7 @@ class SendScheduledPrazoNotifications extends Command
                         $this->warn("[DRY-RUN] Cliente {$person->name} ({$phone}):\n{$msg}");
                     } else {
                         $result = $this->evolutionService->sendMessage($instanceName, $phone, $msg);
-                        Log::info("lawfirm:prazo-notifications [{$janela}_cliente]: Prazo #{$prazo->id} → {$phone}. Resultado: " . json_encode($result));
+                        Log::info("lawfirm:prazo-notifications [{$janela}_cliente]: Prazo #{$prazo->id} → {$phone}. Resultado: ".json_encode($result));
                         $this->info("    📤 [{$janela}_cliente] → {$person->name} ({$phone})");
                     }
                 } else {
@@ -190,8 +195,8 @@ class SendScheduledPrazoNotifications extends Command
         }
 
         // ── Notificação para o ADVOGADO RESPONSÁVEL ──────────────────────────
-        if ($advogado && !empty($advogado->whatsapp)) {
-            $phone    = $this->normalizePhone($advogado->whatsapp);
+        if ($advogado && ! empty($advogado->whatsapp)) {
+            $phone = $this->normalizePhone($advogado->whatsapp);
             $template = core()->getConfigData("lawfirm.whatsapp_templates.messages.{$janela}_advogado");
             if ($template) {
                 $msg = str_replace(
@@ -203,7 +208,7 @@ class SendScheduledPrazoNotifications extends Command
                     $this->warn("[DRY-RUN] Advogado {$advogado->name} ({$phone}):\n{$msg}");
                 } else {
                     $result = $this->evolutionService->sendMessage($instanceName, $phone, $msg);
-                    Log::info("lawfirm:prazo-notifications [{$janela}_advogado]: Prazo #{$prazo->id} → {$phone}. Resultado: " . json_encode($result));
+                    Log::info("lawfirm:prazo-notifications [{$janela}_advogado]: Prazo #{$prazo->id} → {$phone}. Resultado: ".json_encode($result));
                     $this->info("    📤 [{$janela}_advogado] → {$advogado->name} ({$phone})");
                 }
             } else {
@@ -218,7 +223,9 @@ class SendScheduledPrazoNotifications extends Command
     private function getPersonPhone($person): ?string
     {
         $contacts = $person->contact_numbers;
-        if (!$contacts) return null;
+        if (! $contacts) {
+            return null;
+        }
 
         $phone = null;
         if (is_array($contacts)) {
@@ -238,8 +245,9 @@ class SendScheduledPrazoNotifications extends Command
     {
         $clean = preg_replace('/[^0-9]/', '', $phone);
         if (strlen($clean) <= 11) {
-            $clean = '55' . $clean;
+            $clean = '55'.$clean;
         }
+
         return $clean;
     }
 }

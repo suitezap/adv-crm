@@ -12,9 +12,9 @@ class AiExecution extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'input_data' => 'array',
+        'input_data'  => 'array',
         'output_data' => 'array',
-        'confidence' => 'decimal:2',
+        'confidence'  => 'decimal:2',
     ];
 
     public function lead()

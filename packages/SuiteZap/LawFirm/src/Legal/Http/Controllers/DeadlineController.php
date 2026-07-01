@@ -19,18 +19,17 @@ class DeadlineController extends Controller
     /**
      * Store a newly created deadline.
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'processo_id' => 'required|exists:processos,id',
-            'titulo' => 'required|string|max:255',
+            'processo_id'     => 'required|exists:processos,id',
+            'titulo'          => 'required|string|max:255',
             'data_vencimento' => 'required|date',
-            'tipo' => 'required|in:prazo,tarefa',
-            'descricao' => 'nullable|string',
-            'activity_id' => 'nullable|integer',
+            'tipo'            => 'required|in:prazo,tarefa',
+            'descricao'       => 'nullable|string',
+            'activity_id'     => 'nullable|integer',
         ]);
 
         try {
@@ -38,26 +37,28 @@ class DeadlineController extends Controller
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
-                    'status' => 'success',
+                    'status'  => 'success',
                     'message' => 'Prazo criado com sucesso!',
-                    'data' => $prazo
+                    'data'    => $prazo,
                 ]);
             }
 
             session()->flash('success', 'Prazo criado com sucesso!');
+
             return back();
 
         } catch (\Exception $e) {
-            Log::error("DeadlineController: Error creating deadline: " . $e->getMessage());
+            Log::error('DeadlineController: Error creating deadline: '.$e->getMessage());
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'Erro ao criar prazo: ' . $e->getMessage()
+                    'status'  => 'error',
+                    'message' => 'Erro ao criar prazo: '.$e->getMessage(),
                 ], 500);
             }
 
-            session()->flash('error', 'Erro ao criar prazo: ' . $e->getMessage());
+            session()->flash('error', 'Erro ao criar prazo: '.$e->getMessage());
+
             return back()->withInput();
         }
     }
@@ -65,8 +66,7 @@ class DeadlineController extends Controller
     /**
      * Update the specified deadline.
      *
-     * @param Request $request
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, $id)
@@ -92,26 +92,28 @@ class DeadlineController extends Controller
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
-                    'status' => 'success',
+                    'status'  => 'success',
                     'message' => 'Prazo atualizado com sucesso!',
-                    'data' => $prazo
+                    'data'    => $prazo,
                 ]);
             }
 
             session()->flash('success', 'Prazo atualizado com sucesso!');
+
             return back();
 
         } catch (\Exception $e) {
-            Log::error("DeadlineController: Error updating deadline {$id}: " . $e->getMessage());
+            Log::error("DeadlineController: Error updating deadline {$id}: ".$e->getMessage());
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'Erro ao atualizar prazo: ' . $e->getMessage()
+                    'status'  => 'error',
+                    'message' => 'Erro ao atualizar prazo: '.$e->getMessage(),
                 ], 500);
             }
 
-            session()->flash('error', 'Erro ao atualizar prazo: ' . $e->getMessage());
+            session()->flash('error', 'Erro ao atualizar prazo: '.$e->getMessage());
+
             return back()->withInput();
         }
     }
@@ -119,8 +121,7 @@ class DeadlineController extends Controller
     /**
      * Remove the specified deadline.
      *
-     * @param Request $request
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function destroy(Request $request, $id)
@@ -130,25 +131,27 @@ class DeadlineController extends Controller
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
-                    'status' => 'success',
-                    'message' => 'Prazo excluído com sucesso!'
+                    'status'  => 'success',
+                    'message' => 'Prazo excluído com sucesso!',
                 ]);
             }
 
             session()->flash('success', 'Prazo excluído com sucesso!');
+
             return back();
 
         } catch (\Exception $e) {
-            Log::error("DeadlineController: Error deleting deadline {$id}: " . $e->getMessage());
+            Log::error("DeadlineController: Error deleting deadline {$id}: ".$e->getMessage());
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
-                    'status' => 'error',
-                    'message' => 'Erro ao excluir prazo: ' . $e->getMessage()
+                    'status'  => 'error',
+                    'message' => 'Erro ao excluir prazo: '.$e->getMessage(),
                 ], 500);
             }
 
-            session()->flash('error', 'Erro ao excluir prazo: ' . $e->getMessage());
+            session()->flash('error', 'Erro ao excluir prazo: '.$e->getMessage());
+
             return back();
         }
     }
@@ -156,8 +159,7 @@ class DeadlineController extends Controller
     /**
      * Toggle the status of the specified deadline.
      *
-     * @param Request $request
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function toggle(Request $request, $id)
@@ -166,19 +168,20 @@ class DeadlineController extends Controller
             $prazo = $this->deadlineService->toggleStatus($id);
 
             return response()->json([
-                'status' => 'success',
+                'status'  => 'success',
                 'message' => 'Status alterado com sucesso!',
-                'data' => [
-                    'status' => $prazo->status,
-                    'concluido_em' => $prazo->concluido_em
-                ]
+                'data'    => [
+                    'status'       => $prazo->status,
+                    'concluido_em' => $prazo->concluido_em,
+                ],
             ]);
 
         } catch (\Exception $e) {
-            Log::error("DeadlineController: Error toggling deadline {$id}: " . $e->getMessage());
+            Log::error("DeadlineController: Error toggling deadline {$id}: ".$e->getMessage());
+
             return response()->json([
-                'status' => 'error',
-                'message' => 'Erro ao alterar status: ' . $e->getMessage()
+                'status'  => 'error',
+                'message' => 'Erro ao alterar status: '.$e->getMessage(),
             ], 500);
         }
     }

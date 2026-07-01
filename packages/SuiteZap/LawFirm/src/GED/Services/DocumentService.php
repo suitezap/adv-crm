@@ -7,12 +7,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use SuiteZap\LawFirm\Legal\Models\Anexo;
 use SuiteZap\LawFirm\Legal\Models\Processo;
-use SuiteZap\LawFirm\SaaS\Services\SaasStorageService;
 use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
+use SuiteZap\LawFirm\SaaS\Services\SaasStorageService;
 
 class DocumentService
 {
     protected $storageService;
+
     protected $fileService;
 
     public function __construct(
@@ -26,22 +27,19 @@ class DocumentService
     /**
      * Store a file for a specific process.
      *
-     * @param UploadedFile $file
-     * @param Processo $processo
-     * @return Anexo
      * @throws \Exception
      */
     public function storeFile(UploadedFile $file, Processo $processo): Anexo
     {
         // 0. Safety Check - MotherShip Storage Injection
-        if (!$this->fileService->isAvailable()) {
+        if (! $this->fileService->isAvailable()) {
             throw new \Exception('Erro de Infraestrutura: Serviço de armazenamento não disponível (S3/Local falhou).');
         }
 
         $fileSize = $file->getSize();
 
         // 1. Check Quota
-        if (!$this->storageService->checkQuota($fileSize)) {
+        if (! $this->storageService->checkQuota($fileSize)) {
             throw new \Exception('Cota de disco excedida. Limite de armazenamento atingido.');
         }
 
@@ -56,9 +54,9 @@ class DocumentService
         // 3. Store File — Zero-Copy Hierarchy (v3.45)
         // Se o processo pertence a um caso, centralizar na pasta do Caso para compartilhamento.
         if ($processo->caso_id) {
-            $fullPath = 'casos/' . $processo->caso_id . '/documents/' . $finalName;
+            $fullPath = 'casos/'.$processo->caso_id.'/documents/'.$finalName;
         } else {
-            $fullPath = 'processos/' . $processId . '/' . $finalName;
+            $fullPath = 'processos/'.$processId.'/'.$finalName;
         }
 
         $path = $this->fileService->store($file, $fullPath);
@@ -81,8 +79,8 @@ class DocumentService
     /**
      * Delete a file by ID.
      *
-     * @param int $documentId
-     * @return bool
+     * @param  int  $documentId
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
     public function deleteFile($documentId): bool
@@ -105,12 +103,11 @@ class DocumentService
 
         return true;
     }
+
     /**
      * Process uploads from request (single 'anexo' or multiple 'anexos').
      *
-     * @param Processo $processo
-     * @param array|\Illuminate\Http\Request $request
-     * @return array
+     * @param  array|\Illuminate\Http\Request  $request
      */
     public function processUploads(Processo $processo, $request): array
     {
@@ -131,16 +128,17 @@ class DocumentService
         $uploadedDocs = [];
 
         foreach ($files as $file) {
-            if (!$file->isValid())
+            if (! $file->isValid()) {
                 continue;
+            }
 
             try {
                 // Delegate to existing storeFile which determines path, naming, quota, etc.
                 $uploadedDocs[] = $this->storeFile($file, $processo);
             } catch (\Exception $e) {
-                // Log error but continue processing other files? 
+                // Log error but continue processing other files?
                 // matched user snippet behavior of skipping invalid, but here we catch exceptions.
-                \Illuminate\Support\Facades\Log::error("DocumentService::processUploads - Error storing file: " . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('DocumentService::processUploads - Error storing file: '.$e->getMessage());
             }
         }
 

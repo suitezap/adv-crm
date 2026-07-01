@@ -35,29 +35,29 @@ PROMPT;
 
         $variables = [
             [
-                'key' => 'title',
-                'label' => 'Área / Tipo de Ação',
-                'type' => 'text',
+                'key'         => 'title',
+                'label'       => 'Área / Tipo de Ação',
+                'type'        => 'text',
                 'placeholder' => 'Ex: Direito do Consumidor - Negativação Indevida',
             ],
             [
-                'key' => 'description',
-                'label' => 'Resumo do Caso',
-                'type' => 'textarea',
-                'rows' => 5,
+                'key'         => 'description',
+                'label'       => 'Resumo do Caso',
+                'type'        => 'textarea',
+                'rows'        => 5,
                 'placeholder' => 'Descreva os fatos e circunstâncias relevantes...',
             ],
             [
-                'key' => 'tenant_id',
-                'label' => 'Tenant ID',
-                'type' => 'hidden',
+                'key'         => 'tenant_id',
+                'label'       => 'Tenant ID',
+                'type'        => 'hidden',
                 'placeholder' => '',
             ],
             [
-                'key' => 'observacoes',
-                'label' => 'Observações',
-                'type' => 'textarea',
-                'rows' => 5,
+                'key'         => 'observacoes',
+                'label'       => 'Observações',
+                'type'        => 'textarea',
+                'rows'        => 5,
                 'placeholder' => 'Informações adicionais...',
             ],
         ];
@@ -65,17 +65,17 @@ PROMPT;
         AssistantTemplate::updateOrCreate(
             ['slug' => 'script-vendas'],
             [
-                'tenant_id' => null,
-                'category' => 'leads',
-                'area' => 'Geral',
-                'title' => 'Negociação & Conversão',
-                'description' => 'Roteiro estratégico de conversa para conversão do Lead em cliente.',
-                'icon' => '💬',
+                'tenant_id'        => null,
+                'category'         => 'leads',
+                'area'             => 'Geral',
+                'title'            => 'Negociação & Conversão',
+                'description'      => 'Roteiro estratégico de conversa para conversão do Lead em cliente.',
+                'icon'             => '💬',
                 'prompt_structure' => $promptStructure,
-                'variables' => $variables,
-                'n8n_webhook_url' => 'lead_negociacao',
-                'required_module' => null,
-                'is_active' => true,
+                'variables'        => $variables,
+                'n8n_webhook_url'  => 'lead_negociacao',
+                'required_module'  => null,
+                'is_active'        => true,
             ]
         );
 

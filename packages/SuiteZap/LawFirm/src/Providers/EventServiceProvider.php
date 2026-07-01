@@ -3,11 +3,12 @@
 namespace SuiteZap\LawFirm\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use SuiteZap\LawFirm\Events\PrazoCreated;
-use SuiteZap\LawFirm\Whatsapp\Listeners\SendPrazoWhatsapp;
-
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\Events\PrazoCreated;
+use SuiteZap\LawFirm\Legal\Events\CasoStageUpdated;
+use SuiteZap\LawFirm\Legal\Listeners\SyncCasoStageToChatwootListener;
+use SuiteZap\LawFirm\Whatsapp\Listeners\SendPrazoWhatsapp;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -19,6 +20,9 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         PrazoCreated::class => [
             SendPrazoWhatsapp::class,
+        ],
+        CasoStageUpdated::class => [
+            SyncCasoStageToChatwootListener::class,
         ],
     ];
 

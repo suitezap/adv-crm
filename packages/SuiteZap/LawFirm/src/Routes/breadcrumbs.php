@@ -86,3 +86,9 @@ Breadcrumbs::for('lawfirm.escavador.index', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');
     $trail->push('Assistente Jurídico', route('lawfirm.escavador.index'));
 });
+
+// Dashboard > Assistentes IA > EscavAI
+Breadcrumbs::for('lawfirm.assistants.escavai', function (BreadcrumbTrail $trail) {
+    $trail->parent('lawfirm.assistants.index');
+    $trail->push('EscavAI', route('lawfirm.assistants.escavai'));
+});

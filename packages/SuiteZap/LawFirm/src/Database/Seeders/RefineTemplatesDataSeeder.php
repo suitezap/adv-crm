@@ -20,9 +20,9 @@ class RefineTemplatesDataSeeder extends Seeder
                 ['category' => 'triagem'],
                 [
                     'n8n_webhook_url' => 'lawfirm/triagem',
-                    'variables' => json_encode([
+                    'variables'       => json_encode([
                         ['key' => 'relato_cliente', 'label' => 'Relato do Cliente', 'type' => 'textarea', 'placeholder' => 'Descreva o relato...', 'rows' => 4],
-                        ['key' => 'urgencia', 'label' => 'Nível de Urgência', 'type' => 'select', 'options' => ['Baixa', 'Média', 'Alta']]
+                        ['key' => 'urgencia', 'label' => 'Nível de Urgência', 'type' => 'select', 'options' => ['Baixa', 'Média', 'Alta']],
                     ]),
                     'updated_at' => now(),
                 ]
@@ -34,8 +34,8 @@ class RefineTemplatesDataSeeder extends Seeder
                 ['category' => 'processual'],
                 [
                     'n8n_webhook_url' => 'lawfirm/resumo-decisao',
-                    'variables' => json_encode([
-                        ['key' => 'texto_decisao', 'label' => 'Texto da Decisão/Andamento', 'type' => 'textarea', 'rows' => 6]
+                    'variables'       => json_encode([
+                        ['key' => 'texto_decisao', 'label' => 'Texto da Decisão/Andamento', 'type' => 'textarea', 'rows' => 6],
                     ]),
                     'updated_at' => now(),
                 ]
@@ -47,9 +47,9 @@ class RefineTemplatesDataSeeder extends Seeder
                 ['category' => 'pecas'],
                 [
                     'n8n_webhook_url' => 'lawfirm/peticao-inicial',
-                    'variables' => json_encode([
+                    'variables'       => json_encode([
                         ['key' => 'tipo_acao', 'label' => 'Tipo da Ação', 'type' => 'text', 'placeholder' => 'Ex: Indenizatória'],
-                        ['key' => 'fatos', 'label' => 'Fatos do Caso', 'type' => 'textarea', 'rows' => 8]
+                        ['key' => 'fatos', 'label' => 'Fatos do Caso', 'type' => 'textarea', 'rows' => 8],
                     ]),
                     'updated_at' => now(),
                 ]
@@ -61,8 +61,8 @@ class RefineTemplatesDataSeeder extends Seeder
                 ['category' => 'gestao'],
                 [
                     'n8n_webhook_url' => 'lawfirm/calculo-prazo',
-                    'variables' => json_encode([
-                        ['key' => 'publicacao', 'label' => 'Teor da Publicação', 'type' => 'textarea', 'rows' => 5]
+                    'variables'       => json_encode([
+                        ['key' => 'publicacao', 'label' => 'Teor da Publicação', 'type' => 'textarea', 'rows' => 5],
                     ]),
                     'updated_at' => now(),
                 ]
@@ -74,8 +74,8 @@ class RefineTemplatesDataSeeder extends Seeder
                 ['category' => 'compliance'],
                 [
                     'n8n_webhook_url' => 'lawfirm/anonimizacao',
-                    'variables' => json_encode([
-                        ['key' => 'texto_original', 'label' => 'Texto para Anonimizar', 'type' => 'textarea', 'rows' => 10]
+                    'variables'       => json_encode([
+                        ['key' => 'texto_original', 'label' => 'Texto para Anonimizar', 'type' => 'textarea', 'rows' => 10],
                     ]),
                     'updated_at' => now(),
                 ]

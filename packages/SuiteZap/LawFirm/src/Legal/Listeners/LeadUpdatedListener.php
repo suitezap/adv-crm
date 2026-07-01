@@ -16,7 +16,7 @@ class LeadUpdatedListener
     {
         try {
             // Verifica se o lead possui estágio
-            if (!isset($lead->stage)) {
+            if (! isset($lead->stage)) {
                 return;
             }
 
@@ -27,10 +27,10 @@ class LeadUpdatedListener
 
             if ($isWon) {
                 // Cria a mensagem flash com HTML permitido
-                session()->flash('info', 'Lead Ganho! <a href="' . route('admin.processos.create', ['lead_id' => $lead->id]) . '" style="text-decoration: underline; font-weight: bold;">Clique aqui para abrir o Processo Jurídico</a>');
+                session()->flash('info', 'Lead Ganho! <a href="'.route('admin.processos.create', ['lead_id' => $lead->id]).'" style="text-decoration: underline; font-weight: bold;">Clique aqui para abrir o Processo Jurídico</a>');
             }
         } catch (\Exception $e) {
-            Log::error('Erro no LeadUpdatedListener: ' . $e->getMessage());
+            Log::error('Erro no LeadUpdatedListener: '.$e->getMessage());
         }
     }
 }

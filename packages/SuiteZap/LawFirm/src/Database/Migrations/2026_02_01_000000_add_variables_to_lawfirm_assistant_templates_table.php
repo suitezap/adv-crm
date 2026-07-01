@@ -4,14 +4,15 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
     public function up(): void
     {
         // Verifica se a coluna já existe antes de adicionar
-        if (!Schema::connection('mothership')->hasColumn('lawfirm_assistant_templates', 'variables')) {
+        if (! Schema::connection('mothership')->hasColumn('lawfirm_assistant_templates', 'variables')) {
             Schema::connection('mothership')->table('lawfirm_assistant_templates', function (Blueprint $table) {
                 $table->json('variables')->nullable()->after('prompt_structure');
             });

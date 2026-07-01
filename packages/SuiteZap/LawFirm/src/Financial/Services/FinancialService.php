@@ -17,9 +17,7 @@ class FinancialService
      * 2. Gerar parcelas automáticas (parcelar=1, parcelas_qtd > 1)
      * 3. Criar/Atualizar registros individuais
      *
-     * @param  Processo  $processo
-     * @param  array     $financeirosData  Array dos dados financeiros do request
-     * @return void
+     * @param  array  $financeirosData  Array dos dados financeiros do request
      */
     public function syncFinancials(Processo $processo, array $financeirosData): void
     {
@@ -31,9 +29,10 @@ class FinancialService
 
             // CHECK DELETE: Se veio marcado para deletar do front
             if (isset($finData['should_delete']) && $finData['should_delete'] == 1) {
-                if (!empty($finData['id'])) {
+                if (! empty($finData['id'])) {
                     $processo->financeiros()->where('id', $finData['id'])->delete();
                 }
+
                 continue;
             }
 
@@ -44,6 +43,7 @@ class FinancialService
                 foreach ($installments as $installment) {
                     $processo->financeiros()->create($installment);
                 }
+
                 continue;
             }
 
@@ -60,19 +60,14 @@ class FinancialService
 
     /**
      * Realiza a baixa rápida (Quick Pay) de um lançamento financeiro.
-     *
-     * @param  int     $id
-     * @param  string  $paymentDate
-     * @param  string  $paymentMethod
-     * @return Financial
      */
     public function quickPay(int $id, string $paymentDate, string $paymentMethod): Financial
     {
         $financial = Financial::findOrFail($id);
 
         $financial->update([
-            'status' => 'pago',
-            'payment_date' => $paymentDate,
+            'status'         => 'pago',
+            'payment_date'   => $paymentDate,
             'payment_method' => $paymentMethod,
         ]);
 
@@ -81,9 +76,6 @@ class FinancialService
 
     /**
      * Cria um lançamento financeiro avulso.
-     *
-     * @param  array  $data
-     * @return Financial
      */
     public function createFinancial(array $data): Financial
     {
@@ -92,10 +84,6 @@ class FinancialService
 
     /**
      * Atualiza um lançamento financeiro existente.
-     *
-     * @param  int    $id
-     * @param  array  $data
-     * @return Financial
      */
     public function updateFinancial(int $id, array $data): Financial
     {
@@ -107,9 +95,6 @@ class FinancialService
 
     /**
      * Remove um lançamento financeiro.
-     *
-     * @param  int  $id
-     * @return bool
      */
     public function deleteFinancial(int $id): bool
     {
@@ -123,9 +108,9 @@ class FinancialService
      * status de vencimento e retorna um array pronto para o EvolutionService.
      *
      * @param  Financial  $financial  Lançamento carregado com relações processo.person
-     * @return array  ['phone' => string, 'message' => string]
+     * @return array ['phone' => string, 'message' => string]
      *
-     * @throws \InvalidArgumentException  Se o lançamento já está pago ou se não há pessoa/telefone
+     * @throws \InvalidArgumentException Se o lançamento já está pago ou se não há pessoa/telefone
      */
     public function prepareBillingWhatsapp(Financial $financial): array
     {
@@ -134,7 +119,7 @@ class FinancialService
         }
 
         $person = $financial->processo->person ?? null;
-        if (!$person) {
+        if (! $person) {
             throw new \InvalidArgumentException('Nenhuma pessoa associada ao processo.');
         }
 
@@ -143,7 +128,7 @@ class FinancialService
         $contactNumbers = $person->contact_numbers;
         if (is_array($contactNumbers)) {
             foreach ($contactNumbers as $contact) {
-                if (!empty($contact['value'])) {
+                if (! empty($contact['value'])) {
                     $phone = $contact['value'];
                     break;
                 }
@@ -162,32 +147,32 @@ class FinancialService
 
         // Adiciona prefixo do Brasil se necessário
         if (strlen($cleanPhone) >= 10 && strlen($cleanPhone) <= 11) {
-            $cleanPhone = '55' . $cleanPhone;
+            $cleanPhone = '55'.$cleanPhone;
         }
 
         // Compila o template de mensagem com base no status de vencimento
         $nomeCliente = explode(' ', trim($person->name))[0];
-        $valor       = number_format((float) $financial->valor, 2, ',', '.');
-        $descricao   = $financial->nome;
+        $valor = number_format((float) $financial->valor, 2, ',', '.');
+        $descricao = $financial->nome;
         $dataVencimento = $financial->data_vencimento ? Carbon::parse($financial->data_vencimento) : null;
-        $hoje        = Carbon::now()->startOfDay();
+        $hoje = Carbon::now()->startOfDay();
 
         $defaultOverdue = 'Olá {cliente_nome}, verificamos uma pendência de {valor} referente a {descricao}, vencida em {data_vencimento}. Podemos atualizar o boleto?';
-        $defaultDue     = 'Olá {cliente_nome}, lembrete de vencimento ref {descricao} no valor de {valor} para o dia {data_vencimento}.';
+        $defaultDue = 'Olá {cliente_nome}, lembrete de vencimento ref {descricao} no valor de {valor} para o dia {data_vencimento}.';
 
         $templateOverdue = core()->getConfigData('lawfirm.whatsapp_templates.messages.financial_billing_overdue') ?: $defaultOverdue;
-        $templateDue     = core()->getConfigData('lawfirm.whatsapp_templates.messages.financial_billing_due_today') ?: $defaultDue;
+        $templateDue = core()->getConfigData('lawfirm.whatsapp_templates.messages.financial_billing_due_today') ?: $defaultDue;
 
-        $dataStr  = $dataVencimento ? $dataVencimento->format('d/m/Y') : 'data a confirmar';
+        $dataStr = $dataVencimento ? $dataVencimento->format('d/m/Y') : 'data a confirmar';
         $replaces = [
             '{cliente_nome}'    => $nomeCliente,
-            '{valor}'           => 'R$ ' . $valor,
+            '{valor}'           => 'R$ '.$valor,
             '{descricao}'       => $descricao,
             '{data_vencimento}' => $dataStr,
         ];
 
         $template = ($dataVencimento && $dataVencimento->lt($hoje)) ? $templateOverdue : $templateDue;
-        $message  = str_replace(array_keys($replaces), array_values($replaces), $template);
+        $message = str_replace(array_keys($replaces), array_values($replaces), $template);
 
         return [
             'phone'   => $cleanPhone,
@@ -206,7 +191,7 @@ class FinancialService
      */
     private function shouldGenerateInstallments(array $finData): bool
     {
-        $isNew = !isset($finData['id']) || !$finData['id'];
+        $isNew = ! isset($finData['id']) || ! $finData['id'];
         $hasInstallments = isset($finData['parcelar'])
             && $finData['parcelar'] == '1'
             && isset($finData['parcelas_qtd'])
@@ -221,9 +206,9 @@ class FinancialService
      * Lógica: divide o valor total igualmente, adiciona o arredondamento
      * na última parcela. Calcula datas com frequência customizável.
      *
-     * @param  array  $baseData     Dados do lançamento original
-     * @param  int    $processoId   ID do processo pai
-     * @return Collection           Coleção de arrays de atributos
+     * @param  array  $baseData  Dados do lançamento original
+     * @param  int  $processoId  ID do processo pai
+     * @return Collection Coleção de arrays de atributos
      */
     public function generateInstallments(array $baseData, int $processoId): Collection
     {
@@ -245,15 +230,15 @@ class FinancialService
             $dueDate = $startDate->copy()->addDays($freq * ($i - 1));
 
             $installments->push([
-                'tipo' => $baseData['tipo'],
-                'nome' => $baseData['nome'] . " (Parcela $i/$qtd)",
-                'valor' => $currentValue,
+                'tipo'            => $baseData['tipo'],
+                'nome'            => $baseData['nome']." (Parcela $i/$qtd)",
+                'valor'           => $currentValue,
                 'data_vencimento' => $dueDate,
-                'status' => $baseData['status'] ?? 'pendente',
-                'category' => $baseData['category'] ?? null,
-                'issued_at' => $baseData['issued_at'] ?? null,
-                'payment_method' => $baseData['payment_method'] ?? null,
-                'payment_date' => ($baseData['status'] ?? 'pendente') === 'pago'
+                'status'          => $baseData['status'] ?? 'pendente',
+                'category'        => $baseData['category'] ?? null,
+                'issued_at'       => $baseData['issued_at'] ?? null,
+                'payment_method'  => $baseData['payment_method'] ?? null,
+                'payment_date'    => ($baseData['status'] ?? 'pendente') === 'pago'
                     ? ($baseData['payment_date'] ?? now()->toDateString())
                     : null,
                 'processo_id' => $processoId,
@@ -265,23 +250,19 @@ class FinancialService
 
     /**
      * Monta os atributos padrão para um lançamento financeiro.
-     *
-     * @param  array  $finData
-     * @param  int    $processoId
-     * @return array
      */
     private function buildAttributes(array $finData, int $processoId): array
     {
         return [
-            'tipo' => $finData['tipo'],
-            'nome' => $finData['nome'],
-            'valor' => $finData['valor'],
+            'tipo'            => $finData['tipo'],
+            'nome'            => $finData['nome'],
+            'valor'           => $finData['valor'],
             'data_vencimento' => $finData['data_vencimento'],
-            'status' => $finData['status'] ?? 'pendente',
-            'category' => $finData['category'] ?? null,
-            'issued_at' => $finData['issued_at'] ?? null,
-            'payment_method' => $finData['payment_method'] ?? null,
-            'payment_date' => ($finData['status'] ?? 'pendente') === 'pago'
+            'status'          => $finData['status'] ?? 'pendente',
+            'category'        => $finData['category'] ?? null,
+            'issued_at'       => $finData['issued_at'] ?? null,
+            'payment_method'  => $finData['payment_method'] ?? null,
+            'payment_date'    => ($finData['status'] ?? 'pendente') === 'pago'
                 ? ($finData['payment_date'] ?? now()->toDateString())
                 : null,
             'processo_id' => $processoId,

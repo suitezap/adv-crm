@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -45,7 +46,7 @@ return new class extends Migration {
                 'Instrução',
                 'Sentença',
                 'Recurso',
-                'Execução'
+                'Execução',
             ])->nullable();
 
             $table->enum('area_direito', [
@@ -55,13 +56,13 @@ return new class extends Migration {
                 'Tributário',
                 'Família',
                 'Consumidor',
-                'Previdenciário'
+                'Previdenciário',
             ])->nullable();
 
             $table->enum('probabilidade_exito', [
                 'Alta',
                 'Média',
-                'Baixa'
+                'Baixa',
             ])->nullable();
 
             // Descrição

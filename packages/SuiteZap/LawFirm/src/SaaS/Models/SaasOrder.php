@@ -13,14 +13,14 @@ use Webkul\User\Models\User;
  *
  * Status lifecycle: PENDING → PAID | EXPIRED | CANCELED
  *
- * @property int    $id
+ * @property int $id
  * @property string $tenant_id
- * @property int    $user_id
- * @property string $type           ai_credits | subscription
- * @property float  $value          Valor em R$ (1:1 com créditos)
+ * @property int $user_id
+ * @property string $type ai_credits | subscription
+ * @property float $value Valor em R$ (1:1 com créditos)
  * @property string $asaas_payment_id
  * @property string $asaas_checkout_session_id
- * @property string $status         PENDING | PAID | EXPIRED | CANCELED
+ * @property string $status PENDING | PAID | EXPIRED | CANCELED
  * @property string $description
  */
 class SaasOrder extends Model

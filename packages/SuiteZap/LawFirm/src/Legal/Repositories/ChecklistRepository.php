@@ -2,8 +2,8 @@
 
 namespace SuiteZap\LawFirm\Legal\Repositories;
 
-use Webkul\Core\Eloquent\Repository;
 use SuiteZap\LawFirm\Legal\Models\CaseChecklist;
+use Webkul\Core\Eloquent\Repository;
 
 class ChecklistRepository extends Repository
 {
@@ -12,15 +12,15 @@ class ChecklistRepository extends Repository
      *
      * @return string
      */
-    function model()
+    public function model()
     {
         return CaseChecklist::class;
     }
 
     /**
      * Get checklist by Lead ID
-     * 
-     * @param int $leadId
+     *
+     * @param  int  $leadId
      * @return CaseChecklist|null
      */
     public function getByLeadId($leadId)
@@ -30,8 +30,8 @@ class ChecklistRepository extends Repository
 
     /**
      * Get checklist by Processo ID
-     * 
-     * @param int $processoId
+     *
+     * @param  int  $processoId
      * @return CaseChecklist|null
      */
     public function getByProcessoId($processoId)

@@ -36,7 +36,7 @@ class ModuleServiceProvider extends BaseModuleServiceProvider
     {
         parent::boot();
 
-        $this->loadMigrationsFrom(__DIR__ . '/../Database/Migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
     }
 
     /**
@@ -47,7 +47,7 @@ class ModuleServiceProvider extends BaseModuleServiceProvider
     protected function registerConfig()
     {
         $this->mergeConfigFrom(
-            dirname(__DIR__) . '/Config/module.php',
+            dirname(__DIR__).'/Config/module.php',
             'lawfirm'
         );
     }

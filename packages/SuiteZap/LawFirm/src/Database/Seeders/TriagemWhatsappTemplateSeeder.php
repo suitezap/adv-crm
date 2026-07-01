@@ -34,28 +34,28 @@ PROMPT;
 
         $variables = [
             [
-                'key' => 'nome_lead',
-                'label' => 'Nome do Lead',
-                'type' => 'text',
+                'key'         => 'nome_lead',
+                'label'       => 'Nome do Lead',
+                'type'        => 'text',
                 'placeholder' => 'Ex: João da Silva',
             ],
             [
-                'key' => 'mensagem_inicial',
-                'label' => 'Mensagem do WhatsApp',
-                'type' => 'textarea',
-                'rows' => 6,
+                'key'         => 'mensagem_inicial',
+                'label'       => 'Mensagem do WhatsApp',
+                'type'        => 'textarea',
+                'rows'        => 6,
                 'placeholder' => 'Cole aqui a mensagem inicial enviada pelo lead via WhatsApp...',
             ],
             [
-                'key' => 'area_direito',
-                'label' => 'Área do Direito (opcional)',
-                'type' => 'text',
+                'key'         => 'area_direito',
+                'label'       => 'Área do Direito (opcional)',
+                'type'        => 'text',
                 'placeholder' => 'Ex: Trabalhista, Cível, Família...',
             ],
             [
-                'key' => 'tenant_id',
-                'label' => 'Tenant ID',
-                'type' => 'hidden',
+                'key'         => 'tenant_id',
+                'label'       => 'Tenant ID',
+                'type'        => 'hidden',
                 'placeholder' => '',
             ],
         ];
@@ -63,17 +63,17 @@ PROMPT;
         AssistantTemplate::updateOrCreate(
             ['slug' => 'triagem-whatsapp'],
             [
-                'tenant_id' => null,
-                'category' => 'whatsapp',
-                'area' => 'Geral',
-                'title' => 'Assistente de Triagem WhatsApp',
-                'description' => 'Este assistente utiliza IA para realizar triagens, pré-qualificando os Leads pelo canal do WhatsApp. Criando automaticamente, novas oportunidades no painel de Leads.',
-                'icon' => '💬',
+                'tenant_id'        => null,
+                'category'         => 'whatsapp',
+                'area'             => 'Geral',
+                'title'            => 'Assistente de Triagem WhatsApp',
+                'description'      => 'Este assistente utiliza IA para realizar triagens, pré-qualificando os Leads pelo canal do WhatsApp. Criando automaticamente, novas oportunidades no painel de Leads.',
+                'icon'             => '💬',
                 'prompt_structure' => $promptStructure,
-                'variables' => $variables,
-                'n8n_webhook_url' => 'lead_triag_whats',
-                'required_module' => 'IA-WhatsApp',
-                'is_active' => true,
+                'variables'        => $variables,
+                'n8n_webhook_url'  => 'lead_triag_whats',
+                'required_module'  => 'IA-WhatsApp',
+                'is_active'        => true,
             ]
         );
 

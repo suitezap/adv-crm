@@ -2,15 +2,15 @@
 
 namespace SuiteZap\LawFirm\SaaS\Services;
 
+use Exception;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\SaaS\Models\InfrastructureNode;
 use SuiteZap\LawFirm\SaaS\Models\SaasOrder;
 use SuiteZap\LawFirm\SaaS\Models\SaasTransaction;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\DB;
-use Exception;
 
 /**
  * AsaasService
@@ -31,11 +31,11 @@ class AsaasService
      * Retorna a configuração do nó Asaas armazenada no MotherShip.
      *
      * @return array|null {
-     *   api_url: string,      // https://sandbox.asaas.com ou https://api.asaas.com
-     *   api_key: string,      // $aact_hmlg_... (sandbox) ou $aact_prod_... (produção)
-     *   checkout_url: string, // URL base para montar link de checkout
-     *   webhook_token: string // Token para validar header asaas-access-token (opcional)
-     * }
+     *                    api_url: string,      // https://sandbox.asaas.com ou https://api.asaas.com
+     *                    api_key: string,      // $aact_hmlg_... (sandbox) ou $aact_prod_... (produção)
+     *                    checkout_url: string, // URL base para montar link de checkout
+     *                    webhook_token: string // Token para validar header asaas-access-token (opcional)
+     *                    }
      */
     public static function getConfig(): ?array
     {
@@ -44,7 +44,7 @@ class AsaasService
                 ->where('type', 'asaas')
                 ->first();
 
-            if (!$node) {
+            if (! $node) {
                 return null;
             }
 
@@ -81,12 +81,12 @@ class AsaasService
     {
         $config = self::getConfig();
 
-        if (!$config) {
+        if (! $config) {
             throw new Exception('Configuração do nó Asaas não encontrada no MotherShip.');
         }
 
         // Valida prefixo da chave × ambiente para detectar configuração incorreta cedo
-        $apiKey  = $config['api_key'];
+        $apiKey = $config['api_key'];
         $baseUrl = $config['api_url'];
         $isSandboxUrl = str_contains($baseUrl, 'sandbox');
         $isSandboxKey = str_starts_with($apiKey, '$aact_hmlg_') || str_starts_with($apiKey, '$aact_YTU5Y');
@@ -94,11 +94,11 @@ class AsaasService
         if ($isSandboxUrl !== $isSandboxKey) {
             Log::warning('AsaasService: possível uso de chave em ambiente incorreto', [
                 'base_url'    => $baseUrl,
-                'key_prefix'  => substr($apiKey, 0, 12) . '...',
+                'key_prefix'  => substr($apiKey, 0, 12).'...',
             ]);
         }
 
-        $url = $baseUrl . '/' . ltrim($endpoint, '/');
+        $url = $baseUrl.'/'.ltrim($endpoint, '/');
 
         // IMPORTANTE: usar a variável $apiKey (já string PHP) no array — sem interpolação em string dupla
         $http = Http::withHeaders([
@@ -114,22 +114,22 @@ class AsaasService
         if ($response->failed()) {
             $status = $response->status();
             $errors = $response->json('errors', []);
-            $msg    = collect($errors)->pluck('description')->implode(', ');
+            $msg = collect($errors)->pluck('description')->implode(', ');
 
             // Trata 401 especificamente: chave inválida, expirada ou em ambiente errado
             if ($status === 401) {
                 $msg = 'Chave de API Asaas inválida, expirada ou usada no ambiente incorreto (401). '
-                     . 'Verifique a chave no MotherShip → infrastructure_nodes (type=asaas). '
-                     . 'Sandbox usa $aact_hmlg_..., produção usa $aact_prod_...';
+                     .'Verifique a chave no MotherShip → infrastructure_nodes (type=asaas). '
+                     .'Sandbox usa $aact_hmlg_..., produção usa $aact_prod_...';
             }
 
-            $msg = $msg ?: 'Erro desconhecido na API Asaas (HTTP ' . $status . ').';
+            $msg = $msg ?: 'Erro desconhecido na API Asaas (HTTP '.$status.').';
 
             Log::error('AsaasService::request falhou', [
                 'url'        => $url,
                 'status'     => $status,
                 'response'   => $response->json(),
-                'key_prefix' => substr($apiKey, 0, 12) . '...',
+                'key_prefix' => substr($apiKey, 0, 12).'...',
             ]);
 
             throw new Exception($msg);
@@ -144,25 +144,24 @@ class AsaasService
      * Necessário pois o Asaas não envia o externalReference nos webhooks de pagamentos
      * gerados a partir de checkouts.
      *
-     * @param string $id ID do Payment Link (ex: payl_123456)
-     * @return array
+     * @param  string  $id  ID do Payment Link (ex: payl_123456)
      */
     public static function getPaymentLink(string $id): array
     {
         $config = self::getConfig();
 
-        if (!$config) {
+        if (! $config) {
             throw new Exception('Configuração do nó Asaas não encontrada no MotherShip.');
         }
 
         $response = Http::withHeaders([
             'access_token' => $config['api_key'],
             'accept'       => 'application/json',
-        ])->get($config['api_url'] . "/v3/paymentLinks/{$id}");
+        ])->get($config['api_url']."/v3/paymentLinks/{$id}");
 
         if ($response->failed()) {
-            \Log::error("AsaasService::getPaymentLink falhou para o ID {$id}: " . $response->body());
-            throw new \Exception("Erro ao buscar Link de Pagamento no Asaas: " . $response->body());
+            \Log::error("AsaasService::getPaymentLink falhou para o ID {$id}: ".$response->body());
+            throw new \Exception('Erro ao buscar Link de Pagamento no Asaas: '.$response->body());
         }
 
         return $response->json();
@@ -201,7 +200,7 @@ class AsaasService
         }
 
         // 2. Fallback legado: tenta buscar do core_config (Banco local do Tenant)
-        $get = fn($key) => DB::table('core_config')
+        $get = fn ($key) => DB::table('core_config')
             ->where('code', "lawfirm.settings.general.{$key}")
             ->value('value') ?? '';
 
@@ -228,15 +227,15 @@ class AsaasService
      *
      * Proporção fixa: R$ 1,00 = 1 Crédito.
      *
-     * @param  float  $value        Valor em R$ (= quantidade de créditos)
-     * @param  array  $customerData Dados do cliente (já montados por getOwnerCustomerData())
-     * @param  string $paymentMethod PIX, CREDIT_CARD, CREDIT_CARD_INSTALLMENT
-     * @param  int    $orderId      ID da SaasOrder local (criada pelo Controller)
+     * @param  float  $value  Valor em R$ (= quantidade de créditos)
+     * @param  array  $customerData  Dados do cliente (já montados por getOwnerCustomerData())
+     * @param  string  $paymentMethod  PIX, CREDIT_CARD, CREDIT_CARD_INSTALLMENT
+     * @param  int  $orderId  ID da SaasOrder local (criada pelo Controller)
      * @return array  { checkout_url: string, session_id: string }
      */
     public static function createCreditCheckout(float $value, array $customerData, string $paymentMethod = 'PIX', int $orderId = 0): array
     {
-        $config   = self::getConfig();
+        $config = self::getConfig();
         $tenantId = MotherShipService::getTenantId();
 
         $billingTypes = ['PIX'];
@@ -259,13 +258,13 @@ class AsaasService
             // Link válido por 60 minutos
             'minutesToExpire' => 60,
             'callback'        => [
-                'successUrl' => route('admin.lawfirm.saas.index') . '?payment=success',
-                'cancelUrl'  => route('admin.lawfirm.saas.index') . '?payment=cancelled',
-                'expiredUrl' => route('admin.lawfirm.saas.index') . '?payment=expired',
+                'successUrl' => route('admin.lawfirm.saas.index').'?payment=success',
+                'cancelUrl'  => route('admin.lawfirm.saas.index').'?payment=cancelled',
+                'expiredUrl' => route('admin.lawfirm.saas.index').'?payment=expired',
             ],
             'items' => [
                 [
-                    'name'        => "Créditos IA (R$ " . number_format($value, 2, ',', '.') . ")",
+                    'name'        => 'Créditos IA (R$ '.number_format($value, 2, ',', '.').')',
                     'description' => "Recarga de créditos para os Assistentes de IA do LawFirm CRM. Tenant: {$tenantId}",
                     'quantity'    => 1,
                     'value'       => $value,
@@ -273,7 +272,7 @@ class AsaasService
             ],
             // v3.21: externalReference baseado na Order local
             'externalReference' => "order_{$orderId}",
-            'customerData'     => $customerData,
+            'customerData'      => $customerData,
         ];
 
         $result = self::request('post', 'v3/checkouts', $payload);
@@ -284,7 +283,7 @@ class AsaasService
         }
 
         return [
-            'checkout_url' => $config['checkout_url'] . '/checkoutSession/show?id=' . $result['id'],
+            'checkout_url' => $config['checkout_url'].'/checkoutSession/show?id='.$result['id'],
             'session_id'   => $result['id'],
         ];
     }
@@ -294,16 +293,16 @@ class AsaasService
      *
      * Aceita apenas Cartão de Crédito pois PIX não é compatível com chargeType RECURRENT.
      *
-     * @param  string $planId       Identificador do plano (ex: 'pro_anual')
-     * @param  float  $price        Valor mensal em reais
-     * @param  string $planName     Nome de exibição do plano
-     * @param  array  $customerData Dados do cliente
-     * @param  int    $orderId      ID da SaasOrder local
+     * @param  string  $planId  Identificador do plano (ex: 'pro_anual')
+     * @param  float  $price  Valor mensal em reais
+     * @param  string  $planName  Nome de exibição do plano
+     * @param  array  $customerData  Dados do cliente
+     * @param  int  $orderId  ID da SaasOrder local
      * @return array  { checkout_url: string, session_id: string }
      */
     public static function createSubscriptionCheckout(string $planId, float $price, string $planName, array $customerData, int $orderId = 0): array
     {
-        $config   = self::getConfig();
+        $config = self::getConfig();
         $tenantId = MotherShipService::getTenantId();
 
         $payload = [
@@ -312,9 +311,9 @@ class AsaasService
             'chargeTypes'     => ['RECURRENT'],
             'minutesToExpire' => 120,
             'callback'        => [
-                'successUrl' => route('admin.lawfirm.saas.index') . '?payment=success&plan=' . $planId,
-                'cancelUrl'  => route('admin.lawfirm.saas.index') . '?payment=cancelled',
-                'expiredUrl' => route('admin.lawfirm.saas.index') . '?payment=expired',
+                'successUrl' => route('admin.lawfirm.saas.index').'?payment=success&plan='.$planId,
+                'cancelUrl'  => route('admin.lawfirm.saas.index').'?payment=cancelled',
+                'expiredUrl' => route('admin.lawfirm.saas.index').'?payment=expired',
             ],
             'items' => [
                 [
@@ -331,7 +330,7 @@ class AsaasService
             ],
             // v3.21: externalReference baseado na Order local
             'externalReference' => "order_{$orderId}",
-            'customerData'     => $customerData,
+            'customerData'      => $customerData,
         ];
 
         $result = self::request('post', 'v3/checkouts', $payload);
@@ -341,7 +340,7 @@ class AsaasService
         }
 
         return [
-            'checkout_url' => $config['checkout_url'] . '/checkoutSession/show?id=' . $result['id'],
+            'checkout_url' => $config['checkout_url'].'/checkoutSession/show?id='.$result['id'],
             'session_id'   => $result['id'],
         ];
     }
@@ -353,9 +352,9 @@ class AsaasService
     public static function createDetachedCheckout(
         string $name,
         string $description,
-        float  $price,
-        array  $billingTypes,
-        array  $customerData,
+        float $price,
+        array $billingTypes,
+        array $customerData,
         string $externalReference = ''
     ): string {
         $config = self::getConfig();
@@ -365,9 +364,9 @@ class AsaasService
             'chargeTypes'     => ['DETACHED'],
             'minutesToExpire' => 60,
             'callback'        => [
-                'successUrl' => route('admin.lawfirm.saas.index') . '?payment=success',
-                'cancelUrl'  => route('admin.lawfirm.saas.index') . '?payment=cancelled',
-                'expiredUrl' => route('admin.lawfirm.saas.index') . '?payment=expired',
+                'successUrl' => route('admin.lawfirm.saas.index').'?payment=success',
+                'cancelUrl'  => route('admin.lawfirm.saas.index').'?payment=cancelled',
+                'expiredUrl' => route('admin.lawfirm.saas.index').'?payment=expired',
             ],
             'items' => [
                 [
@@ -390,7 +389,7 @@ class AsaasService
             throw new Exception('Asaas não retornou ID de checkout válido.');
         }
 
-        return $config['checkout_url'] . '/checkoutSession/show?id=' . $result['id'];
+        return $config['checkout_url'].'/checkoutSession/show?id='.$result['id'];
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -407,10 +406,12 @@ class AsaasService
     public static function syncTenantPayments(): void
     {
         try {
-            $config   = self::getConfig();
+            $config = self::getConfig();
             $tenantId = MotherShipService::getTenantId();
 
-            if (!$config || !$tenantId) return;
+            if (! $config || ! $tenantId) {
+                return;
+            }
 
             Log::info("AsaasService::syncTenantPayments: iniciando sync para tenant {$tenantId}.");
 
@@ -420,10 +421,10 @@ class AsaasService
             $response = Http::withHeaders([
                 'access_token' => $config['api_key'],
                 'accept'       => 'application/json',
-            ])->get($config['api_url'] . '/v3/payments', [
-                'status'     => 'RECEIVED,CONFIRMED',
+            ])->get($config['api_url'].'/v3/payments', [
+                'status'          => 'RECEIVED,CONFIRMED',
                 'dateCreatedFrom' => $dateFrom,
-                'limit'      => 50,
+                'limit'           => 50,
             ]);
 
             if ($response->failed()) {
@@ -431,15 +432,18 @@ class AsaasService
                     'status'   => $response->status(),
                     'body'     => $response->body(),
                 ]);
+
                 return;
             }
 
             $payments = $response->json('data', []);
-            Log::info("AsaasService::syncTenantPayments: {" . count($payments) . "} pagamentos encontrados na API.");
+            Log::info('AsaasService::syncTenantPayments: {'.count($payments).'} pagamentos encontrados na API.');
 
             foreach ($payments as $payment) {
                 $paymentId = $payment['id'] ?? null;
-                if (!$paymentId) continue;
+                if (! $paymentId) {
+                    continue;
+                }
 
                 // --- IDEMPOTÊNCIA: verifica se já foi processado PARA ESTE TENANT ---
                 $transactionExists = SaasTransaction::where('reference_type', 'asaas_payment')
@@ -454,23 +458,24 @@ class AsaasService
                 // Tenta obter o externalReference — primeiro do payment, depois do PaymentLink
                 $externalReference = $payment['externalReference'] ?? null;
 
-                if (!$externalReference && !empty($payment['paymentLink'])) {
+                if (! $externalReference && ! empty($payment['paymentLink'])) {
                     try {
-                        $linkData          = self::getPaymentLink($payment['paymentLink']);
+                        $linkData = self::getPaymentLink($payment['paymentLink']);
                         $externalReference = $linkData['externalReference'] ?? null;
                     } catch (\Exception $e) {
-                        Log::warning("AsaasService::sync: erro ao buscar PaymentLink {$payment['paymentLink']}: " . $e->getMessage());
+                        Log::warning("AsaasService::sync: erro ao buscar PaymentLink {$payment['paymentLink']}: ".$e->getMessage());
                     }
                 }
 
                 // ── NOVO (v3.21): Tenta resolver via SaasOrder ──────────
                 if ($externalReference && str_starts_with($externalReference, 'order_')) {
                     self::processOrderBasedPayment($externalReference, $payment, $tenantId);
+
                     continue;
                 }
 
                 // ── Tenta recuperar via sessão de checkout salva em SaasOrder ──
-                if (!$externalReference && !empty($payment['checkoutSession'])) {
+                if (! $externalReference && ! empty($payment['checkoutSession'])) {
                     $order = SaasOrder::where('asaas_checkout_session_id', $payment['checkoutSession'])
                         ->where('tenant_id', $tenantId)
                         ->where('status', 'PENDING')
@@ -478,6 +483,7 @@ class AsaasService
 
                     if ($order) {
                         self::processOrderBasedPayment("order_{$order->id}", $payment, $tenantId);
+
                         continue;
                     }
                 }
@@ -485,6 +491,7 @@ class AsaasService
                 // ── FALLBACK LEGADO: formato "{tenantId}|tipo|valor" ─────
                 if ($externalReference) {
                     self::processLegacyPayment($externalReference, $payment, $tenantId);
+
                     continue;
                 }
 
@@ -494,7 +501,7 @@ class AsaasService
                 ]);
             }
         } catch (\Exception $e) {
-            Log::error('AsaasService::syncTenantPayments falhou: ' . $e->getMessage());
+            Log::error('AsaasService::syncTenantPayments falhou: '.$e->getMessage());
         }
     }
 
@@ -514,14 +521,16 @@ class AsaasService
             ->where('tenant_id', $tenantId)
             ->first();
 
-        if (!$order) {
+        if (! $order) {
             Log::warning("AsaasService: order #{$orderId} não encontrada para tenant {$tenantId}.");
+
             return;
         }
 
         // Idempotência: se já foi pago, ignora
         if ($order->isPaid()) {
             Log::info("AsaasService: order #{$orderId} já processada (PAID).");
+
             return;
         }
 
@@ -532,8 +541,9 @@ class AsaasService
             ->where('tenant_id', $tenantId)
             ->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             Log::error("AsaasService: assinatura não encontrada para tenant {$tenantId}.");
+
             return;
         }
 
@@ -548,7 +558,7 @@ class AsaasService
             $subscription->save();
 
             $invoiceInfo = '';
-            if (!empty($payment['invoiceNumber'])) {
+            if (! empty($payment['invoiceNumber'])) {
                 $invoiceInfo = " - Fatura Asaas: {$payment['invoiceNumber']}";
             }
 
@@ -560,12 +570,12 @@ class AsaasService
                 'balance_after'  => $subscription->suitecoin_balance,
                 'currency'       => SuiteCoinService::CURRENCY_CODE,
                 'service_type'   => 'asaas_checkout',
-                'description'    => "Recarga de " . SuiteCoinService::format($suitecoinsVisual) . " via Asaas ({$paymentId}){$invoiceInfo}",
+                'description'    => 'Recarga de '.SuiteCoinService::format($suitecoinsVisual)." via Asaas ({$paymentId}){$invoiceInfo}",
                 'reference_id'   => $paymentId,
                 'reference_type' => 'asaas_payment',
             ]);
 
-            Log::info("AsaasService: +" . SuiteCoinService::format($suitecoinsVisual) . " (R$ {$brlAmount}) → tenant {$tenantId}, user #{$order->user_id}. Saldo DB(BRL): {$subscription->suitecoin_balance}");
+            Log::info('AsaasService: +'.SuiteCoinService::format($suitecoinsVisual)." (R$ {$brlAmount}) → tenant {$tenantId}, user #{$order->user_id}. Saldo DB(BRL): {$subscription->suitecoin_balance}");
 
         } elseif ($order->type === 'subscription') {
             $subscription->status = 'active';
@@ -588,6 +598,7 @@ class AsaasService
         $parts = explode('|', $externalReference);
         if (count($parts) < 3) {
             Log::warning('AsaasService::sync: externalReference legado mal formatado.', ['ref' => $externalReference]);
+
             return;
         }
 
@@ -600,6 +611,7 @@ class AsaasService
                 'ref_tenant_id' => $refTenantId,
                 'current_tenant'=> $tenantId,
             ]);
+
             return;
         }
 
@@ -607,8 +619,9 @@ class AsaasService
             ->where('tenant_id', $tenantId)
             ->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             Log::error("AsaasService::sync: assinatura não encontrada para tenant {$tenantId}.");
+
             return;
         }
 
@@ -621,7 +634,7 @@ class AsaasService
             $subscription->save();
 
             $invoiceInfo = '';
-            if (!empty($payment['invoiceNumber'])) {
+            if (! empty($payment['invoiceNumber'])) {
                 $invoiceInfo = " - Fatura Asaas: {$payment['invoiceNumber']}";
             }
 
@@ -632,12 +645,12 @@ class AsaasService
                 'balance_after'  => $subscription->suitecoin_balance,
                 'currency'       => SuiteCoinService::CURRENCY_CODE,
                 'service_type'   => 'asaas_checkout',
-                'description'    => "Recarga de " . SuiteCoinService::format($suitecoinsVisual) . " via Asaas ({$paymentId}){$invoiceInfo} - Legado",
+                'description'    => 'Recarga de '.SuiteCoinService::format($suitecoinsVisual)." via Asaas ({$paymentId}){$invoiceInfo} - Legado",
                 'reference_id'   => $paymentId,
                 'reference_type' => 'asaas_payment',
             ]);
 
-            Log::info("AsaasService::sync (legado): +" . SuiteCoinService::format($suitecoinsVisual) . " sincronizados para tenant {$tenantId}.");
+            Log::info('AsaasService::sync (legado): +'.SuiteCoinService::format($suitecoinsVisual)." sincronizados para tenant {$tenantId}.");
             Cache::forget("tenant_{$tenantId}_subscription");
             Cache::forget("tenant_{$tenantId}_available_assistants");
         }

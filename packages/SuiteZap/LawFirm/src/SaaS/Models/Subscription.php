@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Subscription extends Model
 {
     protected $connection = 'mothership';
+
     protected $table = 'subscriptions';
 
     protected $fillable = [
@@ -17,12 +18,12 @@ class Subscription extends Model
         'storage_limit_gb',
         'current_usage_bytes',
         'suitecoin_balance',
-        'active_modules'
+        'active_modules',
     ];
 
     protected $casts = [
         'active_modules' => 'array',
-        'expires_at' => 'date'
+        'expires_at'     => 'date',
     ];
 
     public function tenant()

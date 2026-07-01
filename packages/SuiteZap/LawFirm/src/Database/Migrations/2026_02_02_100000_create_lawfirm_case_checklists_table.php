@@ -4,13 +4,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        if (!Schema::hasTable('lawfirm_case_checklists')) {
+        if (! Schema::hasTable('lawfirm_case_checklists')) {
             Schema::create('lawfirm_case_checklists', function (Blueprint $table) {
                 $table->id();
 

@@ -2,8 +2,8 @@
 
 namespace SuiteZap\LawFirm\SaaS\Http\Controllers;
 
-use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use SuiteZap\LawFirm\SaaS\Models\SaasOrder;
 use SuiteZap\LawFirm\SaaS\Services\AsaasService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
@@ -47,8 +47,8 @@ class SubscriptionCheckoutController extends Controller
             }
 
             $tenantId = MotherShipService::getTenantId();
-            $price    = (float) $request->input('price');
-            $planId   = $request->input('plan_id');
+            $price = (float) $request->input('price');
+            $planId = $request->input('plan_id');
             $planName = $request->input('plan_name', 'Plano LawFirm CRM');
 
             // ── 1. Cria a Intenção de Compra (Order) ─────────────────
@@ -58,7 +58,7 @@ class SubscriptionCheckoutController extends Controller
                 'type'        => 'subscription',
                 'value'       => $price,
                 'status'      => 'PENDING',
-                'description' => "Checkout de Assinatura: {$planName} (R$ " . number_format($price, 2, ',', '.') . ")",
+                'description' => "Checkout de Assinatura: {$planName} (R$ ".number_format($price, 2, ',', '.').')',
             ]);
 
             // ── 2. Cria o Checkout no Asaas ──────────────────────────
@@ -80,7 +80,8 @@ class SubscriptionCheckoutController extends Controller
                 'checkoutUrl' => $result['checkout_url'],
             ]);
         } catch (\Exception $e) {
-            \Log::error('SubscriptionCheckoutController::checkoutPlan falhou: ' . $e->getMessage());
+            \Log::error('SubscriptionCheckoutController::checkoutPlan falhou: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -126,7 +127,7 @@ class SubscriptionCheckoutController extends Controller
                 'type'        => 'ai_credits',
                 'value'       => $value,
                 'status'      => 'PENDING',
-                'description' => "Compra de R$ " . number_format($value, 2, ',', '.') . " em Créditos de IA",
+                'description' => 'Compra de R$ '.number_format($value, 2, ',', '.').' em Créditos de IA',
             ]);
 
             // ── 2. Cria o Checkout no Asaas ──────────────────────────
@@ -147,7 +148,8 @@ class SubscriptionCheckoutController extends Controller
                 'checkoutUrl' => $result['checkout_url'],
             ]);
         } catch (\Exception $e) {
-            \Log::error('SubscriptionCheckoutController::checkoutCredits falhou: ' . $e->getMessage());
+            \Log::error('SubscriptionCheckoutController::checkoutCredits falhou: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

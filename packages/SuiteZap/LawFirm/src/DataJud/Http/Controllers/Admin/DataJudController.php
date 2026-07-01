@@ -3,9 +3,9 @@
 namespace SuiteZap\LawFirm\DataJud\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
-use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\DataJud\Services\DataJudService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use Webkul\Admin\Http\Controllers\Controller;
 
 class DataJudController extends Controller
 {
@@ -22,33 +22,33 @@ class DataJudController extends Controller
     public function executarServico(Request $request)
     {
         $request->validate([
-            'service_type' => 'required|in:DATAJUD_CONSULTA_PUBLICA',
-            'data' => 'required|array',
+            'service_type'    => 'required|in:DATAJUD_CONSULTA_PUBLICA',
+            'data'            => 'required|array',
             'data.numero_cnj' => 'required|string',
-            'processo_id' => 'sometimes|nullable|integer',
+            'processo_id'     => 'sometimes|nullable|integer',
         ]);
 
         $tenantId = MotherShipService::getTenantId();
-        
+
         $result = $this->dataJudService->consultarProcesso(
-            $request->input('data.numero_cnj'), 
+            $request->input('data.numero_cnj'),
             $tenantId
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
-                'error' => $result['error'],
+                'error'   => $result['error'],
             ], 422);
         }
 
         return response()->json([
-            'success' => true,
-            'data' => $result['data'],
-            'message' => 'Consulta realizada com sucesso no DataJud.',
-            'async' => false,
+            'success'     => true,
+            'data'        => $result['data'],
+            'message'     => 'Consulta realizada com sucesso no DataJud.',
+            'async'       => false,
             'external_id' => null,
-            'request_id' => null
+            'request_id'  => null,
         ]);
     }
 }

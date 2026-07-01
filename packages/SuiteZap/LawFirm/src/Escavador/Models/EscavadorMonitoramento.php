@@ -25,8 +25,8 @@ class EscavadorMonitoramento extends Model
     ];
 
     protected $casts = [
-        'notify_whatsapp' => 'boolean',
-        'custo_mensal' => 'float',
+        'notify_whatsapp'       => 'boolean',
+        'custo_mensal'          => 'float',
         'ultima_notificacao_at' => 'datetime',
     ];
 

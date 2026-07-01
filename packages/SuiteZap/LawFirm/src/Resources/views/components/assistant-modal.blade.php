@@ -149,6 +149,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <script>
     function assistantModalHandler() {
         return {
@@ -249,7 +250,10 @@
 
             parseMarkdown(text) {
                 if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
-                    return marked.parse(text);
+                    const rawHtml = marked.parse(text);
+                    return (typeof DOMPurify !== 'undefined')
+                        ? DOMPurify.sanitize(rawHtml)
+                        : rawHtml;
                 }
                 return text.replace(/\n/g, '<br>');
             },

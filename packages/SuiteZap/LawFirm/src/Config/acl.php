@@ -350,6 +350,24 @@ return [
         'route' => ['lawfirm.assistants.index', 'lawfirm.assistants.history.index'],
         'sort'  => 2,
     ],
+    [
+        'key'   => 'lawfirm.assistants.escavai',
+        'name'  => 'Acessar EscavAI',
+        'route' => 'lawfirm.assistants.escavai',
+        'sort'  => 3,
+    ],
+    [
+        'key'   => 'lawfirm.assistants.chatwoot',
+        'name'  => 'Acessar SAC / Chatwoot',
+        'route' => 'lawfirm.assistants.chatwoot',
+        'sort'  => 4,
+    ],
+    [
+        'key'   => 'sac',
+        'name'  => 'Acessar SAC',
+        'route' => 'lawfirm.assistants.chatwoot',
+        'sort'  => 5,
+    ],
 
     // ══════════════════════════════════════════════════════════
     // Assistente Jurídico (Escavador)

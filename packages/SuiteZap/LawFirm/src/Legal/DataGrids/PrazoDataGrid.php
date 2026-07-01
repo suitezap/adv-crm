@@ -2,9 +2,9 @@
 
 namespace SuiteZap\LawFirm\Legal\DataGrids;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
-use Carbon\Carbon;
 
 class PrazoDataGrid extends DataGrid
 {
@@ -84,29 +84,28 @@ class PrazoDataGrid extends DataGrid
     {
         // Coluna: Título do Prazo
         $this->addColumn([
-            'index' => 'titulo',
-            'label' => 'Prazo / Tarefa',
-            'type' => 'string',
-            'sortable' => true,
+            'index'      => 'titulo',
+            'label'      => 'Prazo / Tarefa',
+            'type'       => 'string',
+            'sortable'   => true,
             'filterable' => true,
         ]);
 
-
-
         // Coluna: Processo Ref. (com Cliente)
         $this->addColumn([
-            'index' => 'processo_titulo',
-            'label' => 'Processo Ref.',
-            'type' => 'string',
-            'sortable' => true,
+            'index'      => 'processo_titulo',
+            'label'      => 'Processo Ref.',
+            'type'       => 'string',
+            'sortable'   => true,
             'filterable' => true,
-            'closure' => function ($row) {
+            'closure'    => function ($row) {
                 $url = route('admin.processos.show', $row->processo_id);
                 $clientInfo = $row->client_name
-                    ? '<br><small class="text-gray-500">' . e($row->client_name) . '</small>'
+                    ? '<br><small class="text-gray-500">'.e($row->client_name).'</small>'
                     : '';
-                return '<a href="' . $url . '" class="text-blue-600 hover:underline font-medium">'
-                    . e($row->processo_titulo) . '</a>' . $clientInfo;
+
+                return '<a href="'.$url.'" class="text-blue-600 hover:underline font-medium">'
+                    .e($row->processo_titulo).'</a>'.$clientInfo;
             },
         ]);
 
@@ -122,20 +121,21 @@ class PrazoDataGrid extends DataGrid
                 if ($row->notificar_whatsapp) {
                     return '<span class="badge badge-round badge-success" title="Ativado">🔔 Ativado</span>';
                 }
+
                 return '<span class="badge badge-round badge-warning" title="Desativado">🔕 Inativo</span>';
             },
         ]);
 
         // Coluna: Data da Audiência (Nova)
         $this->addColumn([
-            'index' => 'processo_data_audiencia',
-            'label' => 'Data da Audiência',
-            'type' => 'datetime',
-            'sortable' => true,
+            'index'      => 'processo_data_audiencia',
+            'label'      => 'Data da Audiência',
+            'type'       => 'datetime',
+            'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
-            'width' => '140px',
-            'closure' => function ($row) {
+            'width'      => '140px',
+            'closure'    => function ($row) {
                 if (empty($row->processo_data_audiencia)) {
                     return '<span class="text-gray-400">-</span>';
                 }
@@ -149,7 +149,7 @@ class PrazoDataGrid extends DataGrid
 
                 // Se concluído, badge cinza pastel
                 if (in_array($status, $finishedStates)) {
-                    return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #f3f4f6; color: #1f2937;">' . $formatted . '</span>';
+                    return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #f3f4f6; color: #1f2937;">'.$formatted.'</span>';
                 }
 
                 $now = \Carbon\Carbon::now()->startOfDay();
@@ -157,36 +157,36 @@ class PrazoDataGrid extends DataGrid
 
                 // Passado (Vermelho Pastel)
                 if ($dateDay->lt($now)) {
-                    return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #fee2e2; color: #991b1b;">' . $formatted . '</span>';
+                    return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #fee2e2; color: #991b1b;">'.$formatted.'</span>';
                 }
 
                 // Hoje (Vermelho Pastel Piscante)
                 if ($dateDay->eq($now)) {
-                    return '<span class="px-2 py-1 rounded-full text-xs font-semibold animate-pulse" style="background-color: #fee2e2; color: #991b1b;">' . $formatted . '</span>';
+                    return '<span class="px-2 py-1 rounded-full text-xs font-semibold animate-pulse" style="background-color: #fee2e2; color: #991b1b;">'.$formatted.'</span>';
                 }
 
                 $diff = $now->diffInDays($dateDay);
 
                 // Próximo (<= 5 dias) - Amarelo Pastel
                 if ($diff <= 5) {
-                    return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #fef9c3; color: #854d0e;">' . $formatted . '</span>';
+                    return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #fef9c3; color: #854d0e;">'.$formatted.'</span>';
                 }
 
                 // Futuro / Normal (Verde Pastel)
-                return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #dcfce7; color: #166534;">' . $formatted . '</span>';
-            }
+                return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #dcfce7; color: #166534;">'.$formatted.'</span>';
+            },
         ]);
 
         // Coluna: Vencimento
         $this->addColumn([
-            'index' => 'data_vencimento',
-            'label' => 'Vencimento',
-            'type' => 'date',
-            'sortable' => true,
+            'index'      => 'data_vencimento',
+            'label'      => 'Vencimento',
+            'type'       => 'date',
+            'sortable'   => true,
             'filterable' => true,
-            'width' => '120px',
-            'closure' => function ($row) {
-                if (!$row->data_vencimento) {
+            'width'      => '120px',
+            'closure'    => function ($row) {
+                if (! $row->data_vencimento) {
                     return '-';
                 }
 
@@ -208,13 +208,13 @@ class PrazoDataGrid extends DataGrid
 
         // Coluna: Urgência (Semáforo)
         $this->addColumn([
-            'index' => 'urgencia',
-            'label' => 'Status Temporal',
-            'type' => 'string',
-            'sortable' => false,
+            'index'      => 'urgencia',
+            'label'      => 'Status Temporal',
+            'type'       => 'string',
+            'sortable'   => false,
             'filterable' => false,
-            'width' => '140px',
-            'closure' => function ($row) {
+            'width'      => '140px',
+            'closure'    => function ($row) {
                 // Normaliza o status do banco para minúsculo
                 $dbStatus = strtolower(trim($row->raw_status ?? ''));
 
@@ -228,7 +228,7 @@ class PrazoDataGrid extends DataGrid
                             </span>';
                 }
 
-                if (!$row->data_vencimento) {
+                if (! $row->data_vencimento) {
                     return '<span class="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">
                                 Sem data
                             </span>';
@@ -260,9 +260,10 @@ class PrazoDataGrid extends DataGrid
                 // ATRASADO (vermelho forte) - data é anterior a hoje
                 if ($date->lt($hoje)) {
                     $diasAtrasado = $date->diffInDays($hoje);
+
                     return '<span class="px-2 py-1 rounded-full text-xs font-bold text-white" 
                                 style="background-color: #dc2626 !important;">
-                                ⚠ Atrasado ' . $diasAtrasado . 'd
+                                ⚠ Atrasado '.$diasAtrasado.'d
                             </span>';
                 }
 
@@ -281,7 +282,7 @@ class PrazoDataGrid extends DataGrid
                 if ($diasRestantes <= 3) {
                     return '<span class="px-2 py-1 rounded-full text-xs font-bold" 
                                 style="background-color: #fbbf24 !important; color: #78350f !important;">
-                                ⏰ Vencendo ' . $diasRestantes . 'd
+                                ⏰ Vencendo '.$diasRestantes.'d
                             </span>';
                 }
 
@@ -295,11 +296,11 @@ class PrazoDataGrid extends DataGrid
 
         // Coluna: Status do Prazo (Soliciation)
         $this->addColumn([
-            'index' => 'status',
-            'label' => trans('lawfirm::app.deadlines.status'),
-            'type' => 'string',
+            'index'    => 'status',
+            'label'    => trans('lawfirm::app.deadlines.status'),
+            'type'     => 'string',
             'sortable' => true,
-            'closure' => function ($row) {
+            'closure'  => function ($row) {
                 // ---------------------------------------------------------
                 // 1. REGRA SUPREMA: Verifica se já acabou (Status Real)
                 // ---------------------------------------------------------
@@ -317,7 +318,7 @@ class PrazoDataGrid extends DataGrid
                 // ---------------------------------------------------------
                 // 2. Lógica Temporal (Só roda se NÃO estiver concluído)
                 // ---------------------------------------------------------
-    
+
                 // ESTADO 2: Sem Data (Cinza Suave - Neutral)
                 if (empty($row->data_vencimento)) {
                     return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #f3f4f6; color: #1f2937;">Sem Data</span>';
@@ -346,9 +347,9 @@ class PrazoDataGrid extends DataGrid
 
                 $now = \Carbon\Carbon::now()->startOfDay();
                 $diff = $now->diffInDays($dueDate, false); // false = permite negativos
-    
+
                 // ESTADO 3: Vencido (Passado e não é hoje) - Vermelho Suave
-                if ($dueDate->isPast() && !$dueDate->isToday()) {
+                if ($dueDate->isPast() && ! $dueDate->isToday()) {
                     return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #fee2e2; color: #991b1b;">Vencido !!!</span>';
                 }
 
@@ -360,7 +361,7 @@ class PrazoDataGrid extends DataGrid
 
                 // ESTADO 5: Urgente (3 dias ou menos) - Amarelo Suave
                 if ($diff <= 3 && $diff > 0) {
-                    return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #fef9c3; color: #854d0e;">Atenção ' . $diff . 'd</span>';
+                    return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #fef9c3; color: #854d0e;">Atenção '.$diff.'d</span>';
                 }
 
                 // ESTADO 6: No Prazo (Mais de 3 dias) - Verde Suave
@@ -378,30 +379,30 @@ class PrazoDataGrid extends DataGrid
     {
         // View Process
         $this->addAction([
-            'icon' => 'icon-eye',
-            'title' => 'Ver Processo',
+            'icon'   => 'icon-eye',
+            'title'  => 'Ver Processo',
             'method' => 'GET',
-            'url' => function ($row) {
+            'url'    => function ($row) {
                 return route('admin.processos.show', $row->processo_id);
             },
         ]);
 
         // Edit Prazo
         $this->addAction([
-            'icon' => 'icon-edit',
-            'title' => 'Editar Prazo',
+            'icon'   => 'icon-edit',
+            'title'  => 'Editar Prazo',
             'method' => 'GET',
-            'url' => function ($row) {
+            'url'    => function ($row) {
                 return route('admin.prazos.edit', $row->id);
             },
         ]);
 
         // Notificar WhatsApp
         $this->addAction([
-            'icon' => 'icon-mail',
-            'title' => 'Notificar Cliente via WhatsApp',
+            'icon'   => 'icon-mail',
+            'title'  => 'Notificar Cliente via WhatsApp',
             'method' => 'GET',
-            'url' => function ($row) {
+            'url'    => function ($row) {
                 return route('lawfirm.prazos.notify', $row->id);
             },
             'confirm_text' => 'Deseja enviar a notificação de prazo para o cliente agora?',

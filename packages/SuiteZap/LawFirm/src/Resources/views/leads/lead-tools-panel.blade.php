@@ -800,6 +800,7 @@
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
     <script>
         (function () {
             'use strict';
@@ -953,7 +954,12 @@
 
                 function renderMd(text) {
                     if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
-                        try { return marked.parse(String(text)); } catch (e) { return String(text); }
+                        try {
+                            const rawHtml = marked.parse(String(text));
+                            return (typeof DOMPurify !== 'undefined')
+                                ? DOMPurify.sanitize(rawHtml)
+                                : rawHtml;
+                        } catch (e) { return String(text); }
                     }
                     return String(text).replace(/\n/g, '<br>');
                 }

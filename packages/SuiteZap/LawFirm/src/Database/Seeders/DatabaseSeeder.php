@@ -25,7 +25,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ChecklistTemplateSeeder::class);
         $this->call(DocumentChecklistTemplateSeeder::class); // Kits de Documentos (law_checklist_templates)
 
-
         // 4. Seeders de IA / Assistants
         $this->call(AssistantSeeder::class);
 

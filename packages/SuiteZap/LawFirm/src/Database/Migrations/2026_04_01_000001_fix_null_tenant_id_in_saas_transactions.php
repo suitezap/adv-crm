@@ -21,8 +21,9 @@ return new class extends Migration
     {
         $tenantId = config('lawfirm.tenant_id', env('TENANT_ID'));
 
-        if (!$tenantId) {
+        if (! $tenantId) {
             Log::warning('Migration fix_null_tenant_id: TENANT_ID não configurado. Nenhum registro atualizado.');
+
             return;
         }
 

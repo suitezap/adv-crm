@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Schema;
  * - POST → Recebe ID (external_id) → Espera Webhook.
  * - Também registra requisições V1 (síncronas) para auditoria e estorno.
  */
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('escavador_requests', function (Blueprint $table) {

@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('escavador_processos')) {
+        if (! Schema::hasTable('escavador_processos')) {
             Schema::create('escavador_processos', function (Blueprint $table) {
                 $table->id();
                 $table->string('tenant_id', 50)->index();

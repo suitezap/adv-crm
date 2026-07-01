@@ -25,14 +25,14 @@ class LeadWonListener
      */
     public function handle($lead)
     {
-        if (!$lead instanceof Lead) {
+        if (! $lead instanceof Lead) {
             return;
         }
 
         // Load the stage relationship if not loaded
         $lead->loadMissing('stage');
 
-        if (!$lead->stage || $lead->stage->code !== 'won') {
+        if (! $lead->stage || $lead->stage->code !== 'won') {
             return;
         }
 
@@ -41,12 +41,14 @@ class LeadWonListener
 
         if ($exists) {
             Log::info("LeadWonListener: Processo already exists for lead #{$lead->id}, skipping.");
+
             return;
         }
 
         // Ensure lead has a person_id (required by Processo)
-        if (!$lead->person_id) {
+        if (! $lead->person_id) {
             Log::warning("LeadWonListener: Lead #{$lead->id} has no person_id, cannot auto-create Caso/Processo.");
+
             return;
         }
 
@@ -55,8 +57,7 @@ class LeadWonListener
 
             Log::info("LeadWonListener: Caso #{$result['caso']->id} + Processo #{$result['processo']->id} auto-created for Lead #{$lead->id}");
         } catch (\Exception $e) {
-            Log::error("LeadWonListener: Failed to create Caso/Processo for Lead #{$lead->id}: " . $e->getMessage());
+            Log::error("LeadWonListener: Failed to create Caso/Processo for Lead #{$lead->id}: ".$e->getMessage());
         }
     }
 }
-

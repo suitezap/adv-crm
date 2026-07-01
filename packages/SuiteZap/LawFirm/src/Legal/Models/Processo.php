@@ -5,9 +5,10 @@ namespace SuiteZap\LawFirm\Legal\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use SuiteZap\LawFirm\Financial\Models\Financial;
-use SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorMonitoramento;
+use SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso;
+use SuiteZap\LawFirm\Financial\Models\Financial;
+
 class Processo extends Model
 {
     /**
@@ -59,6 +60,7 @@ class Processo extends Model
         'link_audiencia', // hearing_link identified in view
         'advogado_responsavel_nome',
         'advogado_responsavel_oab',
+        'sercreta',
 
         'envolvidos_escavador',
     ];
@@ -92,6 +94,7 @@ class Processo extends Model
     {
         if (empty($value)) {
             $this->attributes['valor_causa'] = null;
+
             return;
         }
 
@@ -99,6 +102,7 @@ class Processo extends Model
         // If it is, don't try to strip formatting again.
         if (is_numeric($value)) {
             $this->attributes['valor_causa'] = $value;
+
             return;
         }
 
@@ -111,8 +115,6 @@ class Processo extends Model
         $this->attributes['valor_causa'] = (float) $clean;
     }
 
-
-
     /**
      * The attributes that should be cast.
      *
@@ -120,13 +122,11 @@ class Processo extends Model
      */
     protected $casts = [
         'data_distribuicao' => 'date',
-        'data_audiencia' => 'datetime',
+        'data_audiencia'    => 'datetime',
     ];
 
     /**
      * Get the lead associated with the processo.
-     *
-     * @return BelongsTo
      */
     public function lead(): BelongsTo
     {
@@ -135,8 +135,6 @@ class Processo extends Model
 
     /**
      * Get the person (client) associated with the processo.
-     *
-     * @return BelongsTo
      */
     public function person(): BelongsTo
     {
@@ -145,8 +143,6 @@ class Processo extends Model
 
     /**
      * Get the organization (company) associated with the processo.
-     *
-     * @return BelongsTo
      */
     public function organization(): BelongsTo
     {
@@ -155,8 +151,6 @@ class Processo extends Model
 
     /**
      * Get the caso (case) this processo belongs to.
-     *
-     * @return BelongsTo
      */
     public function caso(): BelongsTo
     {
@@ -165,8 +159,6 @@ class Processo extends Model
 
     /**
      * Get the prazos (deadlines) for the processo.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function prazos(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
@@ -175,8 +167,6 @@ class Processo extends Model
 
     /**
      * Get the notes (notas) for the processo.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function notas(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
@@ -185,8 +175,6 @@ class Processo extends Model
 
     /**
      * Get the financials (revenues/expenses) for the processo.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function financeiros(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
@@ -195,8 +183,6 @@ class Processo extends Model
 
     /**
      * Get the responsible lawyer (user).
-     *
-     * @return BelongsTo
      */
     public function responsavel(): BelongsTo
     {
@@ -234,6 +220,7 @@ class Processo extends Model
             ->filter(function ($item) {
                 $tipo = strtolower(trim($item->tipo));
                 $status = strtolower(trim($item->status));
+
                 return str_contains($tipo, 'despesa')
                     && $status !== 'cancelado';
             })
@@ -255,8 +242,10 @@ class Processo extends Model
      */
     public function getMargemLucratividadeAttribute()
     {
-        if ($this->receita_total == 0)
+        if ($this->receita_total == 0) {
             return 0;
+        }
+
         return ($this->lucro_liquido / $this->receita_total) * 100;
     }
 
@@ -265,10 +254,13 @@ class Processo extends Model
      */
     public function getIndiceExitoAttribute()
     {
-        if ($this->valor_causa == 0)
+        if ($this->valor_causa == 0) {
             return 0;
+        }
+
         return ($this->receita_total / $this->valor_causa) * 100;
     }
+
     /**
      * Get the CSS class for audience date alert.
      * Logic:
@@ -276,15 +268,13 @@ class Processo extends Model
      * - Past/Today (Ativo/Suspenso): Red + Pulse
      * - Within 5 days (Ativo/Suspenso): Orange
      * - Future (>5 days) (Ativo/Suspenso): Emerald
-     *
-     * @return string
      */
     public function getAudienciaAlertClassAttribute(): string
     {
         // Default styling
-        $defaultClass = "text-gray-600 dark:text-gray-400";
+        $defaultClass = 'text-gray-600 dark:text-gray-400';
 
-        if (!$this->data_audiencia) {
+        if (! $this->data_audiencia) {
             return $defaultClass;
         }
 
@@ -301,19 +291,18 @@ class Processo extends Model
 
         if ($diffDays <= 0) {
             // Overdue or Today
-            return "text-red-800 bg-red-100 px-2 py-0.5 rounded font-bold animate-pulse";
+            return 'text-red-800 bg-red-100 px-2 py-0.5 rounded font-bold animate-pulse';
         } elseif ($diffDays <= 5) {
             // Urgency Warning
-            return "text-orange-600 font-bold";
+            return 'text-orange-600 font-bold';
         } else {
             // Safe
-            return "text-emerald-600 font-medium";
+            return 'text-emerald-600 font-medium';
         }
     }
+
     /**
      * Get the attachments (GED) for the processo.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function anexos(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
@@ -322,8 +311,6 @@ class Processo extends Model
 
     /**
      * Get the documents (GED) for the processo.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function documents(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
@@ -340,8 +327,6 @@ class Processo extends Model
 
     /**
      * Get the imported WhatsApp messages for the processo.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function whatsappMessages(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
@@ -350,8 +335,6 @@ class Processo extends Model
 
     /**
      * Get the WhatsApp import sessions for the processo.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function whatsappImports(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
@@ -360,8 +343,6 @@ class Processo extends Model
 
     /**
      * Get the escavador processo mirror data.
-     *
-     * @return HasOne
      */
     public function escavadorProcesso(): HasOne
     {
@@ -370,8 +351,6 @@ class Processo extends Model
 
     /**
      * Get the escavador monitoramentos linked to this process.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function escavadorMonitoramentos(): \Illuminate\Database\Eloquent\Relations\HasMany
     {

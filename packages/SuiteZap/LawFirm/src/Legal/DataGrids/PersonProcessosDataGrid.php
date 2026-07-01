@@ -35,44 +35,44 @@ class PersonProcessosDataGrid extends ProcessoDataGrid
     public function prepareColumns()
     {
         $this->addColumn([
-            'index' => 'id',
-            'label' => trans('lawfirm::app.processos.datagrid.id'),
-            'type' => 'integer',
+            'index'    => 'id',
+            'label'    => trans('lawfirm::app.processos.datagrid.id'),
+            'type'     => 'integer',
             'sortable' => true,
         ]);
 
         $this->addColumn([
-            'index' => 'titulo',
-            'label' => trans('lawfirm::app.processos.datagrid.titulo'),
-            'type' => 'string',
+            'index'    => 'titulo',
+            'label'    => trans('lawfirm::app.processos.datagrid.titulo'),
+            'type'     => 'string',
             'sortable' => true,
         ]);
 
         $this->addColumn([
-            'index' => 'area_direito',
-            'label' => trans('lawfirm::app.processos.form.area'),
-            'type' => 'string',
+            'index'    => 'area_direito',
+            'label'    => trans('lawfirm::app.processos.form.area'),
+            'type'     => 'string',
             'sortable' => true,
         ]);
 
         $this->addColumn([
-            'index' => 'data_audiencia',
-            'label' => trans('lawfirm::app.processos.form.data_audiencia'),
-            'type' => 'datetime',
+            'index'    => 'data_audiencia',
+            'label'    => trans('lawfirm::app.processos.form.data_audiencia'),
+            'type'     => 'datetime',
             'sortable' => true,
         ]);
 
         $this->addColumn([
-            'index' => 'numero_cnj',
-            'label' => trans('lawfirm::app.processos.datagrid.cnj'),
-            'type' => 'string',
+            'index'    => 'numero_cnj',
+            'label'    => trans('lawfirm::app.processos.datagrid.cnj'),
+            'type'     => 'string',
             'sortable' => true,
         ]);
 
         $this->addColumn([
-            'index' => 'status',
-            'label' => trans('lawfirm::app.processos.datagrid.status'),
-            'type' => 'string',
+            'index'    => 'status',
+            'label'    => trans('lawfirm::app.processos.datagrid.status'),
+            'type'     => 'string',
             'sortable' => true,
         ]);
     }

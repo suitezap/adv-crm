@@ -2,11 +2,11 @@
 
 namespace SuiteZap\LawFirm\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
 use SuiteZap\LawFirm\Legal\Events\PrazoCreated;
 use SuiteZap\LawFirm\Whatsapp\Listeners\SendPrazoWhatsapp;
@@ -16,8 +16,7 @@ class LawFirmServiceProvider extends ServiceProvider
     /**
      * Versão do pacote LawFirm.
      */
-    public const VERSION = '3.52.0';
-
+    public const VERSION = '3.54.0';
 
     /**
      * Bootstrap services.
@@ -32,13 +31,13 @@ class LawFirmServiceProvider extends ServiceProvider
         // 1. Configuração Dinâmica de Storage (Multi-Tenant)
         try {
             // Só tenta configurar se não estiver rodando no console (artisan) para evitar erros em migrations
-            if (!app()->runningInConsole()) {
+            if (! app()->runningInConsole()) {
                 \SuiteZap\LawFirm\SaaS\Services\MotherShipService::configureTenantStorage();
             }
         } catch (\Exception $e) {
             // Falha silenciosa para não derrubar o sistema se o MotherShip estiver offline
             // O sistema usará o bucket padrão do .env como fallback
-            Log::error('SAAS ERROR: Falha ao configurar storage dinâmico: ' . $e->getMessage());
+            Log::error('SAAS ERROR: Falha ao configurar storage dinâmico: '.$e->getMessage());
         }
 
         // ====================================================================
@@ -51,7 +50,7 @@ class LawFirmServiceProvider extends ServiceProvider
         // ====================================================================
         // 1. CARREGAR ROTAS
         // ====================================================================
-        $routesPath = __DIR__ . '/../Http/routes.php';
+        $routesPath = __DIR__.'/../Http/routes.php';
 
         if (file_exists($routesPath)) {
             $this->loadRoutesFrom($routesPath);
@@ -60,7 +59,7 @@ class LawFirmServiceProvider extends ServiceProvider
         }
 
         // Rotas API
-        $apiRoutesPath = __DIR__ . '/../Routes/api.php';
+        $apiRoutesPath = __DIR__.'/../Routes/api.php';
         if (file_exists($apiRoutesPath)) {
             $this->loadRoutesFrom($apiRoutesPath);
         }
@@ -68,7 +67,7 @@ class LawFirmServiceProvider extends ServiceProvider
         // ====================================================================
         // 2. CARREGAR VIEWS
         // ====================================================================
-        $viewsPath = __DIR__ . '/../Resources/views';
+        $viewsPath = __DIR__.'/../Resources/views';
 
         if (is_dir($viewsPath)) {
             $this->loadViewsFrom($viewsPath, 'lawfirm');
@@ -77,7 +76,7 @@ class LawFirmServiceProvider extends ServiceProvider
         // ====================================================================
         // 3. CARREGAR MIGRAÇÕES
         // ====================================================================
-        $migrationsPath = __DIR__ . '/../Database/Migrations';
+        $migrationsPath = __DIR__.'/../Database/Migrations';
 
         if (is_dir($migrationsPath)) {
             $this->loadMigrationsFrom($migrationsPath);
@@ -86,7 +85,7 @@ class LawFirmServiceProvider extends ServiceProvider
         // ====================================================================
         // 4. CARREGAR TRADUÇÕES
         // ====================================================================
-        $langPath = __DIR__ . '/../Resources/lang';
+        $langPath = __DIR__.'/../Resources/lang';
 
         if (is_dir($langPath)) {
             $this->loadTranslationsFrom($langPath, 'lawfirm');
@@ -146,7 +145,7 @@ class LawFirmServiceProvider extends ServiceProvider
         // ====================================================================
         // CONFIGURAÇÃO DO MENU LATERAL
         // ====================================================================
-        $breadcrumbsPath = __DIR__ . '/../Routes/breadcrumbs.php';
+        $breadcrumbsPath = __DIR__.'/../Routes/breadcrumbs.php';
         if (file_exists($breadcrumbsPath)) {
             require $breadcrumbsPath;
         }
@@ -155,7 +154,7 @@ class LawFirmServiceProvider extends ServiceProvider
         // 8. BLADE COMPONENTS
         // ====================================================================
         // Register anonymous components path for package components
-        $componentsPath = __DIR__ . '/../Resources/views/components';
+        $componentsPath = __DIR__.'/../Resources/views/components';
         if (is_dir($componentsPath)) {
             \Illuminate\Support\Facades\Blade::anonymousComponentPath($componentsPath, 'lawfirm');
         }
@@ -169,7 +168,7 @@ class LawFirmServiceProvider extends ServiceProvider
         $menu = config('menu.admin');
         if ($menu) {
             $menu = array_values(array_filter($menu, function ($item) {
-                if (!isset($item['key'])) {
+                if (! isset($item['key'])) {
                     return false;
                 }
                 // Oculta todos os itens de e-mail (pai e filhos mail.inbox, mail.draft, etc.)
@@ -180,6 +179,7 @@ class LawFirmServiceProvider extends ServiceProvider
                 if ($item['key'] === 'quotes') {
                     return false;
                 }
+
                 return true;
             }));
             config(['menu.admin' => $menu]);
@@ -196,25 +196,25 @@ class LawFirmServiceProvider extends ServiceProvider
 
         // Merge Config (Menu)
         $this->mergeConfigFrom(
-            __DIR__ . '/../Config/menu.php',
+            __DIR__.'/../Config/menu.php',
             'menu.admin'
         );
 
         // Merge Config (ACL)
         $this->mergeConfigFrom(
-            __DIR__ . '/../Config/acl.php',
+            __DIR__.'/../Config/acl.php',
             'acl'
         );
 
         // Merge Config (System) - Configurações do Painel
         $this->mergeConfigFrom(
-            __DIR__ . '/../Config/system.php',
+            __DIR__.'/../Config/system.php',
             'core_config'
         );
 
         // Merge Config (LawFirm) - Configurações gerais do pacote (mothership_secret, etc.)
         $this->mergeConfigFrom(
-            __DIR__ . '/../Config/lawfirm.php',
+            __DIR__.'/../Config/lawfirm.php',
             'lawfirm'
         );
 
@@ -239,7 +239,6 @@ class LawFirmServiceProvider extends ServiceProvider
 
         // ✅ Sincronização Reversa Krayin -> LawFirm
         \Webkul\Activity\Models\Activity::observe(\SuiteZap\LawFirm\Legal\Observers\ActivityObserver::class);
-
 
         // ✅ REGISTRO DO OBSERVER SAAS
         // Intercepta qualquer criação de usuário no sistema para validar limites do plano
@@ -266,6 +265,8 @@ class LawFirmServiceProvider extends ServiceProvider
         // ---------------------------------------------------------------------
         Event::listen('sales.lead.update.after', 'SuiteZap\\LawFirm\\Legal\\Listeners\\LeadUpdatedListener@handle');
         Event::listen('lead.update.after', \SuiteZap\LawFirm\Legal\Listeners\LeadWonListener::class);
+        Event::listen('lead.create.after', \SuiteZap\LawFirm\Legal\Listeners\SyncLeadStageToChatwootListener::class);
+        Event::listen('lead.update.after', \SuiteZap\LawFirm\Legal\Listeners\SyncLeadStageToChatwootListener::class);
 
         // ---------------------------------------------------------------------
         // CONTATOS: Persistência de Dados (Substituindo Observers)
@@ -301,8 +302,9 @@ class LawFirmServiceProvider extends ServiceProvider
             if (request()->has('law_details')) {
                 $data = request('law_details');
                 $data['person_id'] = $person->id;
-                if (!isset($data['type']))
+                if (! isset($data['type'])) {
                     $data['type'] = 'PF';
+                }
 
                 \SuiteZap\LawFirm\Legal\Models\LawPersonDetail::updateOrCreate(['person_id' => $person->id], $data);
             }
@@ -450,9 +452,9 @@ class LawFirmServiceProvider extends ServiceProvider
                 ->get();
 
             $view->with([
-                'activeCount' => $activeCount,
-                'totalValorCausa' => $totalValorCausa,
-                'totalValorGanho' => $totalValorGanho,
+                'activeCount'      => $activeCount,
+                'totalValorCausa'  => $totalValorCausa,
+                'totalValorGanho'  => $totalValorGanho,
                 'upcomingHearings' => $upcomingHearings,
             ]);
         });

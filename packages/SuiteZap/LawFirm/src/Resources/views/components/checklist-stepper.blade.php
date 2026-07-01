@@ -228,6 +228,7 @@
 @push('scripts')
     <!-- Include Markdown Parser if not already present -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
     <script>
         (function () {
             // ... (rest of existing script)

@@ -16,52 +16,52 @@ class DosimetroDanoMoralTemplateSeeder extends Seeder
 
         $variables = [
             [
-                'key' => 'tipo_dano',
-                'label' => 'Tipo de Dano',
-                'type' => 'text',
+                'key'         => 'tipo_dano',
+                'label'       => 'Tipo de Dano',
+                'type'        => 'text',
                 'placeholder' => 'Ex: Morte, Dano Estético, Negativação...',
             ],
             [
-                'key' => 'capacidade_reu',
-                'label' => 'Capacidade Econômica do Réu',
-                'type' => 'text',
+                'key'         => 'capacidade_reu',
+                'label'       => 'Capacidade Econômica do Réu',
+                'type'        => 'text',
                 'placeholder' => 'Ex: Banco (Grande Porte), Pessoa Física...',
             ],
             [
-                'key' => 'extensao_dano',
-                'label' => 'Extensão do Dano',
-                'type' => 'textarea',
-                'rows' => 4,
+                'key'         => 'extensao_dano',
+                'label'       => 'Extensão do Dano',
+                'type'        => 'textarea',
+                'rows'        => 4,
                 'placeholder' => 'Ex: Cliente não pôde comprar a casa por causa do Serasa...',
             ],
             [
-                'key' => 'relacao_juridica',
-                'label' => 'Relação Jurídica',
-                'type' => 'text',
+                'key'         => 'relacao_juridica',
+                'label'       => 'Relação Jurídica',
+                'type'        => 'text',
                 'placeholder' => 'Ex: Consumerista, Trabalhista, Civil...',
             ],
             [
-                'key' => 'tenant_id',
-                'label' => 'Tenant ID',
-                'type' => 'hidden',
+                'key'         => 'tenant_id',
+                'label'       => 'Tenant ID',
+                'type'        => 'hidden',
                 'placeholder' => '',
-            ]
+            ],
         ];
 
         AssistantTemplate::updateOrCreate(
             ['slug' => 'dosimetro-dano-moral'],
             [
-                'tenant_id' => null,
-                'category' => 'processual',
-                'area' => 'Cível',
-                'title' => 'Dosímetro de Dano Moral',
-                'description' => 'Aplica Método Bifásico (STJ) na extensão do dano e sugere faixas de ganho (mínimo, médio e ótimo).',
-                'icon' => '⚖️',
+                'tenant_id'        => null,
+                'category'         => 'processual',
+                'area'             => 'Cível',
+                'title'            => 'Dosímetro de Dano Moral',
+                'description'      => 'Aplica Método Bifásico (STJ) na extensão do dano e sugere faixas de ganho (mínimo, médio e ótimo).',
+                'icon'             => '⚖️',
                 'prompt_structure' => $promptStructure,
-                'variables' => $variables,
-                'n8n_webhook_url' => 'ai-dosimetro-dano-moral',
-                'required_module' => 'IA-Civil',
-                'is_active' => true,
+                'variables'        => $variables,
+                'n8n_webhook_url'  => 'ai-dosimetro-dano-moral',
+                'required_module'  => 'IA-Civil',
+                'is_active'        => true,
             ]
         );
 

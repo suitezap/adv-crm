@@ -13,7 +13,7 @@ class AuditLog extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'meta_data' => 'array',
+        'meta_data'  => 'array',
         'created_at' => 'datetime',
     ];
 }

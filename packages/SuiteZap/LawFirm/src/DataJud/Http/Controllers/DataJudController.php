@@ -2,8 +2,8 @@
 
 namespace SuiteZap\LawFirm\DataJud\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use SuiteZap\LawFirm\DataJud\Services\DataJudService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 
@@ -24,12 +24,12 @@ class DataJudController extends Controller
      */
     public function consulta(Request $request)
     {
-        $data         = $request->input('data', []);
+        $data = $request->input('data', []);
         $tipoConsulta = $data['tipo_consulta'] ?? 'numero';
-        $tribunal     = $data['tribunal'] ?? null;
+        $tribunal = $data['tribunal'] ?? null;
 
         // Validate required fields
-        if (!$tribunal) {
+        if (! $tribunal) {
             return response()->json([
                 'success' => false,
                 'error'   => 'Selecione um Tribunal para continuar.',
@@ -54,7 +54,7 @@ class DataJudController extends Controller
 
         $result = $this->service->consultar($tribunal, $tipoConsulta, $data, $tenantId);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json(['success' => false, 'error' => $result['error']], 422);
         }
 

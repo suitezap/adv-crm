@@ -56,14 +56,14 @@ class ValidarCNJ implements Rule
         // Para validar: (NNNNNNNAAAAJTROOOO * 100 + DD) % 97 == 1
         // Fonte: Resolução CNJ 65/2008.
 
-        $blocoSemDigito = $n . $a . $j . $tr . $o; // NNNNNNNAAAAJTROOOO
+        $blocoSemDigito = $n.$a.$j.$tr.$o; // NNNNNNNAAAAJTROOOO
         $digitoVerificador = $d;
 
         // Construir o número gigante: NNNNNNNAAAAJTROOOO + DD
         // Matemáticamente: (Inteiro(BlocoSemDigito) * 100 + Inteiro(Digito)) % 97 deve ser 1
 
         // Como o número é maior que PHP_INT_MAX, usamos bcmod ou algoritmo manual
-        $numeroParaValidar = $blocoSemDigito . $digitoVerificador;
+        $numeroParaValidar = $blocoSemDigito.$digitoVerificador;
 
         // Se bcmod estiver disponível
         if (function_exists('bcmod')) {

@@ -1,13 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use SuiteZap\LawFirm\Legal\Http\Controllers\ProcessoController;
-use SuiteZap\LawFirm\Legal\Http\Controllers\PrazoController;
-use SuiteZap\LawFirm\Legal\Http\Controllers\DeadlineController;
+use SuiteZap\LawFirm\GED\Http\Controllers\ProcessDocumentController;
 use SuiteZap\LawFirm\Legal\Http\Controllers\AgendaController;
 use SuiteZap\LawFirm\Legal\Http\Controllers\CasoController;
+use SuiteZap\LawFirm\Legal\Http\Controllers\DeadlineController;
 use SuiteZap\LawFirm\Legal\Http\Controllers\LegalKanbanController;
-use SuiteZap\LawFirm\GED\Http\Controllers\ProcessDocumentController;
+use SuiteZap\LawFirm\Legal\Http\Controllers\PrazoController;
+use SuiteZap\LawFirm\Legal\Http\Controllers\ProcessoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,7 +38,7 @@ Route::prefix('processos')->controller(ProcessoController::class)->group(functio
     Route::get('anexo/download/{id}', [ProcessDocumentController::class, 'downloadAttachment'])->name('admin.processos.download_attachment');
     Route::post('documentos/store', [ProcessDocumentController::class, 'store'])->name('admin.processos.store_documents');
     Route::post('mass-delete', 'massDestroy')->name('admin.processos.mass_delete');
-    
+
     // WhatsApp Portal Triggers
     Route::post('{id}/request-registration', 'requestRegistration')->name('admin.processos.request_registration');
     Route::post('{id}/request-documents', 'requestDocuments')->name('admin.processos.request_documents');
@@ -121,9 +121,16 @@ Route::prefix('modelos-documentos')->controller(\SuiteZap\LawFirm\Legal\Http\Con
     Route::get('{id}/edit', 'edit')->name('admin.modelos.edit');
     Route::put('{id}', 'update')->name('admin.modelos.update');
     Route::delete('{id}', 'destroy')->name('admin.modelos.destroy');
+
+    // Layout templates (Cabeçalho / Rodapé)
+    Route::get('layout', 'getLayoutTemplates')->name('admin.modelos.layout.get');
+    Route::post('layout/{tipo}', 'saveLayout')->name('admin.modelos.layout.save');
 });
 
 Route::prefix('processos')->controller(\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\DocumentTemplateController::class)->group(function () {
     Route::get('{processoId}/modelos', 'index')->name('admin.processos.modelos.index');
     Route::get('{processoId}/modelos/{templateId}/render', 'render')->name('admin.processos.modelos.render');
+
+    // Save rendered document to S3 Drive
+    Route::post('{processoId}/modelos/salvar', 'saveGenerated')->name('admin.processos.modelos.salvar');
 });

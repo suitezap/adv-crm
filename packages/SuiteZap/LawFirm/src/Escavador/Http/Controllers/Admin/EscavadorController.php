@@ -3,14 +3,13 @@
 namespace SuiteZap\LawFirm\Escavador\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Webkul\Admin\Http\Controllers\Controller;
-use SuiteZap\LawFirm\Escavador\Services\EscavadorService;
-use SuiteZap\LawFirm\Escavador\Services\EscavadorCacheService;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso;
+use SuiteZap\LawFirm\Escavador\Services\EscavadorCacheService;
+use SuiteZap\LawFirm\Escavador\Services\EscavadorService;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use Webkul\Admin\Http\Controllers\Controller;
 
 /**
  * EscavadorController — Admin controller para integração Escavador.
@@ -20,6 +19,7 @@ use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 class EscavadorController extends Controller
 {
     protected $escavador;
+
     protected $cacheService;
 
     public function __construct(EscavadorService $escavador, EscavadorCacheService $cacheService)
@@ -34,6 +34,7 @@ class EscavadorController extends Controller
     public function index()
     {
         $prices = MotherShipService::getEscavadorPrices();
+
         return view('lawfirm::admin.escavador.index', compact('prices'));
     }
 
@@ -52,17 +53,17 @@ class EscavadorController extends Controller
     {
         $result = $this->escavador->consultarSaldo('v1', false);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json($result);
         }
 
         $data = $result['data'] ?? [];
 
         return response()->json([
-            'success' => true,
-            'data' => [$data],
+            'success'      => true,
+            'data'         => [$data],
             'credits_used' => $result['credits_used'],
-            'status_code' => $result['status_code']
+            'status_code'  => $result['status_code'],
         ]);
     }
 
@@ -111,7 +112,7 @@ class EscavadorController extends Controller
     public function consultarEnvolvido(Request $request)
     {
         $request->validate([
-            'nome' => 'required_without:cpf_cnpj|string|nullable',
+            'nome'     => 'required_without:cpf_cnpj|string|nullable',
             'cpf_cnpj' => 'required_without:nome|string|nullable',
         ]);
 
@@ -148,7 +149,7 @@ class EscavadorController extends Controller
     {
         $request->validate([
             'numero_cnj' => 'required|string|min:20',
-            'action' => 'required|in:solicitar,consultar,status',
+            'action'     => 'required|in:solicitar,consultar,status',
         ]);
 
         $playground = (bool) $request->input('playground', false);
@@ -158,7 +159,7 @@ class EscavadorController extends Controller
         $result = match ($action) {
             'solicitar' => $this->escavador->solicitarResumoIa($numeroCnj, $playground),
             'consultar' => $this->escavador->consultarResumoIa($numeroCnj, $playground),
-            default => ['success' => false, 'error' => 'Ação inválida.'],
+            default     => ['success' => false, 'error' => 'Ação inválida.'],
         };
 
         return response()->json($result);
@@ -174,7 +175,7 @@ class EscavadorController extends Controller
     public function buscarTermo(Request $request)
     {
         $request->validate([
-            'q' => 'required|string|min:2',
+            'q'  => 'required|string|min:2',
             'qo' => 'required|string|in:t,p,i,d,en',
         ]);
 
@@ -182,7 +183,7 @@ class EscavadorController extends Controller
 
         $params = array_filter(
             $request->only(['q', 'qo', 'qs', 'limit', 'page', 'utilizar_operadores_logicos']),
-            fn($v) => $v !== null && $v !== ''
+            fn ($v) => $v !== null && $v !== ''
         );
 
         // Defaults conforme a spec da API
@@ -246,9 +247,9 @@ class EscavadorController extends Controller
             'service_type' => [
                 'required',
                 'string',
-                \Illuminate\Validation\Rule::in(array_keys(EscavadorService::SERVICE_MAP))
+                \Illuminate\Validation\Rule::in(array_keys(EscavadorService::SERVICE_MAP)),
             ],
-            'data' => 'sometimes|array',
+            'data'        => 'sometimes|array',
             'processo_id' => 'sometimes|nullable|integer',
         ]);
 
@@ -264,20 +265,20 @@ class EscavadorController extends Controller
             $processoId ? (int) $processoId : null
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
-                'error' => $result['error'],
+                'error'   => $result['error'],
             ], 422);
         }
 
         return response()->json([
-            'success' => true,
-            'async' => $result['async'] ?? false,
-            'request_id' => $result['request']?->id,
+            'success'     => true,
+            'async'       => $result['async'] ?? false,
+            'request_id'  => $result['request']?->id,
             'external_id' => $result['request']?->external_id,
-            'data' => $result['data'],
-            'message' => $result['async']
+            'data'        => $result['data'],
+            'message'     => $result['async']
                 ? 'Requisição enviada. O resultado chegará via webhook em instantes.'
                 : 'Consulta realizada com sucesso.',
         ]);
@@ -313,6 +314,7 @@ class EscavadorController extends Controller
     {
         $playground = (bool) $request->input('playground', false);
         $result = $this->escavador->listarCertificados($playground);
+
         return response()->json($result);
     }
 
@@ -326,7 +328,7 @@ class EscavadorController extends Controller
     public function cadastrarCertificado(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:pfx,p12|max:4096',
+            'file'  => 'required|file|mimes:pfx,p12|max:4096',
             'senha' => 'required|string|min:1',
         ]);
 
@@ -351,6 +353,7 @@ class EscavadorController extends Controller
     {
         $playground = (bool) $request->input('playground', false);
         $result = $this->escavador->retornarCertificado($id, $playground);
+
         return response()->json($result);
     }
 
@@ -361,6 +364,7 @@ class EscavadorController extends Controller
     {
         $tenantId = MotherShipService::getTenantId();
         $response = $this->escavador->requestService('DELETE_CERTIFICADO', ['id' => $id], $tenantId);
+
         return response()->json($response);
     }
 
@@ -373,7 +377,7 @@ class EscavadorController extends Controller
     public function syncProcesso(Request $request)
     {
         $request->validate([
-            'cnj' => 'required|string',
+            'cnj'         => 'required|string',
             'processo_id' => 'nullable|integer|exists:processos,id',
         ]);
 
@@ -383,7 +387,7 @@ class EscavadorController extends Controller
 
         $escavadorProcesso = $this->cacheService->findOrFetchCapa($cnj, $tenantId, $processoId);
 
-        if (!$escavadorProcesso) {
+        if (! $escavadorProcesso) {
             return response()->json([
                 'success' => false,
                 'message' => 'Nenhum processo encontrado no Escavador para este número CNJ.',
@@ -404,7 +408,7 @@ class EscavadorController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Processo sincronizado com sucesso.',
-            'data' => $escavadorProcesso->toArray(),
+            'data'    => $escavadorProcesso->toArray(),
         ]);
     }
 
@@ -418,24 +422,24 @@ class EscavadorController extends Controller
         $escavadorProcesso = EscavadorProcesso::with([
             'movimentacoes',
             'documentos',
-            'envolvidos'
+            'envolvidos',
         ])
             ->where('tenant_id', $tenantId)
             ->where('processo_id', $processoId)
             ->first();
 
-        if (!$escavadorProcesso) {
+        if (! $escavadorProcesso) {
             return response()->json(['success' => false, 'message' => 'Processo não sincronizado com o Escavador ainda.'], 200);
         }
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'processo' => $escavadorProcesso,
-                'is_atualizado' => $escavadorProcesso->isAtualizado(),
-                'needs_refresh' => $escavadorProcesso->needsRefresh(),
-                'resumo_ia_short' => $escavadorProcesso->getResumoExcerpt()
-            ]
+            'data'    => [
+                'processo'        => $escavadorProcesso,
+                'is_atualizado'   => $escavadorProcesso->isAtualizado(),
+                'needs_refresh'   => $escavadorProcesso->needsRefresh(),
+                'resumo_ia_short' => $escavadorProcesso->getResumoExcerpt(),
+            ],
         ]);
     }
 
@@ -460,7 +464,7 @@ class EscavadorController extends Controller
     public function downloadAutos(Request $request)
     {
         $request->validate([
-            'numero_cnj' => 'required|string|min:20',
+            'numero_cnj'  => 'required|string|min:20',
             'processo_id' => 'sometimes|nullable|integer',
         ]);
 
@@ -475,13 +479,13 @@ class EscavadorController extends Controller
             $processoId ? (int) $processoId : null
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json(['success' => false, 'message' => $result['error']], 422);
         }
 
         return response()->json([
-            'success' => true,
-            'message' => 'Solicitação de download dos autos enviada. O resultado chegará via webhook.',
+            'success'    => true,
+            'message'    => 'Solicitação de download dos autos enviada. O resultado chegará via webhook.',
             'request_id' => $result['request']?->id,
         ]);
     }

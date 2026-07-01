@@ -3,7 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -13,19 +14,19 @@ return new class extends Migration {
     {
         // Insert custom field for Leads: Área do Direito (Law Area)
         $lawAreaAttributeId = DB::table('attributes')->insertGetId([
-            'code' => 'law_area',
-            'name' => 'Área do Direito',
-            'type' => 'select',
-            'lookup_type' => null,
-            'entity_type' => 'leads',
-            'sort_order' => 100,
-            'validation' => null,
-            'is_required' => false,
-            'is_unique' => false,
-            'quick_add' => true,
+            'code'            => 'law_area',
+            'name'            => 'Área do Direito',
+            'type'            => 'select',
+            'lookup_type'     => null,
+            'entity_type'     => 'leads',
+            'sort_order'      => 100,
+            'validation'      => null,
+            'is_required'     => false,
+            'is_unique'       => false,
+            'quick_add'       => true,
             'is_user_defined' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at'      => now(),
+            'updated_at'      => now(),
         ]);
 
         // Insert options for Law Area field
@@ -38,27 +39,27 @@ return new class extends Migration {
 
         foreach ($lawAreaOptions as $option) {
             DB::table('attribute_options')->insert([
-                'name' => $option['name'],
-                'sort_order' => $option['sort_order'],
+                'name'         => $option['name'],
+                'sort_order'   => $option['sort_order'],
                 'attribute_id' => $lawAreaAttributeId,
             ]);
         }
 
         // Insert custom field for Persons: CPF/CNPJ
         DB::table('attributes')->insert([
-            'code' => 'cpf_cnpj',
-            'name' => 'CPF/CNPJ',
-            'type' => 'text',
-            'lookup_type' => null,
-            'entity_type' => 'persons',
-            'sort_order' => 100,
-            'validation' => null,
-            'is_required' => false,
-            'is_unique' => false,
-            'quick_add' => true,
+            'code'            => 'cpf_cnpj',
+            'name'            => 'CPF/CNPJ',
+            'type'            => 'text',
+            'lookup_type'     => null,
+            'entity_type'     => 'persons',
+            'sort_order'      => 100,
+            'validation'      => null,
+            'is_required'     => false,
+            'is_unique'       => false,
+            'quick_add'       => true,
             'is_user_defined' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at'      => now(),
+            'updated_at'      => now(),
         ]);
     }
 

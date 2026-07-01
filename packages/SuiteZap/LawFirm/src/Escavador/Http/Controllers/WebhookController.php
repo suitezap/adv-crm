@@ -5,8 +5,8 @@ namespace SuiteZap\LawFirm\Escavador\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use SuiteZap\LawFirm\Escavador\Models\EscavadorRequest;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorMonitoramento;
+use SuiteZap\LawFirm\Escavador\Models\EscavadorRequest;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
 
@@ -36,15 +36,16 @@ class WebhookController
             ?? $payload['external_id']
             ?? null;
 
-        if (!$externalId) {
+        if (! $externalId) {
             Log::warning('EscavadorWebhook: external_id não encontrado no payload.');
+
             return response()->json(['error' => 'external_id ausente'], 400);
         }
 
         // ── Localizar o registro ────────────────────────────────────────────
         $escavadorRequest = EscavadorRequest::where('external_id', $externalId)->first();
 
-        if (!$escavadorRequest) {
+        if (! $escavadorRequest) {
             // Se não for um EscavadorRequest assíncrono, tenta como Monitoramento
             $monitoramento_id = $payload['monitoramento_id'] ?? $payload['monitoramento'] ?? $externalId;
             $monitoramento = EscavadorMonitoramento::where('external_id', $monitoramento_id)->first();
@@ -52,15 +53,17 @@ class WebhookController
             if ($monitoramento) {
                 // Notifica
                 $this->handleMonitoramentoWebhook($monitoramento, $payload);
+
                 return response()->json(['status' => 'monitoramento_processed'], 200);
             }
 
             Log::warning("EscavadorWebhook: Nenhum Request ou Monitoramento encontrado para external_id/monitoramento_id={$externalId}");
+
             // Retorna 200 para o Escavador não re-tentar indefinidamente
             return response()->json(['status' => 'not_found'], 200);
         }
 
-        if (!$escavadorRequest->isPending()) {
+        if (! $escavadorRequest->isPending()) {
             // Já processado (duplicata de webhook)
             return response()->json(['status' => 'already_processed'], 200);
         }
@@ -74,14 +77,14 @@ class WebhookController
             $this->refundBalance($escavadorRequest->tenant_id, $escavadorRequest->cost);
             Log::warning('EscavadorWebhook: requisição falhou, saldo estornado.', [
                 'external_id' => $externalId,
-                'tenant_id' => $escavadorRequest->tenant_id,
+                'tenant_id'   => $escavadorRequest->tenant_id,
             ]);
 
             // Se falhou uma atualização assincona de processo
             if ($escavadorRequest->processo_id) {
                 $ep = \SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso::where('processo_id', $escavadorRequest->processo_id)->first();
                 if ($ep) {
-                   $ep->update(['status_atualizacao' => 'erro']);
+                    $ep->update(['status_atualizacao' => 'erro']);
                 }
             }
 
@@ -94,15 +97,14 @@ class WebhookController
         // Processar os callbacks assíncronos do Refactoring (Resumo IA, Atualização)
         if ($escavadorRequest->processo_id) {
             $ep = \SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso::where('processo_id', $escavadorRequest->processo_id)->first();
-            
+
             if ($ep) {
                 if ($escavadorRequest->type === 'RESUMO_IA') {
                     $ep->update(['resumo_ia' => $payload['resumo'] ?? ($payload['data']['resumo'] ?? 'Resumo não localizado no payload.')]);
-                } 
-                elseif ($escavadorRequest->type === 'ATUALIZACAO_PROCESSO_PUB') {
+                } elseif ($escavadorRequest->type === 'ATUALIZACAO_PROCESSO_PUB') {
                     $ep->update([
-                        'status_atualizacao' => 'atualizado', 
-                        'data_ultima_verificacao' => now()
+                        'status_atualizacao'      => 'atualizado',
+                        'data_ultima_verificacao' => now(),
                     ]);
                     // Idealmente aqui disparamos o syncMovimentacoes do CacheService de novo
                     $apiService = app(\SuiteZap\LawFirm\Escavador\Services\EscavadorService::class);
@@ -114,7 +116,7 @@ class WebhookController
 
         Log::info('EscavadorWebhook: requisição concluída.', [
             'external_id' => $externalId,
-            'tenant_id' => $escavadorRequest->tenant_id,
+            'tenant_id'   => $escavadorRequest->tenant_id,
         ]);
 
         return response()->json(['status' => 'ok'], 200);
@@ -135,7 +137,7 @@ class WebhookController
         }
 
         // Verificar presença de campo 'error' ou 'mensagem_erro'
-        if (!empty($payload['error']) || !empty($payload['mensagem_erro'])) {
+        if (! empty($payload['error']) || ! empty($payload['mensagem_erro'])) {
             return true;
         }
 
@@ -172,31 +174,34 @@ class WebhookController
     {
         Log::info("EscavadorWebhook: Processando atualização de monitoramento ID: {$monitoramento->id}");
 
-        if (!$monitoramento->notify_whatsapp) {
+        if (! $monitoramento->notify_whatsapp) {
             return;
         }
 
         // Buscar Configurações de WhatsApp
         $whatsappNumber = core()->getConfigData('lawfirm.settings.general.contact_whatsapp', null, $monitoramento->tenant_id);
-        
-        if (!$whatsappNumber) {
+
+        if (! $whatsappNumber) {
             Log::warning('EscavadorWebhook: Monitoramento tem notify_whatsapp ativo, mas WhatsApp não está configurado.');
+
             return;
         }
 
         // Remover caracteres não numéricos
         $cleanNumber = preg_replace('/[^0-9]/', '', $whatsappNumber);
-        if (strlen($cleanNumber) < 10) return;
-        
+        if (strlen($cleanNumber) < 10) {
+            return;
+        }
+
         // Adicionar DDI 55 se não houver
-        if (!str_starts_with($cleanNumber, '55')) {
-            $cleanNumber = '55' . $cleanNumber;
+        if (! str_starts_with($cleanNumber, '55')) {
+            $cleanNumber = '55'.$cleanNumber;
         }
 
         // Busca o Template configurado
         $template = core()->getConfigData('lawfirm.whatsapp_templates.messages.escavador_monitoramento_update', null, $monitoramento->tenant_id);
-        
-        if (!$template) {
+
+        if (! $template) {
             $template = "Olá! Detectamos uma nova movimentação do seu monitoramento '{termo_monitorado}' em {fonte} na data de {data_atualizacao}. Acesse o CRM para verificar a íntegra.";
         }
 
@@ -212,19 +217,19 @@ class WebhookController
         );
 
         try {
-            $evolution = new EvolutionService();
-            // A instância precisa ser a padrão do tenant, que o EvolutionService pega do MotherShipService / settings
-            $instanceName = config('lawfirm.evolution.instance_name') ?: 'api'; // Fallback
+            $evolution = new EvolutionService;
+            // A instância precisa ser a padrão do tenant, que o EvolutionService pega do MotherShipService
+            $instanceName = 'api'; // Fallback genérico
             // Fix: pass the true arguments for Tenant Config (tenant_id is the correct argument)
             $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig($monitoramento->tenant_id);
             if ($config && isset($config['instance'])) {
-                 $instanceName = $config['instance'];
+                $instanceName = $config['instance'];
             }
 
             $evolution->sendMessage($instanceName, $cleanNumber, $text);
             Log::info("EscavadorWebhook: Notificação de monitoramento enviada com sucesso ao WhatsApp {$cleanNumber}");
         } catch (\Exception $e) {
-            Log::error("EscavadorWebhook: Erro ao notificar atualização de monitoramento: " . $e->getMessage());
+            Log::error('EscavadorWebhook: Erro ao notificar atualização de monitoramento: '.$e->getMessage());
         }
     }
 }

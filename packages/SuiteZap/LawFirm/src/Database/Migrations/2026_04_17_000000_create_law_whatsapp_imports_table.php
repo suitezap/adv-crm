@@ -25,14 +25,14 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('processo_id')
-                  ->references('id')
-                  ->on('processos')
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on('processos')
+                ->onDelete('cascade');
 
             $table->foreign('imported_by')
-                  ->references('id')
-                  ->on('users')
-                  ->onDelete('set null');
+                ->references('id')
+                ->on('users')
+                ->onDelete('set null');
         });
     }
 

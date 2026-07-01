@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use SuiteZap\LawFirm\Legal\Http\Controllers\Api\ProcessApiController;
-use SuiteZap\LawFirm\Legal\Http\Controllers\Api\DeadlineApiController;
 use SuiteZap\LawFirm\GED\Http\Controllers\Api\DocumentChecklistApiController;
+use SuiteZap\LawFirm\Legal\Http\Controllers\Api\DeadlineApiController;
+use SuiteZap\LawFirm\Legal\Http\Controllers\Api\ProcessApiController;
 
 /*
 |--------------------------------------------------------------------------

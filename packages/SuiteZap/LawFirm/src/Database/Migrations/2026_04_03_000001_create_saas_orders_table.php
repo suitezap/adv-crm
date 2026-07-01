@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\Schema;
  *
  * @see \SuiteZap\LawFirm\SaaS\Models\SaasOrder
  */
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         if (Schema::hasTable('saas_orders')) {

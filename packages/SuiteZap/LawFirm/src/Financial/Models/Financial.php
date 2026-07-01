@@ -26,9 +26,9 @@ class Financial extends Model
 
     protected $casts = [
         'data_vencimento' => 'date',
-        'issued_at' => 'date',
-        'payment_date' => 'date',
-        'valor' => 'decimal:2',
+        'issued_at'       => 'date',
+        'payment_date'    => 'date',
+        'valor'           => 'decimal:2',
     ];
 
     public function processo()

@@ -2,13 +2,13 @@
 
 namespace SuiteZap\LawFirm\SaaS\Http\Controllers;
 
-use Illuminate\Routing\Controller;
+use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Routing\Controller;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 use Webkul\User\Models\User;
-use Carbon\Carbon;
 
 class SaaSController extends Controller
 {
@@ -19,9 +19,9 @@ class SaaSController extends Controller
      */
     public function index(\Illuminate\Http\Request $request)
     {
-        $tenantId    = MotherShipService::getTenantId() ?? 'default';
-        $syncCacheKey = 'asaas_sync_last_run_' . $tenantId;
-        $subCacheKey  = "tenant_{$tenantId}_subscription";
+        $tenantId = MotherShipService::getTenantId() ?? 'default';
+        $syncCacheKey = 'asaas_sync_last_run_'.$tenantId;
+        $subCacheKey = "tenant_{$tenantId}_subscription";
 
         // Pagamento retornado do checkout — força sync imediato e invalida cache da subscription
         $isPaymentReturn = $request->has('payment');
@@ -32,7 +32,7 @@ class SaaSController extends Controller
         }
 
         // Sincroniza pagamentos pendentes (throttled: 1x a cada 60s fora do fluxo de retorno)
-        if (!\Illuminate\Support\Facades\Cache::has($syncCacheKey)) {
+        if (! \Illuminate\Support\Facades\Cache::has($syncCacheKey)) {
             \SuiteZap\LawFirm\SaaS\Services\AsaasService::syncTenantPayments();
             \Illuminate\Support\Facades\Cache::put($syncCacheKey, true, 60); // throttle 60 segundos
             // Invalida cache da subscription para refletir créditos adicionados pelo sync
@@ -76,7 +76,7 @@ class SaaSController extends Controller
 
                 // Busca as configurações do Tenant para pegar a classificação
                 $tenantConfig = MotherShipService::getTenantConfig();
-                if ($tenantConfig && !empty($tenantConfig->classification)) {
+                if ($tenantConfig && ! empty($tenantConfig->classification)) {
                     $tenantClassification = $tenantConfig->classification;
                 }
             }
@@ -101,16 +101,18 @@ class SaaSController extends Controller
         // Pasta onde os arquivos públicos são armazenados (processos, anexos, etc.)
         $storagePath = storage_path('app/public');
 
-        if (!is_dir($storagePath)) {
+        if (! is_dir($storagePath)) {
             return 0;
         }
 
         try {
             $bytes = $this->getDirectorySize($storagePath);
+
             // Converte bytes para GB
             return round($bytes / 1024 / 1024 / 1024, 2);
         } catch (\Exception $e) {
-            \Log::warning('SAAS: Erro ao calcular uso de disco: ' . $e->getMessage());
+            \Log::warning('SAAS: Erro ao calcular uso de disco: '.$e->getMessage());
+
             return 0;
         }
     }
@@ -141,7 +143,7 @@ class SaaSController extends Controller
      */
     public function testS3Connection(SaasFileService $fileService)
     {
-        if (!config('app.debug')) {
+        if (! config('app.debug')) {
             return response()->json([
                 'error' => 'Rota de diagnóstico disponível apenas em modo debug (APP_DEBUG=true).',
             ], 403);

@@ -73,56 +73,56 @@ class ProcessoDataGrid extends DataGrid
     public function prepareColumns()
     {
         $this->addColumn([
-            'index' => 'id',
-            'label' => trans('lawfirm::app.processos.datagrid.id'),
-            'type' => 'integer',
-            'sortable' => true,
+            'index'      => 'id',
+            'label'      => trans('lawfirm::app.processos.datagrid.id'),
+            'type'       => 'integer',
+            'sortable'   => true,
             'filterable' => true,
-            'width' => '50px',
+            'width'      => '50px',
         ]);
 
         $this->addColumn([
-            'index' => 'titulo',
-            'label' => trans('lawfirm::app.processos.datagrid.titulo'),
-            'type' => 'string',
-            'sortable' => true,
-            'filterable' => true,
-        ]);
-
-        $this->addColumn([
-            'index' => 'numero_cnj',
-            'label' => trans('lawfirm::app.processos.datagrid.cnj'),
-            'type' => 'string',
-            'sortable' => true,
-            'filterable' => true,
-            'width' => '220px',
-        ]);
-
-        $this->addColumn([
-            'index' => 'vara',
-            'label' => 'Vara / Fórum',
-            'type' => 'string',
-            'sortable' => true,
+            'index'      => 'titulo',
+            'label'      => trans('lawfirm::app.processos.datagrid.titulo'),
+            'type'       => 'string',
+            'sortable'   => true,
             'filterable' => true,
         ]);
 
         $this->addColumn([
-            'index' => 'person_name',
-            'label' => trans('admin::app.contacts.persons.index.datagrid.name'),
-            'type' => 'string',
-            'sortable' => true,
+            'index'      => 'numero_cnj',
+            'label'      => trans('lawfirm::app.processos.datagrid.cnj'),
+            'type'       => 'string',
+            'sortable'   => true,
+            'filterable' => true,
+            'width'      => '220px',
+        ]);
+
+        $this->addColumn([
+            'index'      => 'vara',
+            'label'      => 'Vara / Fórum',
+            'type'       => 'string',
+            'sortable'   => true,
             'filterable' => true,
         ]);
 
         $this->addColumn([
-            'index' => 'data_audiencia',
-            'label' => trans('lawfirm::app.processos.form.data_audiencia'),
-            'type' => 'datetime',
-            'sortable' => true,
+            'index'      => 'person_name',
+            'label'      => trans('admin::app.contacts.persons.index.datagrid.name'),
+            'type'       => 'string',
+            'sortable'   => true,
             'filterable' => true,
-            'width' => '160px',
-            'closure' => function ($row) {
-                if (!$row->data_audiencia) {
+        ]);
+
+        $this->addColumn([
+            'index'      => 'data_audiencia',
+            'label'      => trans('lawfirm::app.processos.form.data_audiencia'),
+            'type'       => 'datetime',
+            'sortable'   => true,
+            'filterable' => true,
+            'width'      => '160px',
+            'closure'    => function ($row) {
+                if (! $row->data_audiencia) {
                     return '-';
                 }
 
@@ -133,27 +133,28 @@ class ProcessoDataGrid extends DataGrid
                 $formatted = $date->format('d/m/Y H:i');
 
                 if ($diff <= 0) {
-                    return '<span class="px-2 py-1 rounded text-red-800 bg-red-100 font-bold inline-block">' . $formatted . '</span>';
+                    return '<span class="px-2 py-1 rounded text-red-800 bg-red-100 font-bold inline-block">'.$formatted.'</span>';
                 } elseif ($diff <= 5) {
-                    return '<span class="px-2 py-1 rounded text-orange-800 bg-orange-100 font-bold inline-block">' . $formatted . '</span>';
+                    return '<span class="px-2 py-1 rounded text-orange-800 bg-orange-100 font-bold inline-block">'.$formatted.'</span>';
                 }
 
-                return '<span class="text-gray-600 font-medium">' . $formatted . '</span>';
+                return '<span class="text-gray-600 font-medium">'.$formatted.'</span>';
             },
         ]);
 
         $this->addColumn([
-            'index' => 'status',
-            'label' => trans('lawfirm::app.processos.datagrid.status'),
-            'type' => 'string',
-            'sortable' => true,
+            'index'      => 'status',
+            'label'      => trans('lawfirm::app.processos.datagrid.status'),
+            'type'       => 'string',
+            'sortable'   => true,
             'filterable' => true,
-            'width' => '175px',
-            'closure' => function ($row) {
+            'width'      => '175px',
+            'closure'    => function ($row) {
                 $label = $row->status ?: '—';
                 $color = 'bg-gray-100 text-gray-600';
-                return '<span class="px-2 py-1 rounded-full text-xs font-semibold inline-block ' . $color . '">' . htmlspecialchars($label) . '</span>';
-            }
+
+                return '<span class="px-2 py-1 rounded-full text-xs font-semibold inline-block '.$color.'">'.htmlspecialchars($label).'</span>';
+            },
         ]);
 
     }
@@ -171,7 +172,7 @@ class ProcessoDataGrid extends DataGrid
         // For data_audiencia, apply NULL-last ordering
         if ($column === 'data_audiencia' || $column === 'processos.data_audiencia') {
             return $this->queryBuilder->orderByRaw(
-                'CASE WHEN processos.data_audiencia IS NULL THEN 1 ELSE 0 END, processos.data_audiencia ' . strtoupper($order)
+                'CASE WHEN processos.data_audiencia IS NULL THEN 1 ELSE 0 END, processos.data_audiencia '.strtoupper($order)
             );
         }
 
@@ -187,30 +188,30 @@ class ProcessoDataGrid extends DataGrid
     {
         // Ação de Visualizar
         $this->addAction([
-            'icon' => 'icon-eye',
-            'title' => trans('lawfirm::app.processos.view'),
+            'icon'   => 'icon-eye',
+            'title'  => trans('lawfirm::app.processos.view'),
             'method' => 'GET',
-            'url' => function ($row) {
+            'url'    => function ($row) {
                 return route('admin.processos.show', $row->id);
             },
         ]);
 
         // Ação de Editar
         $this->addAction([
-            'icon' => 'icon-edit',
-            'title' => trans('lawfirm::app.processos.edit'),
+            'icon'   => 'icon-edit',
+            'title'  => trans('lawfirm::app.processos.edit'),
             'method' => 'GET',
-            'url' => function ($row) {
+            'url'    => function ($row) {
                 return route('admin.processos.edit', $row->id);
             },
         ]);
 
         // Ação de Excluir
         $this->addAction([
-            'icon' => 'icon-delete',
-            'title' => trans('lawfirm::app.processos.delete'),
+            'icon'   => 'icon-delete',
+            'title'  => trans('lawfirm::app.processos.delete'),
             'method' => 'DELETE',
-            'url' => function ($row) {
+            'url'    => function ($row) {
                 return route('admin.processos.destroy', $row->id);
             },
         ]);
@@ -224,10 +225,10 @@ class ProcessoDataGrid extends DataGrid
     public function prepareMassActions()
     {
         $this->addMassAction([
-            'icon' => 'icon-delete',
-            'title' => trans('lawfirm::app.processos.delete'),
+            'icon'   => 'icon-delete',
+            'title'  => trans('lawfirm::app.processos.delete'),
             'method' => 'POST',
-            'url' => route('admin.processos.mass_delete'),
+            'url'    => route('admin.processos.mass_delete'),
         ]);
     }
 }

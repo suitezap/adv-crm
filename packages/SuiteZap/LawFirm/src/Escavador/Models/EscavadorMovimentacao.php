@@ -20,7 +20,7 @@ class EscavadorMovimentacao extends Model
 
     protected $casts = [
         'data_movimentacao' => 'date',
-        'raw_json' => 'array',
+        'raw_json'          => 'array',
     ];
 
     public function escavadorProcesso(): BelongsTo

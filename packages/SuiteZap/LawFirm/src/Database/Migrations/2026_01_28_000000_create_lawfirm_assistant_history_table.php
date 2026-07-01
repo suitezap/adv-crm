@@ -4,10 +4,11 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up()
     {
-        if (!Schema::hasTable('lawfirm_assistant_history')) {
+        if (! Schema::hasTable('lawfirm_assistant_history')) {
             Schema::create('lawfirm_assistant_history', function (Blueprint $table) {
                 $table->id();
                 $table->integer('user_id')->nullable();

@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('escavador_movimentacoes')) {
+        if (! Schema::hasTable('escavador_movimentacoes')) {
             Schema::create('escavador_movimentacoes', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('escavador_processo_id')->index();

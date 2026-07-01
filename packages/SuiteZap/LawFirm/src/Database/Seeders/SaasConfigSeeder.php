@@ -9,20 +9,18 @@ class SaasConfigSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * 
-     * Sets up default SaaS configuration values for storage quota and AI credits.
      *
-     * @return void
+     * Sets up default SaaS configuration values for storage quota and AI credits.
      */
     public function run(): void
     {
         $configs = [
             // Storage Quota Settings
             'lawfirm.saas.storage.limit' => '4294967296',  // 4GB in bytes
-            'lawfirm.saas.storage.used' => '0',           // Initial usage
+            'lawfirm.saas.storage.used'  => '0',           // Initial usage
 
             // AI Credits Settings
-            'lawfirm.saas.ai.credits' => '1000',        // Trial tokens
+            'lawfirm.saas.ai.credits'   => '1000',        // Trial tokens
             'lawfirm.saas.ai.plan_type' => 'prepaid',     // prepaid or postpaid
         ];
 
@@ -30,10 +28,10 @@ class SaasConfigSeeder extends Seeder
             // Only set if not already configured (don't overwrite existing values)
             $exists = DB::table('core_config')->where('code', $code)->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 DB::table('core_config')->insert([
-                    'code' => $code,
-                    'value' => $value,
+                    'code'       => $code,
+                    'value'      => $value,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

@@ -4,6 +4,7 @@
     </x-slot>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 
     <style>
         .ai-result-box {
@@ -155,7 +156,10 @@
                         const mdText = jsonToMarkdown(jsonData);
                         
                         if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
-                            visualResult.innerHTML = marked.parse(mdText);
+                            const rawHtml = marked.parse(mdText);
+                            visualResult.innerHTML = (typeof DOMPurify !== 'undefined')
+                                ? DOMPurify.sanitize(rawHtml)
+                                : rawHtml;
                         } else {
                             visualResult.innerHTML = mdText.replace(/\n/g, '<br>');
                         }

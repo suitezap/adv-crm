@@ -182,9 +182,9 @@
                         <div class="space-y-1.5 flex-1">
                             <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">@lang('lawfirm::app.processos.form.desc')</p>
                             <div class="rounded-lg border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-gray-800/30">
-                                <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                                    {!! nl2br(e($processo->descricao ?? 'Sem observações.')) !!}
-                                </p>
+                                <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed rich-text-content">
+                                    {!! $processo->descricao ?? 'Sem observações.' !!}
+                                </div>
                             </div>
                         </div>
 

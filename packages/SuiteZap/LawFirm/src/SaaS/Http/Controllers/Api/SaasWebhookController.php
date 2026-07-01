@@ -12,7 +12,6 @@ class SaasWebhookController extends Controller
     /**
      * Handle incoming webhook requests to update SaaS subscription.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function updateSubscription(Request $request)
@@ -21,13 +20,14 @@ class SaasWebhookController extends Controller
         $token = $request->header('X-SAAS-TOKEN');
         // Lê diretamente do BD Mothership garantindo sync com painel global
         $secret = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getAppConfig('api_secret');
-        
+
         if (empty($secret)) {
             $secret = config('lawfirm.saas.webhook_secret');
         }
 
-        if (!$secret || $token !== $secret) {
+        if (! $secret || $token !== $secret) {
             Log::warning('SaaS Webhook: Unauthorized access attempt.', ['ip' => $request->ip()]);
+
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
@@ -35,7 +35,7 @@ class SaasWebhookController extends Controller
         $action = $request->input('action');
         $data = $request->input('data', []);
 
-        if (!$action) {
+        if (! $action) {
             return response()->json(['success' => false, 'message' => 'Missing action parameter'], 400);
         }
 
@@ -83,10 +83,11 @@ class SaasWebhookController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Processed successfully',
-                'action' => $action,
+                'action'  => $action,
             ]);
         } catch (\Exception $e) {
-            Log::error('SaaS Webhook Error: ' . $e->getMessage());
+            Log::error('SaaS Webhook Error: '.$e->getMessage());
+
             return response()->json(['success' => false, 'message' => 'Internal Server Error'], 500);
         }
     }
@@ -99,11 +100,11 @@ class SaasWebhookController extends Controller
         DB::table('core_config')->updateOrInsert(
             ['code' => $code],
             [
-                'value' => $value,
+                'value'        => $value,
                 'channel_code' => null,
-                'locale_code' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'locale_code'  => null,
+                'created_at'   => now(),
+                'updated_at'   => now(),
             ]
         );
     }

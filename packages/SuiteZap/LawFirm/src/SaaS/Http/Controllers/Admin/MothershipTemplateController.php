@@ -6,8 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
+use Webkul\Admin\Http\Controllers\Controller;
 
 /**
  * MothershipTemplateController
@@ -48,8 +48,8 @@ class MothershipTemplateController extends Controller
 
         return response()->json([
             'success' => true,
-            'total' => $templates->count(),
-            'data' => $templates,
+            'total'   => $templates->count(),
+            'data'    => $templates,
         ]);
     }
 
@@ -65,22 +65,22 @@ class MothershipTemplateController extends Controller
         $this->authorizeMothershipKey($request);
 
         $validated = $request->validate([
-            'slug' => 'required|string|max:100',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'category' => 'required|string|max:100',
-            'area' => 'nullable|string|max:100',
-            'required_module' => 'nullable|string|max:100',
+            'slug'             => 'required|string|max:100',
+            'title'            => 'required|string|max:255',
+            'description'      => 'nullable|string',
+            'category'         => 'required|string|max:100',
+            'area'             => 'nullable|string|max:100',
+            'required_module'  => 'nullable|string|max:100',
             'prompt_structure' => 'required|string',
-            'variables' => 'nullable|array',
-            'n8n_webhook_url' => 'nullable|string|max:500',
-            'icon' => 'nullable|string|max:100',
-            'is_active' => 'boolean',
-            'tenant_id' => 'nullable|string|max:100',
+            'variables'        => 'nullable|array',
+            'n8n_webhook_url'  => 'nullable|string|max:500',
+            'icon'             => 'nullable|string|max:100',
+            'is_active'        => 'boolean',
+            'tenant_id'        => 'nullable|string|max:100',
         ]);
 
         $lookupKey = [
-            'slug' => $validated['slug'],
+            'slug'      => $validated['slug'],
             'tenant_id' => $validated['tenant_id'] ?? null,
         ];
 
@@ -96,22 +96,22 @@ class MothershipTemplateController extends Controller
         $scope = $template->tenant_id ? "Tenant: {$template->tenant_id}" : 'Global (todos os tenants)';
 
         Log::info('[Mothership] Template publicado via API', [
-            'slug' => $template->slug,
-            'scope' => $scope,
+            'slug'    => $template->slug,
+            'scope'   => $scope,
             'version' => $template->version,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => "Template '{$template->slug}' publicado. Escopo: {$scope}.",
-            'data' => [
-                'id' => $template->id,
-                'slug' => $template->slug,
-                'title' => $template->title,
+            'data'    => [
+                'id'              => $template->id,
+                'slug'            => $template->slug,
+                'title'           => $template->title,
                 'required_module' => $template->required_module,
-                'tenant_id' => $template->tenant_id,
-                'version' => $template->version,
-                'scope' => $scope,
+                'tenant_id'       => $template->tenant_id,
+                'version'         => $template->version,
+                'scope'           => $scope,
             ],
         ]);
     }
@@ -128,7 +128,7 @@ class MothershipTemplateController extends Controller
             ->whereNull('tenant_id')
             ->update(['is_active' => false]);
 
-        if (!$updated) {
+        if (! $updated) {
             return response()->json(['error' => "Template '{$slug}' não encontrado ou já inativo."], 404);
         }
 
@@ -161,14 +161,14 @@ class MothershipTemplateController extends Controller
         $reason = $request->input('reason', 'external_call');
 
         Log::info('[Mothership] Cache invalidado via webhook', [
-            'reason' => $reason,
+            'reason'      => $reason,
             'new_version' => $newVersion,
-            'caller_ip' => $request->ip(),
+            'caller_ip'   => $request->ip(),
         ]);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Cache de templates invalidado com sucesso.',
+            'success'     => true,
+            'message'     => 'Cache de templates invalidado com sucesso.',
             'new_version' => $newVersion,
         ]);
     }
@@ -230,7 +230,7 @@ class MothershipTemplateController extends Controller
 
         $provided = $request->header('X-Mothership-Key', '');
 
-        if (!hash_equals($secret, $provided)) {
+        if (! hash_equals($secret, $provided)) {
             Log::warning('[Mothership] Tentativa com chave inválida', ['ip' => $request->ip()]);
             abort(403, 'Chave de API inválida.');
         }
@@ -251,7 +251,8 @@ class MothershipTemplateController extends Controller
 
                 return $row ?: null;
             } catch (\Exception $e) {
-                Log::warning('[Mothership] Falha ao ler api_secret do banco: ' . $e->getMessage());
+                Log::warning('[Mothership] Falha ao ler api_secret do banco: '.$e->getMessage());
+
                 return null;
             }
         });

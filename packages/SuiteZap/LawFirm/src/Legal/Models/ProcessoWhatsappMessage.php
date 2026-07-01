@@ -38,14 +38,12 @@ class ProcessoWhatsappMessage extends Model
      */
     protected $casts = [
         'message_timestamp' => 'datetime',
-        'is_from_me' => 'boolean',
-        'payload' => 'array',
+        'is_from_me'        => 'boolean',
+        'payload'           => 'array',
     ];
 
     /**
      * Get the processo that owns the message.
-     *
-     * @return BelongsTo
      */
     public function processo(): BelongsTo
     {

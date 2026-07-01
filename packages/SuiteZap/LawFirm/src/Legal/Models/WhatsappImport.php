@@ -48,7 +48,8 @@ class WhatsappImport extends Model
     public function formattedPeriod(): string
     {
         $from = $this->start_date ? $this->start_date->format('d/m/Y') : 'Início';
-        $to   = $this->end_date   ? $this->end_date->format('d/m/Y')   : 'Atual';
+        $to = $this->end_date ? $this->end_date->format('d/m/Y') : 'Atual';
+
         return "{$from} — {$to}";
     }
 

@@ -2,10 +2,9 @@
 
 namespace SuiteZap\LawFirm\Escavador\Http\Controllers\Admin;
 
-use Illuminate\Http\Request;
-use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\Escavador\DataGrids\EscavadorMonitoramentoDataGrid;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorMonitoramento;
+use Webkul\Admin\Http\Controllers\Controller;
 
 class EscavadorMonitoramentoController extends Controller
 {
@@ -36,20 +35,20 @@ class EscavadorMonitoramentoController extends Controller
     /**
      * Toggle WhatsApp notification preference for a monitoring.
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function toggleWhatsapp($id)
     {
         $monitoramento = EscavadorMonitoramento::findOrFail($id);
-        
-        $monitoramento->notify_whatsapp = !$monitoramento->notify_whatsapp;
+
+        $monitoramento->notify_whatsapp = ! $monitoramento->notify_whatsapp;
         $monitoramento->save();
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Status de notificação por WhatsApp atualizado com sucesso!',
-            'notify_whatsapp' => $monitoramento->notify_whatsapp
+            'status'          => 'success',
+            'message'         => 'Status de notificação por WhatsApp atualizado com sucesso!',
+            'notify_whatsapp' => $monitoramento->notify_whatsapp,
         ]);
     }
 }

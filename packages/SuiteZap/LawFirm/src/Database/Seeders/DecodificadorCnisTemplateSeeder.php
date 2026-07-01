@@ -16,34 +16,34 @@ class DecodificadorCnisTemplateSeeder extends Seeder
 
         $variables = [
             [
-                'key' => 'texto_cnis',
-                'label' => 'Texto CNIS',
-                'type' => 'textarea',
-                'rows' => 20,
+                'key'         => 'texto_cnis',
+                'label'       => 'Texto CNIS',
+                'type'        => 'textarea',
+                'rows'        => 20,
                 'placeholder' => 'Cole o conteúdo do CNIS ou indicadores aqui...',
             ],
             [
-                'key' => 'tenant_id',
-                'label' => 'Tenant ID',
-                'type' => 'hidden',
+                'key'         => 'tenant_id',
+                'label'       => 'Tenant ID',
+                'type'        => 'hidden',
                 'placeholder' => '',
-            ]
+            ],
         ];
 
         AssistantTemplate::updateOrCreate(
             ['slug' => 'decodificador-cnis'],
             [
-                'tenant_id' => null,
-                'category' => 'processual',
-                'area' => 'Previdenciário',
-                'title' => 'Decodificador de CNIS',
-                'description' => 'Identifica pendências no CNIS, explica os indicadores e orienta como saná-los antes do protocolo.',
-                'icon' => '🔍',
+                'tenant_id'        => null,
+                'category'         => 'processual',
+                'area'             => 'Previdenciário',
+                'title'            => 'Decodificador de CNIS',
+                'description'      => 'Identifica pendências no CNIS, explica os indicadores e orienta como saná-los antes do protocolo.',
+                'icon'             => '🔍',
                 'prompt_structure' => $promptStructure,
-                'variables' => $variables,
-                'n8n_webhook_url' => 'ai-decodificador-cnis',
-                'required_module' => 'IA-Previdenciario',
-                'is_active' => true,
+                'variables'        => $variables,
+                'n8n_webhook_url'  => 'ai-decodificador-cnis',
+                'required_module'  => 'IA-Previdenciario',
+                'is_active'        => true,
             ]
         );
 

@@ -10,8 +10,8 @@ class N8nService
     /**
      * Envia os dados para o Webhook do n8n e aguarda resposta.
      *
-     * @param string $url URL do Webhook
-     * @param array $payload Dados do formulário
+     * @param  string  $url  URL do Webhook
+     * @param  array  $payload  Dados do formulário
      * @return string Resposta da IA ou erro
      */
     public function executeWebhook($url, $payload)
@@ -23,15 +23,18 @@ class N8nService
             if ($response->successful()) {
                 // Tenta pegar o campo 'output' ou 'text' do JSON, ou retorna o corpo todo
                 $json = $response->json();
+
                 return $json['output'] ?? $json['text'] ?? $json['message'] ?? $response->body();
             }
 
-            Log::error("Erro n8n [{$url}]: " . $response->status() . " - " . $response->body());
-            return "Erro N8N (" . $response->status() . "): " . ($response->json()['message'] ?? 'Falha remota.');
+            Log::error("Erro n8n [{$url}]: ".$response->status().' - '.$response->body());
+
+            return 'Erro N8N ('.$response->status().'): '.($response->json()['message'] ?? 'Falha remota.');
 
         } catch (\Exception $e) {
-            Log::error("Exceção n8n [{$url}]: " . $e->getMessage());
-            return "Falha de Conexão: " . $e->getMessage();
+            Log::error("Exceção n8n [{$url}]: ".$e->getMessage());
+
+            return 'Falha de Conexão: '.$e->getMessage();
         }
     }
 }

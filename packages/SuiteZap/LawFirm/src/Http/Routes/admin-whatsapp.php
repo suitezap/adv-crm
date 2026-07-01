@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use SuiteZap\LawFirm\Whatsapp\Http\Controllers\ConnectionController;
+use SuiteZap\LawFirm\Whatsapp\Http\Controllers\Admin\WhatsappChatController;
 use SuiteZap\LawFirm\Whatsapp\Http\Controllers\Admin\WhatsappImportController;
 use SuiteZap\LawFirm\Whatsapp\Http\Controllers\Admin\WhatsappTemplatesController;
-use SuiteZap\LawFirm\Whatsapp\Http\Controllers\Admin\WhatsappChatController;
+use SuiteZap\LawFirm\Whatsapp\Http\Controllers\ConnectionController;
 
 /*
 |--------------------------------------------------------------------------

@@ -2,32 +2,30 @@
 
 namespace SuiteZap\LawFirm\Http\Middleware;
 
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
-use Carbon\Carbon;
 
 class CheckSubscriptionStatus
 {
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
      * @return mixed
      */
     public function handle(Request $request, Closure $next)
     {
         // 1. Apenas processa se o usuário estiver logado
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return $next($request);
         }
 
         // 2. Só verifica as rotas de painel administrativo (admin)
-        if (!$request->is('admin/*')) {
+        if (! $request->is('admin/*')) {
             return $next($request);
         }
 
@@ -46,8 +44,8 @@ class CheckSubscriptionStatus
             }
         }
 
-        $tenantKey = "tenant_sub_" . MotherShipService::getTenantId();
-        $fallbackKey = "tenant_fallback_sub_" . MotherShipService::getTenantId();
+        $tenantKey = 'tenant_sub_'.MotherShipService::getTenantId();
+        $fallbackKey = 'tenant_fallback_sub_'.MotherShipService::getTenantId();
 
         // 4. Busca a assinatura do MotherShip com cache (60s)
         $subscription = Cache::remember($tenantKey, 60, function () {
@@ -55,7 +53,7 @@ class CheckSubscriptionStatus
         });
 
         // 5. Tenta o fallback em caso de falha
-        if (!$subscription) {
+        if (! $subscription) {
             // Tenta carregar da API diretamente (ignorando o cache para verificar)
             try {
                 $subscription = MotherShipService::getCurrentSubscription();
@@ -65,11 +63,11 @@ class CheckSubscriptionStatus
                     Cache::put($fallbackKey, $subscription, now()->addHours(24));
                 }
             } catch (\Exception $e) {
-                Log::warning('CheckSubscriptionStatus: falha ao buscar assinatura: ' . $e->getMessage());
+                Log::warning('CheckSubscriptionStatus: falha ao buscar assinatura: '.$e->getMessage());
             }
 
             // Usa o fallback se ainda não tiver subscription
-            if (!$subscription) {
+            if (! $subscription) {
                 $subscription = Cache::get($fallbackKey);
             }
         } else {
@@ -78,10 +76,11 @@ class CheckSubscriptionStatus
         }
 
         // 6. Se não há qualquer informação de assinatura (novo tenant ou falha total da API), libera
-        if (!$subscription) {
+        if (! $subscription) {
             // Não mostramos erro aqui para não assustar o usuário com mensagens falsas
             // Apenas liberamos o acesso (fail-open approach)
             Log::info('CheckSubscriptionStatus: sem assinatura encontrada, liberando acesso temporariamente.');
+
             return $next($request);
         }
 
@@ -108,13 +107,14 @@ class CheckSubscriptionStatus
             // Para requisições AJAX/JSON, retorna JSON em vez de redirect
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
-                    'error' => 'subscription_expired',
-                    'message' => $message,
+                    'error'    => 'subscription_expired',
+                    'message'  => $message,
                     'redirect' => route('admin.lawfirm.saas.index'),
                 ], 403);
             }
 
             session()->flash('error', $message);
+
             return redirect()->route('admin.lawfirm.saas.index');
         }
 
@@ -123,10 +123,10 @@ class CheckSubscriptionStatus
             $daysLeft = (int) now()->diffInDays($expiresAt, false);
             if ($daysLeft >= 0 && $daysLeft <= 7) {
                 // Apenas flasha o aviso em requisições não-AJAX para não poluir a UI
-                if (!$request->expectsJson() && !$request->ajax()) {
+                if (! $request->expectsJson() && ! $request->ajax()) {
                     // Evita repetir o aviso em todas as páginas — só a cada 6h por sessão
-                    $warnKey = 'sub_warn_shown_' . Auth::id();
-                    if (!Cache::has($warnKey)) {
+                    $warnKey = 'sub_warn_shown_'.Auth::id();
+                    if (! Cache::has($warnKey)) {
                         session()->flash('warning', "Sua assinatura vence em {$daysLeft} dia(s). Renove para não perder o acesso.");
                         Cache::put($warnKey, true, now()->addHours(6));
                     }

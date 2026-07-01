@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class InfrastructureNode extends Model
 {
     protected $connection = 'mothership';
+
     protected $table = 'infrastructure_nodes';
 
     protected $fillable = [

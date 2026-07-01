@@ -22,8 +22,9 @@ class Cnpj implements Rule
         $cnpj = preg_replace('/[^0-9]/', '', (string) $value);
 
         // Valida tamanho
-        if (strlen($cnpj) != 14)
+        if (strlen($cnpj) != 14) {
             return false;
+        }
 
         // Valida primeiro dígito verificador
         for ($i = 0, $j = 5, $soma = 0; $i < 12; $i++) {
@@ -33,8 +34,9 @@ class Cnpj implements Rule
 
         $resto = $soma % 11;
 
-        if ($cnpj[12] != ($resto < 2 ? 0 : 11 - $resto))
+        if ($cnpj[12] != ($resto < 2 ? 0 : 11 - $resto)) {
             return false;
+        }
 
         // Valida segundo dígito verificador
         for ($i = 0, $j = 6, $soma = 0; $i < 13; $i++) {

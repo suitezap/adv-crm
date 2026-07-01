@@ -29,7 +29,7 @@ class ValidarCpfCnpj implements Rule
     /**
      * Valida CPF
      *
-     * @param string $cpf
+     * @param  string  $cpf
      * @return bool
      */
     protected function validateCpf($cpf)
@@ -47,13 +47,14 @@ class ValidarCpfCnpj implements Rule
                 return false;
             }
         }
+
         return true;
     }
 
     /**
      * Valida CNPJ
      *
-     * @param string $cnpj
+     * @param  string  $cnpj
      * @return bool
      */
     protected function validateCnpj($cnpj)
@@ -64,14 +65,12 @@ class ValidarCpfCnpj implements Rule
 
         $b = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
 
-        for ($i = 0, $n = 0; $i < 12; $n += $cnpj[$i] * $b[++$i])
-            ;
+        for ($i = 0, $n = 0; $i < 12; $n += $cnpj[$i] * $b[++$i]);
         if ($cnpj[12] != ((($n %= 11) < 2) ? 0 : 11 - $n)) {
             return false;
         }
 
-        for ($i = 0, $n = 0; $i <= 12; $n += $cnpj[$i] * $b[$i++])
-            ;
+        for ($i = 0, $n = 0; $i <= 12; $n += $cnpj[$i] * $b[$i++]);
         if ($cnpj[13] != ((($n %= 11) < 2) ? 0 : 11 - $n)) {
             return false;
         }

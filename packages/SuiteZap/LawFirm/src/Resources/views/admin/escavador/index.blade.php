@@ -913,6 +913,7 @@
 
         @push('scripts')
             <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
             <script>
                 // Only one modal system exists now (paid)
                 (function () {
@@ -2412,7 +2413,9 @@
                                             htmlContent = buildDataJudUi(resultData);
                                         } else {
                                             var mardownStr = jsonToMarkdown(resultData);
-                                            htmlContent = '<div class="lf-esc-data-box markdown-body" style="display:block;max-height:400px;overflow:auto;" id="lf-svc-result-content">' + marked.parse(mardownStr) + '</div>';
+                                            var rawHtml = marked.parse(mardownStr);
+                                            var safeHtml = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(rawHtml) : rawHtml;
+                                            htmlContent = '<div class="lf-esc-data-box markdown-body" style="display:block;max-height:400px;overflow:auto;" id="lf-svc-result-content">' + safeHtml + '</div>';
                                         }
 
                                         var resultHtml = '<div id="lf-svc-result-area" style="margin-top:10px;">' +

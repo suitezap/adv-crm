@@ -115,6 +115,17 @@
                             </x-admin::form.control-group>
                         </div>
 
+                        {{-- Chave Secreta (IA) --}}
+                        <div class="mt-2">
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>Chave Secreta (IA)</x-admin::form.control-group.label>
+                                <x-admin::form.control-group.control type="text" name="sercreta"
+                                    :value="old('sercreta')" label="Chave Secreta (IA)"
+                                    placeholder="Gerado automaticamente se vazio" maxlength="7" />
+                                <x-admin::form.control-group.error control-name="sercreta" />
+                            </x-admin::form.control-group>
+                        </div>
+
                         {{-- Caso Vinculado (Select AJAX) --}}
                         <div class="mt-2" id="lf-caso-selector-wrapper">
                             <label class="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
@@ -174,7 +185,7 @@
                             <x-admin::form.control-group.label>
                                 @lang('lawfirm::app.processos.form.desc')
                             </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="textarea" name="descricao" class="min-h-[120px]"
+                            <x-admin::form.control-group.control type="textarea" name="descricao" id="descricao" tinymce="true" class="min-h-[120px]"
                                 rows="5" :value="old('descricao')" :label="trans('lawfirm::app.processos.form.desc')"
                                 placeholder="Informe aqui suas observações" />
                             <x-admin::form.control-group.error control-name="descricao" />

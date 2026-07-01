@@ -22,6 +22,7 @@ class SaasFileService
     {
         try {
             $disk = $this->getDisk();
+
             // Verifica se o disco foi instanciado corretamente
             return $disk !== null;
         } catch (\Exception $e) {
@@ -44,7 +45,7 @@ class SaasFileService
             }
 
             if ($storedPath === false) {
-                throw new \Exception("Erro ao salvar arquivo no disco.");
+                throw new \Exception('Erro ao salvar arquivo no disco.');
             }
         }
 
@@ -58,7 +59,51 @@ class SaasFileService
 
     public function url(string $path): string
     {
+        if (config('filesystems.default') === 's3') {
+            return $this->getSignedUrl($path);
+        }
+
         return $this->getDisk()->url($path);
+    }
+
+    /**
+     * Retorna uma URL assinada temporária válida para o S3/MinIO.
+     * Necessário para buckets privados (Padrão de segurança de tenants).
+     */
+    public static function getSignedUrl(string $path, int $minutes = 60): string
+    {
+        if (config('filesystems.default') === 's3') {
+            return Storage::disk('s3')->temporaryUrl($path, now()->addMinutes($minutes));
+        }
+
+        return Storage::disk(config('filesystems.default'))->url($path);
+    }
+
+    /**
+     * Retorna a URL do arquivo somente se ele existir no disco.
+     * Para disco local em dev: evita requests 404 quando o arquivo foi enviado
+     * apenas no ambiente de produção (S3/MinIO).
+     * Retorna null se o arquivo não existir — o template deve exibir o logo padrão.
+     */
+    public static function safeUrl(string $path, int $minutes = 60): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        $disk = config('filesystems.default');
+
+        if ($disk === 's3') {
+            // No S3/MinIO assumimos que o arquivo existe (foi enviado em produção)
+            return Storage::disk('s3')->temporaryUrl($path, now()->addMinutes($minutes));
+        }
+
+        // Disco local: verifica existência antes de gerar URL para evitar 404
+        if (! Storage::disk($disk)->exists($path)) {
+            return null;
+        }
+
+        return Storage::disk($disk)->url($path);
     }
 
     public function exists(string $path): bool
@@ -114,12 +159,12 @@ class SaasFileService
             }
 
             $disk = $this->getDisk();
-            
+
             /** @var \Aws\S3\S3Client $client */
             $client = $disk->getClient();
             $bucket = config('filesystems.disks.s3.bucket');
 
-            if (!$bucket) {
+            if (! $bucket) {
                 return;
             }
 
@@ -135,7 +180,7 @@ class SaasFileService
                 }
             }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("SAAS ERRO: Falha ao garantir/criar bucket no MinIO: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('SAAS ERRO: Falha ao garantir/criar bucket no MinIO: '.$e->getMessage());
         }
     }
 
@@ -162,7 +207,8 @@ class SaasFileService
         try {
             return $this->getDisk()->allFiles($directory);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('SaasFileService::listAll falhou: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('SaasFileService::listAll falhou: '.$e->getMessage());
+
             return [];
         }
     }
@@ -186,14 +232,14 @@ class SaasFileService
     public function testConnection(): array
     {
         try {
-            $disk       = $this->getDisk();
-            $diskName   = config('filesystems.default');
-            $testFile   = 'diagnostico/test-connection-' . time() . '.txt';
-            $content    = 'Conexão S3/MinIO OK - ' . now()->toIso8601String();
+            $disk = $this->getDisk();
+            $diskName = config('filesystems.default');
+            $testFile = 'diagnostico/test-connection-'.time().'.txt';
+            $content = 'Conexão S3/MinIO OK - '.now()->toIso8601String();
 
             $disk->put($testFile, $content);
-            $url       = $disk->url($testFile);
-            $exists    = $disk->exists($testFile);
+            $url = $disk->url($testFile);
+            $exists = $disk->exists($testFile);
             $disk->delete($testFile); // limpa o arquivo de teste
 
             return [

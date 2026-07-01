@@ -2,10 +2,11 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -43,7 +44,7 @@ return new class extends Migration {
         Schema::table('lawfirm_ai_executions', function (Blueprint $table) {
             $table->dropForeign(['lead_id']);
             // Reverter para integer simples (signed) caso fosse o original, mas manter unsigned é seguro
-            // $table->integer('lead_id')->change(); 
+            // $table->integer('lead_id')->change();
         });
     }
 };

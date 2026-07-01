@@ -37,29 +37,29 @@ PROMPT;
 
         $variables = [
             [
-                'key' => 'title',
-                'label' => 'Título do Caso',
-                'type' => 'text',
+                'key'         => 'title',
+                'label'       => 'Título do Caso',
+                'type'        => 'text',
                 'placeholder' => 'Ex: Reclamação Trabalhista',
             ],
             [
-                'key' => 'description',
-                'label' => 'Descrição do Caso',
-                'type' => 'textarea',
-                'rows' => 4,
+                'key'         => 'description',
+                'label'       => 'Descrição do Caso',
+                'type'        => 'textarea',
+                'rows'        => 4,
                 'placeholder' => 'Descreva o relato do cliente...',
             ],
             [
-                'key' => 'tenant_id',
-                'label' => 'Tenant ID',
-                'type' => 'text',
+                'key'         => 'tenant_id',
+                'label'       => 'Tenant ID',
+                'type'        => 'text',
                 'placeholder' => '',
             ],
             [
-                'key' => 'observacoes',
-                'label' => 'Observações',
-                'type' => 'textarea',
-                'rows' => 5,
+                'key'         => 'observacoes',
+                'label'       => 'Observações',
+                'type'        => 'textarea',
+                'rows'        => 5,
                 'placeholder' => 'Informações adicionais...',
             ],
         ];
@@ -67,16 +67,16 @@ PROMPT;
         AssistantTemplate::updateOrCreate(
             ['slug' => 'pre-triagem-checklist'],
             [
-                'tenant_id' => null, // Global
-                'category' => 'leads',
-                'title' => 'Qualificação Jurídica',
-                'description' => 'Triagem e qualificação jurídica do Lead com análise de viabilidade.',
-                'icon' => '📋',
+                'tenant_id'        => null, // Global
+                'category'         => 'leads',
+                'title'            => 'Qualificação Jurídica',
+                'description'      => 'Triagem e qualificação jurídica do Lead com análise de viabilidade.',
+                'icon'             => '📋',
                 'prompt_structure' => $promptStructure,
-                'variables' => $variables,
-                'n8n_webhook_url' => 'lead_qualificacao',
-                'required_module' => null,
-                'is_active' => true,
+                'variables'        => $variables,
+                'n8n_webhook_url'  => 'lead_qualificacao',
+                'required_module'  => null,
+                'is_active'        => true,
             ]
         );
 

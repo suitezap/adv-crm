@@ -3,8 +3,8 @@
 namespace SuiteZap\LawFirm\SaaS\DataGrids;
 
 use Illuminate\Support\Facades\DB;
-use Webkul\DataGrid\DataGrid;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use Webkul\DataGrid\DataGrid;
 
 /**
  * SaasOrdersDataGrid — Exibe o histórico de pedidos (intenções de compra)
@@ -18,7 +18,9 @@ use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 class SaasOrdersDataGrid extends DataGrid
 {
     protected $primaryColumn = 'id';
+
     protected $sortColumn = 'id';
+
     protected $sortOrder = 'desc';
 
     public function prepareQueryBuilder()
@@ -69,6 +71,7 @@ class SaasOrdersDataGrid extends DataGrid
                 if ($row->type === 'ai_credits') {
                     return '<span class="badge badge-round badge-primary">Créditos IA</span>';
                 }
+
                 return '<span class="badge badge-round badge-info">Assinatura</span>';
             },
         ]);
@@ -78,7 +81,7 @@ class SaasOrdersDataGrid extends DataGrid
             'label'    => 'Valor',
             'type'     => 'string',
             'sortable' => true,
-            'closure'  => fn($row) => 'R$ ' . number_format($row->value, 2, ',', '.'),
+            'closure'  => fn ($row) => 'R$ '.number_format($row->value, 2, ',', '.'),
         ]);
 
         $this->addColumn([
@@ -92,7 +95,7 @@ class SaasOrdersDataGrid extends DataGrid
                     'PENDING'  => '<span class="badge badge-round badge-warning">Pendente</span>',
                     'EXPIRED'  => '<span class="badge badge-round badge-danger">Expirado</span>',
                     'CANCELED' => '<span class="badge badge-round badge-danger">Cancelado</span>',
-                    default    => '<span class="badge badge-round badge-secondary">' . $row->status . '</span>',
+                    default    => '<span class="badge badge-round badge-secondary">'.$row->status.'</span>',
                 };
             },
         ]);
@@ -111,7 +114,7 @@ class SaasOrdersDataGrid extends DataGrid
             'type'       => 'string',
             'sortable'   => true,
             'searchable' => true,
-            'closure'    => fn($row) => $row->user_name ?: '(Sistema)',
+            'closure'    => fn ($row) => $row->user_name ?: '(Sistema)',
         ]);
 
         $this->addColumn([
@@ -120,7 +123,7 @@ class SaasOrdersDataGrid extends DataGrid
             'type'       => 'string',
             'sortable'   => false,
             'searchable' => true,
-            'closure'    => fn($row) => $row->asaas_payment_id ?: '—',
+            'closure'    => fn ($row) => $row->asaas_payment_id ?: '—',
         ]);
 
         $this->addColumn([
@@ -128,11 +131,9 @@ class SaasOrdersDataGrid extends DataGrid
             'label'    => 'Data/Hora',
             'type'     => 'datetime',
             'sortable' => true,
-            'closure'  => fn($row) => core()->formatDate($row->created_at, 'd/m/Y H:i'),
+            'closure'  => fn ($row) => core()->formatDate($row->created_at, 'd/m/Y H:i'),
         ]);
     }
 
-    public function prepareActions()
-    {
-    }
+    public function prepareActions() {}
 }

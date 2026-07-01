@@ -11,7 +11,7 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::connection('mothership')->hasTable('tenants')) {
-            if (!Schema::connection('mothership')->hasColumn('tenants', 'asaas_node_id')) {
+            if (! Schema::connection('mothership')->hasColumn('tenants', 'asaas_node_id')) {
                 Schema::connection('mothership')->table('tenants', function (Blueprint $table) {
                     $table->unsignedBigInteger('asaas_node_id')->nullable()->after('minio_bucket_name');
                 });

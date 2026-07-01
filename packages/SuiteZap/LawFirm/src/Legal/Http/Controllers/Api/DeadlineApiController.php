@@ -2,11 +2,11 @@
 
 namespace SuiteZap\LawFirm\Legal\Http\Controllers\Api;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use SuiteZap\LawFirm\Legal\Models\Prazo;
-use SuiteZap\LawFirm\Http\Resources\DeadlineResource;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use SuiteZap\LawFirm\Http\Resources\DeadlineResource;
+use SuiteZap\LawFirm\Legal\Models\Prazo;
 
 class DeadlineApiController extends Controller
 {
@@ -36,14 +36,13 @@ class DeadlineApiController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'processo_id' => 'required|exists:processos,id',
-            'titulo' => 'required|string|max:255',
+            'processo_id'     => 'required|exists:processos,id',
+            'titulo'          => 'required|string|max:255',
             'data_vencimento' => 'required|date',
         ]);
 
@@ -55,7 +54,7 @@ class DeadlineApiController extends Controller
 
         return response()->json([
             'message' => 'Deadline created successfully',
-            'data' => new DeadlineResource($prazo),
+            'data'    => new DeadlineResource($prazo),
         ], 201);
     }
 
@@ -69,7 +68,7 @@ class DeadlineApiController extends Controller
     {
         $prazo = Prazo::with('processo')->find($id);
 
-        if (!$prazo) {
+        if (! $prazo) {
             return response()->json(['message' => 'Deadline not found'], 404);
         }
 
@@ -79,7 +78,6 @@ class DeadlineApiController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
@@ -87,7 +85,7 @@ class DeadlineApiController extends Controller
     {
         $prazo = Prazo::find($id);
 
-        if (!$prazo) {
+        if (! $prazo) {
             return response()->json(['message' => 'Deadline not found'], 404);
         }
 
@@ -95,7 +93,7 @@ class DeadlineApiController extends Controller
 
         return response()->json([
             'message' => 'Deadline updated successfully',
-            'data' => new DeadlineResource($prazo),
+            'data'    => new DeadlineResource($prazo),
         ]);
     }
 
@@ -109,7 +107,7 @@ class DeadlineApiController extends Controller
     {
         $prazo = Prazo::find($id);
 
-        if (!$prazo) {
+        if (! $prazo) {
             return response()->json(['message' => 'Deadline not found'], 404);
         }
 

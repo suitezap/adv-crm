@@ -21,7 +21,6 @@ class PrazoCreated
     /**
      * Create a new event instance.
      *
-     * @param  \SuiteZap\LawFirm\Legal\Models\Prazo  $prazo
      * @return void
      */
     public function __construct(Prazo $prazo)

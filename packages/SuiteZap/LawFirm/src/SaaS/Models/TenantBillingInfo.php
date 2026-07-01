@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * TenantBillingInfo
- * 
+ *
  * Armazena os dados de faturamento do assinante no banco de dados MotherShip.
  * Esses dados são usados para preencher as requisições de pagamento ao Asaas.
  */

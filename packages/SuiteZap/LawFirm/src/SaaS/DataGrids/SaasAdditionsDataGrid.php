@@ -3,8 +3,8 @@
 namespace SuiteZap\LawFirm\SaaS\DataGrids;
 
 use Illuminate\Support\Facades\DB;
-use Webkul\DataGrid\DataGrid;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use Webkul\DataGrid\DataGrid;
 
 /**
  * SaasAdditionsDataGrid — Exibe o histórico de créditos adicionados pelo cliente.
@@ -15,7 +15,9 @@ use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 class SaasAdditionsDataGrid extends DataGrid
 {
     protected $primaryColumn = 'id';
+
     protected $sortColumn = 'id';
+
     protected $sortOrder = 'desc';
 
     public function prepareQueryBuilder()
@@ -36,15 +38,15 @@ class SaasAdditionsDataGrid extends DataGrid
         }
 
         $queryBuilder->select(
-                'saas_transactions.id',
-                'saas_transactions.type',
-                'saas_transactions.amount',
-                'saas_transactions.balance_after',
-                'saas_transactions.service_type',
-                'saas_transactions.description',
-                'users.name as user_name',
-                'saas_transactions.created_at'
-            );
+            'saas_transactions.id',
+            'saas_transactions.type',
+            'saas_transactions.amount',
+            'saas_transactions.balance_after',
+            'saas_transactions.service_type',
+            'saas_transactions.description',
+            'users.name as user_name',
+            'saas_transactions.created_at'
+        );
 
         $this->addFilter('id', 'saas_transactions.id');
         $this->addFilter('user_name', 'users.name');
@@ -90,7 +92,7 @@ class SaasAdditionsDataGrid extends DataGrid
             'label'    => 'Valor',
             'type'     => 'string',
             'sortable' => true,
-            'closure'  => fn($row) => 'R$ ' . number_format($row->amount, 2, ',', '.'),
+            'closure'  => fn ($row) => 'R$ '.number_format($row->amount, 2, ',', '.'),
         ]);
 
         $this->addColumn([
@@ -99,9 +101,11 @@ class SaasAdditionsDataGrid extends DataGrid
             'type'     => 'string',
             'sortable' => false,
             'closure'  => function ($row) {
-                if ($row->balance_after === null)
+                if ($row->balance_after === null) {
                     return '—';
-                return 'R$ ' . number_format($row->balance_after, 2, ',', '.');
+                }
+
+                return 'R$ '.number_format($row->balance_after, 2, ',', '.');
             },
         ]);
 
@@ -111,7 +115,7 @@ class SaasAdditionsDataGrid extends DataGrid
             'type'       => 'string',
             'sortable'   => true,
             'searchable' => true,
-            'closure'    => fn($row) => $row->user_name ?: '(Asaas/Sistema)',
+            'closure'    => fn ($row) => $row->user_name ?: '(Asaas/Sistema)',
         ]);
 
         $this->addColumn([
@@ -119,11 +123,9 @@ class SaasAdditionsDataGrid extends DataGrid
             'label'    => 'Data/Hora',
             'type'     => 'datetime',
             'sortable' => true,
-            'closure'  => fn($row) => core()->formatDate($row->created_at, 'd/m/Y H:i'),
+            'closure'  => fn ($row) => core()->formatDate($row->created_at, 'd/m/Y H:i'),
         ]);
     }
 
-    public function prepareActions()
-    {
-    }
+    public function prepareActions() {}
 }

@@ -18,11 +18,11 @@ class CaseChecklist extends Model
         'ai_last_feedback',
         'status',
         'created_by',
-        'updated_by'
+        'updated_by',
     ];
 
     protected $casts = [
-        'step_data' => 'array',
+        'step_data'        => 'array',
         'ai_last_feedback' => 'array',
     ];
 

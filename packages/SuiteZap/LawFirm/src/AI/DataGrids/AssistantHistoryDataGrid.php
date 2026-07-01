@@ -72,75 +72,78 @@ class AssistantHistoryDataGrid extends DataGrid
     public function prepareColumns()
     {
         $this->addColumn([
-            'index' => 'history_id',
-            'label' => 'ID',
-            'type' => 'string',
-            'sortable' => true,
+            'index'      => 'history_id',
+            'label'      => 'ID',
+            'type'       => 'string',
+            'sortable'   => true,
             'searchable' => true,
-            'width' => '60px',
+            'width'      => '60px',
         ]);
 
         $this->addColumn([
-            'index' => 'template_name',
-            'label' => 'Assistente',
-            'type' => 'string',
-            'sortable' => false,
+            'index'      => 'template_name',
+            'label'      => 'Assistente',
+            'type'       => 'string',
+            'sortable'   => false,
             'searchable' => false,
-            'closure' => function ($row) {
+            'closure'    => function ($row) {
                 $template = \SuiteZap\LawFirm\AI\Models\AssistantTemplate::find($row->template_id);
+
                 return $template ? $template->title : 'Desconhecido';
-            }
+            },
         ]);
 
         $this->addColumn([
-            'index' => 'user_name',
-            'label' => 'Usuário',
-            'type' => 'string',
-            'sortable' => true,
+            'index'      => 'user_name',
+            'label'      => 'Usuário',
+            'type'       => 'string',
+            'sortable'   => true,
             'searchable' => true,
         ]);
 
         $this->addColumn([
-            'index' => 'origem',
-            'label' => 'Origem',
-            'type' => 'string',
-            'sortable' => false,
+            'index'      => 'origem',
+            'label'      => 'Origem',
+            'type'       => 'string',
+            'sortable'   => false,
             'searchable' => false,
-            'width' => '100px',
-            'closure' => function ($row) {
+            'width'      => '100px',
+            'closure'    => function ($row) {
                 if ($row->lead_id) {
-                    $leadUrl  = route('admin.leads.view', $row->lead_id);
-                    $leadTitle = e($row->lead_title ?? 'Lead #' . $row->lead_id);
-                    return '<a href="' . $leadUrl . '" title="' . $leadTitle . '" style="text-decoration:none;">'
-                        . '<span class="badge badge-round" style="background:#7B2CBF;color:#fff;font-size:11px;white-space:nowrap;">'
-                        . '🔗 Lead'
-                        . '</span></a>';
+                    $leadUrl = route('admin.leads.view', $row->lead_id);
+                    $leadTitle = e($row->lead_title ?? 'Lead #'.$row->lead_id);
+
+                    return '<a href="'.$leadUrl.'" title="'.$leadTitle.'" style="text-decoration:none;">'
+                        .'<span class="badge badge-round" style="background:#7B2CBF;color:#fff;font-size:11px;white-space:nowrap;">'
+                        .'🔗 Lead'
+                        .'</span></a>';
                 }
 
                 return '<span class="badge badge-round badge-secondary" style="font-size:11px;">Manual</span>';
-            }
+            },
         ]);
 
         $this->addColumn([
-            'index' => 'person_name',
-            'label' => 'Cliente',
-            'type' => 'string',
-            'sortable' => true,
+            'index'      => 'person_name',
+            'label'      => 'Cliente',
+            'type'       => 'string',
+            'sortable'   => true,
             'searchable' => true,
-            'closure' => function ($row) {
+            'closure'    => function ($row) {
                 if ($row->person_name) {
                     return e($row->person_name);
                 }
+
                 return '<span class="text-gray-400">-</span>';
-            }
+            },
         ]);
 
         $this->addColumn([
-            'index' => 'status',
-            'label' => 'Status',
-            'type' => 'string',
+            'index'    => 'status',
+            'label'    => 'Status',
+            'type'     => 'string',
             'sortable' => true,
-            'closure' => function ($row) {
+            'closure'  => function ($row) {
                 switch ($row->status) {
                     case 'completed':
                         return '<span class="badge badge-round badge-success">Concluído</span>';
@@ -151,20 +154,20 @@ class AssistantHistoryDataGrid extends DataGrid
                     case 'failed':
                         return '<span class="badge badge-round badge-danger">Erro</span>';
                     default:
-                        return '<span class="badge badge-round badge-secondary">' . ucfirst($row->status) . '</span>';
+                        return '<span class="badge badge-round badge-secondary">'.ucfirst($row->status).'</span>';
                 }
-            }
+            },
         ]);
 
         $this->addColumn([
-            'index' => 'created_at',
-            'label' => 'Data/Hora Execução',
-            'type' => 'datetime',
-            'sortable' => true,
+            'index'      => 'created_at',
+            'label'      => 'Data/Hora Execução',
+            'type'       => 'datetime',
+            'sortable'   => true,
             'searchable' => false,
-            'closure' => function ($row) {
+            'closure'    => function ($row) {
                 return core()->formatDate($row->created_at, 'd/m/Y H:i');
-            }
+            },
         ]);
     }
 
@@ -176,10 +179,10 @@ class AssistantHistoryDataGrid extends DataGrid
     public function prepareActions()
     {
         $this->addAction([
-            'icon' => 'icon-eye',
-            'title' => 'Visualizar Resultado',
+            'icon'   => 'icon-eye',
+            'title'  => 'Visualizar Resultado',
             'method' => 'GET',
-            'url' => function ($row) {
+            'url'    => function ($row) {
                 return route('lawfirm.assistants.history.show', $row->history_id);
             },
         ]);

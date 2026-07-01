@@ -10,18 +10,16 @@ class ProcessoNotaService
 {
     /**
      * Synchronize notes for a given process based on request data.
-     * 
+     *
      * The array should have the shape:
      * [
      *     0 => ['id' => '1', 'nota' => '...'],
      *     1 => ['id' => '', 'nota' => '...']
      * ]
-     * 
+     *
      * Missing IDs that previously existed will be deleted.
      * Empty IDs will be created.
-     * 
-     * @param Processo $processo
-     * @param array $notasData
+     *
      * @return void
      */
     public function syncNotas(Processo $processo, array $notasData)
@@ -33,9 +31,9 @@ class ProcessoNotaService
 
         // 1. Delete notes that are no longer in the request
         $notasToDelete = array_diff($existingNotaIds, $submittedNotaIds);
-        if (!empty($notasToDelete)) {
+        if (! empty($notasToDelete)) {
             ProcessoNota::whereIn('id', $notasToDelete)->delete();
-            Log::info("ProcessoNotaService: Deleted notes IDs: " . implode(',', $notasToDelete));
+            Log::info('ProcessoNotaService: Deleted notes IDs: '.implode(',', $notasToDelete));
         }
 
         // 2. Create or Update notes
@@ -47,7 +45,7 @@ class ProcessoNotaService
                 continue;
             }
 
-            if (!empty($data['id'])) {
+            if (! empty($data['id'])) {
                 // Update existing (though typically notes are append-only, editing is allowed if ID exists)
                 $nota = ProcessoNota::find($data['id']);
                 if ($nota && $nota->processo_id == $processo->id) {
@@ -57,12 +55,12 @@ class ProcessoNotaService
                 // Create new
                 ProcessoNota::create([
                     'processo_id' => $processo->id,
-                    'user_id' => $userId,
-                    'nota' => $data['nota'],
+                    'user_id'     => $userId,
+                    'nota'        => $data['nota'],
                 ]);
             }
         }
 
-        Log::info("ProcessoNotaService::syncNotas completed.");
+        Log::info('ProcessoNotaService::syncNotas completed.');
     }
 }

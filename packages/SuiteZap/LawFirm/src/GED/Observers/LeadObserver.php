@@ -2,9 +2,9 @@
 
 namespace SuiteZap\LawFirm\GED\Observers;
 
-use Webkul\Lead\Models\Lead;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
+use Webkul\Lead\Models\Lead;
 
 class LeadObserver
 {
@@ -42,7 +42,7 @@ class LeadObserver
                 $fileService->delete($path);
                 Log::info(" > Arquivo apagado: {$path}");
             } catch (\Exception $e) {
-                Log::error(" > Erro ao apagar arquivo {$path}: " . $e->getMessage());
+                Log::error(" > Erro ao apagar arquivo {$path}: ".$e->getMessage());
             }
         }
     }

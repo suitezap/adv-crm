@@ -46,8 +46,8 @@ return [
     */
 
     'settings' => [
-        'enable_case_management' => true,
-        'enable_hearing_calendar' => true,
+        'enable_case_management'     => true,
+        'enable_hearing_calendar'    => true,
         'enable_document_management' => true,
         'enable_billing_integration' => true,
     ],

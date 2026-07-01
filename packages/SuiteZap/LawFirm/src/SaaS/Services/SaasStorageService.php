@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Service for managing SaaS storage quota.
- * 
+ *
  * Provides methods to check, increment, and decrement storage usage
  * based on configuration stored in core_config table.
  */
@@ -16,6 +16,7 @@ class SaasStorageService
      * Configuration keys for storage management.
      */
     protected const CONFIG_LIMIT = 'lawfirm.saas.storage.limit';
+
     protected const CONFIG_USED = 'lawfirm.saas.storage.used';
 
     /**
@@ -26,7 +27,7 @@ class SaasStorageService
     /**
      * Check if there is enough quota for a new file.
      *
-     * @param int $newFileSize Size of the new file in bytes
+     * @param  int  $newFileSize  Size of the new file in bytes
      * @return bool True if (used + newFileSize) <= limit
      */
     public function checkQuota(int $newFileSize): bool
@@ -40,8 +41,7 @@ class SaasStorageService
     /**
      * Increment the storage usage after successful upload.
      *
-     * @param int $bytes Number of bytes to add
-     * @return void
+     * @param  int  $bytes  Number of bytes to add
      */
     public function incrementUsage(int $bytes): void
     {
@@ -59,8 +59,7 @@ class SaasStorageService
      * Decrement the storage usage after file deletion.
      * Ensures usage never goes below zero.
      *
-     * @param int $bytes Number of bytes to subtract
-     * @return void
+     * @param  int  $bytes  Number of bytes to subtract
      */
     public function decrementUsage(int $bytes): void
     {
@@ -130,7 +129,6 @@ class SaasStorageService
     /**
      * Format bytes to human readable format.
      *
-     * @param int $bytes
      * @return string Example: "1.5 GB"
      */
     public function formatBytes(int $bytes): string
@@ -140,7 +138,7 @@ class SaasStorageService
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
 
-        return round($bytes / pow(1024, $pow), 2) . ' ' . $units[$pow];
+        return round($bytes / pow(1024, $pow), 2).' '.$units[$pow];
     }
 
     /**
@@ -154,19 +152,16 @@ class SaasStorageService
         $limit = $this->getLimit();
 
         return [
-            'used' => $used,
-            'limit' => $limit,
-            'percent' => $this->getUsagePercentage(),
-            'used_formatted' => $this->formatBytes($used),
+            'used'            => $used,
+            'limit'           => $limit,
+            'percent'         => $this->getUsagePercentage(),
+            'used_formatted'  => $this->formatBytes($used),
             'limit_formatted' => $this->formatBytes($limit),
         ];
     }
 
     /**
      * Get a configuration value from core_config table.
-     *
-     * @param string $code
-     * @return string|null
      */
     protected function getConfigValue(string $code): ?string
     {
@@ -180,10 +175,6 @@ class SaasStorageService
     /**
      * Set a configuration value in core_config table.
      * Uses upsert to create or update.
-     *
-     * @param string $code
-     * @param string $value
-     * @return void
      */
     protected function setConfigValue(string $code, string $value): void
     {
@@ -193,13 +184,13 @@ class SaasStorageService
             DB::table('core_config')
                 ->where('code', $code)
                 ->update([
-                    'value' => $value,
+                    'value'      => $value,
                     'updated_at' => now(),
                 ]);
         } else {
             DB::table('core_config')->insert([
-                'code' => $code,
-                'value' => $value,
+                'code'       => $code,
+                'value'      => $value,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

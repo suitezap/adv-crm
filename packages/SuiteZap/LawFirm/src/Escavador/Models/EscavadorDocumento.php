@@ -21,7 +21,7 @@ class EscavadorDocumento extends Model
 
     protected $casts = [
         'data_extracao' => 'datetime',
-        'raw_json' => 'array',
+        'raw_json'      => 'array',
     ];
 
     public function escavadorProcesso(): BelongsTo

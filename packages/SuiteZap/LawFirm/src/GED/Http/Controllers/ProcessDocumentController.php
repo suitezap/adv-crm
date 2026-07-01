@@ -2,22 +2,23 @@
 
 namespace SuiteZap\LawFirm\GED\Http\Controllers;
 
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
-use SuiteZap\LawFirm\GED\Services\DocumentService;
-use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\GED\Models\ProcessDocument;
+use SuiteZap\LawFirm\GED\Services\DocumentService;
 use SuiteZap\LawFirm\Legal\Models\ChecklistTemplate;
 use SuiteZap\LawFirm\Legal\Models\LawPersonDetail;
-use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
+use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 
 class ProcessDocumentController extends Controller
 {
     protected $documentService;
+
     protected $fileService;
 
     public function __construct(DocumentService $documentService, SaasFileService $fileService)
@@ -29,17 +30,16 @@ class ProcessDocumentController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
         $request->validate([
             'processo_id' => 'required|exists:processos,id',
-            'anexos.*' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:20480', // 20MB Max
+            'anexos.*'    => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:20480', // 20MB Max
         ], [
             'anexos.*.mimes' => 'Apenas arquivos PDF, Image (JPG/PNG) e Word (DOC/DOCX) são permitidos.',
-            'anexos.*.max' => 'O tamanho máximo do arquivo é 20MB.',
+            'anexos.*.max'   => 'O tamanho máximo do arquivo é 20MB.',
         ]);
 
         try {
@@ -61,6 +61,7 @@ class ProcessDocumentController extends Controller
             if ($request->ajax()) {
                 return response()->json(['message' => $e->getMessage(), 'status' => 'error'], 400);
             }
+
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
@@ -68,7 +69,7 @@ class ProcessDocumentController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
      */
     public function destroy($id)
@@ -86,6 +87,7 @@ class ProcessDocumentController extends Controller
             if (request()->ajax()) {
                 return response()->json(['message' => 'Erro ao excluir anexo.', 'status' => 'error'], 500);
             }
+
             return redirect()->back()->with('error', 'Erro ao excluir anexo.');
         }
     }
@@ -93,7 +95,7 @@ class ProcessDocumentController extends Controller
     /**
      * Remove the specified checklist item from storage.
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function destroyChecklistItem($id)
@@ -111,6 +113,7 @@ class ProcessDocumentController extends Controller
             if (request()->ajax()) {
                 return response()->json(['message' => 'Erro ao excluir item do checklist.', 'status' => 'error'], 500);
             }
+
             return redirect()->back()->with('error', 'Erro ao excluir item do checklist.');
         }
     }
@@ -118,7 +121,7 @@ class ProcessDocumentController extends Controller
     /**
      * Download the specified resource.
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function download($id)
@@ -142,12 +145,13 @@ class ProcessDocumentController extends Controller
 
             return response($contents, 200, [
                 'Content-Type'        => $mimeType,
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
             ]);
 
         } catch (\Exception $e) {
-            Log::error("Erro ao baixar documento {$id}: " . $e->getMessage());
-            return redirect()->back()->with('error', 'Erro ao baixar documento: ' . $e->getMessage());
+            Log::error("Erro ao baixar documento {$id}: ".$e->getMessage());
+
+            return redirect()->back()->with('error', 'Erro ao baixar documento: '.$e->getMessage());
         }
     }
 
@@ -166,7 +170,7 @@ class ProcessDocumentController extends Controller
             }
 
             // Usa SaasFileService para garantir acesso ao bucket correto do Tenant
-            if (!$this->fileService->exists($path)) {
+            if (! $this->fileService->exists($path)) {
                 return redirect()->back()->with('error', 'Arquivo físico não encontrado no servidor remoto.');
             }
 
@@ -177,16 +181,17 @@ class ProcessDocumentController extends Controller
             }
 
             $mimeType = $this->fileService->mimeType($path) ?? 'application/octet-stream';
-            $filename  = $anexo->nome_original ?? 'anexo.pdf';
+            $filename = $anexo->nome_original ?? 'anexo.pdf';
 
             return response($contents, 200, [
                 'Content-Type'        => $mimeType,
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
             ]);
 
         } catch (\Exception $e) {
-            Log::error("Erro ao baixar anexo {$id}: " . $e->getMessage());
-            return redirect()->back()->with('error', 'Erro ao baixar anexo: ' . $e->getMessage());
+            Log::error("Erro ao baixar anexo {$id}: ".$e->getMessage());
+
+            return redirect()->back()->with('error', 'Erro ao baixar anexo: '.$e->getMessage());
         }
     }
 
@@ -205,9 +210,9 @@ class ProcessDocumentController extends Controller
 
             ProcessDocument::firstOrCreate([
                 'processo_id' => $processId,
-                'name' => $name,
+                'name'        => $name,
             ], [
-                'status' => 'pending' // pending, received
+                'status' => 'pending', // pending, received
             ]);
         }
 
@@ -227,21 +232,21 @@ class ProcessDocumentController extends Controller
             // 3. Carregar Template
             $templateMsg = core()->getConfigData('lawfirm.whatsapp_templates.messages.document_request');
 
-            if ($phone && !empty($templateMsg)) {
+            if ($phone && ! empty($templateMsg)) {
 
                 // 4. Gerar Lista de Documentos
-                $docListString = "";
-                if ($template && !empty($template->items)) {
+                $docListString = '';
+                if ($template && ! empty($template->items)) {
                     foreach ($template->items as $item) {
                         $name = is_array($item) ? ($item['name'] ?? $item) : $item;
-                        $docListString .= "- " . $name . "\n";
+                        $docListString .= '- '.$name."\n";
                     }
                 }
 
                 // 5. Substituir Variáveis
                 $portalLink = route('lawfirm.public.portal.index', [
-                    'id' => $processo->id, 
-                    'token' => hash_hmac('sha256', $processo->id, config('app.key'))
+                    'id'    => $processo->id,
+                    'token' => hash_hmac('sha256', $processo->id, config('app.key')),
                 ]);
 
                 $msg = str_replace(
@@ -251,7 +256,7 @@ class ProcessDocumentController extends Controller
                         $processo->titulo ?? 'Processo',
                         $template->name ?? 'Documentação',
                         $docListString,
-                        $portalLink
+                        $portalLink,
                     ],
                     $templateMsg
                 );
@@ -260,22 +265,60 @@ class ProcessDocumentController extends Controller
                 $evolutionService = app(\SuiteZap\LawFirm\Whatsapp\Services\EvolutionService::class);
                 $config = MotherShipService::getEvolutionConfig();
 
-                if (!$config || empty($config['instance'])) {
+                if (! $config || empty($config['instance'])) {
                     Log::error('ProcessDocumentController: Evolution API não configurada no MotherShip. WhatsApp não enviado.');
                 } else {
                     $evolutionService->sendMessage($config['instance'], $phone, $msg);
                     Log::info("Solicitação de documentos enviada via WhatsApp para {$processo->person->name}");
                 }
 
-                session()->flash('success', 'Checklist importado' . ($config ? ' e solicitação enviada via WhatsApp!' : '.'));
+                session()->flash('success', 'Checklist importado'.($config ? ' e solicitação enviada via WhatsApp!' : '.'));
+
                 return redirect()->back();
             }
 
         } catch (\Exception $e) {
-            Log::error("Erro ao enviar solicitação de documentos: " . $e->getMessage());
+            Log::error('Erro ao enviar solicitação de documentos: '.$e->getMessage());
             // Não interrompa o fluxo principal, apenas logue o erro.
         }
         // --- FIM BLOCO WHATSAPP ---
+
+        // ✅ FIX: Always return a redirect (missing return when WhatsApp is not configured)
+        session()->flash('success', 'Checklist importado com sucesso.');
+
+        return redirect()->back();
+    }
+
+    /**
+     * Add a single item to the checklist manually.
+     *
+     * @param  int  $processId
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function addItem(Request $request, $processId)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $doc = ProcessDocument::create([
+            'processo_id' => $processId,
+            'name'        => trim($request->input('name')),
+            'notes'       => trim($request->input('notes', '')),
+            'status'      => 'pending',
+        ]);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Item adicionado ao checklist.',
+                'doc'     => $doc,
+            ]);
+        }
+
+        session()->flash('success', 'Item adicionado ao checklist.');
+
+        return redirect()->back();
     }
 
     // Atualiza o status de um documento (Ex: Pendente -> Recebido)
@@ -284,17 +327,18 @@ class ProcessDocumentController extends Controller
         $document = ProcessDocument::findOrFail($id);
         $document->update([
             'status' => $request->status,
-            'notes' => $request->notes,
+            'notes'  => $request->notes,
         ]);
 
         if ($request->ajax() || $request->expectsJson()) {
             return response()->json([
-                'status' => 'success',
+                'status'  => 'success',
                 'message' => 'Status atualizado com sucesso.',
             ]);
         }
 
         session()->flash('success', 'Status do documento atualizado.');
+
         return redirect()->back();
     }
 
@@ -315,8 +359,9 @@ class ProcessDocumentController extends Controller
                 $phone = is_object($phoneData) ? $phoneData->value : ($phoneData['value'] ?? null);
             }
 
-            if (!$phone) {
+            if (! $phone) {
                 session()->flash('error', 'O cliente não possui telefone cadastrado.');
+
                 return redirect()->back();
             }
 
@@ -335,20 +380,21 @@ class ProcessDocumentController extends Controller
 
             if ($documents->isEmpty()) {
                 session()->flash('error', 'Nenhum documento válido selecionado.');
+
                 return redirect()->back();
             }
 
             // 4. Gerar Lista
-            $docListString = "";
+            $docListString = '';
             foreach ($documents as $doc) {
                 $statusIcon = $doc->status == 'received' ? '✅' : ($doc->status == 'approved' ? '☑️' : '⬜');
-                $docListString .= "{$statusIcon} " . $doc->name . ($doc->notes ? " ({$doc->notes})" : "") . "\n";
+                $docListString .= "{$statusIcon} ".$doc->name.($doc->notes ? " ({$doc->notes})" : '')."\n";
             }
 
             // 5. Substituir Variáveis
             $portalLink = route('lawfirm.public.portal.index', [
-                'id' => $processo->id, 
-                'token' => hash_hmac('sha256', $processo->id, config('app.key'))
+                'id'    => $processo->id,
+                'token' => hash_hmac('sha256', $processo->id, config('app.key')),
             ]);
 
             $msg = str_replace(
@@ -358,7 +404,7 @@ class ProcessDocumentController extends Controller
                     $processo->titulo ?? 'Processo',
                     'Seleção Manual',
                     $docListString,
-                    $portalLink
+                    $portalLink,
                 ],
                 $templateMsg
             );
@@ -368,7 +414,7 @@ class ProcessDocumentController extends Controller
 
             $config = MotherShipService::getEvolutionConfig();
 
-            if (!$config || empty($config['instance'])) {
+            if (! $config || empty($config['instance'])) {
                 Log::error('ProcessDocumentController: Evolution API não configurada no MotherShip. Checklist WhatsApp não enviado.');
                 session()->flash('warning', 'Checklist enviado, mas WhatsApp não está configurado para este workspace.');
             } else {
@@ -377,8 +423,8 @@ class ProcessDocumentController extends Controller
             }
 
         } catch (\Exception $e) {
-            Log::error("Erro ao enviar checklist manual: " . $e->getMessage());
-            session()->flash('error', 'Erro ao enviar mensagem: ' . $e->getMessage());
+            Log::error('Erro ao enviar checklist manual: '.$e->getMessage());
+            session()->flash('error', 'Erro ao enviar mensagem: '.$e->getMessage());
         }
 
         return redirect()->back();
@@ -418,25 +464,33 @@ class ProcessDocumentController extends Controller
             if ($detail && ($detail->logradouro || $detail->cep)) {
                 // Monta endereço a partir dos campos detalhados
                 $parts = [];
-                if ($detail->logradouro)
+                if ($detail->logradouro) {
                     $parts[] = $detail->logradouro;
-                if ($detail->numero)
-                    $parts[] = "nº " . $detail->numero;
-                if ($detail->complemento)
+                }
+                if ($detail->numero) {
+                    $parts[] = 'nº '.$detail->numero;
+                }
+                if ($detail->complemento) {
                     $parts[] = $detail->complemento;
-                if ($detail->bairro)
+                }
+                if ($detail->bairro) {
                     $parts[] = $detail->bairro;
+                }
 
                 $cityState = [];
-                if ($detail->cidade)
+                if ($detail->cidade) {
                     $cityState[] = $detail->cidade;
-                if ($detail->uf)
+                }
+                if ($detail->uf) {
                     $cityState[] = $detail->uf;
+                }
 
-                if (!empty($cityState))
+                if (! empty($cityState)) {
                     $parts[] = implode('/', $cityState);
-                if ($detail->cep)
-                    $parts[] = "CEP " . $detail->cep;
+                }
+                if ($detail->cep) {
+                    $parts[] = 'CEP '.$detail->cep;
+                }
 
                 $client['address'] = implode(', ', $parts);
             } else {
@@ -465,7 +519,7 @@ class ProcessDocumentController extends Controller
         // --- LÓGICA DE CIDADE (Prioridade: Campo Específico > Parsing) ---
         $cityConfig = core()->getConfigData('lawfirm.settings.general.city');
 
-        if (!empty($cityConfig)) {
+        if (! empty($cityConfig)) {
             $city = trim($cityConfig);
         } else {
             $city = 'Local';
@@ -481,7 +535,7 @@ class ProcessDocumentController extends Controller
                         if (preg_match('/^[A-Z]{2}$/', $part)) {
                             if (isset($parts[$index - 1])) {
                                 $candidate = trim($parts[$index - 1]);
-                                if (!preg_match('/^(Jd\.|Jardim|Vila|Rua|Av\.|Alameda)/i', $candidate)) {
+                                if (! preg_match('/^(Jd\.|Jardim|Vila|Rua|Av\.|Alameda)/i', $candidate)) {
                                     $city = $candidate;
                                 }
                             }
@@ -492,7 +546,7 @@ class ProcessDocumentController extends Controller
             }
         }
 
-        $city = trim($city, " .,;-");
+        $city = trim($city, ' .,;-');
 
         $dateExtenso = Carbon::now()->translatedFormat('d \d\e F \d\e Y');
 
@@ -538,25 +592,33 @@ class ProcessDocumentController extends Controller
 
             if ($detail && ($detail->logradouro || $detail->cep)) {
                 $parts = [];
-                if ($detail->logradouro)
+                if ($detail->logradouro) {
                     $parts[] = $detail->logradouro;
-                if ($detail->numero)
-                    $parts[] = "nº " . $detail->numero;
-                if ($detail->complemento)
+                }
+                if ($detail->numero) {
+                    $parts[] = 'nº '.$detail->numero;
+                }
+                if ($detail->complemento) {
                     $parts[] = $detail->complemento;
-                if ($detail->bairro)
+                }
+                if ($detail->bairro) {
                     $parts[] = $detail->bairro;
+                }
 
                 $cityState = [];
-                if ($detail->cidade)
+                if ($detail->cidade) {
                     $cityState[] = $detail->cidade;
-                if ($detail->uf)
+                }
+                if ($detail->uf) {
                     $cityState[] = $detail->uf;
+                }
 
-                if (!empty($cityState))
+                if (! empty($cityState)) {
                     $parts[] = implode('/', $cityState);
-                if ($detail->cep)
-                    $parts[] = "CEP " . $detail->cep;
+                }
+                if ($detail->cep) {
+                    $parts[] = 'CEP '.$detail->cep;
+                }
 
                 $client['address'] = implode(', ', $parts);
             } else {
@@ -581,7 +643,7 @@ class ProcessDocumentController extends Controller
 
         $cityConfig = core()->getConfigData('lawfirm.settings.general.city');
 
-        if (!empty($cityConfig)) {
+        if (! empty($cityConfig)) {
             $city = trim($cityConfig);
         } else {
             $city = 'Local';
@@ -597,7 +659,7 @@ class ProcessDocumentController extends Controller
                         if (preg_match('/^[A-Z]{2}$/', $part)) {
                             if (isset($parts[$index - 1])) {
                                 $candidate = trim($parts[$index - 1]);
-                                if (!preg_match('/^(Jd\.|Jardim|Vila|Rua|Av\.|Alameda)/i', $candidate)) {
+                                if (! preg_match('/^(Jd\.|Jardim|Vila|Rua|Av\.|Alameda)/i', $candidate)) {
                                     $city = $candidate;
                                 }
                             }
@@ -608,7 +670,7 @@ class ProcessDocumentController extends Controller
             }
         }
 
-        $city = trim($city, " .,;-");
+        $city = trim($city, ' .,;-');
 
         $dateExtenso = Carbon::now()->translatedFormat('d \d\e F \d\e Y');
 

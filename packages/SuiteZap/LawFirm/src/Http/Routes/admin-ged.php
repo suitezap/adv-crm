@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 
-
 /*
 |--------------------------------------------------------------------------
 | GED & Document Domain Routes
@@ -18,9 +17,11 @@ use Illuminate\Support\Facades\Route;
 // -----------------------------------------------
 Route::group(['prefix' => 'documentos', 'controller' => \SuiteZap\LawFirm\GED\Http\Controllers\ProcessDocumentController::class], function () {
     Route::post('import-v2/{processId}', 'importTemplate')->name('lawfirm.documents.import_v2');
+    Route::post('add-item/{processId}', 'addItem')->name('lawfirm.documents.add_item');
     Route::post('send-whatsapp-v2/{processId}', 'sendChecklist')->name('lawfirm.documents.send_whatsapp_v2');
     Route::put('update/{id}', 'updateStatus')->name('lawfirm.documents.update');
     Route::delete('delete/{id}', 'destroyChecklistItem')->name('lawfirm.documents.delete');
+
 });
 
 // -----------------------------------------------

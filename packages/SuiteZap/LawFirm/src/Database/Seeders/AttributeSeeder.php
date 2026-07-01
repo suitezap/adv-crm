@@ -33,24 +33,25 @@ class AttributeSeeder extends Seeder
 
         if ($existingAttribute) {
             $this->command->info('Attribute "law_area" already exists. Skipping...');
+
             return;
         }
 
         // Insert the attribute
         $attributeId = DB::table('attributes')->insertGetId([
-            'code' => 'law_area',
-            'name' => 'Área do Direito',
-            'type' => 'select',
-            'lookup_type' => null,
-            'entity_type' => 'leads',
-            'sort_order' => 100,
-            'validation' => null,
-            'is_required' => false,
-            'is_unique' => false,
-            'quick_add' => true,
+            'code'            => 'law_area',
+            'name'            => 'Área do Direito',
+            'type'            => 'select',
+            'lookup_type'     => null,
+            'entity_type'     => 'leads',
+            'sort_order'      => 100,
+            'validation'      => null,
+            'is_required'     => false,
+            'is_unique'       => false,
+            'quick_add'       => true,
             'is_user_defined' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at'      => now(),
+            'updated_at'      => now(),
         ]);
 
         // Insert attribute options
@@ -63,8 +64,8 @@ class AttributeSeeder extends Seeder
 
         foreach ($options as $option) {
             DB::table('attribute_options')->insert([
-                'name' => $option['name'],
-                'sort_order' => $option['sort_order'],
+                'name'         => $option['name'],
+                'sort_order'   => $option['sort_order'],
                 'attribute_id' => $attributeId,
             ]);
         }
@@ -87,24 +88,25 @@ class AttributeSeeder extends Seeder
 
         if ($existingAttribute) {
             $this->command->info('Attribute "cpf_cnpj" already exists. Skipping...');
+
             return;
         }
 
         // Insert the attribute
         DB::table('attributes')->insert([
-            'code' => 'cpf_cnpj',
-            'name' => 'CPF/CNPJ',
-            'type' => 'text',
-            'lookup_type' => null,
-            'entity_type' => 'persons',
-            'sort_order' => 100,
-            'validation' => null,
-            'is_required' => false,
-            'is_unique' => false,
-            'quick_add' => true,
+            'code'            => 'cpf_cnpj',
+            'name'            => 'CPF/CNPJ',
+            'type'            => 'text',
+            'lookup_type'     => null,
+            'entity_type'     => 'persons',
+            'sort_order'      => 100,
+            'validation'      => null,
+            'is_required'     => false,
+            'is_unique'       => false,
+            'quick_add'       => true,
             'is_user_defined' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at'      => now(),
+            'updated_at'      => now(),
         ]);
 
         $this->command->info('Attribute "cpf_cnpj" created successfully.');

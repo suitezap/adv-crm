@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -13,13 +14,13 @@ return new class extends Migration {
         Schema::table('processos', function (Blueprint $table) {
             if (Schema::hasColumn('processos', 'advogado_whatsapp')) {
                 $table->renameColumn('advogado_whatsapp', 'whatsapp_advogado_contrario');
-            } elseif (!Schema::hasColumn('processos', 'whatsapp_advogado_contrario')) {
+            } elseif (! Schema::hasColumn('processos', 'whatsapp_advogado_contrario')) {
                 $table->string('whatsapp_advogado_contrario', 20)->nullable();
             }
         });
 
         Schema::table('processos', function (Blueprint $table) {
-            if (!Schema::hasColumn('processos', 'email_advogado_contrario')) {
+            if (! Schema::hasColumn('processos', 'email_advogado_contrario')) {
                 // Remove 'after' if it causes issues, or keep it now that we are in a separate block
                 // However, separate blocks in same migration method might still be transactionally wrapped?
                 // DDL usually auto-commits in MySQL. So this should be fine.

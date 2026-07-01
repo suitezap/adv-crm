@@ -42,6 +42,7 @@ class Cpf implements Rule
                 return false;
             }
         }
+
         return true;
     }
 

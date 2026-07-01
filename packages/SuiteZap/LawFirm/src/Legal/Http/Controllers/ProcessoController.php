@@ -2,19 +2,19 @@
 
 namespace SuiteZap\LawFirm\Legal\Http\Controllers;
 
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
+use SuiteZap\LawFirm\Financial\Services\FinancialService;
+use SuiteZap\LawFirm\GED\Services\DocumentService;
 use SuiteZap\LawFirm\Legal\DataGrids\ProcessoDataGrid;
 use SuiteZap\LawFirm\Legal\Repositories\ProcessoRepository;
-use Webkul\Activity\Repositories\ActivityRepository;
-use Webkul\Admin\Http\Controllers\Controller;
-use Webkul\Contact\Repositories\PersonRepository;
-use Webkul\Contact\Repositories\OrganizationRepository;
-use Webkul\Lead\Repositories\LeadRepository;
-use SuiteZap\LawFirm\GED\Services\DocumentService;
 use SuiteZap\LawFirm\Legal\Services\DeadlineService;
 use SuiteZap\LawFirm\Legal\Services\ProcessoNotaService;
-use SuiteZap\LawFirm\Financial\Services\FinancialService;
+use SuiteZap\LawFirm\Legal\Services\ProcessoWhatsappService;
+use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Contact\Repositories\OrganizationRepository;
+use Webkul\Contact\Repositories\PersonRepository;
+use Webkul\Lead\Repositories\LeadRepository;
 
 class ProcessoController extends Controller
 {
@@ -82,12 +82,16 @@ class ProcessoController extends Controller
     protected $processoNotaService;
 
     /**
+     * ProcessoWhatsappService object
+     *
+     * @var \SuiteZap\LawFirm\Legal\Services\ProcessoWhatsappService
+     */
+    protected $processoWhatsappService;
+
+    /**
      * Create a new controller instance.
      *
      * @param  \SuiteZap\LawFirm\Repositories\ProcessoRepository  $processoRepository
-     * @param  \Webkul\Contact\Repositories\PersonRepository  $personRepository
-     * @param  \Webkul\Lead\Repositories\LeadRepository  $leadRepository
-     * @param  \Webkul\Activity\Repositories\ActivityRepository  $activityRepository
      * @return void
      */
     public function __construct(
@@ -99,7 +103,8 @@ class ProcessoController extends Controller
         DocumentService $documentService,
         DeadlineService $deadlineService,
         FinancialService $financialService,
-        ProcessoNotaService $processoNotaService
+        ProcessoNotaService $processoNotaService,
+        ProcessoWhatsappService $processoWhatsappService
     ) {
         $this->processoRepository = $processoRepository;
         $this->personRepository = $personRepository;
@@ -110,6 +115,7 @@ class ProcessoController extends Controller
         $this->deadlineService = $deadlineService;
         $this->financialService = $financialService;
         $this->processoNotaService = $processoNotaService;
+        $this->processoWhatsappService = $processoWhatsappService;
     }
 
     /**
@@ -166,7 +172,7 @@ class ProcessoController extends Controller
      */
     public function create()
     {
-        abort_if(!bouncer()->hasPermission('lawfirm.processos.create'), 401, 'This action is unauthorized');
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.create'), 401, 'This action is unauthorized');
 
         $leadId = request('lead_id');
         $preSelectedLead = null;
@@ -184,19 +190,17 @@ class ProcessoController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \SuiteZap\LawFirm\Legal\Http\Requests\StoreProcessoRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(\SuiteZap\LawFirm\Legal\Http\Requests\StoreProcessoRequest $request)
     {
         $data = $request->validated();
 
-        $data['person_id'] = !empty($data['person_id']) ? $data['person_id'] : null;
-        $data['organization_id'] = !empty($data['organization_id']) ? $data['organization_id'] : null;
-        $data['lead_id'] = !empty($data['lead_id']) ? $data['lead_id'] : null;
-        $data['caso_id'] = !empty($data['caso_id']) ? $data['caso_id'] : null;
-        $data['user_id'] = !empty($data['user_id']) ? $data['user_id'] : null;
-
+        $data['person_id'] = ! empty($data['person_id']) ? $data['person_id'] : null;
+        $data['organization_id'] = ! empty($data['organization_id']) ? $data['organization_id'] : null;
+        $data['lead_id'] = ! empty($data['lead_id']) ? $data['lead_id'] : null;
+        $data['caso_id'] = ! empty($data['caso_id']) ? $data['caso_id'] : null;
+        $data['user_id'] = ! empty($data['user_id']) ? $data['user_id'] : null;
 
         Event::dispatch('lawfirm.processo.create.before');
 
@@ -208,7 +212,7 @@ class ProcessoController extends Controller
         }
 
         // Sincronizar prazo de Audiência automaticamente
-        if (!empty($data['data_audiencia'])) {
+        if (! empty($data['data_audiencia'])) {
             $this->deadlineService->syncAudienciaPrazo($processo, $data['data_audiencia']);
         }
 
@@ -250,7 +254,7 @@ class ProcessoController extends Controller
             'financeiros' => function ($query) {
                 $query->orderByRaw("CASE WHEN status = 'pendente' THEN 1 ELSE 2 END ASC")
                     ->orderBy('data_vencimento', 'asc');
-            }
+            },
         ]);
 
         // Get LeadTriagem if lead exists
@@ -270,7 +274,7 @@ class ProcessoController extends Controller
      */
     public function edit($id)
     {
-        abort_if(!bouncer()->hasPermission('lawfirm.processos.edit'), 401, 'This action is unauthorized');
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.edit'), 401, 'This action is unauthorized');
 
         $processo = \SuiteZap\LawFirm\Legal\Models\Processo::with([
             'person',
@@ -283,7 +287,7 @@ class ProcessoController extends Controller
             'financeiros' => function ($query) {
                 $query->orderByRaw("CASE WHEN status = 'pendente' THEN 1 ELSE 2 END")
                     ->orderBy('data_vencimento', 'asc');
-            }
+            },
         ])->findOrFail($id);
 
         $persons = $this->personRepository->all();
@@ -302,13 +306,13 @@ class ProcessoController extends Controller
     {
         $data = $request->validated();
 
-        $data['person_id'] = !empty($data['person_id']) ? $data['person_id'] : null;
-        $data['organization_id'] = !empty($data['organization_id']) ? $data['organization_id'] : null;
+        $data['person_id'] = ! empty($data['person_id']) ? $data['person_id'] : null;
+        $data['organization_id'] = ! empty($data['organization_id']) ? $data['organization_id'] : null;
         if (array_key_exists('lead_id', $data)) {
-            $data['lead_id'] = !empty($data['lead_id']) ? $data['lead_id'] : null;
+            $data['lead_id'] = ! empty($data['lead_id']) ? $data['lead_id'] : null;
         }
-        $data['caso_id'] = !empty($data['caso_id']) ? $data['caso_id'] : null;
-        $data['user_id'] = !empty($data['user_id']) ? $data['user_id'] : null;
+        $data['caso_id'] = ! empty($data['caso_id']) ? $data['caso_id'] : null;
+        $data['user_id'] = ! empty($data['user_id']) ? $data['user_id'] : null;
 
         Event::dispatch('lawfirm.processo.update.before', $id);
 
@@ -325,7 +329,7 @@ class ProcessoController extends Controller
         }
 
         // 3b. Sincronizar prazo de Audiência automaticamente
-        if (!empty($data['data_audiencia'])) {
+        if (! empty($data['data_audiencia'])) {
             $this->deadlineService->syncAudienciaPrazo($processo, $data['data_audiencia']);
         }
 
@@ -341,8 +345,6 @@ class ProcessoController extends Controller
         return redirect()->route('admin.processos.edit', $processo->id);
     }
 
-
-
     /**
      * Remove the specified resource from storage.
      *
@@ -351,7 +353,7 @@ class ProcessoController extends Controller
      */
     public function destroy($id)
     {
-        abort_if(!bouncer()->hasPermission('lawfirm.processos.delete'), 401, 'This action is unauthorized');
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.delete'), 401, 'This action is unauthorized');
 
         try {
             Event::dispatch('lawfirm.processo.delete.before', $id);
@@ -423,7 +425,7 @@ class ProcessoController extends Controller
         $term = request('query');
 
         $results = $this->personRepository->scopeQuery(function ($query) use ($term) {
-            return $query->where('name', 'like', '%' . $term . '%');
+            return $query->where('name', 'like', '%'.$term.'%');
         })->paginate(10);
 
         return response()->json($results);
@@ -439,7 +441,7 @@ class ProcessoController extends Controller
         $term = request('query');
 
         $results = $this->organizationRepository->scopeQuery(function ($query) use ($term) {
-            return $query->where('name', 'like', '%' . $term . '%');
+            return $query->where('name', 'like', '%'.$term.'%');
         })->paginate(10);
 
         return response()->json($results);
@@ -455,143 +457,55 @@ class ProcessoController extends Controller
         $term = request('query');
 
         $results = $this->leadRepository->scopeQuery(function ($query) use ($term) {
-            return $query->where('title', 'like', '%' . $term . '%');
+            return $query->where('title', 'like', '%'.$term.'%');
         })->paginate(10);
 
         return response()->json($results);
     }
 
     /**
-     * Resquest client's registration via WhatsApp
+     * Request client registration update via WhatsApp.
+     * Delegates to ProcessoWhatsappService (Skinny Controller).
      */
     public function requestRegistration($id)
     {
         try {
-            $processo = $this->processoRepository->with('person')->findOrFail($id);
-            
-            // 2. Verificar Telefone
-            $phone = null;
-            if ($processo && $processo->person) {
-                $contactNumbers = collect($processo->person->contact_numbers);
-                $phoneData = $contactNumbers->first();
-                $phone = is_object($phoneData) ? $phoneData->value : ($phoneData['value'] ?? null);
-            }
+            $result = $this->processoWhatsappService->sendRegistrationRequest((int) $id);
 
-            if (!$phone) {
-                session()->flash('error', 'O cliente não possui telefone cadastrado.');
-                return redirect()->back();
-            }
-
-            // 3. Carregar Template
-            $templateMsg = core()->getConfigData('lawfirm.whatsapp_templates.messages.registration_request');
-            if (empty($templateMsg)) {
-                $templateMsg = "Olá {cliente_nome}. Referente ao processo {processo_titulo}, precisamos que atualize suas informações cadastrais.\nUtilize o link: {link_portal}";
-            }
-
-            // 4. Substituir Variáveis
-            $portalLink = route('lawfirm.public.portal.index', [
-                'id' => $processo->id, 
-                'token' => hash_hmac('sha256', $processo->id, config('app.key'))
-            ]);
-
-            $msg = str_replace(
-                ['{cliente_nome}', '{processo_titulo}', '{link_portal}'],
-                [
-                    $processo->person->name,
-                    $processo->titulo ?? 'Processo',
-                    $portalLink
-                ],
-                $templateMsg
-            );
-
-            // 5. Enviar via Service
-            $evolutionService = app(\SuiteZap\LawFirm\Whatsapp\Services\EvolutionService::class);
-            $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
-
-            if (!$config || empty($config['instance'])) {
-                session()->flash('warning', 'Mensagem não enviada. WhatsApp não está configurado para o escritório.');
+            if ($result['error']) {
+                session()->flash('error', $result['error']);
+            } elseif ($result['warning']) {
+                session()->flash('warning', $result['warning']);
             } else {
-                $evolutionService->sendMessage($config['instance'], $phone, $msg);
                 session()->flash('success', 'Solicitação de cadastro enviada via WhatsApp!');
             }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Erro ao enviar solicitação de cadastro: " . $e->getMessage());
-            session()->flash('error', 'Erro ao enviar mensagem: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Erro ao enviar solicitação de cadastro: '.$e->getMessage());
+            session()->flash('error', 'Erro ao enviar mensagem: '.$e->getMessage());
         }
 
         return redirect()->back();
     }
 
     /**
-     * Request pending documents via WhatsApp
+     * Request pending documents via WhatsApp.
+     * Delegates to ProcessoWhatsappService (Skinny Controller).
      */
     public function requestDocuments($id)
     {
         try {
-            $processo = $this->processoRepository->with(['person', 'documents'])->findOrFail($id);
-            
-            // 2. Verificar Telefone
-            $phone = null;
-            if ($processo && $processo->person) {
-                $contactNumbers = collect($processo->person->contact_numbers);
-                $phoneData = $contactNumbers->first();
-                $phone = is_object($phoneData) ? $phoneData->value : ($phoneData['value'] ?? null);
-            }
+            $result = $this->processoWhatsappService->sendDocumentsRequest((int) $id);
 
-            if (!$phone) {
-                session()->flash('error', 'O cliente não possui telefone cadastrado.');
-                return redirect()->back();
-            }
-
-            // Filtrar apenas documentos pendentes
-            $pendingDocs = $processo->documents->where('status', 'pending');
-            
-            if ($pendingDocs->isEmpty()) {
-                session()->flash('warning', 'Não há documentos pendentes para solicitar.');
-                return redirect()->back();
-            }
-
-            $docsList = "";
-            foreach ($pendingDocs as $doc) {
-                $docsList .= "- " . $doc->name . "\n";
-            }
-
-            // 3. Carregar Template
-            $templateMsg = core()->getConfigData('lawfirm.whatsapp_templates.messages.documents_request');
-            if (empty($templateMsg)) {
-                $templateMsg = "Olá {cliente_nome}. Referente ao processo {processo_titulo}, por favor, nos envie os seguintes documentos pendentes:\n\n{documentos_pendentes}\n\nVocê pode enviá-los por aqui mesmo ou através do nosso portal: {link_portal}";
-            }
-
-            // 4. Substituir Variáveis
-            $portalLink = route('lawfirm.public.portal.index', [
-                'id' => $processo->id, 
-                'token' => hash_hmac('sha256', $processo->id, config('app.key'))
-            ]);
-
-            $msg = str_replace(
-                ['{cliente_nome}', '{processo_titulo}', '{documentos_pendentes}', '{link_portal}'],
-                [
-                    $processo->person->name,
-                    $processo->titulo ?? 'Processo',
-                    $docsList,
-                    $portalLink
-                ],
-                $templateMsg
-            );
-
-            // 5. Enviar via Service
-            $evolutionService = app(\SuiteZap\LawFirm\Whatsapp\Services\EvolutionService::class);
-            $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
-
-            if (!$config || empty($config['instance'])) {
-                session()->flash('warning', 'Mensagem não enviada. WhatsApp não está configurado para o escritório.');
+            if ($result['error']) {
+                session()->flash('error', $result['error']);
+            } elseif ($result['warning']) {
+                session()->flash('warning', $result['warning']);
             } else {
-                $evolutionService->sendMessage($config['instance'], $phone, $msg);
                 session()->flash('success', 'Solicitação de documentos pendentes enviada via WhatsApp!');
             }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Erro ao enviar solicitação de documentos: " . $e->getMessage());
-            session()->flash('error', 'Erro ao enviar mensagem: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Erro ao enviar solicitação de documentos: '.$e->getMessage());
+            session()->flash('error', 'Erro ao enviar mensagem: '.$e->getMessage());
         }
 
         return redirect()->back();

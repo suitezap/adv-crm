@@ -14,19 +14,19 @@ return new class extends Migration
     public function up()
     {
         Schema::table('escavador_monitoramentos', function (Blueprint $table) {
-            if (!Schema::hasColumn('escavador_monitoramentos', 'status')) {
+            if (! Schema::hasColumn('escavador_monitoramentos', 'status')) {
                 $table->string('status', 20)->default('ativo');          // ativo|pausado|expirado
             }
-            if (!Schema::hasColumn('escavador_monitoramentos', 'processo_id')) {
+            if (! Schema::hasColumn('escavador_monitoramentos', 'processo_id')) {
                 $table->unsignedBigInteger('processo_id')->nullable();   // FK → processos (opcional)
             }
-            if (!Schema::hasColumn('escavador_monitoramentos', 'custo_mensal')) {
+            if (! Schema::hasColumn('escavador_monitoramentos', 'custo_mensal')) {
                 $table->decimal('custo_mensal', 8, 2)->nullable();       // Custo R$/mês do Escavador
             }
-            if (!Schema::hasColumn('escavador_monitoramentos', 'nome_alvo')) {
+            if (! Schema::hasColumn('escavador_monitoramentos', 'nome_alvo')) {
                 $table->string('nome_alvo', 200)->nullable();            // Nome do monitorado legível
             }
-            if (!Schema::hasColumn('escavador_monitoramentos', 'ultima_notificacao_at')) {
+            if (! Schema::hasColumn('escavador_monitoramentos', 'ultima_notificacao_at')) {
                 $table->timestamp('ultima_notificacao_at')->nullable();
             }
         });

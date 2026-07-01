@@ -2,9 +2,8 @@
 
 namespace SuiteZap\LawFirm\SaaS\Http\Controllers\Admin;
 
-use Illuminate\Support\Facades\View;
-use Webkul\Admin\Http\Controllers\Controller;
 use SuiteZap\LawFirm\SaaS\Services\SaasStorageService;
+use Webkul\Admin\Http\Controllers\Controller;
 
 class SaasDashboardController extends Controller
 {
@@ -16,7 +15,6 @@ class SaasDashboardController extends Controller
     /**
      * Create a new controller instance.
      *
-     * @param SaasStorageService $storageService
      * @return void
      */
     public function __construct(SaasStorageService $storageService)
@@ -40,9 +38,9 @@ class SaasDashboardController extends Controller
 
         // Mock subscription data (can be expanded later with real billing integration)
         $subscription = [
-            'status' => 'Ativo', // Mock
-            'plan_name' => 'LawFirm Pro', // Mock
-            'expires_at' => now()->addMonths(6)->format('d/m/Y'), // Mock
+            'status'       => 'Ativo', // Mock
+            'plan_name'    => 'LawFirm Pro', // Mock
+            'expires_at'   => now()->addMonths(6)->format('d/m/Y'), // Mock
             'status_color' => 'success', // success, warning, danger
         ];
 

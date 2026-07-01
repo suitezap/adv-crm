@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\DB;
  *   - meta_data.checkout_url: https://asaas.com
  *   - api_key: chave de produção
  */
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         $exists = DB::connection('mothership')
@@ -22,7 +23,7 @@ return new class extends Migration {
             ->where('type', 'asaas')
             ->exists();
 
-        if (!$exists) {
+        if (! $exists) {
             DB::connection('mothership')
                 ->table('infrastructure_nodes')
                 ->insert([
@@ -30,7 +31,7 @@ return new class extends Migration {
                     'type'     => 'asaas',
                     'base_url' => 'https://api-sandbox.asaas.com',
                     // ⚠️ SUBSTITUIR PELA CHAVE REAL ANTES DE RODAR A MIGRATION
-                    'api_key'  => 'SUA_API_KEY_SANDBOX_AQUI',
+                    'api_key'   => 'SUA_API_KEY_SANDBOX_AQUI',
                     'meta_data' => json_encode([
                         'checkout_url' => 'https://sandbox.asaas.com',
                         'environment'  => 'sandbox',

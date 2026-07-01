@@ -2,15 +2,14 @@
 
 namespace SuiteZap\LawFirm\Legal\Http\Controllers;
 
-use Illuminate\Http\Request;
-use SuiteZap\LawFirm\Legal\DataGrids\PrazoDataGrid;
-use Webkul\Admin\Http\Controllers\Controller;
-use SuiteZap\LawFirm\Legal\Models\Prazo;
-use SuiteZap\LawFirm\Legal\Events\PrazoCreated;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-
+use SuiteZap\LawFirm\Legal\DataGrids\PrazoDataGrid;
+use SuiteZap\LawFirm\Legal\Events\PrazoCreated;
+use SuiteZap\LawFirm\Legal\Models\Prazo;
 use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
+use Webkul\Admin\Http\Controllers\Controller;
 
 class PrazoController extends Controller
 {
@@ -37,8 +36,9 @@ class PrazoController extends Controller
             $prazo = Prazo::with(['processo.person'])->findOrFail($id);
             $processo = $prazo->processo;
 
-            if (!$processo || !$processo->person) {
+            if (! $processo || ! $processo->person) {
                 session()->flash('error', 'Este prazo não tem um processo/pessoa vinculada.');
+
                 return redirect()->back();
             }
 
@@ -49,8 +49,9 @@ class PrazoController extends Controller
             $contactNumbers = collect($person->contact_numbers);
             $phoneData = $contactNumbers->first();
 
-            if (!$phoneData) {
+            if (! $phoneData) {
                 session()->flash('error', 'A pessoa vinculada não possui telefone cadastrado.');
+
                 return redirect()->back();
             }
 
@@ -60,6 +61,7 @@ class PrazoController extends Controller
             $template = core()->getConfigData('lawfirm.whatsapp_templates.messages.new_prazo_client');
             if (empty($template)) {
                 session()->flash('warning', 'Template de mensagem não configurado em Ajustes.');
+
                 return redirect()->back();
             }
 
@@ -72,21 +74,22 @@ class PrazoController extends Controller
 
             // 5. Enviar via Service
             $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
-            $instanceName = $config['instance'] ?? config('lawfirm.evolution.instance_name');
+            $instanceName = $config['instance'] ?? null;
 
             if (empty($instanceName)) {
                 Log::warning('Disparo de Prazo ignorado: Instância Evolution não configurada.');
                 session()->flash('warning', 'Mensagem não enviada: WhatsApp não configurado para seu escritório.');
+
                 return redirect()->back();
             }
 
             $this->evolutionService->sendMessage($instanceName, $phone, $msg);
 
-            session()->flash('success', 'Notificação enviada com sucesso para ' . $person->name);
+            session()->flash('success', 'Notificação enviada com sucesso para '.$person->name);
 
         } catch (\Exception $e) {
-            Log::error("Erro ao notificar prazo: " . $e->getMessage());
-            session()->flash('error', 'Erro ao enviar mensagem: ' . $e->getMessage());
+            Log::error('Erro ao notificar prazo: '.$e->getMessage());
+            session()->flash('error', 'Erro ao enviar mensagem: '.$e->getMessage());
         }
 
         return redirect()->back();
@@ -102,30 +105,31 @@ class PrazoController extends Controller
     {
         try {
             $prazo = Prazo::findOrFail($id);
-            $prazo->update(['notificar_whatsapp' => !$prazo->notificar_whatsapp]);
+            $prazo->update(['notificar_whatsapp' => ! $prazo->notificar_whatsapp]);
 
             $status = $prazo->notificar_whatsapp ? 'ativado' : 'desativado';
-            $msg    = "Robô Agendador {$status} para o prazo: {$prazo->titulo}";
+            $msg = "Robô Agendador {$status} para o prazo: {$prazo->titulo}";
 
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json([
-                    'success' => true,
-                    'message' => $msg,
+                    'success'            => true,
+                    'message'            => $msg,
                     'notificar_whatsapp' => $prazo->notificar_whatsapp,
                 ]);
             }
 
             session()->flash('success', $msg);
         } catch (\Exception $e) {
-            Log::error("Erro ao fazer toggle do prazo: " . $e->getMessage());
+            Log::error('Erro ao fazer toggle do prazo: '.$e->getMessage());
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
-            session()->flash('error', 'Erro ao alterar notificação: ' . $e->getMessage());
+            session()->flash('error', 'Erro ao alterar notificação: '.$e->getMessage());
         }
 
         return redirect()->back();
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -143,29 +147,28 @@ class PrazoController extends Controller
     /**
      * Store a newly created deadline in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
-        abort_if(!bouncer()->hasPermission('lawfirm.prazos.create'), 401, 'This action is unauthorized');
+        abort_if(! bouncer()->hasPermission('lawfirm.prazos.create'), 401, 'This action is unauthorized');
 
-        \Log::info("PrazoController: store method hit.");
+        \Log::info('PrazoController: store method hit.');
         $request->validate([
-            'processo_id' => 'required|exists:processos,id',
-            'titulo' => 'required|string|max:255',
+            'processo_id'     => 'required|exists:processos,id',
+            'titulo'          => 'required|string|max:255',
             'data_vencimento' => 'required|date',
-            'tipo' => 'required|in:prazo,tarefa',
-            'descricao' => 'nullable|string',
+            'tipo'            => 'required|in:prazo,tarefa',
+            'descricao'       => 'nullable|string',
         ]);
 
         $prazo = Prazo::create([
-            'processo_id' => $request->processo_id,
-            'titulo' => $request->titulo,
+            'processo_id'     => $request->processo_id,
+            'titulo'          => $request->titulo,
             'data_vencimento' => $request->data_vencimento,
-            'tipo' => $request->tipo,
-            'descricao' => $request->descricao,
-            'status' => 'pendente',
+            'tipo'            => $request->tipo,
+            'descricao'       => $request->descricao,
+            'status'          => 'pendente',
         ]);
 
         \Log::info("PrazoController: Disparando evento PrazoCreated para Prazo ID {$prazo->id}");
@@ -188,7 +191,7 @@ class PrazoController extends Controller
      */
     public function edit($id)
     {
-        abort_if(!bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
+        abort_if(! bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
 
         $prazo = Prazo::findOrFail($id);
 
@@ -198,31 +201,30 @@ class PrazoController extends Controller
     /**
      * Update the specified deadline in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, $id)
     {
-        abort_if(!bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
+        abort_if(! bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
 
         $prazo = Prazo::findOrFail($id);
 
         $request->validate([
-            'titulo' => 'required|string|max:255',
+            'titulo'          => 'required|string|max:255',
             'data_vencimento' => 'required|date',
-            'tipo' => 'required|in:prazo,tarefa',
-            'status' => 'required|in:pendente,concluido',
-            'descricao' => 'nullable|string',
+            'tipo'            => 'required|in:prazo,tarefa',
+            'status'          => 'required|in:pendente,concluido',
+            'descricao'       => 'nullable|string',
         ]);
 
         $prazo->update([
-            'titulo' => $request->titulo,
+            'titulo'          => $request->titulo,
             'data_vencimento' => $request->data_vencimento,
-            'tipo' => $request->tipo,
-            'status' => $request->status,
-            'descricao' => $request->descricao,
-            'concluido_em' => $request->status === 'concluido' && $prazo->getOriginal('status') !== 'concluido' ? Carbon::now() : ($request->status === 'pendente' ? null : $prazo->concluido_em),
+            'tipo'            => $request->tipo,
+            'status'          => $request->status,
+            'descricao'       => $request->descricao,
+            'concluido_em'    => $request->status === 'concluido' && $prazo->getOriginal('status') !== 'concluido' ? Carbon::now() : ($request->status === 'pendente' ? null : $prazo->concluido_em),
         ]);
 
         session()->flash('success', trans('lawfirm::app.processos.update-success'));
@@ -238,12 +240,12 @@ class PrazoController extends Controller
      */
     public function concluir($id)
     {
-        abort_if(!bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
+        abort_if(! bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
 
         $prazo = Prazo::findOrFail($id);
 
         $prazo->update([
-            'status' => 'concluido',
+            'status'       => 'concluido',
             'concluido_em' => Carbon::now(),
         ]);
 
@@ -260,7 +262,7 @@ class PrazoController extends Controller
      */
     public function destroy($id)
     {
-        abort_if(!bouncer()->hasPermission('lawfirm.prazos.delete'), 401, 'This action is unauthorized');
+        abort_if(! bouncer()->hasPermission('lawfirm.prazos.delete'), 401, 'This action is unauthorized');
 
         $prazo = Prazo::findOrFail($id);
 

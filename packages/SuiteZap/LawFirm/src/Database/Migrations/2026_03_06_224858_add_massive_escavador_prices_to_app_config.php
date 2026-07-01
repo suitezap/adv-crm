@@ -3,7 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration {
+return new class extends Migration
+{
     private array $newConfigs = [
         // NOVOS V1 (Síncronos)
         ['key' => 'escavador_price_pagina_diario', 'value' => '3.00', 'type' => 'decimal', 'group' => 'escavador', 'description' => 'Preço V1 Página do Diário'],

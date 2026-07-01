@@ -8,8 +8,6 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up(): void
     {
@@ -26,16 +24,14 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('processo_id')
-                  ->references('id')
-                  ->on('processos')
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on('processos')
+                ->onDelete('cascade');
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down(): void
     {

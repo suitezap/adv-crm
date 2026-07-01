@@ -55,11 +55,11 @@ Route::prefix('escavador')->controller(EscavadorController::class)->group(functi
     Route::post('servico', 'executarServico')->name('lawfirm.escavador.servico');
 
     // Certificados Digitais (V2) — sem débito de créditos SaaS
-    Route::get   ('certificados/config', 'viewCertificados')  ->name('lawfirm.escavador.certificados.view');
-    Route::get   ('certificados',      'listarCertificados')  ->name('lawfirm.escavador.certificados.index');
-    Route::post  ('certificados',      'cadastrarCertificado')->name('lawfirm.escavador.certificados.store');
-    Route::get   ('certificados/{id}', 'retornarCertificado') ->name('lawfirm.escavador.certificados.show');
-    Route::delete('certificados/{id}', 'removerCertificado')  ->name('lawfirm.escavador.certificados.destroy');
+    Route::get('certificados/config', 'viewCertificados')->name('lawfirm.escavador.certificados.view');
+    Route::get('certificados', 'listarCertificados')->name('lawfirm.escavador.certificados.index');
+    Route::post('certificados', 'cadastrarCertificado')->name('lawfirm.escavador.certificados.store');
+    Route::get('certificados/{id}', 'retornarCertificado')->name('lawfirm.escavador.certificados.show');
+    Route::delete('certificados/{id}', 'removerCertificado')->name('lawfirm.escavador.certificados.destroy');
 });
 // Histórico dos Assistentes Jurídicos
 Route::get('escavador/historico', [EscavadorHistoryController::class, 'index'])

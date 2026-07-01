@@ -16,51 +16,51 @@ class AuditorPppTemplateSeeder extends Seeder
 
         $variables = [
             [
-                'key' => 'periodo',
-                'label' => 'Período',
-                'type' => 'text',
+                'key'         => 'periodo',
+                'label'       => 'Período',
+                'type'        => 'text',
                 'placeholder' => 'Ex: 01/01/1990 a 31/12/1995',
             ],
             [
-                'key' => 'agente_nocivo',
-                'label' => 'Agente Nocivo',
-                'type' => 'text',
+                'key'         => 'agente_nocivo',
+                'label'       => 'Agente Nocivo',
+                'type'        => 'text',
                 'placeholder' => 'Ex: Ruído Químico, Calor',
             ],
             [
-                'key' => 'intensidade',
-                'label' => 'Intensidade / Concentração',
-                'type' => 'text',
+                'key'         => 'intensidade',
+                'label'       => 'Intensidade / Concentração',
+                'type'        => 'text',
                 'placeholder' => 'Ex: 85 dB(A)',
             ],
             [
-                'key' => 'epi',
-                'label' => 'EPI Eficaz (S/N)',
-                'type' => 'text',
+                'key'         => 'epi',
+                'label'       => 'EPI Eficaz (S/N)',
+                'type'        => 'text',
                 'placeholder' => 'Ex: Sim / Não',
             ],
             [
-                'key' => 'tenant_id',
-                'label' => 'Tenant ID',
-                'type' => 'hidden',
+                'key'         => 'tenant_id',
+                'label'       => 'Tenant ID',
+                'type'        => 'hidden',
                 'placeholder' => '',
-            ]
+            ],
         ];
 
         AssistantTemplate::updateOrCreate(
             ['slug' => 'auditor-ppp'],
             [
-                'tenant_id' => null,
-                'category' => 'processual',
-                'area' => 'Previdenciário',
-                'title' => 'Auditor de PPP',
-                'description' => 'Cruza dados do Perfil Profissiográfico Previdenciário com a legislação da época para verificar direito a tempo especial.',
-                'icon' => '👷',
+                'tenant_id'        => null,
+                'category'         => 'processual',
+                'area'             => 'Previdenciário',
+                'title'            => 'Auditor de PPP',
+                'description'      => 'Cruza dados do Perfil Profissiográfico Previdenciário com a legislação da época para verificar direito a tempo especial.',
+                'icon'             => '👷',
                 'prompt_structure' => $promptStructure,
-                'variables' => $variables,
-                'n8n_webhook_url' => 'ai-auditor-ppp',
-                'required_module' => 'IA-Previdenciario',
-                'is_active' => true,
+                'variables'        => $variables,
+                'n8n_webhook_url'  => 'ai-auditor-ppp',
+                'required_module'  => 'IA-Previdenciario',
+                'is_active'        => true,
             ]
         );
 

@@ -2,10 +2,9 @@
 
 namespace SuiteZap\LawFirm\AI\Http\Controllers\Admin;
 
-use Illuminate\Http\Request;
-use Webkul\Admin\Http\Controllers\Controller;
-use SuiteZap\LawFirm\AI\Models\AssistantHistory;
 use SuiteZap\LawFirm\AI\DataGrids\AssistantHistoryDataGrid;
+use SuiteZap\LawFirm\AI\Models\AssistantHistory;
+use Webkul\Admin\Http\Controllers\Controller;
 
 class AssistantHistoryController extends Controller
 {
@@ -26,7 +25,7 @@ class AssistantHistoryController extends Controller
     /**
      * Show details of a specific AI execution
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\View\View
      */
     public function show($id)
