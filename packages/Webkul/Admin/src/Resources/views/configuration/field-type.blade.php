@@ -6,7 +6,7 @@
     <v-configurable name="{{ $field->getNameField() }}" value="{{ $value }}" label="{{ trans($field->getTitle()) }}"
         info="{{ trans($field->getInfo()) }}" validations="{{ $field->getValidations() }}"
         is-require="{{ $field->isRequired() }}" depend-name="{{ $field->getDependFieldName() }}"
-        src="{{ $value ? Storage::url($value) : '' }}" field-data="{{ json_encode($field) }}"
+        src="{{ $value ? \SuiteZap\LawFirm\SaaS\Services\SaasFileService::getSignedUrl($value) : '' }}" field-data="{{ json_encode($field) }}"
         :tinymce="{{ json_encode($field->getTinymce()) }}">
         <div class="shimmer mb-1.5 h-5 w-24"></div>
 

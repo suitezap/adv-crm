@@ -85,8 +85,7 @@
             "Webkul\\Warehouse\\": "packages/Webkul/Warehouse/src",
             "Webkul\\WebForm\\": "packages/Webkul/WebForm/src",
             "Webkul\\Automation\\": "packages/Webkul/Automation/src",
-            "SuiteZap\\LawFirm\\": "packages/SuiteZap/LawFirm/src",
-            "SuiteZap\\Whaticket\\": "packages/SuiteZap/Whaticket/src"
+            "SuiteZap\\LawFirm\\": "packages/SuiteZap/LawFirm/src"
         }
     },
     "autoload-dev": {

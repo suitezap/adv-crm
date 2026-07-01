@@ -122,6 +122,7 @@
                 <x-admin::tinymce
                     :selector="'textarea#' . ($attributes->get('id') ?? $attributes->get(':id'))"
                     ::field="field"
+                    :hide-placeholders="$attributes->get('hide-placeholders') ?? $attributes->get(':hide-placeholders') ?? 'false'"
                 />
             @endif
         </v-field>

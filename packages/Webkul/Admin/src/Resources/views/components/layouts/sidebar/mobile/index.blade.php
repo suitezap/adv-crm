@@ -20,7 +20,7 @@
                 @if ($logo = core()->getConfigData('general.design.admin_logo.logo_image'))
                     <img
                         class="h-10"
-                        src="{{ Storage::url($logo) }}"
+                        src="{{ \SuiteZap\LawFirm\SaaS\Services\SaasFileService::getSignedUrl($logo) }}"
                         alt="{{ config('app.name') }}"
                     />
                 @else

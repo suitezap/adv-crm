@@ -49,14 +49,14 @@ class TinyMCEController extends Controller
 
         $filename = md5($file->getClientOriginalName().time()).'.'.$file->getClientOriginalExtension();
 
-        $path = $file->storeAs($this->storagePath, $filename);
+        $path = $file->storeAs($this->storagePath, $filename, 'public');
 
-        $this->sanitizeSVG($path, $file);
+        $this->sanitizeSVG($path, $file, 'public');
 
         return [
             'file'      => $path,
             'file_name' => $file->getClientOriginalName(),
-            'file_url'  => Storage::url($path),
+            'file_url'  => Storage::disk('public')->url($path),
         ];
     }
 }

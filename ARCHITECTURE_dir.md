@@ -1,4 +1,4 @@
-# 📂 LawFirm CRM - Arquitetura de Diretórios e Telas (UI) - Krayin v2.1.6 / LF v3.52.0
+# 📂 LawFirm CRM - Arquitetura de Diretórios e Telas (UI) - Krayin v2.1.6 / LF v3.54.1
 
 Este documento mapeia visualmente a estrutura de pastas do pacote **SuiteZap/LawFirm** (baseado na arquitetura Domain-Driven Design - DDD) e detalha quais telas (Views) são entregues à interface do usuário.
 
@@ -11,6 +11,7 @@ Desde a versão v3.18, o pacote possui **Dívida Técnica Zero** na raiz. Desde 
 ```text
 packages/SuiteZap/LawFirm/src/
 ├── AI/                 # Domínio: Inteligência Artificial (Assistentes, Prompts, Triagem)
+├── Atendimento/        # Domínio: Atendimento via Chatwoot (canal centralizado — v3.53.0)
 ├── Config/             # Configurações estáticas do pacote
 ├── Console/            # Comandos Artisan/CLI do módulo
 ├── Contracts/          # Interfaces (ex: Repository patterns)
@@ -346,4 +347,291 @@ A renderização ocorre **client-side** via `marked.js` (já integrado na view `
     *   Editor interativo `textarea` que permite ao advogado revisar e fazer alterações manuais de última hora antes de exportar.
     *   Botão "Copiar Texto" dinâmico (integrado à API de Clipboard) com feedback visual de sucesso temporário.
     *   Função de impressão inteligente formatada especificamente para folhas A4 via CSS `@media print`, ocultando elementos de interface e barras laterais do CRM Krayin.
+
+---
+
+## 11. Atualizações de UI — v3.52.2
+
+### 11.1 Resiliência de Visualização com Storage S3 Privado
+
+*   **Contexto:** Garantir que o upload de logotipos, imagens de faturamento e exibição de fotos de cabeçalho funcione perfeitamente com buckets privados S3/MinIO sem expor dados sensíveis do tenant.
+*   **Views Blade Modificadas:**
+    *   `views/configuration/field-type.blade.php`: O resolvedor do preview de imagem do tipo `image` ou `file` foi atualizado para carregar a URL temporária assinada gerada pelo `SaasFileService::getSignedUrl()`.
+    *   `views/layouts/header/index.blade.php` e `views/layouts/sidebar/mobile/index.blade.php`: As chamadas de renderização da logo do escritório foram refatoradas para evitar `Storage::url()` e utilizar o método `getSignedUrl()` do `SaasFileService`.
+*   **Resultados na UI:**
+    *   O logotipo configurado do escritório agora é exibido corretamente no Header e no menu lateral sem quebrar a imagem ou retornar erros `403 AccessDenied`.
+    *   A visualização/download de anexos e recibos do financeiro operam de forma isolada, gerando assinaturas temporárias válidas por 60 minutos.
+
+---
+
+## 12. Atualizações de UI — v3.52.3
+
+    ListaIA --> ChatIA[Chatbot Especialista]
+    
+    Servicos -->|/admin/juridico/whatsapp| TelaZap[Conectar WhatsApp (QR Code)]
+
+    %% Detalhamento: SaaS e Billing
+    Configuracoes -->|/admin/juridico/assinatura| SaasDash[Gestão de Assinatura]
+    SaasDash --> CheckoutPlan[Modal Pagamento Assinatura]
+    SaasDash --> CheckoutCredit[Modal Compra Créditos IA]
+    SaasDash -->|/admin/juridico/orders| OrdersDash[Meus Pedidos e Faturas]
+    SaasDash -->|/admin/juridico/billing-info| BillingInfo[Dados de Faturamento PF/PJ]
+    
+    %% Estilização
+    style FichaProcesso fill:#2a9d8f,stroke:#fff,stroke-width:2px,color:#fff
+    style AbaFinanceira fill:#e9c46a,color:#000
+    style AbaDocumentos fill:#e9c46a,color:#000
+    style CobrancaZap fill:#25D366,color:#fff
+    style GerarPeca fill:#8338ec,color:#fff
+```
+
+## 5. Detalhamento de Rotas e URLs (Endpoints de UI)
+
+Para suporte ao desenvolvimento e *debugging*, esta é a taxonomia padrão das URLs apresentadas no Front-End:
+
+| Domínio / Módulo | Base URL (Endpoint Front-End) | Descrição da Tela / View Blade |
+| :--- | :--- | :--- |
+| **Legal** | `/admin/juridico/kanban` | Quadro Kanban interativo para gestão ágil dos Casos (Drag & Drop via Vanilla JS). |
+| **Legal** | `/admin/juridico/casos` | Lista global de casos (DataGrid Vue/Krayin). |
+| **Legal** | `/admin/juridico/casos/create` | Formulário para registrar novo caso. |
+| **Legal** | `/admin/juridico/casos/{id}/edit` | Hub central (Ficha do Caso) com processos vinculados. |
+| **Legal** | `/admin/juridico/processos` | Lista global de processos (DataGrid Vue/Krayin). |
+| **Legal** | `/admin/juridico/processos/create` | Formulário para registrar novo processo. |
+| **Legal** | `/admin/juridico/processos/{id}/edit` | Hub central (Ficha do Processo) carregando os módulos *GED*, *Financial*, e *Checklist* via ajax/tabs. |
+| **Legal** | `/admin/juridico/prazos` | Quadro global visualizando todos os prazos ordenados por urgência. |
+| **Legal** | `/admin/juridico/agenda` | Agenda Jurídica unificada (FullCalendar Vanilla JS). Combina Atividades do Krayin e Prazos LawFirm. Suporta `?clean=true` para renderização em modo Modal/Window. |
+| **Escavador** | `/admin/juridico/escavador/termos` | Configuração de monitoramentos de Nome e OAB. |
+| **Escavador** | `/admin/juridico/escavador/historico` | Timeline diária das publicações capturadas nos Diários Oficiais. |
+| **AI (Assistentes)** | `/admin/juridico/assistants` | Vitrine de Assistentes e Agentes configurados pelo Mothership Panel. |
+| **AI (Assistentes)** | `/admin/juridico/assistants/{slug}` | Tela do Chatbot para usar prompts contextuais (ex: Resumo de Sentença). |
+| **DataJud** | `/admin/juridico/datajud` | Consulta pública CNJ (número CNJ, classe+órgão, paginação). |
+| **SaaS** | `/admin/juridico/assinatura` | Gestão do Tenant: Planos, limites de S3, saldo bancário Asaas e consumo de IA. |
+| **SaaS** | `/admin/juridico/orders` | Tabela (DataGrid) exibindo o histórico de pedidos (Orders) e status de pagamento do usuário. |
+| **SaaS** | `/admin/juridico/billing-info` | Dados de Faturamento: Formulário PF/PJ com campos individuais `cpf`/`cnpj`/`company_name`. Toggle dinâmico de tipo de pessoa. |
+| **Whatsapp** | `/admin/juridico/whatsapp` | Status da Evolution API e espelhamento de QR Code para o smartphone do advogado. |
+| **TenantFinance** | `/admin/juridico/cobrancas` | Grid de listagem (`TenantInvoiceDataGrid`) das cobranças emitidas pelo escritório para seus clientes finais. |
+| **TenantFinance** | `/admin/juridico/cobrancas/settings` | Formulário encapsulado nativamente em `Configurações > Jurídico > Cobranças Asaas` com a API Key V3 configurada (Add-on). |
+| **Legal** | `/admin/juridico/modelos-documentos` | Tela para o CRUD e gerenciamento de Modelos de Documentos do escritório. |
+| **Legal** | `/admin/juridico/processos/{processoId}/modelos` | Aba e renderizador dinâmico de modelos de documentos específicos do processo. |
+
+> Todas estas rotas são agrupadas sob os middlewares `['web', 'admin_locale', 'user']` do Krayin (garantindo que apenas usuários autenticados daquele Tenant específico tenham acesso).
+
+---
+
+## 6.6 Chamadas de Rotas Laravel no JavaScript (REPLACE_ID Pattern)
+No Laravel 10/11 (Krayin v2.x), gerar rotas em views Blade passando parâmetros dinâmicos vazios (`route('admin.name', '')`) em funções JavaScript **lança uma exceção fatal (`UrlGenerationException`)** durante a compilação da tela, resultando em um **Erro 500 total**.
+
+**Solução Padrão (REPLACE_ID):**
+Nunca deixe parâmetros obrigatórios de rota vazios no compilador Blade quando for utilizar Javascript em seguida. Use um placeholder seguro em caixa alta (ex: `REPLACE_ID`) e substitua via String nativo antes de realizar o fetch.
+
+**❌ PROIBIDO (Gera Erro 500 no Back-end):**
+```javascript
+const response = await fetch("{{ route('admin.api.action', '') }}/" + jsId);
+```
+
+**✅ OBRIGATÓRIO (REPLACE_ID):**
+```javascript
+const baseRoute = "{{ route('admin.api.action', 'REPLACE_ID') }}";
+const finalUrl = baseRoute.replace('REPLACE_ID', jsId);
+const response = await fetch(finalUrl);
+```
+
+## 6.7 Hidratação de Componentes Vanilla JS (Evitando Blade Runtime Crash)
+Ao iterar dezenas de itens no Blade (ex: quadros Kanban) que requerem dados extensos em JSON para tooltips ou modais Vanilla JS, o uso iterativo do `@pushOnce` ou injeção pesada em atributos HTML (`data-payload="{{ json_encode(...) }}"`) causa vazamentos e corrompimento na compilação do Blade ("startPush Null Pointers").
+
+**✅ OBRIGATÓRIO (Global Hash Map):**
+Toda hidratação massiva deve ser computada como Hash Map Associativo no Controller, transferida via var única e registrada explicitamente como `<script> window.__GLOBAL_MAP_{context} = {!! $json !!}; </script>` no fim do layout HTML da View. O FrontEnd deve resgatar os dados utilizando `window.map[data-id]`.
+
+*Gerado pela auditoria de mapeamento em Maio/2026 (v3.46.0 - Kanban e Pipelines Consolidados).*
+
+---
+
+## 7. Regras de Exibição de SuiteCoins (Ƶ) — Referência Rápida
+
+> [!IMPORTANT]
+> Documentação completa e canônica em **`ARCHITECTURE.md` — Seção 4.69**.
+> Esta seção é um resumo executivo para consulta rápida durante o desenvolvimento de UI.
+
+### Fórmula Padrão (todos os serviços)
+```
+Ƶ_exibido = preço_BRL_bruto × 10 × 1.25
+```
+Aplicável a: cards do Escavador, DataJud, Monitoramentos, Assistentes Jurídicos.
+
+**JavaScript:** `var pZ = p * 10 * 1.25;`
+
+### ⚠️ Exceção — Painel "Minha Assinatura" (`subscription/index.blade.php`)
+```
+Ƶ_exibido = suitecoin_balance_BRL × 10   ← sem markup
+```
+**Motivação:** Se o usuário pagou R$ 10,00, deve ver **Ƶ 100,00** — nunca menos. O markup de 25% é recuperado nos serviços. Aplicar o markup aqui causaria sensação de perda de créditos no ato da compra.
+
+**Onde se aplica:**
+- `subscription/index.blade.php` → usa `SuiteCoinService::toVirtual($brl)` (apenas ×10)
+- endpoint `lawfirm.escavador.saldo_cliente` → retorna `suitecoin_balance` em BRL + `suitecoin_rate = 10`
+- `loadBalance()` JS no `escavador/index.blade.php` → aplica apenas `× suitecoin_rate`
+
+### Tabela de Referência de Conversão
+
+| Contexto | Fórmula | Resultado (base R$ 10,00 no banco) |
+|:---|:---|:---|
+| Saldo "Minha Assinatura" | `10 × 10` | **Ƶ 100,00** |
+| Consulta OAB V2 (R$ 4,50 bruto) | `4.50 × 10 × 1.25` | Exibe **Ƶ 56,25**, debita R$ 5,625 |
+| Monitoramento Diário (R$ 1,76 bruto) | `1.76 × 10 × 1.25` | Exibe **Ƶ 22,00/mês** |
+| Monitoramento Semanal (R$ 0,85 bruto) | `0.85 × 10 × 1.25` | Exibe **Ƶ 10,63/mês** |
+| Monitoramento Mensal (R$ 0,45 bruto) | `0.45 × 10 × 1.25` | Exibe **Ƶ 5,63/mês** |
+
+---
+
+## 8. Padronização de Renderização Markdown nos Assistentes de IA (v3.50.0)
+
+> [!IMPORTANT]
+> Documentação completa em **`ARCHITECTURE.md` — Seção 4.70**.
+
+Todos os assistentes de IA do CRM **devem** renderizar suas respostas em Markdown. Os prompts de sistema de cada assistente incluem a instrução `SEMPRE formate sua resposta usando Markdown`. Esta padronização garante:
+
+- Cabeçalhos hierárquicos (`##`, `###`) para estruturar análises
+- Listas ordenadas/não-ordenadas para enumerações jurídicas
+- **Negrito** para termos técnicos e valores financeiros
+- Blocos de código para transcrições e excertos processuais
+
+### Assistentes com Renderização Markdown Obrigatória
+
+| Assistente (Slug) | Arquivo de Prompt | Tipo de Resposta |
+|:---|:---|:---|
+| `qualificacao_juridica` | Template via Mothership | Análise estruturada com seções |
+| `sugestao_proposta` | Template via Mothership | Lista de itens e valores |
+| `analise_viabilidade` | Template via Mothership | Relatório com cabeçalhos |
+| `negociacao_conversao` | Template via Mothership | Estratégia em tópicos |
+
+### Princípio de Renderização (Frontend)
+A renderização ocorre **client-side** via `marked.js` (já integrado na view `admin/assistants/index.blade.php`). O servidor retorna o texto bruto do assistente; o JS converte para HTML seguro com `DOMPurify` antes de injetar no DOM.
+
+---
+
+## 9. Atualizações de UI — v3.51.0
+
+### 9.1 Compactação de Labels na Navigation Filter Bar (Processos)
+
+*   **Contexto:** Aprimoramento UX nas telas `show` e `edit` de Processos (`admin/juridico/processos/{id}`).
+*   **Problema Resolvido:** Em viewports < 1440px (notebooks), os rótulos longos da barra de filtros causavam quebra de linha e sobreposição visual sobre os ícones de navegação.
+*   **Arquivos Modificados:**
+
+| Arquivo | Label Anterior | Label Atual |
+|:---|:---|:---|
+| `views/admin/processos/show.blade.php` | `Documentos e Anexos` | `Docs e Anexos` |
+| `views/admin/processos/show.blade.php` | `Modelos de Docs` | `Model. Docs` |
+| `views/admin/processos/edit.blade.php` | `Documentos e Anexos` | `Docs e Anexos` |
+| `views/admin/processos/edit.blade.php` | `Modelos de Docs` | `Model. Docs` |
+
+*   **Impacto:** Zero — alteração puramente cosmética de strings de texto em Blade. Nenhuma lógica PHP, rota, serviço ou regra de negócio foi modificada. As IDs dos `lf-section` targets permanecem inalteradas.
+
+---
+
+## 10. Atualizações de UI — v3.52.0
+
+### 10.1 Gestão e Renderização de Modelos de Documentos Dinâmicos
+
+*   **Contexto:** Inclusão de aba para uso e edição dinâmica de templates de documentos pré-preenchidos.
+*   **Novas Views Blade Criadas:**
+    *   `views/Legal/modelos/index.blade.php`: Listagem e gerenciamento (CRUD) de templates de documentos do escritório.
+    *   `views/Legal/modelos/create.blade.php` e `views/Legal/modelos/edit.blade.php`: Telas de criação/edição contendo campos para título, tipo, área do direito, conteúdo (com suporte a tags/variáveis) e descrição.
+    *   `views/Legal/processos/tabs/modelos-tab.blade.php`: Aba renderizada no painel do processo, listando os modelos ativos e compatíveis com a área do direito do caso.
+*   **Features de UI (A4 Document Previewer Modal):**
+    *   Um modal estilizado foi construído para apresentar o documento em formato de folha A4 com fundo contrastante.
+    *   Editor interativo `textarea` que permite ao advogado revisar e fazer alterações manuais de última hora antes de exportar.
+    *   Botão "Copiar Texto" dinâmico (integrado à API de Clipboard) com feedback visual de sucesso temporário.
+    *   Função de impressão inteligente formatada especificamente para folhas A4 via CSS `@media print`, ocultando elementos de interface e barras laterais do CRM Krayin.
+
+---
+
+## 11. Atualizações de UI — v3.52.2
+
+### 11.1 Resiliência de Visualização com Storage S3 Privado
+
+*   **Contexto:** Garantir que o upload de logotipos, imagens de faturamento e exibição de fotos de cabeçalho funcione perfeitamente com buckets privados S3/MinIO sem expor dados sensíveis do tenant.
+*   **Views Blade Modificadas:**
+    *   `views/configuration/field-type.blade.php`: O resolvedor do preview de imagem do tipo `image` ou `file` foi atualizado para carregar a URL temporária assinada gerada pelo `SaasFileService::getSignedUrl()`.
+    *   `views/layouts/header/index.blade.php` e `views/layouts/sidebar/mobile/index.blade.php`: As chamadas de renderização da logo do escritório foram refatoradas para evitar `Storage::url()` e utilizar o método `getSignedUrl()` do `SaasFileService`.
+*   **Resultados na UI:**
+    *   O logotipo configurado do escritório agora é exibido corretamente no Header e no menu lateral sem quebrar a imagem ou retornar erros `403 AccessDenied`.
+    *   A visualização/download de anexos e recibos do financeiro operam de forma isolada, gerando assinaturas temporárias válidas por 60 minutos.
+
+---
+
+## 12. Atualizações de UI — v3.52.3
+
+### 12.1 Resiliência do Filtro de Modelos & Gestão de Layouts Locais
+
+*   **Contexto:** Garantir que as interações JavaScript para pesquisa e seleção de modelos permaneçam ativas na Ficha do Processo, mesmo após atualizações dinâmicas do DOM promovidas pelo Vue.js ou Livewire, além de restabelecer o gerenciamento dos layouts de cabeçalho e rodapé.
+*   **Modificações de Componentes de UI:**
+    *   `views/Legal/processos/tabs/modelos-tab.blade.php`: O script do componente foi convertido para delegação de eventos global. Listeners para ações como `input` (pesquisa/filtro), `click` (seleção de opção), `focus` (abrir dropdown), `mousedown` (fechar ao clicar fora) e `keydown` (navegação por setas e ESC) agora escutam no objeto `document`, contornando problemas onde o Vue apagava listeners atrelados diretamente a elementos recriados.
+    *   `views/Legal/modelos/index.blade.php`: Corrigida a listagem "Meus Modelos Locais" para não sobrescrever a variável `$localTemplates` com a coleção de templates de documentos ativos. Com isso, os registros de layouts locais (`is_layout = true`), tais como o Cabeçalho Padrão e o Rodapé Padrão, voltaram a ser renderizados na tabela de gerenciamento com seus respectivos botões para edição.
+    *   **Atualização do Cabeçalho Padrão:** O HTML do layout padrão do cabeçalho de documentos gerado por `DocumentTemplateController::createDefaultLayout` foi atualizado para uma tabela sem bordas, com altura definida, contendo a logomarca corporativa hospedada no S3 e o nome do escritório (`{{escritorio_nome}}`).
+
+---
+
+## 13. Atualizações de UI — v3.52.4
+
+### 13.1 Campo Chave Secreta em Informações Básicas (Processos)
+
+*   **Contexto:** Inclusão do campo `sercreta` nas visualizações de criação e edição de processos para dar transparência ao código numérico utilizado pelos assistentes de IA na identificação de canais de comunicação com clientes.
+*   **Views Modificadas:**
+    *   `views/admin/processos/create.blade.php`: Inserido o campo de entrada para Chave Secreta (IA) dentro do card "Iniciando Processo".
+    *   `views/admin/processos/edit.blade.php`: Inserido o campo de entrada sob a seção "Informações Básicas".
+*   **Comportamento:** O campo é gerado automaticamente pelo observer do model se for deixado em branco, mas permite que o usuário o edite ou especifique uma chave personalizada de até 7 dígitos.
+
+---
+
+## 14. Atualizações de Backend — v3.54.0
+
+### 14.1 Sincronização Automática de Labels Chatwoot via Kanban
+
+*   **Contexto:** Integração bidirecional entre os Kanbans do CRM (Leads e Jurídico) e o Chatwoot, sincronizando labels de estágio automaticamente sempre que um card é movido.
+*   **Fluxo:** Totalmente assíncrono via `ShouldQueue` — o HTTP response nunca é bloqueado.
+
+#### Novos Arquivos no Domínio `Legal/`
+
+| Tipo | Arquivo | Responsabilidade |
+|:---|:---|:---|
+| **Event** | `Legal/Events/CasoStageUpdated.php` | Evento tipado disparado por `LegalPipelineService::moveCaseToStage()` após o commit da transaction. Carrega o `Caso` atualizado via `readonly` property. |
+| **Listener** | `Legal/Listeners/SyncLeadStageToChatwootListener.php` | Escuta `lead.update.after`. Mapeia `$lead->stage->code` → label Chatwoot via `STAGE_LABEL_MAP` estático. Extrai telefone de `$person->contact_numbers` (JSON array). Chama `ChatwootService::findOrCreateContact()` + `syncContactLabels()`. |
+| **Listener** | `Legal/Listeners/SyncCasoStageToChatwootListener.php` | Escuta `CasoStageUpdated`. Mapeia `Str::slug($caso->stage->name)` → label via mapa com 12 stages jurídicos. Lógica idêntica ao Listener de Leads. |
+
+#### Arquivos do Domínio `Atendimento/` Modificados
+
+| Arquivo | Mudança |
+|:---|:---|
+| `Atendimento/Services/ChatwootService.php` | +4 métodos: `createContact()`, `findOrCreateContact()`, `getContactConversations()`, `syncContactLabels()` |
+
+#### Arquivos de Domínios Adjacentes Modificados
+
+| Arquivo | Mudança |
+|:---|:---|
+| `Legal/Services/LegalPipelineService.php` | `moveCaseToStage()` refatorado — result da `DB::transaction` capturado em `$updatedCaso`; `Event::dispatch(new CasoStageUpdated($updatedCaso))` disparado pós-commit |
+| `Providers/EventServiceProvider.php` | `CasoStageUpdated → SyncCasoStageToChatwootListener` adicionado ao `$listen` |
+| `Providers/LawFirmServiceProvider.php` | `SyncLeadStageToChatwootListener` registrado em `lead.update.after` (L270); `VERSION` bumped para `3.54.0` |
+
+#### Notas Críticas de Implementação
+
+*   **`contact_numbers` é JSON array**, não relação Eloquent. Acesso: `$person->contact_numbers[0]['value']` (cast `array` no model `Person`).
+*   **`emails` também é JSON array** no `Person` model. Acesso: `$person->emails[0]['value'] ?? null`.
+*   **Stage do Lead** mapeado por `code` (`new`, `follow-up`, `prospect`, `negotiation`, `won`, `lost`).
+*   **Stage do Caso** mapeado por `Str::slug($stage->name)` — locale-independente, compatível com nomes PT-BR acentuados.
+*   **`tries = 1`** em ambos os Listeners — sem retentativas para evitar flood na API do Chatwoot.
+*   **Degradação graciosa**: `MotherShipService::getChatwootConfig() === null` → `Log::info` + `return` — nunca `throw`.
+
+---
+
+## 15. Atualizações de Backend — v3.54.1
+
+### 15.1 Separação de Account ID e Inbox ID no Chatwoot
+
+*   **Contexto:** Correção conceitual e estrutural da integração Chatwoot. Anteriormente, a coluna `chatwoot_inbox_id` era utilizada para armazenar tanto o ID da Conta quanto o ID do Inbox, gerando colisões de validação nos Webhooks e falha na API de criação de contato.
+*   **Banco de Dados (Conexão `mothership`):**
+    *   Nova migration: `2026_07_01_000001_add_chatwoot_channel_inbox_id_to_tenants.php`.
+    *   Coluna criada: `chatwoot_channel_inbox_id INT UNSIGNED NULL`.
+*   **Modificações de Componentes de Backend:**
+    *   `SaaS/Models/Tenant.php`: Adicionados os campos `chatwoot_node_id`, `chatwoot_inbox_id`, `chatwoot_channel_inbox_id`, e `chatwoot_webhook_token` ao array `$fillable` para permitir mass-assignment seguro. Implementada a relação `chatwootNode()`.
+    *   `SaaS/Services/MotherShipService.php`: Método `getChatwootConfig()` ajustado para mapear `inbox_id` a partir da coluna `chatwoot_channel_inbox_id` (real ID da caixa de entrada) e mapear `account_id` a partir da coluna legada `chatwoot_inbox_id` ou via metadados do nó.
 

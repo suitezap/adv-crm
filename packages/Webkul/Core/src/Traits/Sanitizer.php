@@ -17,14 +17,16 @@ trait Sanitizer
     /**
      * Sanitize an SVG file to remove potentially malicious content.
      */
-    public function sanitizeSvg(string $path, UploadedFile $file): void
+    public function sanitizeSvg(string $path, UploadedFile $file, string $disk = null): void
     {
         if (! $this->isSvgFile($file)) {
             return;
         }
 
+        $storage = $disk ? Storage::disk($disk) : Storage::drive();
+
         try {
-            $svgContent = Storage::get($path);
+            $svgContent = $storage->get($path);
 
             if (! $svgContent) {
                 return;
@@ -56,18 +58,18 @@ trait Sanitizer
                     $sanitizedContent = preg_replace($pattern, '', $sanitizedContent);
                 }
 
-                Storage::put($path, $sanitizedContent);
+                $storage->put($path, $sanitizedContent);
 
                 return;
             }
 
             $sanitizedContent = preg_replace('/(<script.*?>.*?<\/script>)|(\son\w+\s*=\s*["\'][^"\']*["\'])/is', '', $sanitizedContent);
 
-            Storage::put($path, $sanitizedContent);
+            $storage->put($path, $sanitizedContent);
         } catch (Exception $e) {
             report($e->getMessage());
 
-            Storage::delete($path);
+            $storage->delete($path);
         }
     }
 

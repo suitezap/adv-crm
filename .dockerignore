@@ -2,6 +2,8 @@
 .env
 node_modules
 vendor
+.agents
+.gemini
 storage/logs/*.log
 !storage/app/public
 ! .env.example
