@@ -122,6 +122,53 @@ class ChatwootService
         }
     }
 
+    /**
+     * Sends a text message to a Chatwoot conversation from the AI Assistant.
+     * Uses assistant_inbox_id if available, otherwise falls back to inbox_id.
+     *
+     * @param  int  $conversationId  Chatwoot conversation ID
+     * @param  string  $message  Text content to send
+     */
+    public function sendAssistantMessage(int $conversationId, string $message): bool
+    {
+        try {
+            $inboxId = $this->config['assistant_inbox_id'] ?? null;
+            if ($inboxId === null) {
+                Log::warning('[ChatwootService] assistant_inbox_id não configurado para este tenant — usando inbox_id como fallback.', [
+                    'fallback_inbox_id' => $this->config['inbox_id'] ?? null,
+                ]);
+                $inboxId = $this->config['inbox_id'] ?? null;
+            }
+
+            $url = $this->accountUrl("conversations/{$conversationId}/messages");
+
+            $response = Http::timeout(10)
+                ->withHeaders($this->botHeaders())
+                ->post($url, [
+                    'content'      => $message,
+                    'message_type' => 'outgoing',
+                    'private'      => false,
+                    'inbox_id'     => $inboxId,
+                ]);
+
+            if (! $response->successful()) {
+                Log::warning('[ChatwootService] sendAssistantMessage falhou.', [
+                    'conversation_id' => $conversationId,
+                    'status'          => $response->status(),
+                    'body'            => $response->body(),
+                ]);
+
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('[ChatwootService] sendAssistantMessage exception: '.$e->getMessage());
+
+            return false;
+        }
+    }
+
     // =========================================================================
     // Labels (Management — User Access Token required)
     // =========================================================================
@@ -379,9 +426,9 @@ class ChatwootService
         return isset($this->config['inbox_id']) ? (int) $this->config['inbox_id'] : null;
     }
 
-    /** Returns the webhook_token used to validate X-Chatwoot-Signature. */
+    /** Returns the access_token used to validate X-Chatwoot-Signature and management API calls. */
     public function getWebhookToken(): ?string
     {
-        return $this->config['webhook_token'] ?? null;
+        return $this->config['access_token'] ?? null;
     }
 }

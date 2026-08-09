@@ -48,6 +48,29 @@ class MotherShipService
     }
 
     /**
+     * Verifica se um módulo específico está ativo na assinatura do tenant atual.
+     *
+     * Uso recomendado nos middlewares de módulo (CheckWhatsappModule, etc.)
+     * e em qualquer Blade/Controller que precise fazer um gate de funcionalidade.
+     *
+     * @param  string  $module  Chave exata do módulo (ex: 'WHATSAPP', 'WhatsApp_Triagem', 'TENANT_FINANCE')
+     */
+    public static function isModuleActive(string $module): bool
+    {
+        $subscription = self::getCurrentSubscription();
+
+        if (! $subscription) {
+            return false;
+        }
+
+        $activeModules = is_array($subscription->active_modules)
+            ? $subscription->active_modules
+            : json_decode($subscription->active_modules ?? '[]', true);
+
+        return in_array($module, $activeModules, true);
+    }
+
+    /**
      * Verifica se pode ativar/criar novos usuários ativos.
      * Limit 0 ou null = sem limite (ilimitado).
      */
@@ -166,8 +189,10 @@ class MotherShipService
     /**
      * Retorna a configuração da Evolution API para o Tenant atual.
      * Prioriza o banco de dados MotherShip. Retorna null se não configurado.
+     * 
+     * @param string $type 'default' ou 'atendimento'
      */
-    public static function getEvolutionConfig()
+    public static function getEvolutionConfig(string $type = 'default')
     {
         // 1. Pega configs do Tenant (incluindo chaves e IDs de nós)
         $tenantConfig = self::getTenantConfig();
@@ -187,9 +212,18 @@ class MotherShipService
             return null;
         }
 
+        $instanceName = $tenantConfig->evolution_instance_name;
+        if ($type === 'atendimento') {
+            // Prioriza o nome explicitamente configurado no MotherShip.
+            // Fallback: sufixo _atendimento para compatibilidade com tenants legados.
+            $instanceName = !empty($tenantConfig->evolution_assistente_name)
+                ? $tenantConfig->evolution_assistente_name
+                : $instanceName . '_atendimento';
+        }
+
         return [
             'base_url' => rtrim($node->base_url, '/'),
-            'instance' => $tenantConfig->evolution_instance_name,
+            'instance' => $instanceName,
             'token'    => $tenantConfig->evolution_api_key ?: $node->api_key,
         ];
     }
@@ -471,7 +505,7 @@ class MotherShipService
      *   - tenants.chatwoot_inbox_id         → account_id (ID numérico da CONTA Chatwoot)
      *   - tenants.chatwoot_channel_inbox_id → inbox_id   (ID da CAIXA DE ENTRADA do tenant)
      *
-     * @return array|null Keys: base_url, api_key, account_id, inbox_id, access_token, webhook_token
+     * @return array|null Keys: base_url, api_key, account_id, inbox_id, assistant_inbox_id, access_token
      */
     public static function getChatwootConfig(): ?array
     {
@@ -499,12 +533,12 @@ class MotherShipService
             : (json_decode($node->meta_data, true) ?? []);
 
         return [
-            'base_url'      => rtrim($node->base_url, '/'),
-            'api_key'       => $node->api_key,                                       // Bot token
-            'account_id'    => $meta['account_id'] ?? $tenantConfig->chatwoot_inbox_id ?? null, // ID da conta Chatwoot
-            'inbox_id'      => $tenantConfig->chatwoot_channel_inbox_id ?? null,     // ID da caixa de entrada (CORRIGIDO)
-            'access_token'  => $tenantConfig->chatwoot_webhook_token ?? null,        // User Access Token
-            'webhook_token' => $tenantConfig->chatwoot_webhook_token ?? null,
+            'base_url'           => rtrim($node->base_url, '/'),
+            'api_key'            => $node->api_key,                                                  // Bot token — POST /messages
+            'account_id'         => $meta['account_id'] ?? $tenantConfig->chatwoot_inbox_id ?? null, // ID numérico da CONTA Chatwoot
+            'inbox_id'           => $tenantConfig->chatwoot_channel_inbox_id ?? null,                // Inbox Atendimento Humano
+            'assistant_inbox_id' => $tenantConfig->chatwoot_assistant_inbox_id ?? null,              // Inbox Assistente IA (Jul/2026)
+            'access_token'       => $tenantConfig->chatwoot_webhook_token ?? null,                   // User Access Token — /labels, /contacts
         ];
     }
 }

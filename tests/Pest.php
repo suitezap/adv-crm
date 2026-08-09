@@ -13,6 +13,9 @@
 
 uses(\Tests\TestCase::class)->in('Feature');
 
+// Unit tests run without the full Laravel application — pure Mockery
+uses()->afterEach(fn () => \Mockery::close())->in('Unit');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations

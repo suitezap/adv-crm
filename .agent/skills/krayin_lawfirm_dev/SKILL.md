@@ -2,7 +2,7 @@
 name: krayin_lawfirm_architecture
 description: Standards for SuiteZap/LawFirm package (DDD/SaaS).
 ---
-# LawFirm CRM - Architecture Standards (v3.47)
+# LawFirm CRM - Architecture Standards (v3.53)
 
 ## 1. Directory Structure (Domain-Driven)
 All code lives in `packages/SuiteZap/LawFirm/src/`. **Root is Zero-Debt** — no loose PHP files outside a domain. `src/Http/Controllers/` **must remain empty** (Zero Root Controllers since v3.36).
@@ -14,6 +14,8 @@ All code lives in `packages/SuiteZap/LawFirm/src/`. **Root is Zero-Debt** — no
 - **Escavador/**: `SuiteZap\LawFirm\Escavador` — Escavador API V1/V2, Webhooks, Monitoramentos
 - **DataJud/**: `SuiteZap\LawFirm\DataJud` — Consulta Pública CNJ (DataJud REST API)
 - **Whatsapp/**: `SuiteZap\LawFirm\Whatsapp` — EvolutionService, **ConnectionController** (canonical), Listeners
+- **TenantFinance/**: `SuiteZap\LawFirm\TenantFinance` — TenantAsaasService, Invoices, Webhooks, Customers
+- **Atendimento/**: `SuiteZap\LawFirm\Atendimento` — ChatwootService, webhook handlers and routing
 
 ## 2. Strict Rules
 
@@ -64,13 +66,15 @@ All business logic lives in **Services**. Controllers only orchestrate request �
 ### 3.1 WhatsApp / Evolution API
 ✅ **Always fetch from MotherShip:**
 ```php
-$config = MotherShipService::getEvolutionConfig(); // ['base_url', 'instance', 'token'] or null
-if (!$config || empty($config['instance'])) {
-    Log::error('Evolution API não configurada no MotherShip.');
-    return; // graceful abort — never throw uncaught
-}
-$instanceName = $config['instance'];
+// Primary instance (notifications/system)
+$config = MotherShipService::getEvolutionConfig('primary');
+// ['base_url', 'instance', 'token'] or null
+
+// Secondary instance (human support — uses evolution_assistente_name or fallback _atendimento)
+$config = MotherShipService::getEvolutionConfig('atendimento');
 ```
+- Se `evolution_assistente_name` estiver preenchido no tenant → usa esse valor.
+- Se `NULL` → fallback automático: `{instance_name}_atendimento` (retrocompatível com §19).
 ⛔ **NEVER:** `env('EVOLUTION_INSTANCE_NAME')` as the only source.
 
 ### 3.2 N8N Webhooks
@@ -84,11 +88,35 @@ $url = rtrim($n8nConfig['url'], '/') . '/' . ltrim($template->n8n_webhook_url, '
 ```
 ⛔ **NEVER:** `env('N8N_WEBHOOK_BASE_URL')`.
 
-### 3.3 Mothership API Secret
+### 3.3 Chatwoot
+✅ **Always fetch from MotherShip:**
+```php
+$chatwootConfig = MotherShipService::getChatwootConfig();
+// Returns: ['url', 'api_key', 'account_id', 'inbox_id', 'assistant_inbox_id', 'access_token'] or null
+if (!$chatwootConfig) {
+    return response()->json(['error' => 'Chatwoot não configurado para sua conta.'], 503);
+}
+```
+
+**Distinção crítica de tokens (Jul/2026):**
+
+| Operação | Token | Header |
+|---|---|---|
+| `POST /messages` (enviar mensagem) | `api_key` (Bot token) | `botHeaders()` |
+| `POST /labels` (atribuir label) | `access_token` (User Access Token) | `managementHeaders()` |
+| `GET /contacts/search` | `access_token` (User Access Token) | `managementHeaders()` |
+| `sendAssistantMessage()` | usa `assistant_inbox_id` (5º campo Jul/2026) | `botHeaders()` |
+| Validação `X-Chatwoot-Signature` | `access_token` como secret HMAC | — |
+
+> ⛔ Usar `api_key` (bot token) em `/labels` ou `/contacts` → **HTTP 401**. Usar `access_token` em `/messages` → contexto errado de conta.
+
+⛔ **NEVER:** `env('CHATWOOT_BASE_URL')` or `env('CHATWOOT_API_KEY')`.
+
+### 3.4 Mothership API Secret
 ✅ Read from `mothership.app_config` key `api_secret` (cached 5min via `getApiSecretFromDb()`).
 🟡 `env('MOTHERSHIP_API_SECRET')` is **only** acceptable as a pre-migration fallback.
 
-### 3.4 Acceptable env() Fallback Pattern
+### 3.5 Acceptable env() Fallback Pattern
 `env()` is allowed ONLY when MotherShipService is already the primary source:
 ```php
 $config = MotherShipService::getEvolutionConfig();
@@ -98,7 +126,7 @@ $instanceName = ($config && !empty($config['instance']))
 ```
 
 ## 4. Graceful Degradation for Unconfigured Services
-When Evolution, N8N, Asaas, or Escavador is not configured in MotherShip for a tenant:
+When Evolution, N8N, Asaas, Escavador, or Chatwoot is not configured in MotherShip for a tenant:
 - **Jobs / Listeners:** `Log::error(...)` + `return` — never throw, never crash the queue worker.
 - **API Controllers:** Return HTTP `503` with a user-friendly JSON `error` message.
 - **Web Controllers:** `session()->flash('warning', '...')` + `redirect()->back()` — never 500.
@@ -108,17 +136,24 @@ When Evolution, N8N, Asaas, or Escavador is not configured in MotherShip for a t
 - Each tenant has FKs: `n8n_node_id`, `evolution_node_id`, `storage_node_id`, `asaas_node_id`.
 - Storage disk is resolved dynamically by `MotherShipService::configureTenantStorage()` at boot — `SaasFileService::getDisk()` always picks up the correct tenant bucket.
 - Balance debits/credits must be registered in `saas_transactions` (tenant DB). Orders tracked in `saas_orders`.
+- **SuiteCoins (Ƶ):** All AI token balances are managed via `suitecoin_balance` in the `subscriptions` table. MotherShip stores balances in BRL (1:1), and LawFirm converts it purely for UI display using the `suitecoin_multiplier` from `app_config`. Do not alter balances natively outside this rule.
+- **Hybrid Document Templates (v3.53.0+):** LawFirm uses a mixed system for document templates.
+  - Global templates: Served from `mothership_db` (`lawfirm_document_templates`), fetched via `MothershipDocumentTemplate` (connection `'mothership'`), with `global-{id}` prefix. Any attempt to write/edit a `global-` template from the tenant CRM must be blocked (HTTP 403).
+  - Local templates: Served from the tenant DB (`law_document_templates`), with `local-{id}` prefix.
+- **Whaticket Suspended:** The Messenger Inbox (Whaticket) is suspended. Do not create new features or routes for it. Autoloading and migrations are kept only to prevent legacy build failures.
 
-### 4. Escavador (v3.32+ Refactoring)
+### 5.1 Escavador & DataJud (v3.32+ Refactoring)
 *   **MANDATORY "Zero .env" Policy:** Never use `env()` for Escavador tokens or prices. Use `MotherShipService::getTenantConfig()` and `MotherShipService::getEscavadorPrices()`.
+*   **DataJud API:** Public consultations via DataJud CNJ API are supported. Pricing keys: `datajud_price_*`.
 *   **Cost Hierarchy Strategy:** LawFirm CRM uses a cost-savings hierarchical query pattern for Legal Process Intelligence.
-    *   **Level 1: Local Cache** (`EscavadorProcesso`, `EscavadorMovimentacao` tables vs DB records).
+    *   **Level 1: Local Cache** (`escavador_processos`, `escavador_movimentacoes`, `escavador_envolvidos`, `escavador_documentos`, `escavador_autos`, `escavador_id_map`). Always check local cache first.
     *   **Level 2: V1 Term Search** (Lower cost, fallback).
     *   **Level 3: V2 Capa / Autos** (Highest cost, triggered only when explicitly requested/sync'd).
 *   **Async processing:** Heavy requests like `Resumo IA` and `Capa de Tribunal` are processed asynchronously. Webhooks are handled in `WebhookController` without CSRF verification.
 
 ## 6. Frontend & UI Patterns
 - **Tailwind CSS** — standard for all new components.
+- **DOMPurify:** Always sanitize user-provided HTML with DOMPurify before rendering it dynamically in the DOM or Vue components to prevent XSS.
 - **Vue vs Vanilla JS:** Krayin's Vue instance controls the global DOM. ⛔ Do NOT use Alpine.js inside Blade views Vue manages. ✅ Use Vanilla JS with `MutationObserver` or event delegation.
 - **AJAX & CSRF:** Read `X-CSRF-TOKEN` **at event time** (onclick), never on script init.
 - **Complex Forms (External Tabs Pattern):** Use `window.appendExternalTabs(event, this)` to collect inputs from tabs outside the main `<form>`.
@@ -252,3 +287,43 @@ When a Lead is WON, the `LeadWonListener` delegates to `LegalOrchestrator::conve
 - **Financeiro:** Cobranças Asaas (TenantFinance) and Dashboard Financeiro now reside inside an exclusive "Financeiro" top-level node.
 - **Do NOT** re-create fragmented UI menus per integration. Keep features nestled within their specific domain clusters or the centralized categories (Legal, Financeiro, Assistentes, Configuração).
 
+## 10. Multi-Tenant Isolation & Migration Rules
+
+> [!CAUTION]
+> **Any code breaking tenant isolation is a security vulnerability, not just a bug.**
+
+### 10.1 Tenant Scoping
+All queries accessing domain data (Legal, Financial, GED, Whatsapp, Atendimento) **MUST** be scoped by `tenant_id` or equivalent isolation.
+- ✅ Correct: `Processo::where('tenant_id', tenant('id'))->get();`
+- ❌ Prohibited: `Processo::all();`
+
+**Allowed cross-tenant (mothership) tables**:
+`tenants`, `subscriptions`, `app_config`, `infrastructure_nodes`, `lawfirm_assistant_templates`, `lawfirm_document_templates`, `tenant_billing_infos`, `core_config`.
+
+### 10.2 Migrations and Idempotency
+- All migrations **MUST** be idempotent (use `hasColumn()`, `hasTable()`).
+- All migrations **MUST** explicitly declare the connection (`Schema::connection('tenant')` or `Schema::connection('mothership')`).
+- ❌ **Prohibited:** `Schema::create('table', ...)` (omitting connection creates tables in the wrong DB during tenant provisioning).
+
+### 10.3 Credentials & Redis Isolation
+- **Redis Swarm Isolation**: Every tenant's docker-compose stack MUST include `REDIS_PREFIX: "${TENANT_ID}_"` to prevent cross-tenant job execution.
+- **Credentials**: Never use global master credentials where a tenant-isolated credential should exist (e.g. `evolution_api_key`), except for the documented fallback in `MotherShipService::getEvolutionConfig()`.
+
+## 11. Suspended Modules & Operations
+
+### 11.1 Whaticket / Messenger Inbox (Suspended)
+- The Whaticket / Messenger Inbox module is **suspended since 29/05/2026**.
+- ❌ **Do NOT** reactivate Chat/Inbox routes, remove deactivation guards, or reference chat endpoints without explicit approval.
+- The `packages/SuiteZap/Whaticket/` folder is an **intentional empty scaffold**. Do NOT delete it or remove it from `composer.json` or `docker/entrypoint.sh` (doing so breaks container boot with "Migration path not found").
+- **Active WhatsApp Features** (Safe to touch): Faturas, Alertas de Processos, WhatsappImport, Agendador de Prazos, Kanban Sync Labels. Always confirm scope before touching Whatsapp files.
+
+### 11.2 MotherShip Architecture Sync
+If you create/alter a table in the `mothership` connection, create an endpoint consumed by MotherShip, or alter `MotherShipService` return contracts, you **MUST** update `ARCHITECTURE_mothership_orient.md` in the same task.
+
+### 11.3 Domain Boundaries
+- **Do not cross domains** without explicit justification in the execution plan. A Legal task shouldn't alter Financial services unless integration is the specific goal.
+
+### 11.4 Jobs, Listeners & DataGrid
+- **Jobs & Listeners**: Always fail gracefully with `Log::error()`. Never throw bare Exceptions that kill the queue worker.
+- **DataGrid Actions (Vue)**: Always use `['method' => 'GET']` for single-click actions to prevent CSRF silent failures in Krayin V2.
+- **Docker Image**: Never use `:latest` in production stacks. Always fix the semantic tag (e.g. `image: suitezap/lawfirm:vX.Y.Z`).

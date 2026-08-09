@@ -58,5 +58,16 @@ class EventServiceProvider extends ServiceProvider
         Event::listen('admin.leads.view.stages.after', function ($viewRenderEventManager) {
             $viewRenderEventManager->addTemplate('lawfirm::leads.lead-tools-panel');
         });
+
+        // ---------------------------------------------------------------------
+        // Injection: vee-validate phone rule override
+        // Injeta DEPOIS do bundle Vue (window.load) para blindar a regra
+        // customizada contra merges upstream do Krayin core.
+        // @see packages/SuiteZap/LawFirm/src/Resources/views/components/vee-validate-phone-override.blade.php
+        // @see SKILL.md §7 — Merge Safety
+        // ---------------------------------------------------------------------
+        Event::listen('admin.layout.vue-app-mount.after', function ($viewRenderEventManager) {
+            $viewRenderEventManager->addTemplate('lawfirm::components.vee-validate-phone-override');
+        });
     }
 }

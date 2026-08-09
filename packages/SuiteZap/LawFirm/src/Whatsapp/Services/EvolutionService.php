@@ -18,8 +18,16 @@ class EvolutionService
 
     public function __construct()
     {
+        $this->setConfigType('default');
+    }
+
+    /**
+     * Permite reconfigurar o serviço para outra instância (ex: atendimento)
+     */
+    public function setConfigType(string $type = 'default')
+    {
         // Tenta carregar do Banco de Dados (MotherShip)
-        $config = MotherShipService::getEvolutionConfig();
+        $config = MotherShipService::getEvolutionConfig($type);
 
         if ($config) {
             $this->baseUrl = $config['base_url'];
@@ -33,7 +41,9 @@ class EvolutionService
         }
 
         // Normalize URL
-        $this->baseUrl = rtrim($this->baseUrl, '/');
+        if ($this->baseUrl) {
+            $this->baseUrl = rtrim($this->baseUrl, '/');
+        }
 
         if ($this->baseUrl && $this->apiKey) {
             $this->client = new Client([
@@ -45,6 +55,8 @@ class EvolutionService
                 'timeout' => 30,
             ]);
         }
+
+        return $this;
     }
 
     /**

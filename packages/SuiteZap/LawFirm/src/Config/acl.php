@@ -362,12 +362,6 @@ return [
         'route' => 'lawfirm.assistants.chatwoot',
         'sort'  => 4,
     ],
-    [
-        'key'   => 'sac',
-        'name'  => 'Acessar SAC',
-        'route' => 'lawfirm.assistants.chatwoot',
-        'sort'  => 5,
-    ],
 
     // ══════════════════════════════════════════════════════════
     // Assistente Jurídico (Escavador)
@@ -404,18 +398,41 @@ return [
     ],
 
     // ══════════════════════════════════════════════════════════
+    // Integração WhatsApp
+    // ══════════════════════════════════════════════════════════
+    [
+        'key'   => 'lawfirm.whatsapp',
+        'name'  => 'Integração WhatsApp',
+        'route' => 'admin.lawfirm.whatsapp.index',
+        'sort'  => 8,
+    ],
+    [
+        'key'   => 'lawfirm.whatsapp.manage',
+        'name'  => 'Gerenciar WhatsApp e Templates',
+        'route' => [
+            'admin.lawfirm.whatsapp.index', 
+            'admin.lawfirm.whatsapp.templates'
+        ],
+        'sort'  => 1,
+    ],
+
+    // ══════════════════════════════════════════════════════════
     // Assinatura SaaS
     // ══════════════════════════════════════════════════════════
     [
         'key'   => 'lawfirm.saas',
         'name'  => 'Assinatura e Créditos SaaS',
         'route' => 'admin.lawfirm.saas.index',
-        'sort'  => 8,
+        'sort'  => 9,
     ],
     [
         'key'   => 'lawfirm.saas.manage',
         'name'  => 'Gerenciar Assinatura e Créditos',
-        'route' => 'admin.lawfirm.saas.index',
+        'route' => [
+            'admin.lawfirm.saas.index',
+            'admin.lawfirm.saas.billing-info.index',
+            'lawfirm.saas.transactions'
+        ],
         'sort'  => 1,
     ],
 
@@ -426,7 +443,7 @@ return [
         'key'   => 'lawfirm.documentos',
         'name'  => 'Documentos (GED)',
         'route' => 'admin.processos.store_documents',
-        'sort'  => 9,
+        'sort'  => 10,
     ],
     [
         'key'   => 'lawfirm.documentos.create',

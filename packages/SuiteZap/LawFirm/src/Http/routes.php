@@ -121,7 +121,7 @@ Route::middleware(['web', 'user'])
                 return response()->json([
                     'view_name' => $viewName,
                     'exists'    => \Illuminate\Support\Facades\View::exists($viewName),
-                    'hints'     => app('view')->getFinder()->getHints(),
+                    'hints'     => (function() { /** @var \Illuminate\View\FileViewFinder $finder */ $finder = app('view')->getFinder(); return $finder->getHints(); })(),
                 ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
             })->name('admin.lawfirm.debug_view');
 

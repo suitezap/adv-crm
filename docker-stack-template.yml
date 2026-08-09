@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   app:
-    image: suitezap/lawfirm:v3.54.0
+    image: suitezap/lawfirm:v3.54.1
     hostname: adv
 
     deploy:
@@ -46,6 +46,7 @@ services:
       # 🆔 TENANT
       # -----------------------------------------------------------------
       - TENANT_ID=tenant_escritorio_teste
+      - REDIS_PREFIX=${TENANT_ID}_
 
       # -----------------------------------------------------------------
       # 🛸 BANCO MOTHERSHIP (CONTROLE)

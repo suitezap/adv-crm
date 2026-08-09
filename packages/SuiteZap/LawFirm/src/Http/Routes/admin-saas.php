@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use SuiteZap\LawFirm\SaaS\Http\Controllers\Admin\MothershipTemplateController;
 use SuiteZap\LawFirm\SaaS\Http\Controllers\SaaSController;
+use SuiteZap\LawFirm\Atendimento\Http\Middleware\CheckChatwootModule;
 
 /*
 |--------------------------------------------------------------------------
@@ -72,6 +73,7 @@ Route::prefix('assistants')->controller(\SuiteZap\LawFirm\AI\Http\Controllers\Ad
 // SAC (Central de Atendimento)
 // -----------------------------------------------
 Route::get('sac', [\SuiteZap\LawFirm\AI\Http\Controllers\Admin\AssistantController::class, 'chatwoot'])
+    ->middleware([CheckChatwootModule::class])
     ->name('lawfirm.assistants.chatwoot');
 
 // -----------------------------------------------

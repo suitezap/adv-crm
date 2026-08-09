@@ -25,17 +25,30 @@ class SendWhatsappNotification implements ShouldQueue
     protected $tenantId;
 
     /**
+     * Tipo de conexão a ser usada:
+     *   'default'     → Notificações (Padrão) — TODOS os envios automáticos do sistema
+     *   'atendimento' → Assistente de Atendimento — somente via teste manual
+     */
+    protected string $connectionType;
+
+    /**
      * Create a new job instance.
      *
      * @param  array  $attachments  Arrays with 'path' and 'name'
+     * @param  string  $connectionType  'default' (Notificações) ou 'atendimento'
      */
-    public function __construct(string $phoneNumber, string $message, array $attachments = [], ?string $tenantId = null)
+    public function __construct(string $phoneNumber, string $message, array $attachments = [], ?string $tenantId = null, string $connectionType = 'default')
     {
         $this->phoneNumber = $phoneNumber;
         $this->message = $message;
         $this->attachments = $attachments;
         // Injeta tenantId se passado, senão pega do request atual
         $this->tenantId = $tenantId ?? MotherShipService::getTenantId();
+        // Garante que apenas 'default' ou 'atendimento' são aceitos.
+        // Envios automáticos SEMPRE usam 'default'.
+        $this->connectionType = in_array($connectionType, ['default', 'atendimento'], true)
+            ? $connectionType
+            : 'default';
     }
 
     /**
@@ -51,15 +64,17 @@ class SendWhatsappNotification implements ShouldQueue
         }
 
         // Verifica a configuração diretamente do MotherShip (Zero .env)
-        $config = MotherShipService::getEvolutionConfig();
+        // Usa a conexão correta: 'default' para envios automáticos, ou a especificada no teste
+        $config = MotherShipService::getEvolutionConfig($this->connectionType);
 
         if (! $config || empty($config['instance']) || empty($config['token'])) {
-            Log::error("WHATSAPP ERROR: Falha de configuração Evolution API para o Tenant {$this->tenantId}. Cancelando disparo.");
+            Log::error("WHATSAPP ERROR: Falha de configuração Evolution API [{$this->connectionType}] para o Tenant {$this->tenantId}. Cancelando disparo.");
 
-            return; // Degradação graciosa
+            return; // Degradação graçosa
         }
 
         $evolutionService = new EvolutionService;
+        $evolutionService->setConfigType($this->connectionType);
 
         // Envia mensagem de texto
         if (! empty($this->message)) {

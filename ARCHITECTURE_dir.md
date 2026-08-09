@@ -28,6 +28,7 @@ packages/SuiteZap/LawFirm/src/
 ├── SaaS/               # Domínio: Infraestrutura Multi-Tenant e Pagamentos (SaaS → Tenant)
 ├── TenantFinance/      # Domínio: Cobranças do Escritório para Clientes via Asaas (Tenant → Cliente) [v3.40]
 └── Whatsapp/           # Domínio: Mensageria (Evolution API)
+    * Nota de UI: Formulários de configuração (como Teste de Disparo e Settings) devem adotar obrigatoriamente o padrão "Krayin Native Two-Column Configuration Grid" (grid-cols-[1fr_2fr]) para manter consistência com módulos nativos como Cobranças Asaas.
 ```
 
 > [!WARNING]
@@ -635,3 +636,72 @@ A renderização ocorre **client-side** via `marked.js` (já integrado na view `
     *   `SaaS/Models/Tenant.php`: Adicionados os campos `chatwoot_node_id`, `chatwoot_inbox_id`, `chatwoot_channel_inbox_id`, e `chatwoot_webhook_token` ao array `$fillable` para permitir mass-assignment seguro. Implementada a relação `chatwootNode()`.
     *   `SaaS/Services/MotherShipService.php`: Método `getChatwootConfig()` ajustado para mapear `inbox_id` a partir da coluna `chatwoot_channel_inbox_id` (real ID da caixa de entrada) e mapear `account_id` a partir da coluna legada `chatwoot_inbox_id` ou via metadados do nó.
 
+---
+
+## 16. Atualizações de Backend — v3.54.1+ / MotherShip v1.21 (Jul/2026)
+
+### 16.1 Dual Inbox Chatwoot — `chatwoot_assistant_inbox_id`
+
+*   **Contexto:** O MotherShip v1.21 (Jul/2026) adicionou um **5º campo Chatwoot** na tabela `tenants`: `chatwoot_assistant_inbox_id`. Isso suporta escritórios com duas instâncias Evolution distintas — uma para atendimento humano e outra para o Assistente de IA.
+*   **Banco de Dados (Conexão `mothership`):**
+    *   Migration: `migrations/add_chatwoot_assistant_inbox_id.php` (script PHP idempotente).
+    *   Coluna: `chatwoot_assistant_inbox_id INT UNSIGNED NULL` — **5º campo Chatwoot do tenant**.
+*   **Modelo `SaaS/Models/Tenant.php`:** `chatwoot_assistant_inbox_id` deve ser adicionado ao `$fillable`.
+*   **`SaaS/Services/MotherShipService::getChatwootConfig()`** — retorno expandido:
+
+```php
+return [
+    'url'                => $node->base_url,
+    'api_key'            => $node->api_key,                            // Bot Token — POST /messages
+    'account_id'         => $tenantConfig->chatwoot_inbox_id,          // Account ID global
+    'inbox_id'           => $tenantConfig->chatwoot_channel_inbox_id,  // Inbox Atendimento Humano 📥
+    'assistant_inbox_id' => $tenantConfig->chatwoot_assistant_inbox_id ?? null,  // Inbox IA 🤖 — NOVO
+    'access_token'       => $tenantConfig->chatwoot_webhook_token,     // User Access Token (gestão)
+];
+```
+
+*   **`Atendimento/Services/ChatwootService.php`** — novos métodos esperados:
+    *   `sendMessage(int $conversationId, string $message)` — usa `inbox_id` (atendimento humano)
+    *   `sendAssistantMessage(int $conversationId, string $message)` — usa `assistant_inbox_id`; se `null`, faz fallback para `inbox_id` com `Log::warning()`
+
+> [!CAUTION]
+> **Distinção de Tokens é CRÍTICA:**
+> - `api_key` (Bot Token) → `POST /messages`, `GET /status` — nunca usar em `/labels` ou `/contacts`
+> - `access_token` (User Access Token `chatwoot_webhook_token`) → `/labels`, `/contacts/search`, validação HMAC do webhook
+
+---
+
+### 16.2 `evolution_assistente_name` — Instância de Atendimento Explícita
+
+*   **Contexto:** O MotherShip v1.21 adicionou `evolution_assistente_name` à tabela `tenants`. Isso supera o modelo de **sufixo mágico** (`_atendimento`) da seção §19, permitindo configurar um nome completamente arbitrário para a instância de atendimento.
+*   **Migration:** `migrations/add_evolution_assistente_name.php` (script PHP idempotente).
+*   **Modelo `SaaS/Models/Tenant.php`:** `evolution_assistente_name` deve ser adicionado ao `$fillable`.
+*   **`SaaS/Services/MotherShipService::getEvolutionConfig($type)`** — lógica de resolução:
+
+```php
+// $type = 'primary' | 'atendimento'
+if ($type === 'atendimento') {
+    $instanceName = $tenantConfig->evolution_assistente_name
+        ?? ($tenantConfig->evolution_instance_name . '_atendimento'); // fallback retrocompatível
+} else {
+    $instanceName = $tenantConfig->evolution_instance_name;
+}
+```
+
+*   **Retrocompatibilidade total:** Tenants com `evolution_assistente_name = NULL` continuam funcionando via fallback automático. Nenhuma migration de dados necessária.
+
+---
+
+### 16.3 Referência Completa dos 5 Campos Chatwoot (mothership `tenants`)
+
+| Campo DB | Label UI MotherShip | Uso no CRM |
+|---|---|---|
+| `chatwoot_node_id` | Nó Chatwoot | FK para `infrastructure_nodes` (URL + bot token) |
+| `chatwoot_inbox_id` | Account ID | `$config['account_id']` — ID numérico da conta global |
+| `chatwoot_channel_inbox_id` | Inbox Instância 📥 | `$config['inbox_id']` — caixa de entrada humana |
+| `chatwoot_assistant_inbox_id` | Inbox Assist. 🤖 | `$config['assistant_inbox_id']` — caixa de entrada IA |
+| `chatwoot_webhook_token` | User Access Token | `$config['access_token']` — operações de gestão (labels/contacts) |
+
+---
+
+*Atualizado em 08/07/2026 — MotherShip v1.21 ↔ LawFirm v3.54.1 — Dual Inbox Chatwoot + evolution_assistente_name.*

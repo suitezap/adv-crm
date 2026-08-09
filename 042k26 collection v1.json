@@ -1,0 +1,1394 @@
+{
+    "info": {
+        "name": "Escavador - API V1",
+        "description": "",
+        "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "https://api.escavador.com"
+        },
+        {
+            "key": "access_token",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "Busca",
+            "item": [
+                {
+                    "name": "Buscar por termo",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/busca?q=Jo%C3%A3o+Silva&qo=t&qs=example&limit=60&page=1&utilizar_operadores_logicos=0",
+                        "description": "Pesquisa um termo no Escavador.\n\nO resultado da pesquisa pode incluir pessoas, instituições e diários oficiais, dependendo dos parâmetros fornecidos.\n\n O endpoint suporta pesquisas avançadas utilizando operadores lógicos para refinar os resultados."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Saldo da API",
+            "item": [
+                {
+                    "name": "Consultar saldo",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/quantidade-creditos",
+                        "description": "Retorna o saldo atual do usuário na API."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Callback",
+            "item": [
+                {
+                    "name": "Marcar callbacks como recebidos",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/callbacks/marcar-recebidos",
+                        "description": "Marca os callbacks enviados pela API como recebidos.\n\nOs callbacks que estão em tentativa (next_run_at diferente de null) não podem ser marcados como recebidos. Example: [1,12,42]",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "ids",
+                                    "value": "1",
+                                    "type": "text",
+                                    "enabled": true
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Listar os callbacks",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/callbacks?data_maxima=2019-10-23+07%3A01%3A22&data_minima=2019-09-23+07%3A01%3A22&evento=resultado_busca_assincrona&item_tipo=busca_assincrona&item_id=101&status=sucesso",
+                        "description": "Consultar todos os callbacks recebidos pela API."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Reenviar callback",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/callbacks/{id}/reenviar",
+                        "description": "Reevia o callback informado."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Monitoramento de Diários Oficiais",
+            "item": [
+                {
+                    "name": "Listar diários oficiais monitorados",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos/{monitoramentoId}/origens",
+                        "description": "Retorna os diários oficiais de um monitoramento pelo identificador do monitoramento."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Listar monitoramentos",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos?page=2",
+                        "description": "Retorna uma lista paginada com os monitoramentos de diários oficiais do usuário autenticado.\n\nQuando `pasta_id` for informado, apenas os monitoramentos da pasta serão retornados."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Buscar monitoramento",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos/{monitoramento}",
+                        "description": "Retorna um monitoramento pelo seu identificador."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Editar monitoramento",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos/{monitoramento}",
+                        "description": "Edita um monitoramento de diário oficial. É possível alterar os Diários monitorados, ou as variações do monitoramento.",
+                        "body": {
+                            "mode": "urlencoded",
+                            "urlencoded": [
+                                {
+                                    "key": "origens_ids",
+                                    "value": "[1, 2, 3]",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "variacoes",
+                                    "value": "['apartamento', 'fazenda']",
+                                    "type": "text",
+                                    "enabled": false
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Remover monitoramento",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos/{monitoramento}",
+                        "description": "Remove um monitoramento de diário cadastrado pelo usuário baseado no seu identificador."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Retornar aparições",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos/{monitoramento}/aparicoes",
+                        "description": "Retorna as aparições de um monitoramento pelo identificador do monitoramento."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Criar monitoramento",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos",
+                        "description": "Cadastra um termo ou processo para ser monitorado nos diários oficiais.",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "tipo",
+                                    "value": "termo",
+                                    "type": "text",
+                                    "enabled": true
+                                },
+                                {
+                                    "key": "termo",
+                                    "value": "casa",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "origens_ids",
+                                    "value": "[1, 2, 3]",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "processo_id",
+                                    "value": "3",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "variacoes",
+                                    "value": "['mansão', 'casebre']",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "termos_auxiliares",
+                                    "value": "[{\"termo\":\"nao\",\"condicao\":\"NAO_CONTEM\"},{\"termo\":\"contem isso\",\"condicao\":\"CONTEM\"},{\"termo\":\"e isso\",\"condicao\":\"CONTEM\"},{\"termo\":\"alguma\",\"condicao\":\"CONTEM_ALGUMA\"}]",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "limite_aparicoes",
+                                    "value": "1500",
+                                    "type": "text",
+                                    "enabled": false
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Testar callback do monitoramento",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos/testcallback",
+                        "description": "Rota usada para testar o retorno enviado quando ocorre uma aparição no\nmonitoramento de Diários Oficiais, o seguinte objeto será enviado por um POST para a url registrada como callback.",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "callback",
+                                    "value": "http://www.teste.com.br/callback",
+                                    "type": "text",
+                                    "enabled": true
+                                },
+                                {
+                                    "key": "tipo",
+                                    "value": "diario",
+                                    "type": "text",
+                                    "enabled": false
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Diários Oficiais",
+            "item": [
+                {
+                    "name": "Retornar origens",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/origens",
+                        "description": "Retorna as origens de todos os diários disponíveis no Escavador."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Download do PDF da página do Diário Oficial",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/diarios/{id}/pdf/pagina/{pagina}/baixar",
+                        "description": "Retorna em formato PDF, uma página do Diário Oficial pelo seu identificador no Escavador."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Monitoramento no site do Tribunal",
+            "item": [
+                {
+                    "name": "Retornar monitoramentos",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos-tribunal",
+                        "description": "Retorna todos os monitoramentos criados pelo usuário."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Retornar monitoramento",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos-tribunal/{monitoramentoId}",
+                        "description": "Retorna um monitoramento pelo identificador."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Editar um monitoramento",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos-tribunal/{monitoramentoId}",
+                        "description": "Edita um monitoramento de sistema do tribunal. É possível alterar apenas a frequência do monitoramento.\n\n{\n  \"status\": \"success\"\n}",
+                        "body": {
+                            "mode": "urlencoded",
+                            "urlencoded": [
+                                {
+                                    "key": "frequencia",
+                                    "value": "DIARIA",
+                                    "type": "text",
+                                    "enabled": false
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Remover monitoramento",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos-tribunal/{id}",
+                        "description": "Remove um monitoramento pelo identificador cadastrado pelo usuário."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Registrar novo monitoramento",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/monitoramentos-tribunal",
+                        "description": "Cadastra o número de um processo para ser monitorado nos tribunais. Ao encontrar algo novo, um callback é enviado para a sua <a href=\"http://api.escavador.com/callbacks\" target=\"_blank\">url definida</a>. Você pode consultar todos os <a href=\"/v1/docs/callbacks#listar-os-callbacks\">callbacks enviados e os status</a>.",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "tipo",
+                                    "value": "UNICO",
+                                    "type": "text",
+                                    "enabled": true
+                                },
+                                {
+                                    "key": "estado_oab",
+                                    "value": "SP",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "valor",
+                                    "value": "0011119-72.2019.8.26.0050",
+                                    "type": "text",
+                                    "enabled": true
+                                },
+                                {
+                                    "key": "tribunal",
+                                    "value": "STJ",
+                                    "type": "text",
+                                    "enabled": true
+                                },
+                                {
+                                    "key": "frequencia",
+                                    "value": "DIARIA",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "tipo_numero",
+                                    "value": "2021/0179885-9.",
+                                    "type": "text",
+                                    "enabled": false
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Pessoas",
+            "item": [
+                {
+                    "name": "Obter pessoa",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/pessoas/{pessoaId}",
+                        "description": "Retorna dados relacionados a uma pessoa pelo seu identificador."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Processos de uma Pessoa",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/pessoas/{pessoaId}/processos?limit=60&page=1",
+                        "description": "Retorna os processos de uma pessoa que saíram em Diários Oficiais e estão no Escavador."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Instituições",
+            "item": [
+                {
+                    "name": "Obter Instituição",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/instituicoes/{instituicaoId}",
+                        "description": "Retorna dados relacionados a uma instituição pelo seu identificador."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Processos de uma Instituição",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/instituicoes/{instituicaoId}/processos?limit=20&page=1",
+                        "description": "Retorna os processos de uma instituição que saíram em Diários Oficiais e estão no Escavador."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Pessoas de uma Instituição",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/instituicoes/{instituicaoId}/pessoas?limit=20&page=1",
+                        "description": "Retorna as pessoas que estão associadas a uma instituição."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Processos",
+            "item": [
+                {
+                    "name": "Movimentações de um processo que saíram em Diários Oficiais",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/processos/{processoId}/movimentacoes?limit=2&page=15",
+                        "description": "Retorna as movimentações de um Processo pelo identificador do processo no Escavador."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Buscar processos dos Diários Oficiais por OAB",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/oab/{estado}/{numero}/processos?page=1",
+                        "description": "Busca processos que estão nos Diários Oficiais do Escavador que estão relacionados ao OAB informado.\nComo essa busca é feita em cima  de dados extraídos das páginas dos Diários Oficiais, não é garantido vir todos os processos da OAB informada."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Buscar processos dos Diários Oficiais por número",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/processos/numero/{numero}?match_exato=",
+                        "description": "Busca processos que estão nos Diários Oficiais do Escavador e contenham o número único informado."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Envolvidos de um Processo que saíram em Diários Oficiais",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/processos/{processoId}/envolvidos?limit=20&page=1",
+                        "description": "Retorna os envolvidos de um Processo pelo identificador do processo no Escavador."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Pesquisar processos no site do tribunal em lote (assíncrono)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/tribunal/async/lote",
+                        "description": "Faz uma busca em todos os tribunais enviados para o tipo de busca escolhido, uma alternativa para a chamadas iguais para diferentes tribunais.\nA busca é feita diretamente nos sites dos tribunais, pelos robôs do Escavador.\nO tempo de busca é afetado pelo tempo de resposta dos sites dos tribunais, pela presença de captchas e outros fatores.\nComo há possibilidade do tempo de resposta ser longo, essa rota funciona de maneira assíncrona.\nApós solicitar as informações do processo, caso tenha informado, você irá receber um callback (POST)\ncomo resultado e também um link para consultar o [resultado](/v1/docs/busca-assincrona#resultado-especfico-de-uma-busca-assncrona) através do campo `link_api`.\n\n<aside class=\"notice\"> *<a href=\"/v1/docs/tribunais-e-orgaos-administrativos#retornar-sistemas-dos-tribunais-disponveis\">Consulte os tribunais</a> para saber a disponibilidade para esse tipo de busca.</aside>",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "tipo",
+                                    "value": "busca_por_nome",
+                                    "type": "text",
+                                    "enabled": true
+                                },
+                                {
+                                    "key": "tribunais",
+                                    "value": "[TJBA, TJES, TRT-2]",
+                                    "type": "text",
+                                    "enabled": true
+                                },
+                                {
+                                    "key": "nome",
+                                    "value": "Ronaldo Assis",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "numero_documento",
+                                    "value": "123.123.123-32",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "numero_oab",
+                                    "value": "12345",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "estado_oab",
+                                    "value": "BA",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "send_callback",
+                                    "value": "0",
+                                    "type": "text",
+                                    "enabled": false
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Pesquisar processo no site do tribunal (assíncrono)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/processo-tribunal/{numero}/async",
+                        "description": "A busca é feita diretamente nos sites dos tribunais, pelos robôs do Escavador.\nO tempo de busca é afetado pelo\ntempo de resposta dos sites dos tribunais, pela presença de captchas e outros fatores. Como há possibilidade do tempo de resposta\nser longo, essa rota funciona de maneira assíncrona. Após solicitar as informações do processo,\ncaso tenha informado, você irá receber um callback (POST) como resultado e também  um link para consultar o\n[resultado](/v1/docs/busca-assincrona#todos-os-resultados-das-buscas-assncronas) através do campo `link_api`.",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "send_callback",
+                                    "value": "1",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "wait",
+                                    "value": "0",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "autos",
+                                    "value": "0",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "documentos_publicos",
+                                    "value": "0",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "usuario",
+                                    "value": "example",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "senha",
+                                    "value": "example",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "origem",
+                                    "value": "STF",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "tipo_numero",
+                                    "value": "classe_numero",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "dias_ultima_atualizacao",
+                                    "value": "30",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "utilizar_certificado",
+                                    "value": "",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "certificado_id",
+                                    "value": "",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "documentos_especificos",
+                                    "value": "",
+                                    "type": "text",
+                                    "enabled": false
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Pesquisar processos no site do tribunal por nome do envolvido (assíncrono)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/tribunal/{origem}/busca-por-nome/async",
+                        "description": "A busca é feita diretamente nos sites dos tribunais, pelos robôs do Escavador.\nO tempo de busca é afetado pelo tempo de resposta dos sites dos tribunais,\npela presença de captchas e outros fatores. Como há possibilidade do tempo de resposta ser longo, essa rota funciona de maneira assíncrona.\nApós solicitar as informações do processo, caso tenha informado, você irá receber um callback (POST) como resultado e também  um link para consultar o\n[resultado](/v1/docs/busca-assincrona#todos-os-resultados-das-buscas-assncronas) através do campo `link_api`.\n\n<aside class=\"notice\"> *<a href=\"/v1/docs/tribunais-e-orgaos-administrativos#retornar-sistemas-dos-tribunais-disponveis\">Consulte os tribunais</a> para saber a disponibilidade para esse tipo de busca.</aside>",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "nome",
+                                    "value": "Carlos Silva Souza",
+                                    "type": "text",
+                                    "enabled": true
+                                },
+                                {
+                                    "key": "permitir_parcial",
+                                    "value": "1",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "send_callback",
+                                    "value": "0",
+                                    "type": "text",
+                                    "enabled": false
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Pesquisar processos no site do tribunal por CPF ou CNPJ (assíncrono)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/tribunal/{origem}/busca-por-documento/async",
+                        "description": "A busca é feita diretamente nos sites dos tribunais, pelos robôs do Escavador.\nO tempo de busca é afetado pelo tempo de resposta dos sites dos tribunais, pela presença de captchas e outros fatores.\nComo há possibilidade do tempo de resposta ser longo, essa rota funciona de maneira assíncrona.\nApós solicitar as informações do processo, caso tenha informado, você irá receber um callback (POST)\ncomo resultado e também um link para consultar o [resultado](/v1/docs/busca-assincrona#resultado-especfico-de-uma-busca-assncrona) através do campo `link_api`.\n\n<aside class=\"notice\"> *<a href=\"/v1/docs/tribunais-e-orgaos-administrativos#retornar-sistemas-dos-tribunais-disponveis\">Consulte os tribunais</a> para saber a disponibilidade para esse tipo de busca.</aside>",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "numero_documento",
+                                    "value": "420.945.910-00",
+                                    "type": "text",
+                                    "enabled": true
+                                },
+                                {
+                                    "key": "permitir_parcial",
+                                    "value": "0",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "send_callback",
+                                    "value": "0",
+                                    "type": "text",
+                                    "enabled": false
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Pesquisar processos no site do tribunal por OAB (assíncrono)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/tribunal/{origem}/busca-por-oab/async",
+                        "description": "A busca é feita diretamente nos sites dos tribunais, pelos robôs do Escavador.\nO tempo de busca é afetados pelo tempo de resposta dos sites dos tribunais, pela presença de captchas e outros fatores.\nComo há possibilidade do tempo de resposta ser longo, essa rota funciona de maneira assíncrona.\nApós solicitar as informações do processo, caso tenha informado, você irá receber um callback (POST)\ncomo resultado e também um link para consultar o [resultado](/v1/docs/busca-assincrona#resultado-especfico-de-uma-busca-assncrona) através do campo `link_api`.\n\n<aside class=\"notice\"> *<a href=\"/v1/docs/tribunais-e-orgaos-administrativos#retornar-sistemas-dos-tribunais-disponveis\">Consulte os tribunais</a> para saber a disponibilidade para esse tipo de busca.</aside>",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "numero_oab",
+                                    "value": "1234",
+                                    "type": "text",
+                                    "enabled": true
+                                },
+                                {
+                                    "key": "estado_oab",
+                                    "value": "BA",
+                                    "type": "text",
+                                    "enabled": true
+                                },
+                                {
+                                    "key": "permitir_parcial",
+                                    "value": "0",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "send_callback",
+                                    "value": "0",
+                                    "type": "text",
+                                    "enabled": false
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Pesquisar processo administrativo com NUP (assíncrono)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/processo-administrativo/{numero_nup}/async",
+                        "description": "A busca é feita diretamente nos sites dos órgãos e entidades da Administração Pública federal, pelos robôs do Escavador.\nO tempo de busca é afetado pelo\ntempo de resposta dos sites dos órgãos, pela presença de captchas e outros fatores. Como há possibilidade do tempo de resposta\nser longo, essa rota funciona de maneira assíncrona. Após solicitar as informações do processo,\ncaso tenha informado, você irá receber um callback (POST) como resultado e também  um link para consultar o\n[resultado](/v1/docs/busca-assincrona#todos-os-resultados-das-buscas-assncronas) através do campo `link_api`.",
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "send_callback",
+                                    "value": "1",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "wait",
+                                    "value": "0",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "origem",
+                                    "value": "ME",
+                                    "type": "text",
+                                    "enabled": false
+                                },
+                                {
+                                    "key": "dias_ultima_atualizacao",
+                                    "value": "30",
+                                    "type": "text",
+                                    "enabled": false
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Movimentações",
+            "item": [
+                {
+                    "name": "Retornar uma movimentação",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/movimentacoes/{movimentaco}",
+                        "description": "Retorna uma movimentação pelo seu identificador no Escavador."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Tribunais e Órgãos Administrativos",
+            "item": [
+                {
+                    "name": "Retornar Sistemas dos tribunais disponíveis",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/tribunal/origens",
+                        "description": "Retorna os sistemas de tribunais disponíveis no Escavador."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Retornar detalhes de um Tribunal",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/tribunal/origens/{origem}",
+                        "description": "Retorna os detalhes de um tribunal específico, mostrando as opções disponíveis e custos."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Retornar Órgãos administrativos disponíveis",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/orgao-administrativo/origens",
+                        "description": "Retorna os órgãos administrativos disponíveis no Escavador."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Busca Assíncrona",
+            "item": [
+                {
+                    "name": "Todos os resultados das buscas assíncronas",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/async/resultados",
+                        "description": "Consultar todos os resultados das buscas assíncronas (Busca de <a href=\"/v1/docs/processos#pesquisar-processo-no-site-do-tribunal-assncrono\">processos</a>,\n<a href=\"/v1/docs/processos#pesquisar-processos-no-site-do-tribunal-por-cpf-ou-cnpj-assncrono\">documentos</a>,\n<a href=\"/v1/docs/processos#pesquisar-processos-no-site-do-tribunal-por-nome-do-envolvido-assncrono\">nomes</a> e\n<a href=\"/v1/docs/processos#pesquisar-processos-no-site-do-tribunal-por-oab-assncrono\">OABs</a> em sistemas de tribunais)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Resultado específico de uma busca assíncrona",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Requested-With",
+                                "value": "XMLHttpRequest"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": "https://api.escavador.com/api/v1/async/resultados/{id}",
+                        "description": "Consultar um resultado específico de uma busca assíncrona (Busca de <a href=\"/v1/docs/processos#pesquisar-processo-no-site-do-tribunal-assncrono\">processos</a>,\n<a href=\"/v1/docs/processos#pesquisar-processos-no-site-do-tribunal-por-cpf-ou-cnpj-assncrono\">documentos</a>,\n<a href=\"/v1/docs/processos#pesquisar-processos-no-site-do-tribunal-por-nome-do-envolvido-assncrono\">nomes</a> e\n<a href=\"/v1/docs/processos#pesquisar-processos-no-site-do-tribunal-por-nome-do-envolvido-assncrono\">OABs </a> em sistemas de tribunais)."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}

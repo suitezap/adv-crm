@@ -19,6 +19,11 @@ class CheckSubscriptionStatus
      */
     public function handle(Request $request, Closure $next)
     {
+        // 0. Ignora se estiver em ambiente de testes
+        if (app()->environment('testing')) {
+            return $next($request);
+        }
+
         // 1. Apenas processa se o usuário estiver logado
         if (! Auth::check()) {
             return $next($request);

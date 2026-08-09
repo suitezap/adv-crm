@@ -1196,7 +1196,7 @@ Para modais injetados dinamicamente (ex: Histórico WhatsApp):
     *   **Imagens publicadas:** `suitezap/lawfirm:v3.54.0` e `suitezap/lawfirm:latest` publicadas no Docker Hub Registry.
 *   **Verificação:** Executado `docker run --rm suitezap/lawfirm:v3.54.0` confirmando a string `🚀 Iniciando LawFirm SaaS v6.2 (LF v3.54.0)...` no startup do container.
 
-### 4.83 Sincronização Automática de Labels Chatwoot via Movimentação de Kanban (v3.54.0)
+### 4.87 Sincronização Automática de Labels Chatwoot via Movimentação de Kanban (v3.54.0)
 
 *   **Data:** 2026-06-30 | **Implementação:** Antigravity Senior Architect
 *   **Motivação:** Quando um Lead é arrastado entre etapas do Kanban de Vendas (`/admin/leads`) ou um Caso é movido no Kanban Jurídico (`/admin/juridico/kanban`), a label do contato correspondente no Chatwoot deve ser atualizada automaticamente. Isso permite que as equipes de atendimento visualizem em tempo real o estágio de cada cliente nas conversas WhatsApp, sem precisar abrir o CRM.
@@ -1337,7 +1337,7 @@ ChatwootWebhookController         valida payload.inbox_id == config['inbox_id'] 
 
 ---
 
-### 4.85 Consolidação do Docker Hub — Imagem Canônica `suitezap/lawfirm` (v3.54.1)
+### 4.86 Consolidação do Docker Hub — Imagem Canônica `suitezap/lawfirm` (v3.54.1)
 
 *   **Decisão:** Consolidar em **uma única imagem Docker oficial** para eliminar ambiguidade entre as duas imagens que existiam no Docker Hub: `suitezap/adv-crm` (legada, descontinuada) e `suitezap/lawfirm` (canônica, ativa).
 

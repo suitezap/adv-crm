@@ -1,0 +1,578 @@
+# 🤖 AGENTS.md — Regras Mandatórias para Agentes de IA (LawFirm SaaS)
+
+> [!CAUTION]
+> **Estas regras têm precedência sobre qualquer padrão genérico de Laravel — em caso de dúvida, seguir o que está aqui, não o que é comum em outros projetos Laravel.**
+
+Baseado em `ARCHITECTURE.md §3 — Regras de Ouro (Development Standards)` e decisões arquiteturais acumuladas até a v3.54.1. Qualquer geração de código, refatoração ou sugestão deve respeitar 100% das regras abaixo. Violações são bloqueantes.
+
+---
+
+## 1. Manipulação de Arquivos
+
+> [!CAUTION]
+> **Regra Ironclad — Violação é bloqueante.**
+
+### ❌ PROIBIDO — nunca gerar ou sugerir:
+```php
+Storage::put(...)
+Storage::makeDirectory(...)
+Storage::url(...)
+Storage::disk('s3')->...
+Storage::download(...)
+// Qualquer acesso direto ao disco local via Storage:: fora do SaasFileService
+```
+
+### ✅ OBRIGATÓRIO — sempre usar:
+```php
+use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
+
+// Upload
+$this->fileService->put($path, $contents);
+
+// Delete (cascata de Processos, Anexos, ProcessDocuments)
+$this->fileService->delete($path);
+
+// Exibição/Download de qualquer asset de tenant (logos, anexos, PDFs)
+$url = $this->fileService->getSignedUrl($path);
+// ou equivalentemente:
+$url = $this->fileService->url($path); // resolve automaticamente para URL assinada em S3
+```
+
+**Motivo:** Todos os buckets de tenants no S3/MinIO são **estritamente privados**. Documentos jurídicos, procurações e contratos nunca podem ser expostos via link público ou `Storage::url()`. O `SaasFileService` garante isolamento lógico por Tenant e geração de URLs temporárias assinadas. (`ARCHITECTURE.md §3.1`, `§4.42`, `§4.4`)
+
+---
+
+## 2. Rotas e Controllers
+
+### ❌ PROIBIDO:
+- Lógica de negócio (cálculos, validações complexas, salvamento em lote) dentro de Controllers
+- Controllers com mais do que: receber input → delegar para Service → retornar response
+
+### ✅ OBRIGATÓRIO — Controllers "Skinny":
+```php
+// ✅ CORRETO — Controller delega para Services
+class ProcessoController extends Controller
+{
+    public function store(StoreProcessoRequest $request): RedirectResponse
+    {
+        $this->processoService->create($request->validated());
+        return redirect()->back()->with('success', 'Processo criado.');
+    }
+}
+
+// ❌ ERRADO — lógica de negócio no Controller
+class ProcessoController extends Controller
+{
+    public function store(Request $request): RedirectResponse
+    {
+        $prazo = Carbon::parse($request->data)->addDays(30); // ← lógica aqui = VIOLAÇÃO
+        Processo::create([...]);
+    }
+}
+```
+
+**Referência:** `ProcessoController` delega para `DeadlineService`, `FinancialService` e `DocumentService`. (`ARCHITECTURE.md §3.2`)
+
+---
+
+## 3. Zero `.env` — Credenciais via MotherShipService
+
+> [!CAUTION]
+> **`env()` é permitido APENAS como dev fallback em `Config/lawfirm.php`. Em código de produção (Controllers, Jobs, Listeners, Services) é PROIBIDO.**
+
+### ❌ PROIBIDO — nunca usar diretamente em código de produção:
+```php
+env('EVOLUTION_INSTANCE_NAME')
+env('EVOLUTION_API_KEY')
+env('CHATWOOT_API_KEY')
+env('AWS_BUCKET')
+env('N8N_WEBHOOK_BASE_URL')
+// Qualquer env() de credencial de integração em Controllers/Services/Jobs/Listeners
+```
+
+### ✅ OBRIGATÓRIO — sempre via MotherShipService:
+```php
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+
+// Evolution / WhatsApp
+$evolutionConfig = MotherShipService::getEvolutionConfig();
+
+// Chatwoot
+$chatwootConfig  = MotherShipService::getChatwootConfig();
+
+// n8n
+$n8nConfig       = MotherShipService::getN8nConfig();
+
+// Storage S3 (configuração dinâmica de tenant)
+MotherShipService::configureTenantStorage();
+
+// Tratamento quando não configurado: log + abort gracioso, SEM exception bare
+if (empty($evolutionConfig['instance'])) {
+    Log::error('[Evolution] Instância não configurada para tenant ' . tenant('id'));
+    return redirect()->back()->with('warning', 'WhatsApp não configurado.');
+}
+```
+
+**Motivo:** Credenciais vêm do banco do MotherShip por tenant. Usar `env()` diretamente vaza configurações entre tenants em ambiente SaaS e quebra o isolamento multi-tenant. (`ARCHITECTURE.md §4.42`, `§4.52`, `§4.2`)
+
+---
+
+## 4. Imagem Docker
+
+### ❌ PROIBIDO — absolutamente em qualquer arquivo, comentário ou instrução:
+```yaml
+image: suitezap/adv-crm         # ← DESCONTINUADA desde v3.54.1, jamais referenciar
+image: suitezap/lawfirm:latest   # ← NUNCA usar :latest em produção
+```
+
+### ✅ OBRIGATÓRIO:
+```yaml
+# Docker Stack (Swarm / Portainer) — sempre tag semântica
+image: suitezap/lawfirm:v3.54.1  # substituir pelo número de versão atual
+
+# Build e push
+docker build -t suitezap/lawfirm:vX.Y.Z -t suitezap/lawfirm:latest .
+docker push suitezap/lawfirm:vX.Y.Z
+docker push suitezap/lawfirm:latest
+```
+
+**Regra:** `:latest` pode existir no Docker Hub como alias de conveniência, mas **stacks de produção (Swarm/Portainer) SEMPRE devem fixar a tag semântica** para garantir rastreabilidade e rollback determinístico. (`ARCHITECTURE.md §3.7`, `§4.86`)
+
+---
+
+## 5. Estrutura DDD — Zero Root Controllers
+
+> [!IMPORTANT]
+> **Desde v3.36, o diretório `src/Http/Controllers/` deve conter 0 arquivos PHP. Qualquer novo Controller criado na raiz é uma violação imediata.**
+
+### ❌ PROIBIDO — nunca criar ou mover código para:
+```
+src/Http/Controllers/AlgumController.php        ← VIOLAÇÃO
+src/Http/Controllers/Admin/AlgumController.php  ← VIOLAÇÃO
+```
+
+### ✅ OBRIGATÓRIO — todo código novo dentro do bounded context correto:
+```
+src/
+├── {Dominio}/                  (Legal, Financial, SaaS, AI, GED, Whatsapp, ...)
+│   ├── Http/
+│   │   └── Controllers/        ← Controllers aqui, NUNCA na raiz
+│   ├── Models/                 ← Eloquent Models aqui
+│   ├── Services/               ← Lógica de negócio aqui
+│   └── Repositories/           ← Acesso a dados aqui
+├── Http/
+│   ├── routes.php              (Master Loader — apenas inclui os arquivos de domínio)
+│   └── Routes/
+│       └── admin-{dominio}.php ← Arquivo de rota por domínio
+└── Resources/
+    └── views/                  ← Blade views
+```
+
+**Exemplos corretos de namespace e localização:**
+- `src/Legal/Http/Controllers/ProcessoController.php` → `SuiteZap\LawFirm\Legal\Http\Controllers`
+- `src/Whatsapp/Http/Controllers/ConnectionController.php` → `SuiteZap\LawFirm\Whatsapp\Http\Controllers`
+- `src/GED/Http/Controllers/ProcessDocumentController.php` → `SuiteZap\LawFirm\GED\Http\Controllers`
+- `src/AI/Models/LeadTriagem.php` → `SuiteZap\LawFirm\AI\Models`
+
+(`ARCHITECTURE.md §3.3`, `§4.52`, `§4.1`, `§4.2`, `§4.54`)
+
+---
+
+## 6. Regras Adicionais de Alta Prioridade
+
+### 6.1 Jobs e Listeners — falha silenciosa, nunca exception bare
+```php
+// ✅ Jobs e Listeners: retornar com log, não lançar exception
+if (!$config) {
+    Log::error('[Job] Configuração ausente.', ['tenant' => tenant('id')]);
+    return; // NÃO: throw new \Exception(...)
+}
+```
+
+### 6.2 Redis — isolamento por tenant em Swarm
+Todo stack Docker de novo tenant DEVE incluir o prefixo Redis na âncora de environment:
+```yaml
+x-environment: &tenant-env
+  REDIS_PREFIX: "${TENANT_ID}_"   # obrigatório — previne cross-tenant job execution
+```
+
+### 6.3 Ações de DataGrid (Vue/Krayin) — sempre GET para ações de um clique
+```php
+// ✅ CORRETO — evita falha silenciosa de CSRF em Krayin V2
+addAction(['method' => 'GET'])
+
+// ❌ ERRADO — POST em DataGrid perde o token CSRF e gera loop 500
+addAction(['method' => 'POST', 'confirm_text' => '...'])
+```
+
+### 6.4 Migrations — sempre idempotentes com hasColumn() e conexão explícita
+```php
+// ✅ Migrations devem ser idempotentes e referenciar a conexão correta
+if (!Schema::connection('tenant')->hasColumn('processos', 'novo_campo')) {
+    Schema::connection('tenant')->table('processos', function (Blueprint $table) {
+        $table->string('novo_campo')->nullable();
+    });
+}
+```
+
+### 6.5 Sincronização Obrigatória de `ARCHITECTURE_mothership_orient.md`
+
+> [!CAUTION]
+> **Nunca deixar a documentação do MotherShip desatualizada após uma alteração. A atualização é parte da tarefa, não um passo opcional.**
+
+Qualquer tarefa que faça **qualquer** das ações abaixo **deve atualizar `ARCHITECTURE_mothership_orient.md` na mesma entrega**:
+
+| Gatilho | Exemplos |
+|:---|:---|
+| Cria ou altera tabela/coluna na conexão `mothership` | Nova coluna em `tenants`, nova tabela no banco central |
+| Cria novo endpoint consumido pelo MotherShip | Nova rota em `admin/saas/`, novo webhook recebido pelo Mothership UI |
+| Muda a semântica de campo já documentado | Renomear, reclassificar ou alterar o comportamento de `chatwoot_inbox_id`, `evolution_*`, etc. |
+| Altera `MotherShipService` de forma que o contrato de retorno mude | Novos campos em `getChatwootConfig()`, `getEvolutionConfig()`, etc. |
+
+### ❌ NUNCA:
+```
+// Concluir uma tarefa que criou/alterou tabela mothership sem atualizar ARCHITECTURE_mothership_orient.md
+// Assumir que "não afeta o MotherShip" sem verificar explicitamente
+```
+
+### ✅ OBRIGATÓRIO:
+- Se houver dúvida se a tarefa afeta o MotherShip → **perguntar ao responsável antes de assumir que não afeta**.
+- A seção relevante de `ARCHITECTURE_mothership_orient.md` deve ser atualizada **no mesmo commit** que a migration ou o código.
+
+---
+
+### 6.6 Isolamento de Domínio — Não Cruzar Domínios Sem Justificativa Explícita
+
+> [!IMPORTANT]
+> **Uma tarefa em um domínio não deve alterar arquivos de outro domínio, a menos que a integração entre eles seja o objetivo explícito da tarefa.**
+
+#### Domínios reconhecidos do sistema:
+`Legal` | `Financial` | `GED` | `Whatsapp` | `Atendimento` (AI) | `SaaS`
+
+#### ❌ PROIBIDO — sem aprovação explícita no plano:
+```php
+// Tarefa de domínio Legal alterando service de Financial
+// Tarefa de domínio GED modificando controller de Whatsapp
+// Qualquer arquivo fora do domínio da tarefa sem justificativa listada no plano
+```
+
+#### ✅ OBRIGATÓRIO quando houver integração entre domínios:
+- O plano deve **listar explicitamente** todos os domínios tocados e o **motivo** de cada cruzamento
+- Exemplo correto no plano:
+  ```
+  Domínios em escopo: Legal (origem), Financial (integração necessária — prazo gera cobrança)
+  ```
+
+#### ✅ OBRIGATÓRIO ao iniciar qualquer tarefa:
+- **Confirmar com o responsável** qual(is) domínio(s) estão em escopo **antes** de propor o plano
+- Nunca assumir escopo de domínio por inferência — perguntar se não estiver explícito no pedido
+
+---
+
+## 7. Isolamento Multi-Tenant (Regra Crítica)
+
+> [!CAUTION]
+> **Qualquer código que quebre o isolamento entre tenants é uma falha de segurança — não apenas um bug de funcionalidade.**
+
+### 7.1 Escopo de Tenant em Queries de Domínio
+
+Toda query que acessa dados dos domínios **Legal, Financial, GED, Whatsapp, Atendimento (AI)** deve estar escopada por `tenant_id` ou equivalente de isolamento:
+
+```php
+// ✅ CORRETO — query escopada ao tenant corrente
+$processos = Processo::where('tenant_id', tenant('id'))->get();
+
+// ❌ ERRADO — query irrestrita atravessa todos os tenants
+$processos = Processo::all();
+```
+
+**Exceções permitidas** — tabelas do banco `mothership` (leitura cross-tenant é esperada por design):
+
+| Tabela | Banco | Propósito |
+|:---|:---|:---|
+| `tenants` | `mothership` | Registro central de tenants |
+| `subscriptions` | `mothership` | Planos e módulos ativos por tenant |
+| `app_config` | `mothership` | Configurações globais e precificação |
+| `infrastructure_nodes` | `mothership` | Nós de Evolution, MinIO, N8N, Asaas |
+| `lawfirm_assistant_templates` | `mothership` | Templates globais de assistente IA |
+| `lawfirm_document_templates` | `mothership` | Templates globais de documentos |
+| `tenant_billing_infos` | `mothership` | Dados de faturamento (PF/PJ) |
+| `core_config` | `mothership` | Configurações do Krayin core |
+
+Queries nessas tabelas usam `Schema::connection('mothership')` ou model com `$connection = 'mothership'` — não são violações de isolamento.
+
+### 7.2 Justificativa Obrigatória para Alterações em Autenticação e Queries Dinâmicas
+
+Qualquer PR ou plano de execução que altere:
+- Código de **autenticação** ou **resolução de tenant** (`LawFirmServiceProvider`, middlewares de tenant, guards)
+- **Queries dinâmicas** que recebem parâmetros externos (filtros de DataGrid, endpoints de API pública)
+- **Scoping global** de Models (ex: `GlobalScope` adicionado ou removido)
+
+**DEVE** incluir explicitamente, **antes da execução**, a seguinte justificativa no plano:
+
+```
+## Impacto no Isolamento Multi-Tenant
+- Qual mecanismo garante que tenant A não acessa dados do tenant B?
+- A query/lógica foi testada com tenant_id diferente do usuário logado?
+- Existe risco de vazamento em caso de falha silenciosa (ex: tenant_id = null)?
+```
+
+Se esta seção estiver ausente no plano, **não executar a tarefa**.
+
+### 7.3 Credenciais: Nunca Global Onde Deve Ser Por Tenant
+
+```php
+// ❌ ERRADO — usa token master onde deveria haver credencial por tenant
+$apiKey = config('lawfirm.evolution.master_key');
+
+// ✅ CORRETO — obtém credencial isolada do tenant via MotherShipService
+$config = MotherShipService::getEvolutionConfig();
+$apiKey = $config['api_key'];
+```
+
+**Caso aprovado e documentado de herança de token (não abrir novos sem registrar aqui):**
+
+> `MotherShipService::getEvolutionConfig()` — Se o Tenant não possuir `evolution_api_key` próprio, a plataforma usa como fallback o `api_key` do Servidor Hospedeiro (`infrastructure_node`) ao qual o tenant está vinculado. Este comportamento é **intencional, documentado em `§4.35`** e não constitui violação de isolamento — é herança hierárquica de nó, não uso de credencial global indiscriminada.
+
+Qualquer novo padrão de fallback/herança de credencial deve ser:
+1. Documentado neste arquivo **antes** de ser implementado
+2. Referenciado com a seção do `ARCHITECTURE.md` que o aprova
+3. Restrito ao Service responsável (`MotherShipService`) — nunca inline em Controllers ou Jobs
+
+### 7.4 Migrations do Banco `mothership` — Conexão Explícita Obrigatória
+
+```php
+// ✅ CORRETO — conexão explícita, sem ambiguidade
+Schema::connection('mothership')->create('nova_tabela', function (Blueprint $table) {
+    // ...
+});
+
+// ✅ CORRETO — verificação idempotente com conexão explícita
+if (!Schema::connection('mothership')->hasColumn('tenants', 'nova_coluna')) {
+    Schema::connection('mothership')->table('tenants', function (Blueprint $table) {
+        $table->string('nova_coluna')->nullable();
+    });
+}
+
+// ❌ ERRADO — omissão de conexão assume o banco do Tenant corrente
+Schema::create('nova_tabela_mothership', function (Blueprint $table) {
+    // Isso cria a tabela NO BANCO DO TENANT, não no mothership!
+});
+```
+
+**Motivo:** A tabela `migrations` reside no banco do Tenant. Migrations do mothership sem conexão explícita são executadas no banco errado quando um novo tenant é provisionado, causando `Table already exists` ou tabelas espúrias no tenant. (`ARCHITECTURE.md §4.32`, `§4.85`)
+
+---
+
+## 8. Módulos Suspensos — Não Reativar Sem Aprovação Explícita
+
+> [!WARNING]
+> **Estas suspensões são decisões arquiteturais deliberadas, não bugs nem débitos técnicos a serem resolvidos automaticamente. Qualquer reativação requer aprovação explícita do responsável pelo projeto.**
+
+### 8.1 Messenger Inbox / Whaticket — Suspenso desde 29/05/2026
+
+**Status:** ⛔ SUSPENSO — não reativar sem aprovação explícita.
+
+*   O submódulo **Messenger Inbox (Whaticket)**, documentado em `ARCHITECTURE_whats.md`, foi suspenso em **29/05/2026**.
+*   Rotas e controllers do Chat/Inbox (`admin/whatsapp/inbox/*`) estão desabilitados com guard de desativação intencional.
+
+### ❌ NUNCA, sem aprovação explícita do responsável:
+- Reativar rotas do Inbox/Chat
+- Restaurar rotas comentadas relacionadas ao Messenger
+- Remover ou contornar o guard de desativação do módulo
+- Referenciar endpoints de Chat como se estivessem ativos
+
+### 8.2 Pacote `packages/SuiteZap/Whaticket/` — Scaffold Vazio Intencional
+
+**Status:** ⚠️ MANTIDO INTENCIONALMENTE VAZIO — não remover.
+
+*   O pacote `packages/SuiteZap/Whaticket/` é um **scaffold vazio** mantido propositalmente.
+*   Suas migrations **nunca foram executadas** e **nunca devem ser executadas**.
+*   Sua presença é obrigatória para:
+    1.  Não quebrar o `composer.json` (dependência registrada)
+    2.  Não quebrar o `docker/entrypoint.sh` (path de migration referenciado)
+
+### ❌ NUNCA:
+```bash
+# Proibido — causa "Migration path not found" e derruba a stack Docker
+rm -rf packages/SuiteZap/Whaticket/
+```
+
+```json
+// Proibido — remove o path do autoload e quebra o boot
+// composer.json: remover entrada de "SuiteZap\\Whaticket\\"
+```
+
+```bash
+# Proibido — remove path do entrypoint e causa crash loop no container
+# docker/entrypoint.sh: remover linha com packages/SuiteZap/Whaticket/
+```
+
+### 8.3 Confirmação Obrigatória Antes de Tocar em Arquivos Whatsapp
+
+Antes de **qualquer tarefa** que envolva arquivos dentro de:
+- `packages/SuiteZap/LawFirm/src/Whatsapp/`
+- `packages/SuiteZap/Whaticket/`
+
+**DEVE-SE confirmar com o responsável** se a tarefa envolve:
+
+| Contexto | Status | Ação |
+|:---|:---|:---|
+| Módulo suspenso (Inbox, Chat, Messenger) | ⛔ Suspenso | Requer aprovação explícita antes de qualquer alteração |
+| Funcionalidades ativas de WhatsApp | ✅ Ativo | Pode prosseguir seguindo as demais regras deste documento |
+
+**Funcionalidades WhatsApp ativas** (podem ser trabalhadas normalmente):
+- **Faturas WhatsApp** — envio de cobranças via Evolution API
+- **Alertas de Processos** — notificações automáticas de prazos e movimentações
+- **Importação de Conversas** — `WhatsappImport`, histórico por processo
+- **Agendador de Prazos** — `SendScheduledPrazoNotifications` (Artisan scheduler)
+- **Kanban Sync Labels** — sincronização automática de labels Chatwoot via movimentação
+
+---
+
+## 9. Fluxo Obrigatório para Qualquer Alteração
+
+> [!IMPORTANT]
+> **Este fluxo é obrigatório mesmo para correções que pareçam simples, especialmente em `Whatsapp/`, `Atendimento/` e `SaaS/`.**
+
+### Fase 1 — EXPLORAÇÃO
+
+Antes de propor qualquer código:
+
+- Explicar como o **comportamento atual** resolve (ou não) o problema
+- Referenciar a documentação de arquitetura relevante para o domínio afetado:
+
+| Domínio | Documento canônico |
+|:---|:---|
+| Legal, Financial, GED, AI, Whatsapp, SaaS | `ARCHITECTURE.md` (seção do domínio) |
+| Estrutura de diretórios, namespaces, DDD | `ARCHITECTURE_dir.md` |
+| MotherShip, infraestrutura SaaS, multi-tenant | `ARCHITECTURE_mothership_orient.md` |
+| WhatsApp Inbox suspenso | `ARCHITECTURE_whats.md` |
+
+> [!CAUTION]
+> **Não gerar código nesta fase.** Apenas diagnóstico e referência.
+
+### Fase 2 — PLANO
+
+Apresentar plano explícito contendo:
+
+```
+## Plano de Alteração
+
+### Arquivos / Domínios tocados
+- [ ] src/{Dominio}/Http/Controllers/XController.php
+- [ ] src/{Dominio}/Services/XService.php
+- [ ] ...
+
+### Escopo de Domínio (§6.6 obrigatório)
+- Domínio(s) em escopo: ____________ (confirmar com responsável antes de propor plano)
+- [ ] A tarefa toca arquivos de mais de um domínio?
+  - Se **sim**: listar cada domínio adicional e o motivo explícito do cruzamento
+  - Se **não**: confirmar que nenhum arquivo fora do domínio será alterado
+
+### Impacto no Isolamento Multi-Tenant (§7.2 obrigatório)
+- Qual mecanismo garante que tenant A não acessa dados do tenant B?
+- A query/lógica foi revisada para tenant_id correto?
+
+### Módulos Suspensos (§8)
+- [ ] A tarefa envolve Whatsapp/ ou Whaticket/? → confirmar com responsável.
+
+### Migrations Novas
+- [ ] Usa hasColumn() ou hasTable() (idempotência)?
+- [ ] Declara conexão explícita (tenant ou mothership)?
+
+### Sincronização com MotherShip (§6.5)
+- [ ] A tarefa cria/altera tabela ou coluna na conexão `mothership`?
+- [ ] A tarefa cria novo endpoint consumido pelo MotherShip?
+- [ ] A tarefa muda semântica de campo em `ARCHITECTURE_mothership_orient.md`?
+- Se qualquer resposta for **sim** (ou **incerta**) → atualizar `ARCHITECTURE_mothership_orient.md` na mesma entrega.
+```
+
+**Aguardar aprovação antes de avançar para Execução.**
+
+### Fase 3 — EXECUÇÃO
+
+- Aplicar **apenas** o aprovado no Plano
+- Mostrar **diff** de cada arquivo alterado
+- Toda migration nova deve:
+  - Ser **idempotente**: usar `hasColumn()`, `hasTable()` ou `hasIndex()`
+  - Declarar **explicitamente** a conexão: `Schema::connection('tenant')` ou `Schema::connection('mothership')`
+  - **Nunca** omitir a conexão e assumir o banco padrão
+
+### Fase 4 — VALIDAÇÃO
+
+```bash
+# Rodar sempre após qualquer alteração
+php vendor/bin/pest
+
+# Obrigatório se a mudança afetar Chatwoot (MotherShipService, ChatwootService,
+# ChatwootWebhookController ou qualquer código que use getChatwootConfig())
+php vendor/bin/pest tests/Feature/ChatwootConfigTest.php
+```
+
+Não passar para a fase seguinte se algum teste falhar.
+
+### Fase 5 — SINCRONIZAÇÃO DE VERSÃO
+
+Se a mudança for **estrutural** (nova feature, refatoração de domínio, correção de bug crítico):
+
+1. Incrementar a versão no cabeçalho de `ARCHITECTURE.md`
+2. Atualizar a constante `VERSION` em `LawFirmServiceProvider.php`
+3. **Ambas devem sempre coincidir** — versão divergente é um sinal de documentação desatualizada
+
+```php
+// packages/SuiteZap/LawFirm/src/Providers/LawFirmServiceProvider.php
+const VERSION = 'v3.54.1'; // ← deve coincidir com o cabeçalho do ARCHITECTURE.md
+```
+
+### Fase 6 — REGISTRO
+
+Se qualquer coisa **quebrou** durante o processo (regressão, erro inesperado, comportamento diferente do documentado):
+
+1. Adicionar entrada em `GUARDRAILS.md` no formato:
+   ```
+   ## [DATA] — [Componente afetado]
+   **O que quebrou:**
+   **Causa raiz:**
+   **Regra criada para evitar repetição:**
+   ```
+2. Se a regra for genérica o suficiente para afetar outros domínios, adicioná-la também ao `AGENTS.md`
+3. **Não finalizar a tarefa** sem registrar o incidente
+
+### Fase 7 — COMMIT
+
+- Sugerir **mensagem de commit atômica** no formato Conventional Commits:
+  ```
+  fix(chatwoot): separate account_id from inbox_id in getChatwootConfig()
+
+  - Renamed chatwoot_channel_inbox_id for inbox_id semantic
+  - Fixed ChatwootWebhookController cross-tenant guard
+  - Resolves 422 in createContact()
+  Refs: ARCHITECTURE.md §4.85
+  ```
+- **Commitar somente após aprovação explícita** do responsável
+- Um commit por unidade lógica — nunca aglomerar mudanças não relacionadas
+
+---
+
+## Referências Canônicas
+
+| Tema | Localização em ARCHITECTURE.md |
+|:---|:---|
+| Manipulação de Arquivos (SaasFileService) | §3.1, §4.4, §4.42 |
+| Controllers Skinny | §3.2 |
+| Estrutura DDD / Zero Root Controllers | §3.3, §4.52, §4.54 |
+| Zero `.env` em Produção | §4.42, §4.52 |
+| Imagem Docker Canônica | §3.7, §4.86 |
+| Redis Isolation Swarm | §4.44 |
+| Jobs/Listeners sem Exception Bare | §4.42 |
+| Isolamento Multi-Tenant (Queries, Auth, Credenciais, Migrations) | §4.32, §4.35, §4.42, §4.44 |
+| Módulos Suspensos (Whaticket/Inbox) | `ARCHITECTURE_whats.md`, §4.52 |
+| Fluxo Obrigatório de Alteração | `GUARDRAILS.md`, `ARCHITECTURE.md` (geral) |
+| Sincronização MotherShip Docs | `ARCHITECTURE_mothership_orient.md`, §6.5 |
+| Isolamento de Domínio (não cruzar sem justificativa) | §6.6 |
+
+---
+
+> [!CAUTION]
+> **Estas regras têm precedência sobre qualquer padrão genérico de Laravel — em caso de dúvida, seguir o que está aqui, não o que é comum em outros projetos Laravel.**

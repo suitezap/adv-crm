@@ -24,14 +24,16 @@ class Tenant extends Model
         'evolution_node_id',
         'storage_node_id',
         'evolution_instance_name',
+        'evolution_assistente_name',   // Instância explícita do assistente IA (v1.21)
         'evolution_api_key',
         'minio_bucket_name',
         'asaas_node_id',
         // Chatwoot integration fields
         'chatwoot_node_id',
-        'chatwoot_inbox_id',          // account_id — ID numérico da CONTA Chatwoot (legado)
-        'chatwoot_channel_inbox_id',  // inbox_id   — ID real da CAIXA DE ENTRADA do tenant
-        'chatwoot_webhook_token',     // User Access Token do Chatwoot
+        'chatwoot_inbox_id',            // account_id — ID numérico da CONTA Chatwoot (legado)
+        'chatwoot_channel_inbox_id',    // inbox_id   — Inbox de Atendimento Humano
+        'chatwoot_assistant_inbox_id',  // inbox_id   — Inbox do Assistente IA (v1.21)
+        'chatwoot_webhook_token',       // User Access Token do Chatwoot (/labels, /contacts)
     ];
 
     public function subscription()

@@ -146,7 +146,7 @@ return [
         'route'      => 'lawfirm.assistants.index',
         'sort'       => 0,
         'icon-class' => 'icon-dashboard',
-        'permission' => 'lawfirm.assistants',
+        'permission' => 'lawfirm.assistants.view',
     ],
 
     // 1 ─── Assistentes Jurídicos ──────────────────────────────
@@ -188,7 +188,7 @@ return [
         'route'      => 'lawfirm.assistants.chatwoot',
         'sort'       => 4.5,
         'icon-class' => 'icon-settings-webhooks',
-        'permission' => 'sac',
+        'permission' => 'lawfirm.assistants.chatwoot',
     ],
 
     // 4 ─── Históricos Assist. IA ──────────────────────────────

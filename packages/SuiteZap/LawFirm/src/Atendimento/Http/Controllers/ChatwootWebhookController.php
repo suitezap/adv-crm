@@ -5,6 +5,8 @@ namespace SuiteZap\LawFirm\Atendimento\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\Atendimento\Jobs\ProcessChatwootConversationCreatedJob;
+use SuiteZap\LawFirm\Atendimento\Jobs\ProcessChatwootMessageCreatedJob;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 
 /**
@@ -31,7 +33,7 @@ class ChatwootWebhookController extends Controller
         // ── Step 1: Load tenant Chatwoot config from Mothership ──
         $config = MotherShipService::getChatwootConfig();
 
-        if (empty($config) || empty($config['webhook_token'])) {
+        if (empty($config) || empty($config['access_token'])) {
             Log::warning('[ChatwootWebhook] Tenant sem configuração Chatwoot. Ignorando evento.');
 
             // Still return 200 to avoid Chatwoot disabling the webhook on repeated failures.
@@ -41,7 +43,7 @@ class ChatwootWebhookController extends Controller
         // ── Step 2: Validate HMAC-SHA1 signature ──
         $signature = $request->header('X-Chatwoot-Signature');
         $rawBody = $request->getContent();
-        $expected = 'sha1='.hash_hmac('sha1', $rawBody, $config['webhook_token']);
+        $expected = 'sha1='.hash_hmac('sha1', $rawBody, $config['access_token']);
 
         if (! hash_equals($expected, (string) $signature)) {
             Log::warning('[ChatwootWebhook] Assinatura inválida — possível requisição não autorizada.', [
@@ -97,8 +99,9 @@ class ChatwootWebhookController extends Controller
      */
     protected function handleConversationCreated(array $payload): void
     {
-        // TODO: dispatch(new ProcessChatwootConversationCreatedJob($payload));
-        Log::info('[ChatwootWebhook] conversation_created — aguardando implementação de Job.', [
+        ProcessChatwootConversationCreatedJob::dispatch($payload);
+
+        Log::info('[ChatwootWebhook] conversation_created — Job despachado.', [
             'conversation_id' => $payload['id'] ?? null,
         ]);
     }
@@ -109,10 +112,10 @@ class ChatwootWebhookController extends Controller
      */
     protected function handleMessageCreated(array $payload): void
     {
-        // TODO: dispatch(new ProcessChatwootMessageCreatedJob($payload));
-        Log::info('[ChatwootWebhook] message_created — aguardando implementação de Job.', [
+        ProcessChatwootMessageCreatedJob::dispatch($payload);
+
+        Log::info('[ChatwootWebhook] message_created — Job despachado.', [
             'conversation_id' => $payload['conversation']['id'] ?? null,
-            'sender'          => $payload['sender']['name'] ?? null,
         ]);
     }
 }

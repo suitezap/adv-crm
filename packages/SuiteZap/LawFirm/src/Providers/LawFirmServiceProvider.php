@@ -16,7 +16,7 @@ class LawFirmServiceProvider extends ServiceProvider
     /**
      * Versão do pacote LawFirm.
      */
-    public const VERSION = '3.54.0';
+    public const VERSION = '3.54.1';
 
     /**
      * Bootstrap services.
@@ -177,6 +177,16 @@ class LawFirmServiceProvider extends ServiceProvider
                 }
                 // Oculta o menu Orçamentos (versões SaaS futuras — a ser reativado via módulo)
                 if ($item['key'] === 'quotes') {
+                    return false;
+                }
+
+                // Oculta o menu SAC (Chatwoot) se o módulo CHATWOOT não estiver ativo na assinatura
+                if ($item['key'] === 'sac' && ! \SuiteZap\LawFirm\SaaS\Services\MotherShipService::isModuleActive('CHATWOOT')) {
+                    return false;
+                }
+
+                // Oculta o sub-menu de Cobranças se o módulo TENANT_FINANCE não estiver ativo
+                if ($item['key'] === 'financeiro.cobrancas' && ! \SuiteZap\LawFirm\SaaS\Services\MotherShipService::isModuleActive('TENANT_FINANCE')) {
                     return false;
                 }
 

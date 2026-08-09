@@ -179,7 +179,7 @@ class WebhookController
         }
 
         // Buscar Configurações de WhatsApp
-        $whatsappNumber = core()->getConfigData('lawfirm.settings.general.contact_whatsapp', null, $monitoramento->tenant_id);
+        $whatsappNumber = core()->getConfigData('lawfirm.settings.general.contact_whatsapp');
 
         if (! $whatsappNumber) {
             Log::warning('EscavadorWebhook: Monitoramento tem notify_whatsapp ativo, mas WhatsApp não está configurado.');
@@ -199,7 +199,7 @@ class WebhookController
         }
 
         // Busca o Template configurado
-        $template = core()->getConfigData('lawfirm.whatsapp_templates.messages.escavador_monitoramento_update', null, $monitoramento->tenant_id);
+        $template = core()->getConfigData('lawfirm.whatsapp_templates.messages.escavador_monitoramento_update');
 
         if (! $template) {
             $template = "Olá! Detectamos uma nova movimentação do seu monitoramento '{termo_monitorado}' em {fonte} na data de {data_atualizacao}. Acesse o CRM para verificar a íntegra.";

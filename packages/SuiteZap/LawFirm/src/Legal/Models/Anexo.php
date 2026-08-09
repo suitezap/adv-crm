@@ -27,9 +27,9 @@ class Anexo extends Model
     }
 
     /**
-     * Get a secure signed URL for the file.
-     * Retorna rota de proxy interno para evitar "SignatureDoesNotMatch" no MinIO com Reverse Proxy.
-     * (Storage::temporaryUrl() removido — usa route() via proxy do backend, Regra 2.2)
+     * Get a secure URL for the file via the internal proxy backend route.
+     * Usa proxy do backend para evitar "SignatureDoesNotMatch" em ambientes MinIO com Reverse Proxy.
+     * Conforme Regra 2.2 (SKILL.md): acesso a arquivos via SaasFileService, nunca direto.
      */
     public function getUrlAttribute(): string
     {
