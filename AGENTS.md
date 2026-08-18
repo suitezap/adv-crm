@@ -157,4 +157,12 @@ Antes de qualquer tarefa que toque em arquivos dentro de:
 
 ---
 
+## Verificação de Integridade em Arquivos de Governança
+
+> [!IMPORTANT]
+> **Após qualquer escrita em `GUARDRAILS.md`, `AGENTS.md` ou `SKILL.md`**, reabrir o arquivo e confirmar visualmente que o conteúdo está íntegro (sem caracteres de controle, sem perda de palavras ou variáveis) antes de considerar a tarefa concluída — esses três arquivos são fonte de verdade para sessões futuras, então corrupção neles é mais cara que em qualquer outro arquivo do projeto.
+
+---
+
 > Este arquivo trata de **COMO o agente deve se comportar** (processo, aprovação, memória de incidentes). Para **O QUE é permitido ou proibido no código**, a fonte é sempre o **SKILL.md**.
+
