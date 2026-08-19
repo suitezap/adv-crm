@@ -461,7 +461,7 @@ Usuário clica em "Usar Assistente"
 > A implementação real segue a **arquitetura DDD do pacote LawFirm** (Zero Root Controllers — v3.36+):
 
 ```
-// â�Œ Scaffold do orient (orientação conceitual)
+// ❌ Scaffold do orient (orientação conceitual)
 namespace App\Atendimento\Services;
 
 // ✅ Implementação real (DDD correto)
@@ -506,10 +506,10 @@ Os seguintes itens ainda dependem de ação manual no painel Mothership antes de
 
 ```php
 // packages/SuiteZap/LawFirm/src/Providers/LawFirmServiceProvider.php
-public const VERSION = '3.53.0';
+public const VERSION = '3.54.1';
 ```
 
-*Atualizado em 22/06/2026 — Implementação LawFirm v3.53.0 ↔ MotherShip orient v1.4 — Todos os itens "Dev LawFirm" concluídos.*
+*Atualizado em 18/08/2026 — Versão confirmada no código: `LawFirmServiceProvider::VERSION = '3.54.1'`. O checklist de produção atualizado está em §20.5 (que substitui o checklist de implantação Chatwoot de §16.5).*
 
 ---
 
@@ -740,8 +740,8 @@ O conjunto completo de labels sincronizadas via botão "🏷️ Tags" no painel 
 | 3 | Configurar `evolution_assistente_name` no tenant (ou aceitar fallback `{instance_name}_atendimento`) | Admin Mothership | ⏳ Pendente |
 | 4 | Acionar botão **"🏷️ Tags"** no tenant para sincronizar as 64 labels padrão LawFirm | Admin Mothership | ⏳ Pendente |
 | 5 | No **Chatwoot** → Configurações → Integrações → Webhooks → apontar para `https://{tenant-domain}/api/webhooks/chatwoot` com o `chatwoot_webhook_token` como secret | Admin Mothership | ⏳ Pendente |
-| 6 | Executar `php migrations/add_chatwoot_assistant_inbox_id.php` em produção | DevOps | ⏳ Pendente |
-| 7 | Executar `php migrations/add_evolution_assistente_name.php` em produção | DevOps | ⏳ Pendente |
+| 6 | Executar `php migrations/add_chatwoot_assistant_inbox_id.php` em produção *(Parte LawFirm implementada — `chatwoot_assistant_inbox_id` presente em `Tenant.php` fillable e consumido por `MotherShipService.php`. Confirmar execução da migration no MotherShip antes de marcar concluído.)* | DevOps | ⏳ Pendente |
+| 7 | Executar `php migrations/add_evolution_assistente_name.php` em produção *(Parte LawFirm implementada — `evolution_assistente_name` presente em `Tenant.php` fillable e consumido por `MotherShipService.php`. Confirmar execução da migration no MotherShip antes de marcar concluído.)* | DevOps | ⏳ Pendente |
 | 8 | Garantir `escavador_price_v1_autos_processo = 1.50` no `app_config` | Admin Mothership | ✅ Aplicado |
 
 ---

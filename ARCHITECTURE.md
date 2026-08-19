@@ -321,6 +321,11 @@ src/
     *   **`menu.php` (fix):** Chaves dos itens "Criar Monitoramentos" e "Monitoramentos/Robôs" corrigidas de `lawfirm.escavador_monitoramentos*` para `assistants.escavador_monitoramentos*`, fazendo-os aparecer aninhados corretamente sob o menu top-level "Assistentes".
 *   **Segurança .env (Fallback Offline):** O método utiliza a variável `MOTHERSHIP_BASE_URL` declarada localmente. O sistema previne a quebra da aplicação, e caso este Environment não tenha sido criado ou validado no locatário (`env` nulo, vazia, ou servidor MotherShip intermitente), a infraestrutura atua em *Graceful Degradation* (adotando uma tarifa fixa provisória na cotação) preservando o CRM intacto e funcional no dashboard administrativo.
 
+> [!NOTE]
+> **Histórico:** O `ExchangeRateService` foi superado e consolidado pelo `SuiteCoinService` a partir da v3.48 (ver §4.69).
+> Este serviço não deve ser usado em código novo — toda lógica de conversão Ƶ passa exclusivamente por `SuiteCoinService`.
+> A documentação acima é mantida como registro histórico da decisão arquitetural.
+
 ### 4.69 Regras de Cálculo e Exibição de SuiteCoins (v3.48)
 
 > [!IMPORTANT]
@@ -334,19 +339,20 @@ src/
 Aplicável a: Escavador, Monitoramentos, Assistentes Jurídicos, DataJud e qualquer serviço futuro.
 
 ```
-Ƶ_exibido = preço_BRL_bruto × 10 × 1.25
+Ƶ_exibido = preço_BRL_bruto × suitecoin_rate × suitecoin_markup
+            (defaults configuráveis: rate=10.0, markup=1.25 — lidos de mothership.app_config)
 ```
 
 | Componente | Valor | Descrição |
 |:---|:---|:---|
 | `preço_BRL_bruto` | `p` | Custo real da API/serviço lido do MotherShip (`app_config`) |
-| `× 10` | `rate` | Taxa de conversão BRL → Ƶ (`SuiteCoinService::getRate()`) |
-| `× 1.25` | `markup` | Margem de 25% da plataforma (`SuiteCoinService::getMarkup()`) |
+| `× rate` | `suitecoin_rate` | Taxa de conversão BRL → Ƶ — configurável em `mothership.app_config` (default: `10.0`) |
+| `× markup` | `suitecoin_markup` | Margem da plataforma — configurável em `mothership.app_config` (default: `1.25`) |
 | **Resultado** | `Ƶ_exibido` | Valor exibido ao usuário na interface |
 
 **Implementação no front-end (JavaScript):**
 ```javascript
-var pZ = p * 10 * 1.25; // p = preço BRL bruto vindo do MotherShip
+var pZ = p * suitecoinsRate * suitecoinsMarkup; // defaults: rate=10.0, markup=1.25 (lidos de mothership.app_config)
 ```
 
 **Implementação no back-end (PHP — Escavador/DataJud):**
@@ -361,7 +367,7 @@ Esta é a **única exceção** à fórmula padrão, aplicável exclusivamente à
 
 **Regra da Exceção:**
 ```
-Ƶ_exibido = suitecoin_balance_BRL × 10   (sem markup)
+Ƶ_exibido = suitecoin_balance_BRL × suitecoin_rate   (sem markup — default: × 10)
 ```
 
 **Motivação:** Quando o usuário paga R$ 10,00, o sistema deve exibir **Ƶ 100,00** — e não Ƶ 125,00 nem Ƶ 80,00. A percepção de "receber menos do que pagou" deve ser evitada. O markup de 25% é recuperado naturalmente no consumo dos serviços, onde a fórmula completa `× 10 × 1.25` é aplicada.
@@ -374,8 +380,8 @@ $aiBalanceVirtual = SuiteCoinService::toVirtual($aiBalanceBrl); // apenas × rat
 
 **Implementação (JavaScript — loadBalance):**
 ```javascript
-var suitecoinsRate = parseFloat(d.suitecoin_rate || 10);
-currentBalance = balanceBrl * suitecoinsRate; // apenas × 10, sem × 1.25
+var suitecoinsRate = parseFloat(d.suitecoin_rate || 10);   // default 10.0 de mothership.app_config
+currentBalance = balanceBrl * suitecoinsRate; // apenas × rate, sem × markup
 ```
 
 #### Exemplo Completo com R$ 10,00 de Saldo
@@ -389,8 +395,8 @@ currentBalance = balanceBrl * suitecoinsRate; // apenas × 10, sem × 1.25
 | Saldo após consulta | `R$ 4,375` → exibe **Ƶ 43,75** |
 
 #### Fonte de Verdade dos Serviços (SuiteCoinService)
-*   `SuiteCoinService::getRate()` → taxa de conversão (padrão: `10`)
-*   `SuiteCoinService::getMarkup()` → markup da plataforma (padrão: `1.25`)
+*   `SuiteCoinService::getRate()` → lê `mothership.app_config('suitecoin_rate')`, fallback `10.0`
+*   `SuiteCoinService::getMarkup()` → lê `mothership.app_config('suitecoin_markup')`, fallback `1.25`
 *   `SuiteCoinService::toVirtual(float $brl)` → converte BRL → Ƶ (sem markup — para exibição de saldo)
 *   `SuiteCoinService::toBrl(float $virtual)` → converte Ƶ → BRL (para validação de saldo)
 *   `SuiteCoinService::calculateServicePriceBrl(float $raw)` → aplica markup: `$raw × getMarkup()`
@@ -962,9 +968,10 @@ Para modais injetados dinamicamente (ex: Histórico WhatsApp):
 
 ### 4.72 WhatsApp Messenger — Inbox de Atendimento tipo Whaticket (v3.50.0+)
 
-> [!WARNING]
-> **PROJETO SUSPENSO (29/05/2026):** Esta funcionalidade de Messenger/Inbox (Whaticket) foi colocada em suspensão nesta data e **não fará parte das versões posteriores**. Seus endpoints e controladores foram desativados.
-> As demais funcionalidades de WhatsApp (Envio de faturas, alertas de monitoramento, importação de histórico por processo e agendador de prazos) permanecem 100% ativas e funcionais.
+> [!CAUTION]
+> **FUNCIONALIDADE SUSPENSA DESDE 29/05/2026:**
+> Este sub-sistema (Whaticket Messenger Inbox) está suspenso e não fará parte das versões posteriores. As rotas e controladores do Chat/Inbox foram desabilitados.
+> As demais funcionalidades de WhatsApp (Envio de faturas, alertas de monitoramento, importação de histórico por processo e agendador de prazos) permanecem ativas, testadas e 100% funcionais.
 
 > [!NOTE]
 > Documentação completa e histórico de evolução em **`ARCHITECTURE_whats.md`**.
