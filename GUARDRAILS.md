@@ -36,7 +36,7 @@ Formato de cada entrada:
 
 **Regra criada para evitar repetição:** SKILL.md §3.3 e AGENTS.md §Isolamento Multi-Tenant §1 — account_id SEMPRE mapeado de chatwoot_inbox_id; inbox_id SEMPRE de chatwoot_channel_inbox_id (coluna nova, adicionada em v3.54.1). Nunca inverter. Testes automatizados em tests/Feature/ChatwootConfigTest.php cobrem este mapeamento.
 
-**Referência:** ARCHITECTURE.md §4.85 | **Versão corrigida:** v3.54.1
+**Referência:** ARCHITECTURE.md §4.86 | **Versão corrigida:** v3.54.1
 
 ---
 

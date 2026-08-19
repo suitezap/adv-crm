@@ -1,7 +1,7 @@
 # ⚖️ LawFirm CRM - Documento de Arquitetura (v3.54.1 - DDD & SaaS Multi-Tenant)
 
 > [!NOTE]
-> **Imagem Docker Oficial:** `suitezap/lawfirm` — única imagem canônica. `suitezap/adv-crm` foi descontinuada (v3.54.1). Ver ADR §4.85.
+> **Imagem Docker Oficial:** `suitezap/lawfirm` — única imagem canônica. `suitezap/adv-crm` foi descontinuada (v3.54.1). Ver ADR §4.87.
 > [!IMPORTANT]
 > **Manutenção do Documento:** Este arquivo **DEVE** ser atualizado (seção 4.x) e a versão incrementada no cabeçalho sempre que houver mudanças estruturais, novas funcionalidades core ou atualizações na constante de versão em `LawFirmServiceProvider.php`.
 
@@ -279,7 +279,7 @@ src/
     *   **Gráficos no Dashboard (`admin.lawfirm.financial.index`):** Transplante do DataGrid antigo para a página central de Cobranças. O Dashboard passa a focar somente nos KPIs gerenciais acompanhados de Chart.js isolados mostrando divisão via "Pizza" (Formas de pagamento) e comparativo de "Barras" mensais.
     *   **Emissão Pragmática Assíncrona:** Checkbox "Emitir via Asaas" condicional na Aba Financeiro nos processos; aparece somente em marcações em Receitas marcadas via (PIX, Boleto, Cartão), conectando automaticamente a trigger base no `FinancialController`.
 
-### 4.33 Adoção de Masking via Watchers Vue Resilientes vs Krayin `v-mask` (v3.45)
+### 4.33.1 Adoção de Masking via Watchers Vue Resilientes vs Krayin `v-mask` (v3.45)
 *   **Decisão:** Substituir bibliotecas globais de injetamento (v-mask) que conflitam com distribuições fechadas Vee-Validate/Krayin, adotando listeners de JS Puro (`watch`) processando limpeza e reformatação em tempo real diretamente na submissão de componentes dinâmicos no ecossistema e formulários.
 *   **Mudanças:**
     *   **Fim da Limitação Global Vee-Validate (`vee-validate.js`):** Regra global `phone` teve seu Regex afrouxado de apens `/^\+?\d+$/` (que barraria submissão de valores formatados) para suporte em permissões de espaços, parênteses e hífens.
@@ -404,7 +404,7 @@ currentBalance = balanceBrl * suitecoinsRate; // apenas × rate, sem × markup
 
 
 
-### 4.32 Idempotência do Mothership e Hardening do Deploy Docker (v3.17)
+### 4.32.1 Idempotência do Mothership e Hardening do Deploy Docker (v3.17)
 *   **Decisão:** Tornar o ambiente Docker resiliente a falhas de boot de container e resolver permanentemente o provisionamento de novos tenants no SaaS.
 *   **Problema 1 (Container Crash Loop):** O `entrypoint.sh` rodava `artisan migrate` forçando o caminho `Webkul/Mail`, que havia sido deletado no refactoring anterior, resultando em "Migration path not found" e derrubando a stack imediatamente no Docker Swarm.
 *   **Problema 2 (Não-Idempotência):** A tabela de controle `migrations` vive no banco do Tenant, enquanto as migrations do Mothership alteram o banco central. Sempre que um *novo* tenant era provisionado, o Laravel tentava rodar as migrations do Mothership de novo, gerando erro `Table already exists` e quebrando o deploy (Erro 42S01).
@@ -413,7 +413,7 @@ currentBalance = balanceBrl * suitecoinsRate; // apenas × rate, sem × markup
     *   **Migrations Blindadas:** Todas as migrations da connection `mothership` (como `app_config` e `lawfirm_assistant_templates`) receberam blocos `hasTable()` e `hasColumn()`, tornando o ecossistema 100% idempotente a deploys paralelos ou novos tenants.
     *   **Configuração via Compose:** Adotado o modelo `.env.docker` (passagem explícita de `DB_MOTHERSHIP_*` via `environment:` do `docker-compose.yml`), abandonando o antipattern de `COPY .env` para a imagem e evitando conexões recusas por *localhost*.
 
-### 4.33 Krayin 2.1.6 Localization e Estabilização de Rotas (v3.17)
+### 4.33.2 Krayin 2.1.6 Localization e Estabilização de Rotas (v3.17)
 *   **Decisão:** Corrigir os DataGrids e formulários corrompidos no idioma Português (PT-BR) após a atualização do Core do Krayin (v2.1.6) e estabilizar Views do sistema como o Dashboard Financeiro.
 *   **Problema 1 (Seeders Destrutivos e Locale):** Seeders do Krayin (ex: `PipelineSeeder`, `AttributeSeeder`) usam a função `trans()` para preencher o banco de dados. No boot do Docker, se o locale (`pt_BR`) não estava no cache, o Laravel salvava chaves brutas de tradução (ex: `admin::app.seeders...`) corrompendo 100% da interface do usuário baseada nesses atributos.
 *   **Problema 2 (Erro 500 no Dashboard Financeiro):** O Laravel 10/11 passou a lançar a exceção fatal `UrlGenerationException` ao compilar Views Blade que injetam rotas JavaScript com o ID dinâmico omitido (ex: `route('admin.lawfirm.financial.quick_pay', '')`). Isso causava a quebra massiva das telas do sistema.
@@ -422,7 +422,7 @@ currentBalance = balanceBrl * suitecoinsRate; // apenas × rate, sem × markup
     *   **Padrão REPLACE_ID (`Blade` e JS):** Enraizado nas regras de Frontend do pacote que rotas geradas pelo Blade para consumo assíncrono do JavaScript nunca usem o id vazio nas views. Devem usar um string placeholder explícito injetado via route: `route('nome_da_rota', 'REPLACE_ID')` com substituição `.replace('REPLACE_ID', id)` puramente *client-side*.
     *   **Branding Control (`LawFirmServiceProvider`):** Adicionada constante `VERSION` = `3.18` injetada globalmente no Header (exibindo `Versão 2.1.6 | LF 3.18`).
 
-### 4.34 Integração Asaas: Sincronização Local, CheckoutSession e Idempotência (v3.18)
+### 4.88 Integração Asaas: Sincronização Local, CheckoutSession e Idempotência (v3.18)
 *   **Decisão:** Eliminar falhas de perda de créditos de IA (race conditions, bloqueios de webhook em localhost ou checkouts de cartão de crédito) mapeando rigidamente os nós de pagamento na infraestrutura.
 *   **Mudanças:**
     *   **Nó Asaas Estrutural:** Adicionado `asaas_node_id` na tabela `tenants` do banco Mothership e na model genérica `Tenant`, equiparando o gateway financeiro ao nível arquitetural de deploy do N8N e MinIO.
@@ -928,7 +928,7 @@ Para modais injetados dinamicamente (ex: Histórico WhatsApp):
     *   **Tag-Driven Metadata Prioritization:** Uses standard Lead Tags (e.g. `Trabalhista`, `Crítica`) to populate canonical metadata like Área and Prioridade before falling back to `LeadTriagem` AI metrics.
     *   **Canonical Pipelines (v3.46+):** All Legal Status validation must strictly rely on `LegalOrchestrator::VALID_STATUSES` and avoid hard-coded pipeline matching arrays via `UpdateCasoRequest` rules. The Legal Entity assumes standard 12-stage lifecycles, and Processos fallback to canonical mappings over UI inputs.
 
-### 4.65 Global JS State Injection Pattern (Kanban Data Hydration) (v3.46.0)
+### 4.65.1 Global JS State Injection Pattern (Kanban Data Hydration) (v3.46.0)
 
 *   **Decisão:** Eliminar acessos indiretos e bugs de ciclo-de-vida no Blade ao hidratar dependências Vanilla JS (Tooltips e Modais) com grandes volumes de dados de Banco (ex: Listagem de Processos exibida via hover nos cards de Casos do Kanban).
 *   **Problema (Blade Compilation Scope):** Ao iterar centenas de cards (ex: Kanban) e tentar passar um array JSON por atributo HTML (`data-processos="{{ json_encode(...) }}"`), ocorriam escapes incorretos de aspas. Ao tentar injetar scripts via `@pushOnce('scripts')` no meio do loop, o compilador do Blade executava apenas a primeira iteração e ignorava variáveis de view se compiladas prematuramente, resultando em Null Pointers (`Undefined property: Illuminate\View\Factory::$startPush`) ou `[object Object]` vazio.
@@ -938,7 +938,7 @@ Para modais injetados dinamicamente (ex: Histórico WhatsApp):
     *   **Event Delegation (JS):** O componente visual apenas recebe a key referencial (ex: `<div class="card" data-caso-id="5">`), consumida via Event Listener Vanilla JS: `const procData = window.__LF_PROCESSOS_MAP[casoId]`.
 *   **Performance:** Zerou os problemas N+1 na renderização HTML e diminuiu os KBs totais de payload retornado, segregando estado (State) de apresentação (DOM). A abordagem impede crashes no render do Krayin (Vue), assegurando que o `script` injetado nunca interfira na árvore virtual (Virtual DOM).
 
-### 4.66 Kanban Operacional de Casos e Padronização de Pipeline (v3.46.0)
+### 4.66.1 Kanban Operacional de Casos e Padronização de Pipeline (v3.46.0)
 
 *   **Decisão:** Introduzir um quadro Kanban visual para `Caso`s, operando com um pipeline rigoroso de 12 estágios operacionais padronizados (do "Novo Caso" ao "Encerrado"), unificando as paletas de cores de Área, Status e Prioridade em todo o sistema.
 *   **Mudanças:**
@@ -1203,7 +1203,7 @@ Para modais injetados dinamicamente (ex: Histórico WhatsApp):
     *   **Imagens publicadas:** `suitezap/lawfirm:v3.54.0` e `suitezap/lawfirm:latest` publicadas no Docker Hub Registry.
 *   **Verificação:** Executado `docker run --rm suitezap/lawfirm:v3.54.0` confirmando a string `🚀 Iniciando LawFirm SaaS v6.2 (LF v3.54.0)...` no startup do container.
 
-### 4.87 Sincronização Automática de Labels Chatwoot via Movimentação de Kanban (v3.54.0)
+### 4.85 Sincronização Automática de Labels Chatwoot via Movimentação de Kanban (v3.54.0)
 
 *   **Data:** 2026-06-30 | **Implementação:** Antigravity Senior Architect
 *   **Motivação:** Quando um Lead é arrastado entre etapas do Kanban de Vendas (`/admin/leads`) ou um Caso é movido no Kanban Jurídico (`/admin/juridico/kanban`), a label do contato correspondente no Chatwoot deve ser atualizada automaticamente. Isso permite que as equipes de atendimento visualizem em tempo real o estágio de cada cliente nas conversas WhatsApp, sem precisar abrir o CRM.
@@ -1293,7 +1293,7 @@ Labels de outras categorias (`ORG_WHATS`, `CLI_PF`, `FIN_ADIM`, etc.) são **sem
 | 6 | Namespace DDD `SuiteZap\LawFirm\{Domain}\{Type}` | ✅ PASS |
 | **TOTAL** | **Score Final** | **🏆 10 / 10** |
 
-### 4.85 Correção de Bug Crítico — Separação de `account_id` e `inbox_id` no Chatwoot (v3.54.1)
+### 4.86 Correção de Bug Crítico — Separação de `account_id` e `inbox_id` no Chatwoot (v3.54.1)
 
 *   **Data:** 2026-07-01 | **Implementação:** Antigravity Senior Architect
 *   **Motivação:** A coluna `chatwoot_inbox_id` na tabela `tenants` do Mothership estava sendo usada de forma ambígua — guardava ora o `account_id` (ID da conta Chatwoot), ora o `inbox_id` (ID da caixa de entrada). Isso causava dois bugs críticos:
@@ -1344,7 +1344,7 @@ ChatwootWebhookController         valida payload.inbox_id == config['inbox_id'] 
 
 ---
 
-### 4.86 Consolidação do Docker Hub — Imagem Canônica `suitezap/lawfirm` (v3.54.1)
+### 4.87 Consolidação do Docker Hub — Imagem Canônica `suitezap/lawfirm` (v3.54.1)
 
 *   **Decisão:** Consolidar em **uma única imagem Docker oficial** para eliminar ambiguidade entre as duas imagens que existiam no Docker Hub: `suitezap/adv-crm` (legada, descontinuada) e `suitezap/lawfirm` (canônica, ativa).
 

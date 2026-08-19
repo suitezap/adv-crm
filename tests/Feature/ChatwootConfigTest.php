@@ -14,7 +14,7 @@
  * a dependência de banco/MotherShipService e permitindo testes puramente unitários no
  * ambiente Feature (necessário para Http::fake() e Log facades).
  *
- * @see ARCHITECTURE.md §4.85
+ * @see ARCHITECTURE.md §4.86
  * @see AGENTS.md §7.1 e §7.3
  * @see GUARDRAILS.md — Incidente 2026-07-01
  */
@@ -77,7 +77,7 @@ describe('account_id — sempre mapeado de chatwoot_inbox_id', function () {
         expect($service->accountUrl())->toContain('/accounts/7');
     });
 
-    it('account_id=5 com inbox_id=200 — URL usa 5, não 200 (regressão §4.85)', function () {
+    it('account_id=5 com inbox_id=200 — URL usa 5, não 200 (regressão §4.86)', function () {
         // Cenário exato do bug: antes do fix, account_id podia assumir valor de inbox
         $service = makeChatwootServiceWithConfig(['account_id' => 5, 'inbox_id' => 200]);
 
@@ -455,7 +455,7 @@ describe('ChatwootWebhookController — usa access_token como secret HMAC', func
 });
 
 // ---------------------------------------------------------------------------
-// REQUISITO: MotherShipService mapeia nomes de campo reais (ARCHITECTURE.md §4.85)
+// REQUISITO: MotherShipService mapeia nomes de campo reais (ARCHITECTURE.md §4.86)
 // ---------------------------------------------------------------------------
 
 describe('MotherShipService::getChatwootConfig() — mapeamento de tokens e IDs', function () {
