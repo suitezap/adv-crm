@@ -19,7 +19,7 @@
 
 ### 1. Escopo de Tenant em Queries de Domínio
 
-Toda query que acessa dados dos domínios **Legal, Financial, GED, Whatsapp, Atendimento** deve estar escopada por `tenant_id` ou equivalente de isolamento.
+Toda query que acessa dados dos domínios **Legal, Financial, GED, Whatsapp, Atendimento, AI, Escavador, TenantFinance** ou tabelas tenant-scoped do domínio **SaaS** (ex: `saas_transactions`) deve estar escopada por `tenant_id` ou equivalente de isolamento.
 
 **Exceção documentada — tabelas do banco `mothership` que permitem acesso cross-tenant por design:**
 
@@ -154,6 +154,16 @@ Antes de qualquer tarefa que toque em arquivos dentro de:
 
 > [!IMPORTANT]
 > Este fluxo é obrigatório mesmo para correções que pareçam simples, especialmente em `Whatsapp/`, `Atendimento/` e `SaaS/`.
+
+---
+
+## Higiene de Commits
+
+> [!IMPORTANT]
+> **Regras obrigatórias de versionamento e commit:**
+> - **Nunca usar `git add -A` ou `git add .`** sem antes rodar `git status` e revisar a lista completa de arquivos que serão incluídos no stage.
+> - **Atomicidade Estrita:** Um commit deve conter apenas os arquivos relacionados à tarefa em execução. Arquivos não relacionados encontrados no working directory durante uma tarefa devem ser reportados ao usuário, nunca commitados juntos.
+> - **Artefatos Proibidos em Git:** Nunca commitar arquivos de backup (`*.bak`, `*.bak2`), bancos de sincronização local (`*.ffs_db`), arquivos de coleção soltos, ou build artifacts compilados (`public/**/build/`) — esses arquivos devem residir obrigatoriamente no `.gitignore`.
 
 ---
 

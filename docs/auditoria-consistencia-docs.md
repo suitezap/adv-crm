@@ -1,249 +1,170 @@
-﻿# Relatorio de Auditoria - Consistencia de Documentacao
-**Data:** 2026-08-09 | **Escopo:** `ARCHITECTURE.md`, `ARCHITECTURE_dir.md`, `ARCHITECTURE_mothership_orient.md`, `AUDIT_REPORT.md`, `.agent/skills/krayin_lawfirm_dev/SKILL.md`
-**Versao de referencia:** v3.54.1 (cabecalho de `ARCHITECTURE.md`)
+# Relatório de Auditoria — Consistência de Documentação
+**Data:** 2026-08-18 | **Escopo:** `ARCHITECTURE.md`, `ARCHITECTURE_dir.md`, `ARCHITECTURE_mothership_orient.md`, `AUDIT_REPORT.md`, `.agent/skills/krayin_lawfirm_dev/SKILL.md`  
+**Versão de Referência do Sistema:** v3.54.1 (declarada em `LawFirmServiceProvider.php::VERSION` e cabeçalho de `ARCHITECTURE.md`)
 
 > [!NOTE]
-> Este relatorio e **somente leitura** -- nenhum arquivo foi alterado. Cada achado inclui localizacao exata (arquivo + linha/secao) para facilitar correcoes pontuais.
+> Este relatório é **estritamente analítico e investigatório (somente leitura)** — nenhum arquivo de código ou documentação foi alterado nesta tarefa. Cada achado inclui a localização precisa (arquivo, seção e linha) e a comparação com o código-fonte real.
 
 ---
 
-## 1. Informacoes Contraditorias Entre Documentos
+## 1. Informações Contraditórias Entre Documentos
 
-### 1.1 Formula de Conversao de SuiteCoins -- Valores Fixos vs. Multiplier Dinamico
+### 1.1 Fórmula de Conversão de SuiteCoins (Valores Fixos vs. Multiplicador Dinâmico)
 
-**Severidade:** MEDIA -- ambas as descricoes estao tecnicamente corretas mas descrevem camadas diferentes sem deixar isso claro.
+* **Gravidade:** MÉDIA (indução a erro arquitetural).
+* **Documentos Envolvidos:** `ARCHITECTURE.md` (§4.69), `ARCHITECTURE_dir.md` (§7), `SKILL.md` (§5), `ARCHITECTURE_mothership_orient.md` (§12, §13).
 
-#### O que cada documento diz:
+#### O que cada documento afirma:
+1. **`ARCHITECTURE.md §4.69` (linhas 337, 343-344, 349):**
+   Apresenta a fórmula como constantes numéricas literais hardcoded:
+   ```text
+   Ƶ_exibido = preço_BRL_bruto × 10 × 1.25
+   ```
+   No front-end: `var pZ = p * 10 * 1.25;`
+2. **`ARCHITECTURE_dir.md §7` (linhas 263 e 458):**
+   Reafirma a fórmula com valores literais `× 10 × 1.25` sem explicitar a dependência dinâmica do MotherShip.
+3. **`SKILL.md §5` (linha 139):**
+   Descreve que a conversão é puramente em runtime para exibição na UI utilizando o multiplicador dinâmico vindo da tabela `app_config` do MotherShip:
+   `"LawFirm converts it purely for UI display using the suitecoin_multiplier from app_config"`.
+4. **`ARCHITECTURE_mothership_orient.md §12 e §13` (linhas 318 e 333-338):**
+   Documenta que as chaves `suitecoin_rate` (default 10) e `suitecoin_markup` / `markup_factor` (default 1.25) residem no banco `mothership.app_config` e são consumidas dinamicamente.
 
-| Documento | Localizacao | Descricao |
-|:---|:---|:---|
-| `ARCHITECTURE.md` | S4.69, ln 337 | `Exibido = preco_BRL_bruto x 10 x 1.25` -- apresentado como formula canonica com valores numericos literais |
-| `ARCHITECTURE.md` | S4.69, ln 392-393 | `SuiteCoinService::getRate()` padrao `10`; `SuiteCoinService::getMarkup()` padrao `1.25` -- indica que sao configuaveis |
-| `ARCHITECTURE_dir.md` | S7, ln 263 e ln 458 (secoes duplicadas) | Formula com valores literais, sem mencao a configurabilidade |
-| `SKILL.md` | S5, ln 139 | `"LawFirm converts it purely for UI display using the suitecoin_multiplier from app_config"` -- descreve o multiplicador como vindo de `app_config`, dinamico |
-| `ARCHITECTURE_mothership_orient.md` | S12, ln 318 | `suitecoin_rate (default 10), suitecoin_markup` -- confirma que os valores vivem em `app_config` |
-| `ARCHITECTURE_mothership_orient.md` | S13, ln 333-338 | `markup_factor DECIMAL default 1.2500` -- confirma dinamica |
+#### Validação contra o Código-Fonte Real:
+* **`packages/SuiteZap/LawFirm/src/SaaS/Services/SuiteCoinService.php`:**
+  * Linha 42: `SuiteCoinService::getRate()` consulta dinamicamente `MotherShipService::getAppConfig('suitecoin_rate')` com fallback para `DEFAULT_RATE = 10.0`.
+  * Linha 52: `SuiteCoinService::getMarkup()` consulta dinamicamente `MotherShipService::getAppConfig('suitecoin_markup')` com fallback para `DEFAULT_MARKUP = 1.25`.
+  * Linha 75: `SuiteCoinService::toVirtual($brlAmount)` usa `self::getRate()`.
+  * Linha 95: `SuiteCoinService::calculateServicePriceBrl($costBrl)` usa `self::getMarkup()`.
+* **`packages/SuiteZap/LawFirm/src/SaaS/Services/MotherShipService.php`:**
+  * Linha 149/178: `getEscavadorPrices()` busca `suitecoin_multiplier` em `app_config` com default `10`.
 
-#### Diagnostico:
-
-- **`ARCHITECTURE.md S4.69`** e **`ARCHITECTURE_dir.md S7`** apresentam `10` e `1.25` como constantes da formula, sem indicar que vem de `app_config`. Um leitor pode deduzir que sao hardcoded.
-- **`SKILL.md S5`** e **`ARCHITECTURE_mothership_orient.md S12/S13`** descrevem corretamente a arquitetura: os valores sao lidos de `app_config` (`suitecoin_rate`, `suitecoin_multiplier`/`suitecoin_markup`) com defaults de `10` e `1.25`.
-- **Qual esta correto:** `SKILL.md` e `ARCHITECTURE_mothership_orient.md` -- o multiplicador e dinamico via `app_config`. **O texto de `S4.69` nao deixa isso explicito**, o que e ambiguo.
-- **O que esta desatualizado:** A nota de `S4.69` deveria deixar claro que `rate=10` e `markup=1.25` sao defaults de `app_config`, nao valores fixos em codigo.
-
-**Localizacao exata:**
-- `ARCHITECTURE.md` ln 337, 343-344, 392-393
-- `ARCHITECTURE_dir.md` ln 263, 267 e duplicatas ln 458, 462
-- `SKILL.md` ln 139
-- `ARCHITECTURE_mothership_orient.md` ln 318, 333-338
-
----
-
-### 1.2 Campo `url` vs. `base_url` no Retorno de `getChatwootConfig()`
-
-**Severidade:** ALTA -- contradicao direta entre o contrato documentado e o codigo real.
-
-| Documento | Localizacao | Campo usado |
-|:---|:---|:---|
-| `SKILL.md` | S3.3, ln 95 | `['url', 'api_key', 'account_id', 'inbox_id', 'assistant_inbox_id', 'access_token']` -- chave `url` |
-| `ARCHITECTURE_mothership_orient.md` | S20.1, ln 646 | `'url' => $node->base_url` -- chave `url` no retorno documentado |
-| `MotherShipService.php` (codigo real) | -- | `'base_url' => rtrim($node->base_url, '/')` -- chave `base_url` |
-| `ChatwootService.php` (codigo real) | ln 49-52 | `$this->config['base_url']` -- usa `base_url` |
-
-#### Diagnostico:
-
-- O **codigo real** usa `base_url`.
-- **`SKILL.md S3.3`** e **`ARCHITECTURE_mothership_orient.md S20.1`** documentam `url` -- **desatualizado**.
-- Codigo que use `$config['url']` seguindo a documentacao recebera `null`.
-
-**Localizacao dos achados:**
-- `SKILL.md` ln 95 -- `'url'` deve ser `'base_url'`
-- `ARCHITECTURE_mothership_orient.md` ln 646 -- `'url' => $node->base_url` deve ser `'base_url' => ...`
+#### Conclusão e Diagnóstico:
+* **Qual reflete o código atual:** `SKILL.md §5` e `ARCHITECTURE_mothership_orient.md §12/§13`. O sistema é **dinâmico e orientado a configuração global via MotherShip**.
+* **O que está desatualizado/impreciso:** `ARCHITECTURE.md §4.69` e `ARCHITECTURE_dir.md §7`. Eles omitem que `10` e `1.25` são apenas fallbacks/defaults de `app_config`, dando a entender errôneamente que se trata de uma regra matemática fixa em código.
 
 ---
 
-### 1.3 `getChatwootConfig()` -- Tabela de Consistencia de Campos
+### 1.2 Nomes de Campo Retornados por `MotherShipService::getChatwootConfig()`
 
-| Campo | `SKILL.md S3.3` | `orient.md S20.1` | Codigo real |
-|:---|:---|:---|:---|
-| URL da instancia | `url` | `url` | `base_url` ERRADO |
-| Bot token | `api_key` | `api_key` | `api_key` OK |
-| ID da conta | `account_id` | `account_id` | `account_id` OK |
-| Inbox atendimento | `inbox_id` | `inbox_id` | `inbox_id` OK |
-| Inbox assistente IA | `assistant_inbox_id` | `assistant_inbox_id` | `assistant_inbox_id` OK |
-| User Access Token | `access_token` | `access_token` | `access_token` OK |
+* **Gravidade:** ALTA (risco de `null pointer` / quebra de integração em novos desenvolvimentos).
+* **Documentos Envolvidos:** `SKILL.md` (§3.3), `ARCHITECTURE_mothership_orient.md` (§20.1), `ARCHITECTURE.md` (§4.82, §4.85).
 
-`ARCHITECTURE.md S4.85` (ln 1315-1320) ao descrever o bug historico usa os nomes corretos pos-correcao (`account_id`, `inbox_id`) e e consistente com o codigo.
+#### Tabela de Comparação de Contrato:
+
+| Campo / Semântica | Código Real (`MotherShipService.php`) | `SKILL.md §3.3` | `orient.md §20.1` | `ARCHITECTURE.md §4.82/§4.85` | Situação |
+|:---|:---|:---|:---|:---|:---|
+| **URL Base da Instância** | `'base_url'` | `'url'` ❌ | `'url'` ❌ | `'base_url'` ✅ | **Divergência Crítica** |
+| **Token do Bot (Mensagens)** | `'api_key'` | `'api_key'` ✅ | `'api_key'` ✅ | `'api_key'` ✅ | Alinhado |
+| **ID da Conta Chatwoot** | `'account_id'` | `'account_id'` ✅ | `'account_id'` ✅ | `'account_id'` ✅ | Alinhado |
+| **Inbox Atendimento Humano** | `'inbox_id'` | `'inbox_id'` ✅ | `'inbox_id'` ✅ | `'inbox_id'` ✅ | Alinhado |
+| **Inbox Assistente IA** | `'assistant_inbox_id'` | `'assistant_inbox_id'` ✅ | `'assistant_inbox_id'` ✅ | *(não listado em §4.82)* | Alinhado |
+| **User Access Token** | `'access_token'` | `'access_token'` ✅ | `'access_token'` ✅ | `'access_token'` / `'webhook_token'` | Alinhado |
+
+#### Validação contra o Código-Fonte Real:
+* **`packages/SuiteZap/LawFirm/src/SaaS/Services/MotherShipService.php` (linhas 535-542):**
+  ```php
+  return [
+      'base_url'           => rtrim($node->base_url, '/'),
+      'api_key'            => $node->api_key,
+      'account_id'         => $meta['account_id'] ?? $tenantConfig->chatwoot_inbox_id ?? null,
+      'inbox_id'           => $tenantConfig->chatwoot_channel_inbox_id ?? null,
+      'assistant_inbox_id' => $tenantConfig->chatwoot_assistant_inbox_id ?? null,
+      'access_token'       => $tenantConfig->chatwoot_webhook_token ?? null,
+  ];
+  ```
+* **`packages/SuiteZap/LawFirm/src/Atendimento/Services/ChatwootService.php` (linha 31 e 49):**
+  ```php
+  $this->baseUrl = $config['base_url'] ?? '';
+  ```
+
+#### Conclusão e Diagnóstico:
+* A chave canônica é **`base_url`**. Se um desenvolvedor ou IA seguir o exemplo de `SKILL.md §3.3` (`$n8nConfig['url']` / `$chatwootConfig['url']`) ou `orient.md §20.1`, o acesso à URL resultará em `null`, causando falha de conexão HTTP.
+* **`ARCHITECTURE.md §4.85`** descreve com precisão a resolução histórica do bug de ambiguidade entre `account_id` (lido de `chatwoot_inbox_id`) e `inbox_id` (lido de `chatwoot_channel_inbox_id`), estando 100% em conformidade com o código atual.
 
 ---
 
-### 1.4 `VERSION` Desatualizado em `ARCHITECTURE_mothership_orient.md`
+### 1.3 `VERSION` Desatualizado em `ARCHITECTURE_mothership_orient.md` e `SKILL.md`
 
-**Severidade:** MEDIA
-
-| Documento | Localizacao | Versao registrada |
-|:---|:---|:---|
-| `ARCHITECTURE.md` | ln 1 (cabecalho) | **v3.54.1** |
-| `ARCHITECTURE_mothership_orient.md` | S16.6, ln 509 | **3.53.0** (sem "v") |
-| `ARCHITECTURE_mothership_orient.md` | ln 512 | "v1.4 -- 22/06/2026" |
-
-O documento nao foi atualizado para refletir v3.54.0 e v3.54.1, incluindo as migrations `chatwoot_channel_inbox_id` e `chatwoot_assistant_inbox_id` que ele mesmo documenta em S20.1 como pendentes.
+* **Gravidade:** MÉDIA.
+* **Localização:**
+  * `ARCHITECTURE_mothership_orient.md §16.6` (linhas 505-512): Documenta `VERSION = '3.53.0'` como referência canônica da plataforma e data de 22/06/2026, ignorando as versões v3.54.0 e v3.54.1 que foram adicionadas no final do arquivo (§20).
+  * `SKILL.md` (linha 5): Declara `# LawFirm CRM - Architecture Standards (v3.53)`, enquanto o projeto está em `v3.54.1`.
 
 ---
 
-### 1.5 `SKILL.md` com Versao Antiga no Cabecalho
+## 2. Seções com Numeração Duplicada ou Referências Quebradas
 
-**Severidade:** BAIXA
+### 2.1 Numeração Duplicada e Ordem Cronológica Invertida em `ARCHITECTURE.md`
 
-- `SKILL.md` ln 5: `"# LawFirm CRM - Architecture Standards (v3.53)"` -- dois minor versions atras da versao atual.
-- O conteudo ja inclui informacoes de v3.54.1 (como `assistant_inbox_id`), mas o numero nao foi incrementado.
+* **Gravidade:** ALTA (compromete a rastreabilidade de ADRs e regras).
 
----
-
-## 2. Secoes com Numeracao Duplicada ou Referencias Quebradas
-
-### 2.1 `ARCHITECTURE.md` -- Secoes S4.x Numeradas Duas ou Tres Vezes
-
-**Severidade:** ALTA -- impede referencias precisas por numero de secao.
-
-| Secao | Ocorrencias | Linha 1 | Linha 2 | Linha 3 |
+| Seção Duplicada | Ocorrência 1 (Linha / Título) | Ocorrência 2 (Linha / Título) | Ocorrência 3 | Diagnóstico |
 |:---|:---|:---|:---|:---|
-| S4.32 | 2x | ln 265: "Security Hardening do ACL (v3.18)" | ln 401: "Idempotencia do Mothership e Hardening do Deploy Docker (v3.17)" | -- |
-| S4.33 | **3x** | ln 275: "Consolidacao Top-Level do Modulo Financeiro (v3.45)" | ln 282: "Adocao de Masking via Watchers Vue (v3.45)" | ln 410: "Krayin 2.1.6 Localization (v3.17)" |
-| S4.34 | 2x | ln 289: "Integracao Orientada a Identidade (v3.45)" | ln 419: "Integracao Asaas: Sincronizacao Local (v3.18)" | -- |
-| S4.65 | 2x | ln 296: "Unificacao de Status de Entidades Legais (v3.46.1)" | ln 925: "Global JS State Injection Pattern (v3.46.0)" | -- |
-| S4.66 | 2x | ln 303: "Organizacao do Menu Assistentes (v3.47)" | ln 935: "Kanban Operacional de Casos (v3.46.0)" | -- |
-| S4.83 | 2x | ln 1153: "Auditoria de Conformidade DDD (v3.53.1)" | ln 1199: "Sincronizacao Automatica de Labels Chatwoot (v3.54.0)" | -- |
+| **§4.32** | L265: *Security Hardening do ACL (v3.18)* | L401: *Idempotência do Mothership e Deploy (v3.17)* | — | Colisão de números de versão antiga e nova |
+| **§4.33** | L275: *Consolidação Top-Level Financeiro (v3.45)* | L282: *Masking via Watchers Vue (v3.45)* | L410: *Krayin Localization (v3.17)* | **Triplicada** com versões discrepantes |
+| **§4.34** | L289: *Migração do whatsapp_responsavel (v3.45)* | L419: *Integração Asaas Sincronização (v3.18)* | — | Colisão entre v3.45 e v3.18 |
+| **§4.65** | L296: *Unificação de Status de Entidades (v3.46.1)* | L925: *Global JS State Injection (v3.46.0)* | — | Colisão de número na mesma release |
+| **§4.66** | L303: *Organização do Menu Assistentes (v3.47)* | L935: *Kanban Operacional de Casos (v3.46.0)* | — | Colisão entre v3.47 e v3.46 |
+| **§4.87 vs §4.85** | L1199: *§4.87 Sincronização Labels (v3.54.0)* | L1289: *§4.85 Correção Bug Chatwoot (v3.54.1)* | — | §4.87 aparece **antes** de §4.85 e §4.86 |
 
-> A correcao da segunda ocorrencia de S4.85 para S4.86 foi realizada em auditoria anterior. Os demais permanecem.
-
----
-
-### 2.2 `ARCHITECTURE_dir.md` -- Secoes Inteiras Duplicadas (Bloco)
-
-**Severidade:** ALTA -- as secoes 5 a 12 aparecem duas vezes completas.
-
-| Secao | 1a ocorrencia | 2a ocorrencia |
-|:---|:---|:---|
-| S5 "Detalhamento de Rotas e URLs" | ln 194 | ln 389 |
-| S6.6 "Chamadas de Rotas Laravel no JavaScript" | ln 227 | ln 422 |
-| S6.7 "Hidratacao de Componentes Vanilla JS" | ln 245 | ln 440 |
-| S7 "Regras de Exibicao de SuiteCoins" | ln 255 | ln 450 |
-| "Formula Padrao" | ln 261 | ln 456 |
-| "Excecao -- Painel Minha Assinatura" | ln 269 | ln 464 |
-| "Tabela de Referencia de Conversao" | ln 280 | ln 475 |
-| S8 "Padronizacao de Renderizacao Markdown" | ln 292 | ln 487 |
-| S9 "Atualizacoes de UI -- v3.51.0" | ln 318 | ln 513 |
-| S10 "Atualizacoes de UI -- v3.52.0" | ln 337 | ln 532 |
-| S11 "Atualizacoes de UI -- v3.52.2" | ln 354 | ln 549 |
-| S12 "Atualizacoes de UI -- v3.52.3" | ln 368 | ln 563 |
-
-**Diagnostico:** As ocorrencias em ln 389-707 sao copias exatas das em ln 194-390. O conteudo original (1a ocorrencia) deve ser mantido; o bloco duplicado (2a ocorrencia, a partir de ~ln 389) deve ser removido.
+* **Inversão Cronológica de Bloco:**
+  As linhas 265 a 324 (que tratam de v3.45 até v3.48 — Financeiro, Masking, Status, Assistentes, SuiteCoins) foram coladas no topo da seção 4, antes do bloco histórico legítimo de v3.17 a v3.44 (linhas 401 a 850).
 
 ---
 
-### 2.3 Checklist de Producao com Itens Desatualizados
+### 2.2 Bloco Inteiro Duplicado em `ARCHITECTURE_dir.md`
 
-**Severidade:** BAIXA
-
-- `ARCHITECTURE_mothership_orient.md S16.5`, ln 497-503: itens marcados `Pendente` (ex: migration v3.53.0) provavelmente ja executados.
-- `ARCHITECTURE_mothership_orient.md S20.1`, ln 743: "Executar `php migrations/add_chatwoot_assistant_inbox_id.php`" marcado `Pendente` -- sem confirmacao de execucao em producao.
-
----
-
-## 3. Problemas de Encoding (Caracteres Corrompidos)
-
-### 3.1 `ARCHITECTURE_mothership_orient.md` -- 12 Linhas com Encoding Double-UTF-8
-
-**Severidade:** MEDIA -- prejudica a leitura; nao afeta codigo.
-
-| Linha | Conteudo corrompido | Correcao esperada |
-|:---|:---|:---|
-| ln 334 | `Display = Ã— 10` | `Display = x 10` (multiplicacao) |
-| ln 337 | `base_cost_brl Ã— markup_factor Ã— 10000` | `base_cost_brl x markup_factor x 10000` |
-| ln 338 | `price_virtual Ã— suitecoin_rate (10)` | `price_virtual x suitecoin_rate (10)` |
-| ln 339 | `O n8n NÃƒO PRECISA SER ALTERADO` | `O n8n NAO PRECISA SER ALTERADO` |
-| ln 359 | `âœ… price_virtual` | `[check] price_virtual` (emoji corrompido) |
-| ln 167, 499, 650, 682, 697, 738 | Setas e aspas corrompidos | Varios simbolos Unicode |
-
-**Origem provavel:** O arquivo foi salvo com encoding Latin-1 em algum momento e relido como UTF-8, ou passou por dupla codificacao.
-
-### 3.2 `ARCHITECTURE.md` -- Sem Problemas de Encoding
-
-As linhas detectadas pelo script automatico nao contem caracteres corrompidos -- eram falsos positivos causados por sintaxe PHP (`->`, `\\`).
-
-### 3.3 `ARCHITECTURE_dir.md` -- Sem Problemas de Encoding
-
-Verificacao nao encontrou sequencias corrompidas.
-
-### 3.4 `AUDIT_REPORT.md` -- Sem Problemas de Encoding
-
-Verificacao nao encontrou sequencias corrompidas.
+* **Gravidade:** ALTA (duplicação maciça de ~315 linhas).
+* **Localização:** `ARCHITECTURE_dir.md`.
+  * **Bloco Original:** Linhas 194 a 388 (Seções 5, 6.6, 6.7, 7, 8, 9, 9.1, 10, 10.1, 11, 11.1, 12).
+  * **Bloco Duplicado:** Linhas 389 a 580 (as mesmas seções repetidas na íntegra palavra por palavra).
 
 ---
 
-## 4. Decisoes Arquiteturais Obsoletas Nao Marcadas Como Tal
+## 3. Trechos com Problemas de Encoding (Caracteres Corrompidos)
 
-### 4.1 Imagem Docker `suitezap/adv-crm`
+### 3.1 `ARCHITECTURE_mothership_orient.md`
+* **Localização:** Linha 464.
+* **Texto Corrompido:** `// âŒ Scaffold do orient (orientação conceitual)`
+* **Texto Pretendido:** `// ❌ Scaffold do orient (orientação conceitual)`
+* **Causa:** O emoji `❌` (`\xE2\x9D\x8C`) foi gravado com perda de byte/mojibake.
 
-**Severidade:** BAIXA -- achado ja resolvido.
-
-`ARCHITECTURE.md S4.86` (ln 1340-1363) e o cabecalho (ln 4) documentam corretamente a descontinuacao. Sem mencoes residuais sem aviso.
-
----
-
-### 4.2 `ARCHITECTURE.md` S4.32-S4.34 (ln 265-295) -- Bloco Fora de Ordem Cronologica
-
-**Severidade:** MEDIA
-
-As secoes S4.32-S4.34 em ln 265-295 descrevem mudancas de **v3.45** (consolidacao do modulo financeiro, masking Vue, migracao de `whatsapp_responsavel`), enquanto as secoes S4.32-S4.34 em ln 401-419 descrevem mudancas de **v3.17-v3.18** (Krayin 2.1.6, Asaas). A ordem cronologica esta invertida -- as mudancas mais recentes tem numeracao menor do que as mais antigas.
-
-**Diagnostico:** O bloco em ln 265-295 foi inserido mais recentemente e reutilizou numeros ja existentes. Os blocos em ln 401-419 sao os originais. O conteudo de ln 265-308 (v3.45-v3.47) deveria ter numeros sequenciais a partir do ultimo existente no documento.
+*(Nota: Os arquivos `ARCHITECTURE.md`, `ARCHITECTURE_dir.md`, `AUDIT_REPORT.md` e `SKILL.md` passaram com zero caracteres de controle corrompidos e zero mojibake).*
 
 ---
 
-### 4.3 `ARCHITECTURE.md` S4.65-S4.66 (ln 296-308) -- Idem Anterior
+## 4. Decisões Arquiteturais Obsoletas ou Superadas
 
-**Severidade:** MEDIA
+> [!NOTE]
+> **Esclarecimento sobre `sendAssistantMessage()`:** A suspeita inicial de que o método `ChatwootService::sendAssistantMessage()` estaria ausente do código era **falsa**. O método está implementado em `packages/SuiteZap/LawFirm/src/Atendimento/Services/ChatwootService.php` (linhas 132 a 170) e validado com 27 testes automatizados em `tests/Feature/ChatwootConfigTest.php` (100% aprovados). A documentação em `SKILL.md §3.3` e `ARCHITECTURE_mothership_orient.md §20.1` está correta.
 
-- ln 296: `S4.65 Unificacao de Status de Entidades Legais (v3.46.1)` -- versao **mais nova**
-- ln 925: `S4.65 Global JS State Injection Pattern (v3.46.0)` -- versao **mais antiga**
+### 4.1 Status de Suspensão do Whaticket Messenger em `ARCHITECTURE.md §4.72`
+* **Gravidade:** MÉDIA.
+* **Localização:** `ARCHITECTURE.md §4.72` (linhas 963 a 993).
+* **Diagnóstico:** O documento `ARCHITECTURE_whats.md` e o `AGENTS.md` definem explicitamente que o Whaticket Messenger Inbox está **suspenso desde 29/05/2026**. Contudo, em `ARCHITECTURE.md §4.72`, o texto ainda descreve o submódulo como feature ativa sem a tarja obrigatória `> [!CAUTION] FUNCIONALIDADE SUSPENSA`.
 
-Secoes recentes inseridas antes das originais com o mesmo numero.
+### 4.2 Substituição de `ExchangeRateService` por `SuiteCoinService`
+* **Gravidade:** BAIXA.
+* **Localização:** `ARCHITECTURE.md §4.68` (linhas 315-323).
+* **Diagnóstico:** A seção 4.68 descreve a criação do `ExchangeRateService` na v3.47. Na v3.48 ele foi consolidado e substituído pelo `SuiteCoinService`, mas a seção 4.68 não possui uma nota de "Superado por §4.69 / SuiteCoinService".
 
----
-
-### 4.4 `ARCHITECTURE_mothership_orient.md S16.6` -- VERSION 3.53.0 Permanece Como "Verdade"
-
-**Severidade:** MEDIA
-
-A secao `S16.6` (ln 505-512) documenta `VERSION = '3.53.0'` como referencia canonica. A secao S20 foi acrescentada para v3.54.x mas nao atualizou o `VERSION` e o timestamp de `S16.6`, criando impressao de que a sincronizacao MotherShip-LawFirm esta em v3.53.0.
-
----
-
-### 4.5 `SKILL.md S3.3` -- `sendAssistantMessage()` Documentado Mas Nao Existe no Codigo
-
-**Severidade:** ALTA -- pode causar `Call to undefined method` se um agente seguir essa documentacao.
-
-- `SKILL.md S3.3`, ln 108: `"sendAssistantMessage() | usa assistant_inbox_id (5o campo Jul/2026) | botHeaders()"`
-- `ARCHITECTURE_mothership_orient.md S20.1`, ln 657: `"sendAssistantMessage() -> usa assistant_inbox_id"`
-- **Codigo real (`ChatwootService.php`):** O metodo `sendAssistantMessage()` **nao existe**. A classe possui apenas `sendMessage()`.
-
-O metodo foi documentado como planejado mas nao implementado, sem indicacao de que e futuro/pendente.
+### 4.3 Status de Migrations Pendentes no `orient.md`
+* **Gravidade:** BAIXA.
+* **Localização:** `ARCHITECTURE_mothership_orient.md §16.5` e `§20.1` (linhas 497-503 e 739-745).
+* **Diagnóstico:** Tabelas continuam rotulando tarefas como `⏳ Pendente` (ex: migração de `chatwoot_channel_inbox_id`, ajuste de endpoints e rotas), quando na verdade já foram totalmente implementadas e validadas no CRM na v3.54.1.
 
 ---
 
-## Resumo Executivo dos Achados
+## Tabela Resumo dos Achados
 
-| # | Tipo | Severidade | Arquivo(s) | Acao Recomendada |
-|:---|:---|:---:|:---|:---|
-| 1.1 | Contradicao: formula SuiteCoins fixa vs. dinamica | MEDIA | `ARCHITECTURE.md S4.69`, `SKILL.md S5`, `orient.md S12-13` | Adicionar nota em S4.69 explicando que `10` e `1.25` sao defaults de `app_config` |
-| 1.2 | Contradicao: campo `url` vs. `base_url` em getChatwootConfig | **ALTA** | `SKILL.md S3.3`, `orient.md S20.1` | Corrigir `url` para `base_url` nos dois docs |
-| 1.4 | VERSION desatualizado | MEDIA | `orient.md S16.6` | Atualizar para v3.54.1 e adicionar changelog do S20 |
-| 1.5 | SKILL.md com versao antiga no cabecalho | BAIXA | `SKILL.md` ln 5 | Atualizar `v3.53` para `v3.54.1` |
-| 2.1 | Numeracao duplicada em S4.32, S4.33(x3), S4.34, S4.65, S4.66, S4.83 | **ALTA** | `ARCHITECTURE.md` | Renumerar as ocorrencias inseridas mais recentemente |
-| 2.2 | Secoes 5-12 completamente duplicadas | **ALTA** | `ARCHITECTURE_dir.md` | Remover bloco a partir de ~ln 389 |
-| 3.1 | 12 linhas com encoding corrompido | MEDIA | `orient.md` ln 334, 337, 338, 339, 359, ... | Corrigir encoding (re-salvar como UTF-8 limpo) |
-| 4.2-4.3 | Secoes S4.32-S4.66 fora de ordem cronologica | MEDIA | `ARCHITECTURE.md` | Renumerar bloco ln 265-308 |
-| 4.4 | VERSION no orient.md nao reflete v3.54.x | MEDIA | `orient.md S16.6` | Atualizar secao com versao e data corretas |
-| 4.5 | `sendAssistantMessage()` documentado mas nao implementado | **ALTA** | `SKILL.md S3.3`, `orient.md S20.1` | Marcar como `[PLANEJADO - nao implementado]` ou implementar |
+| ID | Tipo | Severidade | Arquivo(s) | Localização | Ação Recomendada Futura |
+|:---|:---|:---:|:---|:---|:---|
+| **1.1** | Contradição: SuiteCoins fixo vs dinâmico | MÉDIA | `ARCHITECTURE.md`, `ARCHITECTURE_dir.md` | §4.69 (ln 337), §7 (ln 263) | Esclarecer que `10` e `1.25` são defaults de `app_config` |
+| **1.2** | Contradição: chave `url` vs `base_url` no Chatwoot | **ALTA** | `SKILL.md`, `orient.md` | `SKILL.md §3.3` (ln 95), `orient.md §20.1` (ln 646) | Corrigir `'url'` para `'base_url'` |
+| **1.3** | Versão desatualizada no cabeçalho | BAIXA | `orient.md`, `SKILL.md` | `orient.md §16.6` (ln 509), `SKILL.md` (ln 5) | Atualizar referências para `v3.54.1` |
+| **2.1** | Seções duplicadas / fora de ordem | **ALTA** | `ARCHITECTURE.md` | §4.32, §4.33, §4.34, §4.65, §4.66, §4.87 | Reorganizar e renumerar sequencialmente |
+| **2.2** | Bloco massivo duplicado (~315 linhas) | **ALTA** | `ARCHITECTURE_dir.md` | Linhas 389 a 580 | Remover a segunda cópia idêntica |
+| **3.1** | Mojibake / caractere quebrado | MÉDIA | `orient.md` | Linha 464 (`âŒ`) | Substituir por `❌` limpo em UTF-8 |
+| **4.1** | Módulo suspenso sem aviso de caution | MÉDIA | `ARCHITECTURE.md` | §4.72 (ln 963) | Inserir tarja `[!CAUTION]` de suspensão |
+| **4.2** | ADR superado sem marcação de histórico | BAIXA | `ARCHITECTURE.md` | §4.68 (ln 315) | Anotar substituição pelo `SuiteCoinService` |
+| **4.3** | Checklists marcados pendentes já concluídos | BAIXA | `orient.md` | §16.5 (ln 497), §20.1 (ln 739) | Atualizar checklist para `✅ Concluído` |

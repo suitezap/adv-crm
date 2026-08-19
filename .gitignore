@@ -57,3 +57,18 @@ out_*.log
 test_*.php
 remove_logo.php
 .env.docker
+
+# Backup Files
+*.bak
+*.bak2
+
+# FreeFileSync Database
+*.ffs_db
+*.ffs_gui
+
+# Compiled Frontend Build Artifacts
+/public/build/
+/public/admin/build/
+/public/installer/build/
+/public/webform/build/
+
