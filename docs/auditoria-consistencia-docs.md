@@ -138,10 +138,10 @@
 > [!NOTE]
 > **Esclarecimento sobre `sendAssistantMessage()`:** A suspeita inicial de que o método `ChatwootService::sendAssistantMessage()` estaria ausente do código era **falsa**. O método está implementado em `packages/SuiteZap/LawFirm/src/Atendimento/Services/ChatwootService.php` (linhas 132 a 170) e validado com 27 testes automatizados em `tests/Feature/ChatwootConfigTest.php` (100% aprovados). A documentação em `SKILL.md §3.3` e `ARCHITECTURE_mothership_orient.md §20.1` está correta.
 
-### 4.1 Status de Suspensão do Whaticket Messenger em `ARCHITECTURE.md §4.72`
-* **Gravidade:** MÉDIA.
-* **Localização:** `ARCHITECTURE.md §4.72` (linhas 963 a 993).
-* **Diagnóstico:** O documento `ARCHITECTURE_whats.md` e o `AGENTS.md` definem explicitamente que o Whaticket Messenger Inbox está **suspenso desde 29/05/2026**. Contudo, em `ARCHITECTURE.md §4.72`, o texto ainda descreve o submódulo como feature ativa sem a tarja obrigatória `> [!CAUTION] FUNCIONALIDADE SUSPENSA`.
+### 4.1 Descomissionamento Total do Whaticket Messenger
+* **Status:** ✅ RESOLVIDO (Ago/2026).
+* **Diagnóstico Anterior:** O documento `ARCHITECTURE_whats.md` e o `AGENTS.md` definiam o Whaticket como suspenso, mas `ARCHITECTURE.md §4.72` mantinha menção ativa.
+* **Resolução Aplicada:** O submódulo Whaticket, suas rotas, controllers e o documento `ARCHITECTURE_whats.md` foram completamente removidos do repositório, e as decisões consolidadas no ADR §4.88 do `ARCHITECTURE.md` e em `ARCHITECTURE.br`.
 
 ### 4.2 Substituição de `ExchangeRateService` por `SuiteCoinService`
 * **Gravidade:** BAIXA.
@@ -165,6 +165,6 @@
 | **2.1** | Seções duplicadas / fora de ordem | **ALTA** | `ARCHITECTURE.md` | §4.32, §4.33, §4.34, §4.65, §4.66, §4.87 | Reorganizar e renumerar sequencialmente |
 | **2.2** | Bloco massivo duplicado (~315 linhas) | **ALTA** | `ARCHITECTURE_dir.md` | Linhas 389 a 580 | Remover a segunda cópia idêntica |
 | **3.1** | Mojibake / caractere quebrado | MÉDIA | `orient.md` | Linha 464 (`âŒ`) | Substituir por `❌` limpo em UTF-8 |
-| **4.1** | Módulo suspenso sem aviso de caution | MÉDIA | `ARCHITECTURE.md` | §4.72 (ln 963) | Inserir tarja `[!CAUTION]` de suspensão |
+| **4.1** | Descomissionamento Whaticket | RESOLVIDO | `ARCHITECTURE.md`, `SKILL.md` | ADR §4.88 | ✅ Removido definitivamente do repositório |
 | **4.2** | ADR superado sem marcação de histórico | BAIXA | `ARCHITECTURE.md` | §4.68 (ln 315) | Anotar substituição pelo `SuiteCoinService` |
 | **4.3** | Checklists marcados pendentes já concluídos | BAIXA | `orient.md` | §16.5 (ln 497), §20.1 (ln 739) | Atualizar checklist para `✅ Concluído` |

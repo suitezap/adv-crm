@@ -139,8 +139,7 @@ When Evolution, N8N, Asaas, Escavador, or Chatwoot is not configured in MotherSh
 - **SuiteCoins (Ƶ):** All AI token balances are managed via `suitecoin_balance` in the `subscriptions` table. MotherShip stores balances in BRL (1:1), and LawFirm converts it purely for UI display using the `suitecoin_multiplier` from `app_config`. Do not alter balances natively outside this rule.
 - **Hybrid Document Templates (v3.53.0+):** LawFirm uses a mixed system for document templates.
   - Global templates: Served from `mothership_db` (`lawfirm_document_templates`), fetched via `MothershipDocumentTemplate` (connection `'mothership'`), with `global-{id}` prefix. Any attempt to write/edit a `global-` template from the tenant CRM must be blocked (HTTP 403).
-  - Local templates: Served from the tenant DB (`law_document_templates`), with `local-{id}` prefix.
-- **Whaticket Suspended:** The Messenger Inbox (Whaticket) is suspended. Do not create new features or routes for it. Autoloading and migrations are kept only to prevent legacy build failures.
+- **Whaticket Decommissioned:** The legacy Whaticket Messenger Inbox was completely removed. Live customer chat and multi-channel inbox are handled exclusively by the `Atendimento` domain (Chatwoot Dual Inbox). The `Whatsapp` domain handles transactional notifications only (Faturas, Prazos, Alertas, Import).
 
 ### 5.1 Escavador & DataJud (v3.32+ Refactoring)
 *   **MANDATORY "Zero .env" Policy:** Never use `env()` for Escavador tokens or prices. Use `MotherShipService::getTenantConfig()` and `MotherShipService::getEscavadorPrices()`.
@@ -309,13 +308,12 @@ All queries accessing domain data (Legal, Financial, GED, Whatsapp, Atendimento)
 - **Redis Swarm Isolation**: Every tenant's docker-compose stack MUST include `REDIS_PREFIX: "${TENANT_ID}_"` to prevent cross-tenant job execution.
 - **Credentials**: Never use global master credentials where a tenant-isolated credential should exist (e.g. `evolution_api_key`), except for the documented fallback in `MotherShipService::getEvolutionConfig()`.
 
-## 11. Suspended Modules & Operations
+## 11. Governance & Operations
 
-### 11.1 Whaticket / Messenger Inbox (Suspended)
-- The Whaticket / Messenger Inbox module is **suspended since 29/05/2026**.
-- ❌ **Do NOT** reactivate Chat/Inbox routes, remove deactivation guards, or reference chat endpoints without explicit approval.
-- The `packages/SuiteZap/Whaticket/` folder is an **intentional empty scaffold**. Do NOT delete it or remove it from `composer.json` or `docker/entrypoint.sh` (doing so breaks container boot with "Migration path not found").
-- **Active WhatsApp Features** (Safe to touch): Faturas, Alertas de Processos, WhatsappImport, Agendador de Prazos, Kanban Sync Labels. Always confirm scope before touching Whatsapp files.
+### 11.1 Decommissioned Modules (Whaticket Removed)
+- The legacy Whaticket / Messenger Inbox module and its scaffold (`packages/SuiteZap/Whaticket/`) have been **completely removed** from the repository, `composer.json`, and `docker/entrypoint.sh`.
+- ❌ **Do NOT** attempt to create or restore Whaticket routes/controllers.
+- **Active WhatsApp Domain Scope** (`packages/SuiteZap/LawFirm/src/Whatsapp/`): Reserved strictly for transactional notifications (Faturas, Alertas de Processos, WhatsappImport, Agendador de Prazos, Kanban Sync Labels). Omnichannel chat lives in `Atendimento/` (Chatwoot). Always confirm scope before modifying WhatsApp files.
 
 ### 11.2 MotherShip Architecture Sync
 If you create/alter a table in the `mothership` connection, create an endpoint consumed by MotherShip, or alter `MotherShipService` return contracts, you **MUST** update `ARCHITECTURE_mothership_orient.md` in the same task.

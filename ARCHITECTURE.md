@@ -1348,3 +1348,32 @@ ChatwootWebhookController         valida payload.inbox_id == config['inbox_id'] 
     | `v3.50.0` | v3.50.0 | 2026-06 | ✅ Ativo |
     | `v3.20` / `v1.7` | v3.20 | 2026-04 | ⚠️ Legado |
 
+---
+
+### 4.88 ADR: Descomissionamento e Remoção Definitiva do Whaticket (Ago/2026)
+
+*   **Contexto:** O projeto inicialmente manteve um protótipo de Messenger Inbox inspirado no Whaticket (`packages/SuiteZap/Whaticket/` e rotas de chat em `LawFirm/Whatsapp`). O submódulo foi suspenso em Maio/2026 e mantido temporariamente como scaffold de compatibilidade.
+*   **Decisão Arquitetural:**
+    1. **Centralização do Atendimento no Chatwoot:** O atendimento multicanal, live chat, distribuição de tickets por equipe e integração com assistentes de IA foram consolidados de forma canônica e exclusiva no domínio `Atendimento/` (`ChatwootService`), operando no padrão **Dual Inbox** (humano + assistente IA).
+    2. **Especialização do Domínio `Whatsapp/`:** O domínio `Whatsapp/` foi delimitado exclusivamente para **notificações transacionais e automações jurídicas** (envio de faturas, alertas de prazos, notificações de movimentação e importação de histórico de conversa por processo via `WhatsappImport`).
+    3. **Remoção Definitiva:** Todo o pacote fantasma `packages/SuiteZap/Whaticket/`, rotas legadas, controllers de chat e referências em `composer.json` e `docker/entrypoint.sh` foram totalmente removidos do repositório.
+*   **Regra Derivada:** É proibido tentar restaurar controladores locais de chat ou pacotes Whaticket no CRM. Toda evolução de inbox deve ser direcionada ao Chatwoot.
+
+---
+
+### 4.89 ADR / Diretriz Técnica: Gestão de Upgrades Upstream (Krayin CRM) & Transição Laravel 12 (Ago/2026)
+
+*   **Contexto:** Análise técnica comparativa entre a base do LawFirm (Krayin CRM v2.1.6) e as releases upstream mais recentes do repositório oficial (`krayin/laravel-crm` v2.2.0 a v2.2.5).
+*   **Diagnóstico de Incompatibilidade de Upgrade Direto:**
+    *   Um `composer update webkul/*` ou `git merge upstream` direto é **inviável** e causaria quebra em cascata, devido às profundas customizações do LawFirm:
+        *   Arquitetura DDD própria em `packages/SuiteZap/LawFirm/` com isolamento multi-tenant estrito.
+        *   Substituição obrigatória de `Storage::` por `SaasFileService` (S3 com signed URLs dinâmicas por tenant).
+        *   Política "Zero .env" via `MotherShipService`.
+        *   Templates de documentos híbridos e injeção de IA/DataJud/Escavador.
+        *   Modificações pontuais em views e assets do core (`vee-validate.js`, middleware CSRF, header S3).
+    *   A release upstream **v2.2.0** introduziu a migração para o **Laravel 12**, que altera a forma de registro de middlewares, injeção de dependências e lifecycles de bootloaders de Service Providers.
+*   **Diretriz Estratégica Adotada (Protocolo de 3 Camadas):**
+    1. **Segurança e Bug Fixes Críticos (Cherry-Pick Imediato):** Vulnerabilidades reportadas upstream (ex: XSS em Notes `#2542`, SQLi em Rotten Lead `#2583`, IDOR em Agent Record `#2567`, SSRF em Webhooks `#2592`) devem ser aplicadas cirurgicamente por arquivo/diff sem tocar no versionamento do vendor.
+    2. **Features de UX Inspiradas:** Melhorias de interface do upstream (ex: toggle de sidebar colapsável com persistência em `localStorage`, filtro por tag em contatos) devem ser implementadas nativamente no LawFirm (via `LawFirmServiceProvider` ou templates próprios), preservando a autonomia do código.
+    3. **Migração do Framework (Laravel 12 / Krayin v2.2.x):** Classificada como **iniciativa estrutural isolada**, com planejamento dedicado de 2 a 4 semanas, branch separada, ambiente de staging e matriz de regressão completa nos 10 domínios DDD.
+

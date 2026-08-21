@@ -1,56 +1,29 @@
 # 🏗️ Arquitetura do Sistema — LawFirm CRM
 
-Este arquivo consolida os princípios arquiteturais e decisões técnicas tomadas para o projeto LawFirm e seu ecossistema MotherShip.
+Este arquivo consolida os princípios arquiteturais, domínios e decisões técnicas tomadas para o projeto LawFirm e seu ecossistema MotherShip.
 
 ---
 
-## 1. Módulo WhatsApp Messenger (Inspirado no Whaticket)
+## 1. Domínio WhatsApp (`Whatsapp/`) — Notificações Transacionais
 
-O sub-sistema de **Mensageria e Atendimento** é o coração da comunicação do LawFirm, permitindo que advogados e atendentes gerenciem conversas via WhatsApp diretamente do CRM.
+O domínio `Whatsapp/` (`packages/SuiteZap/LawFirm/src/Whatsapp/`) é responsável exclusivamente por **notificações transacionais e automações jurídicas** via **Evolution API**:
+
+- **Envio de Faturas e Cobranças:** Notificações automáticas de boletos e Pix gerados pelo Asaas.
+- **Alertas de Processos e Prazos:** Disparos automáticos de prazos vencendo (`SendScheduledPrazoNotifications`).
+- **Importação de Histórico:** Associação de conversas arquivadas a processos jurídicos (`WhatsappImport`).
+- **Sincronização de Tags/Kanban:** Atualização de status visual.
 
 ### 🌐 Integração com Ecossistema SaaS
-- **MotherShip Service:** Todas as credenciais (Base URL, Instance, API Key) são extraídas dinamicamente via `MotherShipService::getEvolutionConfig($tenantId)`. O sistema nunca lê chaves de WhatsApp do `.env` local para garantir isolamento e flexibilidade.
-- **Isolamento de Dados (Multi-tenancy):** Cada query ao banco de dados obrigatoriamente contém o filtro `where('tenant_id', ...)`, garantindo que um escritório nunca visualize as mensagens de outro.
-
-### 🔌 Estrutura de Ingestão (Webhooks)
-O sistema utiliza um webhook público e resiliente para receber eventos da **Evolution API**:
-- **Idempotência:** Mensagens são salvas via `updateOrCreate` baseando-se no `evolution_message_id`. Isso evita duplicidade caso o webhook seja enviado múltiplas vezes.
-- **Auto-vínculo:** Ao receber uma mensagem, o sistema tenta vincular o telefone automaticamente a uma "Person" (Pessoa) no CRM Jurídico.
+- **MotherShip Service:** Credenciais (Base URL, Instance, API Key) são extraídas dinamicamente via `MotherShipService::getEvolutionConfig($tenantId)`. O sistema nunca lê chaves de WhatsApp do `.env` local para garantir isolamento e flexibilidade multi-tenant.
+- **Isolamento de Dados (Multi-tenancy):** Cada query ao banco de dados obrigatoriamente contém o escopo `tenant_id`.
 
 ---
 
-## 2. Padrões de Interface (UX/UI)
+## 2. Domínio Atendimento (`Atendimento/`) — Chatwoot Dual Inbox
 
-### 🎨 Portal Dialog & Vanilla JS
-Seguindo as diretrizes de performance e isolamento do LawFirm (§6.1), o Messenger UI:
-- **Zero Injeção Vue:** Implementado inteiramente em Blade + Vanilla JS + Tailwind CSS para evitar conflitos com a instância Vue do CRM principal.
-- **Layout Split-View:** Interface de dois painéis (sidebar de tickets + área de chat) otimizada para Desktop.
-- **Feedback em Tempo Real:** Utiliza polling de 10 segundos para manter mensagens e status de tickets sincronizados sem necessidade de reload manual.
+O atendimento em tempo real, chat multicanal e inbox com distribuição de conversas é delegado integralmente ao **Chatwoot**, implementado no domínio `Atendimento/` via `ChatwootService`.
 
----
-
-## 3. Segurança e Resiliência
-
-- **CSRF-Exempt:** As rotas de webhook são protegidas e isentas de validação CSRF para permitir comunicação externa da Evolution API.
-- **Arquitetura de Filas:** O envio de mensagens não é feito durante o request HTTP. Ele é despachado para um **Job Assíncrono** (`SendWhatsappMessageJob`), garantindo que o sistema não trave caso a API do WhatsApp demore a responder.
-- **Prefixos de Tabela:** Todas as tabelas seguem o padrão `law_whatsapp_*`, diferenciando-as claramente das tabelas core do sistema.
-
----
-
-## 4. Evolução e Próximos Passos
-
-A arquitetura atual permite a expansão para:
-1.  **WebSockets (Laravel Reverb):** Para atualizações instantâneas em vez de polling.
-2.  **Distribuição de Tickets:** Lógica de encaminhamento automático para usuários específicos baseada em regras de negócio.
-3.  **Templates de IA:** Integração de assistentes de IA para sugestão de respostas em mensagens recebidas.
-
----
-
-## 5. Integração Chatwoot — Dual Inbox (v3.54.1 / MotherShip v1.21 — Jul/2026)
-
-O LawFirm CRM integra com o Chatwoot através do domínio `Atendimento/` via `ChatwootService`. A partir de **Jul/2026**, o sistema suporta **dois Inboxes distintos** por tenant: um para atendimento humano e outro para o Assistente de IA.
-
-### 🔑 Mapeamento de Tokens (Crítico)
+### 🔑 Mapeamento de Tokens
 
 | Operação | Token Correto | Campo DB | Método |
 |---|---|---|---|
@@ -75,6 +48,20 @@ O `ChatwootService` resolve o inbox correto via `MotherShipService::getChatwootC
 
 ### 🔗 Sync de Labels (64 Labels Padrão)
 
-O botão "🏷️ Tags" no MotherShip sincroniza 64 labels via upsert (PATCH + POST). O `ChatwootService::syncContactLabels()` no CRM usa estas mesmas labels para atualizar contatos via Kanban (Leads/Casos). Ver tabela completa em `ARCHITECTURE_mothership_orient.md §20.4`.
+O botão "🏷️ Tags" no MotherShip sincroniza 64 labels via upsert (PATCH + POST). O `ChatwootService::syncContactLabels()` no CRM usa estas mesmas labels para atualizar contatos via Kanban (Leads/Casos).
 
-> ⚠️ Labels com MAIÚSCULAS (LD_NOVO, CAS_*) dependem do Chatwoot retornar o `title` em lowercase. Testar contra a versão instalada.
+---
+
+## 3. Decisões Arquiteturais Registradas (ADRs)
+
+### 3.1 Descomissionamento Total do Whaticket
+- **Decisão:** O submódulo legado de Messenger/Whaticket (`packages/SuiteZap/Whaticket/` e rotas de chat locais) foi **definitivamente descontinuado e removido**.
+- **Justificativa:** O Chatwoot assumiu com robustez todas as demandas de inbox, atendimento simultâneo por equipe, canais múltiplos e roteamento para assistentes de IA, tornando redundante e inseguro manter um chat paralelo no CRM.
+- **Estado Atual:** Zero código residual de Whaticket no repositório, `composer.json` e `docker/entrypoint.sh`.
+
+### 3.2 Estratégia de Atualização do Core Upstream (Krayin CRM)
+- **Decisão:** Upgrades diretos de core (`git merge upstream` ou `composer update webkul/*`) são **proibidos** devido às extensas customizações do LawFirm (DDD, `SaasFileService`, MotherShip Zero .env, templates globais).
+- **Procedimento:**
+  1. **Segurança e Bug Fixes:** Aplicados via *Cherry-Pick Cirúrgico* a partir dos diffs de PRs do upstream.
+  2. **Novas Features UX:** Replicadas nativamente dentro do pacote LawFirm sem modificar o vendor.
+  3. **Upgrade de Framework (Laravel 12):** Isolado como projeto dedicado com branch própria, staging e bateria completa de testes de regressão.
