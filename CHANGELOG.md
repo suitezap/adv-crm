@@ -43,9 +43,6 @@
 
 ## **LF v3.51.0 (Maio 2026)** - *Release*
 
-* [feature] Integração oficial com o módulo Whaticket (WhatsApp).
-* [enhancement] Refatoração do módulo Messenger com suporte a mídias (foto, áudio, vídeo, docs).
-* [enhancement] Melhorias de isolamento multi-tenant para dados do Messenger.
 * [maintenance] Atualização do repositório Docker Hub para a versão v3.51.0.
 
 ## **LF v3.50.0 (Maio 2026)** - *Release*

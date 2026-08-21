@@ -428,12 +428,7 @@ Usuário clica em "Usar Assistente"
 *   **Impacto no MotherShip:**
     *   **Nenhum.** O processo é 100% autônomo e executado no banco do tenant via `php artisan migrate`, isentando a necessidade de comandos adicionais de seed no painel ou pipelines de provisionamento.
 
-### 15.3 Suspensão do Whaticket (Messenger Inbox)
-*   **Contexto:** O submódulo Messenger Inbox (Whaticket) foi colocado em suspensão permanente a partir de **29/05/2026** e não fará parte das versões posteriores.
-*   **Impacto no MotherShip / Deploy:**
-    *   **Nenhum imediato.** Para evitar que o pacote seja ignorado ou cause quebras no Docker build e no Composer install, mantivemos o autoloading de `SuiteZap\Whaticket` no `composer.json` e a migration correspondente (`packages/SuiteZap/Whaticket/src/Database/Migrations`) ativa no `docker/entrypoint.sh`. 
-    *   As demais funcionalidades do WhatsApp (como alertas de prazos, avisos e cobranças/faturas) continuam ativas, funcionais e devidamente configuradas.
-    *   Não há necessidade de desprovisionar tabelas já existentes nos tenants ativos, pois elas permanecerão inativas e sem rotas públicas.
+
 
 ---
 

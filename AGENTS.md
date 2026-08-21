@@ -86,33 +86,9 @@ x-environment: &tenant-env
 > [!CAUTION]
 > **Reativar qualquer item desta lista sem aprovação explícita é uma alteração proibida, independentemente do contexto da tarefa.**
 
-### 1. Messenger Inbox (Whaticket) — Suspenso desde 29/05/2026
+### 1. Gate Obrigatório — Confirmação Antes de Tocar nos Paths Afetados
 
-O submódulo Messenger Inbox (Whaticket), documentado em `ARCHITECTURE_whats.md`, está **suspenso desde 29/05/2026**. Rotas e controllers do Chat/Inbox estão desabilitados.
-
-**É proibido, sem aprovação explícita:**
-- Reativar o módulo ou qualquer parte dele
-- Restaurar rotas comentadas relacionadas ao Chat/Inbox
-- Remover o guard de desativação que bloqueia o acesso
-
-### 2. `packages/SuiteZap/Whaticket/` — Scaffold Vazio Intencional
-
-O pacote `packages/SuiteZap/Whaticket/` é mantido intencionalmente como **scaffold vazio** (migrations nunca executadas) apenas para não quebrar `composer.json` e `docker/entrypoint.sh`.
-
-**É proibido, sem aprovação explícita:**
-- Deletar o pacote ou qualquer arquivo dele
-- Removê-lo do `composer.json`
-- Remover seu path do `docker/entrypoint.sh`
-
-> ⚠️ Remover o path do `entrypoint.sh` quebraria o boot do container com erro fatal: **`Migration path not found`**.
-
-### 3. Gate Obrigatório — Confirmação Antes de Tocar nos Paths Afetados
-
-Antes de qualquer tarefa que toque em arquivos dentro de:
-- `packages/SuiteZap/LawFirm/src/Whatsapp/`
-- `packages/SuiteZap/Whaticket/`
-
-**Confirmar explicitamente** se a tarefa envolve o módulo suspenso ou as funcionalidades **ativas** que convivem nesses paths:
+Antes de qualquer tarefa que toque em arquivos dentro de `packages/SuiteZap/LawFirm/src/Whatsapp/`, confirmar explicitamente se a tarefa envolve funcionalidades **ativas** nesse path:
 
 | Funcionalidade ativa | Localização |
 |:---|:---|

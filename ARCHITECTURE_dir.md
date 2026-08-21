@@ -34,12 +34,10 @@ packages/SuiteZap/LawFirm/src/
 > [!WARNING]
 > **Sincronia com o Entrypoint Docker:** Ao refatorar, mover ou deletar diretórios do Master/Webkul (ex: `Webkul/Mail`), é estritamente obrigatório remover o `--path` correspondente no arquivo `docker/entrypoint.sh`. Deixar um caminho fantasma causa exceção de `Migration path not found` no boot do container, resultando em rejeição imediata da stack no Docker Swarm.
 > 
-> > [!WARNING]
-> > **Suspensão do Whaticket (Messenger Inbox):** Em 29/05/2026, o submódulo Messenger Inbox (Whaticket) foi suspenso e não fará parte das versões posteriores. Suas rotas foram comentadas e desativadas em `admin-whatsapp.php`. No entanto, para evitar erros no deploy Docker e no carregamento do Composer, o pacote `SuiteZap/Whaticket` continua listado no `composer.json` (autoload) e seu caminho de migração (`packages/SuiteZap/Whaticket/src/Database/Migrations`) foi mantido no `docker/entrypoint.sh` para garantir a integridade do banco de dados existente. As demais funcionalidades de WhatsApp (Agendador de Prazos, Avisos e Envio de Faturas) permanecem ativas e funcionais.
-> 
 > **Zero/Optional Dependencies (.env via Graceful Fallback):** Como os dados essenciais estão no `Mothership Service`, chamadas atreladas a chaves de api e `MOTHERSHIP_BASE_URL` possuem arquitetura "Fallback". O Painel ignora as paralisações HTTP ou ausência de rotas `.env` no arquivo da VPS providenciando tarifas fallback padrões sem derrubar as views, assegurando 100% integridade no dashboard.
 > 
 > **Nota de Processamento Assíncrono:** O `entrypoint.sh` agora intercepta comandos arbitrários (`$@`) despachados pelo `command:` da Stack do Swarm. Comandos que não sejam o servidor web nativo irão rodar sob a delegação de `su -s /bin/sh www-data -c` para preservar e isolar as permissões de gravação da pasta `storage/logs/laravel.log`.
+
 
 ---
 

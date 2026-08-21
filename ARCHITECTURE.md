@@ -966,38 +966,6 @@ Para modais injetados dinamicamente (ex: Histórico WhatsApp):
     *   **Imagens publicadas:** `suitezap/lawfirm:v3.50.0` e `suitezap/lawfirm:latest` atualizadas no Docker Hub Registry.
 *   **Verificação:** Executado `docker run --rm suitezap/lawfirm:v3.50.0` confirmando a string `🚀 Iniciando LawFirm SaaS v6.2 (LF v3.50.0)...` no startup do container.
 
-### 4.72 WhatsApp Messenger — Inbox de Atendimento tipo Whaticket (v3.50.0+)
-
-> [!CAUTION]
-> **FUNCIONALIDADE SUSPENSA DESDE 29/05/2026:**
-> Este sub-sistema (Whaticket Messenger Inbox) está suspenso e não fará parte das versões posteriores. As rotas e controladores do Chat/Inbox foram desabilitados.
-> As demais funcionalidades de WhatsApp (Envio de faturas, alertas de monitoramento, importação de histórico por processo e agendador de prazos) permanecem ativas, testadas e 100% funcionais.
-
-> [!NOTE]
-> Documentação completa e histórico de evolução em **`ARCHITECTURE_whats.md`**.
-
-*   **Contexto:** O LawFirm CRM incorporou um sistema de atendimento via WhatsApp inspirado no projeto open-source Whaticket, permitindo que advogados gerenciem conversas de clientes como "tickets" com ciclo de vida `pending → open → closed`.
-*   **Avaliação de Isolamento:** O módulo é **HÍBRIDO**. Apesar de existir um diretório `packages/SuiteZap/Whaticket/` (com migrations não registradas), a implementação completa vive dentro do domínio `Whatsapp` do pacote `SuiteZap/LawFirm`.
-*   **Pontos de Integração com outros Domínios:**
-    *   **`SaasS/MotherShipService`:** Credenciais da Evolution API obtidas via `getEvolutionConfig()` (sem `.env`). Isolamento multi-tenant via `getTenantId()` em todas as queries.
-    *   **`Legal/persons` (Krayin Core):** `MessengerService::findKrayinPersonId()` tenta auto-vincular o número de telefone do contato WhatsApp a um `Person` existente no CRM, criando um link `whaticket_contacts.person_id`.
-    *   **`core_config`:** Mensagem de despedida configurável por tenant via `lawfirm.whatsapp_templates.messages.farewell_message`.
-*   **Componentes-chave (`LawFirm/src/Whatsapp/`):**
-    *   **`MessengerService`:** Serviço central — `processIncoming()` (idempotente via `evolution_message_id`), `sendText()`, `sendMedia()`, `acceptTicket()`, `closeTicket()`, `getOrCreateTicket()`.
-    *   **`WhatsappChatController`:** Serve a view do Messenger e 8 endpoints JSON (tickets, messages, accept, close, send, sendMedia, uploadMedia, startConversation).
-    *   **`WhatsappWebhookController`:** Receptor público de eventos da Evolution API (`messages.upsert`, `messages.update` para ACK).
-    *   **`SendWhatsappMessageJob`:** Envio assíncrono de mensagens de texto (queued — requer worker ativo).
-    *   **Messenger View (`Whatsapp/messenger.blade.php`):** Interface split-view estilo WhatsApp Web com Vanilla JS, polling a 10s, suporte a mídia e ACK visual.
-*   **Tabelas do Banco (prefixo `whaticket_`, criadas por migrations do LawFirm):**
-    | Tabela | Propósito |
-    |:---|:---|
-    | `whaticket_contacts` | Contatos vinculados (`phone` + `person_id`) |
-    | `whaticket_tickets` | Conversas (`pending` / `open` / `closed`) |
-    | `whaticket_messages` | Mensagens com `evolution_message_id` único e `ack` (0–4) |
-    | `whaticket_queues` (scaffold) | Setores/departamentos (não implementados) |
-    | `whaticket_tags` (scaffold) | Etiquetas (não implementadas) |
-*   **Alerta Crítico:** O pacote `packages/SuiteZap/Whaticket/` contém apenas migrations nunca executadas e não está registrado em nenhum `ServiceProvider`. Deve ser **removido ou formalmente integrado** para evitar confusão.
-
 ### 4.73 UX — Compactação de Labels na Navigation Filter Bar de Processos (v3.51.0)
 
 *   **Decisão:** Compactar os rótulos da barra de navegação por seções (`Navigation Filter Bar`) nas telas de **visualização** (`show.blade.php`) e **edição** (`edit.blade.php`) de Processos, sem alterar lógica ou funcionalidade, com objetivo de melhorar a legibilidade em telas menores e reduzir quebras de linha nos filtros.
@@ -1057,7 +1025,7 @@ Para modais injetados dinamicamente (ex: Histórico WhatsApp):
 | 7 | Padrão `abort(503)` para serviços externos | ✅ PASS | 9/10 |
 | 8 | Qualidade de Observers e Listeners | ✅ PASS | 10/10 |
 | 9 | Isolamento multi-tenant (SaasFileService em cascatas) | ✅ PASS | 9/10 |
-| 10 | Suspensão Whaticket (rotas + docs) | ✅ PASS | 10/10 |
+| 10 | Remoção completa do Whaticket (package + docs) | ✅ CONCLUÍDO | 10/10 |
 
 **Score Final: 9.5 / 10** *(3 violações corrigidas durante a auditoria)*
 
