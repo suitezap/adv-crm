@@ -35,8 +35,14 @@ class EvolutionService
             $this->instanceName = $config['instance'];
         } else {
             // 2. Fallback para banco local (Configurações do CRM Admin - tenant isolado)
-            $this->baseUrl = core()->getConfigData('lawfirm.settings.general.evolution_api_url');
-            $this->apiKey = core()->getConfigData('lawfirm.settings.general.evolution_api_key');
+            try {
+                $this->baseUrl = core()->getConfigData('lawfirm.settings.general.evolution_api_url');
+                $this->apiKey = core()->getConfigData('lawfirm.settings.general.evolution_api_key');
+            } catch (\Exception $e) {
+                // Falha silenciosa no bootstrap caso a tabela core_config ainda não exista (testes)
+                $this->baseUrl = null;
+                $this->apiKey = null;
+            }
             $this->instanceName = null;
         }
 

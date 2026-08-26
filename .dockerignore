@@ -34,4 +34,4 @@ storage/escavador/*
 /patch_escavador.php
 /generate_escavador_parts.php
 /migrate_macros*.php
-/update_*.php
+/update_*.phpimplementation_plan.md

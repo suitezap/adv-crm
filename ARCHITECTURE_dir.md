@@ -1,6 +1,46 @@
-# 📂 LawFirm CRM - Arquitetura de Diretórios e Telas (UI) - Krayin v2.1.6 / LF v3.54.1
+# 📂 LawFirm CRM - Arquitetura de Diretórios e Telas (UI) - Krayin v2.1.6 / LF v3.55.0
 
-Este documento mapeia visualmente a estrutura de pastas do pacote **SuiteZap/LawFirm** (baseado na arquitetura Domain-Driven Design - DDD) e detalha quais telas (Views) são entregues à interface do usuário.
+Este documento mapeia visualmente a estrutura de pastas do pacote **SuiteZap/LawFirm** (baseado na arquitetura Domain-Driven Design - DDD), a infraestrutura de qualidade viva (`quality/`) e detalha quais telas (Views) são entregues à interface do usuário.
+
+---
+
+## 0. Infraestrutura Permanente de Qualidade e Memória Operacional (`quality/`)
+
+A infraestrutura de governança viva, catálogo de testes automatizados e memória operacional reside na raiz do repositório:
+
+```text
+quality/
+├── AGENTS.md                   # Regras operacionais da suíte de qualidade
+├── README.md                   # Índice central, arquitetura e guia de execução rápida
+├── TEST_CATALOG.yaml           # Fonte da verdade do catálogo de testes (com ciclo de vida formal)
+├── COVERAGE_MATRIX.md          # Matriz de rastreabilidade de cobertura gerada automaticamente
+├── CHANGELOG.md                # Histórico de alterações e manutenções de testes
+├── KNOWN_GAPS.md               # Lacunas conhecidas, débitos mapeados e riscos aceitos
+├── RELEASE_CHECKLIST.md        # Checklist operacional para homologação e release
+├── adr/                        # Architecture Decision Records específicos de Qualidade
+│   ├── ADR-001-multi-database-isolation.md
+│   ├── ADR-002-playwright-python-stack.md
+│   ├── ADR-003-ai-testing-strategy.md
+│   └── ADR-004-document-validation-gate.md
+├── modules/                    # Documentação viva por módulo funcional (requisitos e testes)
+│   ├── auth.md
+│   ├── chatwoot.md
+│   ├── lead.md
+│   ├── legal-orchestrator.md
+│   ├── ai-assistant.md
+│   ├── tenant-isolation.md
+│   └── governance.md
+├── runbooks/                   # Guias práticos de diagnóstico e execução
+│   ├── run-tests-local.md
+│   ├── run-tests-docker.md
+│   └── investigate-failures.md
+└── scripts/                    # Automação de validação documental e geração de matriz
+    ├── validate_test_docs.py   # Validador estático (12 regras de integridade)
+    ├── generate_coverage_matrix.py
+    ├── requirements-quality.txt
+    └── tests/
+        └── test_validate_test_docs.py
+```
 
 ---
 

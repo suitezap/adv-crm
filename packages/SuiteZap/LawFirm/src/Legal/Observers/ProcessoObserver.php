@@ -114,8 +114,25 @@ class ProcessoObserver
      */
     private function ensureCalendarEvent(Processo $processo)
     {
-        // Check for process owner, then admin guard, then user guard
-        $userId = $processo->user_id ?? auth()->guard('admin')->id() ?? auth()->guard('user')->id();
+        $userId = $processo->user_id;
+
+        if (! $userId) {
+            $guards = array_keys(config('auth.guards', []));
+            if (in_array('admin', $guards)) {
+                $userId = auth()->guard('admin')->id();
+            }
+        }
+
+        if (! $userId) {
+            $guards = array_keys(config('auth.guards', []));
+            if (in_array('user', $guards)) {
+                $userId = auth()->guard('user')->id();
+            }
+        }
+
+        if (! $userId) {
+            $userId = auth()->id();
+        }
 
         if (! $userId) {
             Log::warning("ProcessoObserver: Failed to resolve user_id for Processo {$processo->id}. Calendar event sync aborted.");

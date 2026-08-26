@@ -6,9 +6,16 @@
 
 2. **ARCHITECTURE.md**, **ARCHITECTURE_dir.md** e **ARCHITECTURE_mothership_orient.md** são a fonte para histórico de decisões (ADRs), mapas de diretório/rotas, e integrações cross-repo — **não** para regras de código do dia a dia.
 
-3. **Se um documento parecer contradizer o outro, PARE** e reporte o conflito explicitamente antes de agir — nunca escolher um lado silenciosamente.
+3. **Infraestrutura de Qualidade e Memória Operacional (`quality/`)**: Antes de qualquer tarefa que crie ou modifique funcionalidades, testes, Docker, CI/CD ou releases, é **mandatório** ler:
+   - `quality/README.md` (Índice central e arquitetura de testes)
+   - `quality/TEST_CATALOG.yaml` (Catálogo e ciclo de vida dos testes)
+   - `quality/KNOWN_GAPS.md` (Lacunas conhecidas e débitos mapeados)
+   - O documento do módulo funcional afetado em `quality/modules/{module}.md`
+   - ADRs de qualidade aplicáveis em `quality/adr/`
 
-4. **Este AGENTS.md nunca deve conter uma regra de código que já existe no SKILL.md.** Se uma regra nova de código for necessária, ela deve ser adicionada ao SKILL.md, não aqui.
+4. **Se um documento parecer contradizer o outro, PARE** e reporte o conflito explicitamente antes de agir — nunca escolher um lado silenciosamente.
+
+5. **Este AGENTS.md nunca deve conter uma regra de código que já existe no SKILL.md.** Se uma regra nova de código for necessária, ela deve ser adicionada ao SKILL.md, não aqui.
 
 ---
 

@@ -34,6 +34,7 @@ class AssistantHistory extends Model implements AssistantHistoryContract
         'model',
         'total_cost',
         'real_cost',
+        'error_message',
     ];
 
     /**

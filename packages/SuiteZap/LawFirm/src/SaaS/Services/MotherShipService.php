@@ -35,15 +35,22 @@ class MotherShipService
         }
 
         return Cache::remember("tenant_{$tenantId}_subscription", 60, function () use ($tenantId) {
-            $sub = Subscription::on('mothership')
-                ->where('tenant_id', $tenantId)
-                ->first();
+            try {
+                $sub = Subscription::on('mothership')
+                    ->where('tenant_id', $tenantId)
+                    ->first();
 
-            if (! $sub) {
-                Log::error("SAAS: Nenhuma assinatura encontrada para tenant: {$tenantId}");
+                if (! $sub) {
+                    Log::error("SAAS: Nenhuma assinatura encontrada para tenant: {$tenantId}");
+                }
+
+                return $sub;
+            } catch (\Exception $e) {
+                // Falha silenciosa — tabela pode não existir durante migrations ou bootstrap de testes
+                Log::warning("[MotherShipService] getCurrentSubscription falhou para tenant {$tenantId}: ".$e->getMessage());
+
+                return null;
             }
-
-            return $sub;
         });
     }
 
@@ -109,9 +116,16 @@ class MotherShipService
 
         // Cache de longa duração (1 hora) pois configurações de infra mudam pouco
         return Cache::remember("tenant_{$tenantId}_config", 3600, function () use ($tenantId) {
-            return \SuiteZap\LawFirm\SaaS\Models\Tenant::on('mothership')
-                ->where('id', $tenantId)
-                ->first();
+            try {
+                return \SuiteZap\LawFirm\SaaS\Models\Tenant::on('mothership')
+                    ->where('id', $tenantId)
+                    ->first();
+            } catch (\Exception $e) {
+                // Falha silenciosa — tabela pode não existir durante migrations ou bootstrap de testes
+                Log::warning("[MotherShipService] getTenantConfig falhou para tenant {$tenantId}: ".$e->getMessage());
+
+                return null;
+            }
         });
     }
 

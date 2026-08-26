@@ -248,6 +248,22 @@ class ProcessoController extends Controller
     public function show($id)
     {
         $processo = $this->processoRepository->findOrFail($id);
+
+        // Isolamento multi-tenant: verifica se o usuário autenticado pode ver este processo.
+        // Usuários sem permissão global só podem ver seus próprios processos.
+        $authUser = auth()->guard('user')->user();
+        if ($authUser !== null) {
+            $viewPermission = \Illuminate\Support\Facades\DB::table('users')
+                ->where('id', $authUser->id)
+                ->value('view_permission');
+            $processoUserId = (int) \Illuminate\Support\Facades\DB::table('processos')
+                ->where('id', $processo->id)
+                ->value('user_id');
+            if ($viewPermission !== 'global' && $processoUserId !== (int) $authUser->id) {
+                abort(403, 'Acesso negado: este processo não pertence ao seu tenant.');
+            }
+        }
+
         $processo->load([
             'person',
             'lead',
