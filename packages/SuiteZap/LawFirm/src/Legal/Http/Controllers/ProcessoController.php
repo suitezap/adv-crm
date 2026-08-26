@@ -4,6 +4,7 @@ namespace SuiteZap\LawFirm\Legal\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -264,10 +265,10 @@ class ProcessoController extends Controller
         // Usuários sem permissão global só podem ver seus próprios processos.
         $authUser = auth()->guard('user')->user();
         if ($authUser !== null) {
-            $viewPermission = \Illuminate\Support\Facades\DB::table('users')
+            $viewPermission = DB::table('users')
                 ->where('id', $authUser->id)
                 ->value('view_permission');
-            $processoUserId = (int) \Illuminate\Support\Facades\DB::table('processos')
+            $processoUserId = (int) DB::table('processos')
                 ->where('id', $processo->id)
                 ->value('user_id');
             if ($viewPermission !== 'global' && $processoUserId !== (int) $authUser->id) {

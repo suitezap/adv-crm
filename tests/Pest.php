@@ -1,7 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
-use Tests\TestCase;
+use Tests\MultiDatabaseTestCase;
 use Webkul\User\Models\User;
 
 /*
@@ -43,18 +44,20 @@ function _bootstrapIsolationCheck(): ?string
 
     // 2. Sentinel Exato e Contexto de Contêiner (garantido por docker-compose)
     $sentinelExpected = 'LAW_FIRM_ISOLATED_TEST';
-    $sentinelActual   = getenv('TEST_ENVIRONMENT_ACK');
-    if ($sentinelActual === false) $sentinelActual = null;
+    $sentinelActual = getenv('TEST_ENVIRONMENT_ACK');
+    if ($sentinelActual === false) {
+        $sentinelActual = null;
+    }
 
     if ($sentinelActual !== $sentinelExpected) {
-        return "BootstrapSafetyGuard: TEST_ENVIRONMENT_ACK inválido ou ausente. " .
-               "Esperado: '{$sentinelExpected}', recebido: '" . ($sentinelActual ?? 'null') . "'. " .
-               "Execute SOMENTE via run-backend-tests.sh dentro do contêiner php-tests.";
+        return 'BootstrapSafetyGuard: TEST_ENVIRONMENT_ACK inválido ou ausente. '.
+               "Esperado: '{$sentinelExpected}', recebido: '".($sentinelActual ?? 'null')."'. ".
+               'Execute SOMENTE via run-backend-tests.sh dentro do contêiner php-tests.';
     }
 
     // 3. Hosts permitidos (Allowlist)
     $allowedHosts = ['127.0.0.1', 'localhost', 'mysql-test', 'mothership-db-test'];
-    
+
     // Verificar hosts ativos no ambiente
     $hostsToCheck = [
         getenv('DB_HOST') ?: null,
@@ -65,9 +68,9 @@ function _bootstrapIsolationCheck(): ?string
 
     foreach (array_filter($hostsToCheck) as $dbHost) {
         if (! in_array($dbHost, $allowedHosts, true)) {
-            return "BootstrapSafetyGuard: HOST '{$dbHost}' não está na allowlist de hosts de teste. " .
-                   "Hosts permitidos: " . implode(', ', $allowedHosts) . ". " .
-                   "POSSÍVEL CONEXÃO COM PRODUÇÃO — SUÍTE BLOQUEADA.";
+            return "BootstrapSafetyGuard: HOST '{$dbHost}' não está na allowlist de hosts de teste. ".
+                   'Hosts permitidos: '.implode(', ', $allowedHosts).'. '.
+                   'POSSÍVEL CONEXÃO COM PRODUÇÃO — SUÍTE BLOQUEADA.';
         }
     }
 
@@ -81,8 +84,8 @@ function _bootstrapIsolationCheck(): ?string
 
     foreach (array_filter($dbsToCheck) as $dbName) {
         if (! str_ends_with($dbName, '_test')) {
-            return "BootstrapSafetyGuard: DB_DATABASE '{$dbName}' não termina com '_test'. " .
-                   "POSSÍVEL BANCO DE PRODUÇÃO — SUÍTE BLOQUEADA.";
+            return "BootstrapSafetyGuard: DB_DATABASE '{$dbName}' não termina com '_test'. ".
+                   'POSSÍVEL BANCO DE PRODUÇÃO — SUÍTE BLOQUEADA.';
         }
     }
 
@@ -91,34 +94,34 @@ function _bootstrapIsolationCheck(): ?string
 
 // ─── Aplicação Global: Feature ────────────────────────────────────────────────
 // beforeAll() em Feature: bloqueia ANTES do primeiro teste do grupo
-uses(\Tests\MultiDatabaseTestCase::class)
+uses(MultiDatabaseTestCase::class)
     ->beforeAll(function () {
         $error = _bootstrapIsolationCheck();
         if ($error !== null) {
-            throw new \RuntimeException($error);
+            throw new RuntimeException($error);
         }
     })
     ->beforeEach(function () {
-        \Illuminate\Support\Facades\Http::preventStrayRequests();
+        Http::preventStrayRequests();
     })
     ->in('Feature');
 
 // ─── Aplicação Global: Security ───────────────────────────────────────────────
-uses(\Tests\MultiDatabaseTestCase::class)
+uses(MultiDatabaseTestCase::class)
     ->beforeAll(function () {
         $error = _bootstrapIsolationCheck();
         if ($error !== null) {
-            throw new \RuntimeException($error);
+            throw new RuntimeException($error);
         }
     })
     ->beforeEach(function () {
-        \Illuminate\Support\Facades\Http::preventStrayRequests();
+        Http::preventStrayRequests();
     })
     ->in('Security');
 
 // Unit tests run without the full Laravel application — pure Mockery
 // A trava não é aplicada a Unit pois tests puros não acessam banco.
-uses()->afterEach(fn () => \Mockery::close())->in('Unit');
+uses()->afterEach(fn () => Mockery::close())->in('Unit');
 
 /*
 |--------------------------------------------------------------------------

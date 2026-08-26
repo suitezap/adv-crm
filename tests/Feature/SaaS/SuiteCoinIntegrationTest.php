@@ -7,7 +7,6 @@ namespace Tests\Feature\SaaS;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use SuiteZap\LawFirm\AI\Models\AssistantHistory;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
-use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 use Tests\MultiDatabaseTestCase;
 use Webkul\Lead\Models\Lead;
@@ -21,7 +20,6 @@ use Webkul\User\Models\User;
  * - LEAD-AI-007: Débito único e registro em saas_transactions
  * - LEAD-AI-012: Idempotência e proteção contra duplo débito
  *
- * @package Tests\Feature\SaaS
  * @since   v3.55.0 — Etapa 3 da Infraestrutura de Qualidade
  */
 class SuiteCoinIntegrationTest extends MultiDatabaseTestCase
@@ -29,37 +27,38 @@ class SuiteCoinIntegrationTest extends MultiDatabaseTestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Lead $lead;
+
     private AssistantTemplate $template;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-
         $this->user = User::withoutEvents(function () {
             return User::create([
-                'name'     => 'User SuiteCoin',
-                'email'    => 'suitecoin@tenant.test',
-                'password' => bcrypt('password'),
-                'role_id'  => 1,
+                'name'            => 'User SuiteCoin',
+                'email'           => 'suitecoin@tenant.test',
+                'password'        => bcrypt('password'),
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'status'   => 1,
+                'status'          => 1,
             ]);
         });
         $this->lead = Lead::create([
-            'user_id'  => $this->user->id,
-            'title'    => 'Lead de Teste SuiteCoin',
-            'lead_pipeline_id' => 1,
+            'user_id'                => $this->user->id,
+            'title'                  => 'Lead de Teste SuiteCoin',
+            'lead_pipeline_id'       => 1,
             'lead_pipeline_stage_id' => 1,
         ]);
 
         $this->template = AssistantTemplate::create([
-            'category'        => 'triagem',
-            'title'           => 'Pré-Triagem Lead',
+            'category'         => 'triagem',
+            'title'            => 'Pré-Triagem Lead',
             'prompt_structure' => 'Analise o lead: {{lead_title}}',
-            'n8n_webhook_url' => 'webhook/pre-triagem-lead',
-            'is_active'       => true,
+            'n8n_webhook_url'  => 'webhook/pre-triagem-lead',
+            'is_active'        => true,
         ]);
     }
 

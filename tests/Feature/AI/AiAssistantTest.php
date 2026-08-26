@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace Tests\Feature\AI;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Queue\Events\JobProcessed;
-use Illuminate\Support\Facades\Event;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use SuiteZap\LawFirm\AI\Jobs\ProcessAiAssistant;
 use SuiteZap\LawFirm\AI\Models\AssistantHistory;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
+use SuiteZap\LawFirm\SaaS\Models\InfrastructureNode;
+use SuiteZap\LawFirm\SaaS\Models\Subscription;
+use SuiteZap\LawFirm\SaaS\Models\Tenant;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
-use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 use Tests\MultiDatabaseTestCase;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
@@ -33,7 +35,6 @@ use Webkul\User\Models\User;
  * Nota: LEAD-AI-007 e LEAD-AI-012 (SuiteCoins e idempotência) são abordados em
  * SuiteCoinIntegrationTest.php para isolamento de responsabilidade.
  *
- * @package Tests\Feature\AI
  * @since   v3.55.0 — Etapa 3 da Infraestrutura de Qualidade
  */
 class AiAssistantTest extends MultiDatabaseTestCase
@@ -41,39 +42,40 @@ class AiAssistantTest extends MultiDatabaseTestCase
     use RefreshDatabase;
 
     private Lead $lead;
+
     private User $user;
+
     private AssistantTemplate $template;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-
         $this->user = User::withoutEvents(function () {
             return User::create([
-                'name'     => 'User Test',
-                'email'    => 'user_ai@tenant.test',
-                'password' => bcrypt('password'),
-                'role_id'  => 1,
+                'name'            => 'User Test',
+                'email'           => 'user_ai@tenant.test',
+                'password'        => bcrypt('password'),
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'status'   => 1,
+                'status'          => 1,
             ]);
         });
         $this->lead = Lead::create([
-            'user_id'  => $this->user->id,
-            'title'    => 'Lead de Teste IA',
-            'lead_pipeline_id' => 1,
+            'user_id'                => $this->user->id,
+            'title'                  => 'Lead de Teste IA',
+            'lead_pipeline_id'       => 1,
             'lead_pipeline_stage_id' => 1,
         ]);
 
         // Template no banco mothership_test (connection = 'mothership')
         $this->template = AssistantTemplate::create([
-            'category'         => 'triagem',
-            'title'            => 'Pré-Triagem de Lead',
-            'description'      => 'Análise dos fatos do Lead',
+            'category'          => 'triagem',
+            'title'             => 'Pré-Triagem de Lead',
+            'description'       => 'Análise dos fatos do Lead',
             'prompt_structure'  => 'Analise o lead: {{lead_title}}',
-            'n8n_webhook_url'  => 'webhook/pre-triagem-lead',
-            'is_active'        => true,
+            'n8n_webhook_url'   => 'webhook/pre-triagem-lead',
+            'is_active'         => true,
         ]);
     }
 
@@ -97,29 +99,29 @@ class AiAssistantTest extends MultiDatabaseTestCase
      */
     private function mockMotherShipWithN8n(float $balance = 100.0): void
     {
-        \Illuminate\Support\Facades\Cache::flush();
+        Cache::flush();
 
-        $node = \SuiteZap\LawFirm\SaaS\Models\InfrastructureNode::on('mothership')->updateOrCreate(
+        $node = InfrastructureNode::on('mothership')->updateOrCreate(
             ['base_url' => 'http://n8n-mock.test', 'type' => 'n8n'],
             [
-                'name' => 'Mock N8N Node',
+                'name'    => 'Mock N8N Node',
                 'api_key' => 'test-n8n-api-key',
-                'status' => 'active'
+                'status'  => 'active',
             ]
         );
 
-        \SuiteZap\LawFirm\SaaS\Models\Tenant::on('mothership')->updateOrCreate(
+        Tenant::on('mothership')->updateOrCreate(
             ['id' => 'tenant_a'],
             ['name' => 'Tenant A', 'domain' => 'tenant-a.test', 'n8n_node_id' => $node->id]
         );
 
-        \SuiteZap\LawFirm\SaaS\Models\Subscription::on('mothership')->updateOrCreate(
+        Subscription::on('mothership')->updateOrCreate(
             ['tenant_id' => 'tenant_a'],
             [
-                'plan_name' => 'Premium',
+                'plan_name'         => 'Premium',
                 'suitecoin_balance' => $balance,
-                'status' => 'active',
-                'active_modules' => ['LEGAL', 'AI']
+                'status'            => 'active',
+                'active_modules'    => ['LEGAL', 'AI'],
             ]
         );
 
@@ -142,7 +144,7 @@ class AiAssistantTest extends MultiDatabaseTestCase
 
         ProcessAiAssistant::dispatch($history, $this->template, ['lead_id' => $this->lead->id]);
 
-        Queue::assertPushed(ProcessAiAssistant::class, function ($job) use ($history) {
+        Queue::assertPushed(ProcessAiAssistant::class, function ($job) {
             return true; // Job foi enfileirado
         });
     }
@@ -163,11 +165,11 @@ class AiAssistantTest extends MultiDatabaseTestCase
 
         foreach ($slugs as $slug) {
             $template = AssistantTemplate::create([
-                'category'        => 'triagem',
-                'title'           => $slug,
-                'prompt_structure' => 'Prompt para ' . $slug,
-                'n8n_webhook_url' => "webhook/{$slug}",
-                'is_active'       => true,
+                'category'         => 'triagem',
+                'title'            => $slug,
+                'prompt_structure' => 'Prompt para '.$slug,
+                'n8n_webhook_url'  => "webhook/{$slug}",
+                'is_active'        => true,
             ]);
             $history = $this->makeHistory(['template_id' => $template->id]);
             ProcessAiAssistant::dispatch($history, $template, []);
@@ -275,7 +277,7 @@ class AiAssistantTest extends MultiDatabaseTestCase
     {
         Http::fake([
             'http://n8n-mock.test/*' => function () {
-                throw new \Illuminate\Http\Client\ConnectionException('Connection refused');
+                throw new ConnectionException('Connection refused');
             },
         ]);
 
@@ -308,21 +310,21 @@ class AiAssistantTest extends MultiDatabaseTestCase
      */
     public function test_missing_n8n_config_marks_history_as_failed(): void
     {
-        \Illuminate\Support\Facades\Cache::flush();
+        Cache::flush();
 
         // Usa mock de DB em vez de Mockery
-        \SuiteZap\LawFirm\SaaS\Models\Tenant::on('mothership')->updateOrCreate(
+        Tenant::on('mothership')->updateOrCreate(
             ['id' => 'tenant_a'],
             ['domain' => 'tenant-a.test', 'n8n_node_id' => null] // N8N ausente!
         );
 
-        \SuiteZap\LawFirm\SaaS\Models\Subscription::on('mothership')->updateOrCreate(
+        Subscription::on('mothership')->updateOrCreate(
             ['tenant_id' => 'tenant_a'],
             [
-                'plan_name' => 'Premium',
+                'plan_name'         => 'Premium',
                 'suitecoin_balance' => 100.0,
-                'status' => 'active',
-                'active_modules' => ['LEGAL', 'AI']
+                'status'            => 'active',
+                'active_modules'    => ['LEGAL', 'AI'],
             ]
         );
 
@@ -347,30 +349,30 @@ class AiAssistantTest extends MultiDatabaseTestCase
      */
     public function test_insufficient_balance_blocks_execution_before_http(): void
     {
-        \Illuminate\Support\Facades\Cache::flush();
+        Cache::flush();
 
-        $node = \SuiteZap\LawFirm\SaaS\Models\InfrastructureNode::on('mothership')->updateOrCreate(
+        $node = InfrastructureNode::on('mothership')->updateOrCreate(
             ['base_url' => 'http://n8n-mock.test', 'type' => 'n8n'],
             [
-                'name' => 'Mock N8N Node',
+                'name'    => 'Mock N8N Node',
                 'api_key' => 'test-n8n-api-key',
-                'status' => 'active'
+                'status'  => 'active',
             ]
         );
 
         // Usa mock de DB em vez de Mockery
-        \SuiteZap\LawFirm\SaaS\Models\Tenant::on('mothership')->updateOrCreate(
+        Tenant::on('mothership')->updateOrCreate(
             ['id' => 'tenant_a'],
             ['domain' => 'tenant-a.test', 'n8n_node_id' => $node->id]
         );
 
-        \SuiteZap\LawFirm\SaaS\Models\Subscription::on('mothership')->updateOrCreate(
+        Subscription::on('mothership')->updateOrCreate(
             ['tenant_id' => 'tenant_a'],
             [
-                'plan_name' => 'Premium',
+                'plan_name'         => 'Premium',
                 'suitecoin_balance' => 0.0, // Sem saldo
-                'status' => 'active',
-                'active_modules' => ['LEGAL', 'AI']
+                'status'            => 'active',
+                'active_modules'    => ['LEGAL', 'AI'],
             ]
         );
 
@@ -402,28 +404,28 @@ class AiAssistantTest extends MultiDatabaseTestCase
     {
         $otherUser = User::withoutEvents(function () {
             return User::create([
-                'name'     => 'Other User',
-                'email'    => 'other_user@tenant.test',
-                'password' => bcrypt('password'),
-                'role_id'  => 1,
+                'name'            => 'Other User',
+                'email'           => 'other_user@tenant.test',
+                'password'        => bcrypt('password'),
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'status'   => 1,
+                'status'          => 1,
             ]);
         });
         $otherLead = Lead::create([
-            'user_id'  => $otherUser->id,
-            'title'    => 'Other Lead',
-            'lead_pipeline_id' => 1,
+            'user_id'                => $otherUser->id,
+            'title'                  => 'Other Lead',
+            'lead_pipeline_id'       => 1,
             'lead_pipeline_stage_id' => 1,
         ]);
 
         // Cria 3 históricos para o Lead do usuário correto
         for ($i = 0; $i < 3; $i++) {
             AssistantHistory::create([
-                'user_id'     => $this->user->id,
-                'lead_id'     => $this->lead->id,
-                'template_id' => $this->template->id,
-                'status'      => 'completed',
+                'user_id'        => $this->user->id,
+                'lead_id'        => $this->lead->id,
+                'template_id'    => $this->template->id,
+                'status'         => 'completed',
                 'execution_mode' => 'async',
             ]);
         }
@@ -431,10 +433,10 @@ class AiAssistantTest extends MultiDatabaseTestCase
         // Cria 2 históricos para o outro lead (não deve aparecer)
         for ($i = 0; $i < 2; $i++) {
             AssistantHistory::create([
-                'user_id'     => $otherUser->id,
-                'lead_id'     => $otherLead->id,
-                'template_id' => $this->template->id,
-                'status'      => 'completed',
+                'user_id'        => $otherUser->id,
+                'lead_id'        => $otherLead->id,
+                'template_id'    => $this->template->id,
+                'status'         => 'completed',
                 'execution_mode' => 'async',
             ]);
         }
@@ -463,10 +465,10 @@ class AiAssistantTest extends MultiDatabaseTestCase
     {
         for ($i = 0; $i < 15; $i++) {
             AssistantHistory::create([
-                'user_id'     => $this->user->id,
-                'lead_id'     => $this->lead->id,
-                'template_id' => $this->template->id,
-                'status'      => 'completed',
+                'user_id'        => $this->user->id,
+                'lead_id'        => $this->lead->id,
+                'template_id'    => $this->template->id,
+                'status'         => 'completed',
                 'execution_mode' => 'async',
             ]);
         }

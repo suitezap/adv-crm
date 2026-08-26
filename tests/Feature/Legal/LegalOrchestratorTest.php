@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Mockery;
 use SuiteZap\LawFirm\AI\Models\LeadTriagem;
+use SuiteZap\LawFirm\Legal\Listeners\LeadWonListener;
 use SuiteZap\LawFirm\Legal\Models\Caso;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Legal\Services\CasoService;
@@ -16,6 +17,7 @@ use Tests\MultiDatabaseTestCase;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
+use Webkul\User\Models\User;
 
 /**
  * LegalOrchestratorTest — Etapa 3 (Infraestrutura de Qualidade)
@@ -25,7 +27,6 @@ use Webkul\Lead\Models\Stage;
  *
  * Cobertura: LEGAL-FEATURE-001 a LEGAL-FEATURE-006
  *
- * @package Tests\Feature\Legal
  * @since   v3.55.0 — Etapa 3 da Infraestrutura de Qualidade
  */
 class LegalOrchestratorTest extends MultiDatabaseTestCase
@@ -50,8 +51,8 @@ class LegalOrchestratorTest extends MultiDatabaseTestCase
      */
     private function makeLead(array $overrides = []): Lead
     {
-        $user = \Webkul\User\Models\User::withoutEvents(function () {
-            return \Webkul\User\Models\User::firstOrCreate(
+        $user = User::withoutEvents(function () {
+            return User::firstOrCreate(
                 ['email' => 'test@test.com'],
                 ['name' => 'Test User', 'password' => bcrypt('password'), 'role_id' => 1, 'status' => 1]
             );
@@ -60,12 +61,12 @@ class LegalOrchestratorTest extends MultiDatabaseTestCase
         $person = Person::create(['name' => 'Test Person', 'emails' => [['value' => 'test@test.com', 'label' => 'work']]]);
 
         return Lead::create(array_merge([
-            'title'       => 'Caso de Teste - ' . fake()->words(3, true),
-            'description' => 'Descrição do caso de teste automatizado.',
-            'person_id'   => $person->id,
-            'user_id'     => $user->id,
-            'lead_value'  => 5000.00,
-            'lead_pipeline_id' => 1,
+            'title'                  => 'Caso de Teste - '.fake()->words(3, true),
+            'description'            => 'Descrição do caso de teste automatizado.',
+            'person_id'              => $person->id,
+            'user_id'                => $user->id,
+            'lead_value'             => 5000.00,
+            'lead_pipeline_id'       => 1,
             'lead_pipeline_stage_id' => 1,
         ], $overrides));
     }
@@ -182,10 +183,10 @@ class LegalOrchestratorTest extends MultiDatabaseTestCase
             DB::transaction(function () use ($lead, &$threwException) {
                 // Simula criação do Caso (dentro da transaction do orchestrator)
                 $caso = Caso::create([
-                    'titulo'   => $lead->title,
-                    'status'   => 'Novo Caso',
-                    'user_id'  => $lead->user_id,
-                    'area'     => 'Cível',
+                    'titulo'     => $lead->title,
+                    'status'     => 'Novo Caso',
+                    'user_id'    => $lead->user_id,
+                    'area'       => 'Cível',
                     'prioridade' => 'Baixa',
                 ]);
 
@@ -219,18 +220,18 @@ class LegalOrchestratorTest extends MultiDatabaseTestCase
 
         // Cria o Processo manualmente para simular conversão já realizada
         $processo = Processo::create([
-            'titulo'    => $lead->title,
-            'lead_id'   => $lead->id,
-            'caso_id'   => null,
-            'user_id'   => $lead->user_id,
-            'status'    => 'Em Análise',
+            'titulo'      => $lead->title,
+            'lead_id'     => $lead->id,
+            'caso_id'     => null,
+            'user_id'     => $lead->user_id,
+            'status'      => 'Em Análise',
             'valor_causa' => 0,
         ]);
 
         $this->assertDatabaseHas('processos', ['lead_id' => $lead->id]);
 
         // Tenta uma segunda conversão via listener
-        $listener = app(\SuiteZap\LawFirm\Legal\Listeners\LeadWonListener::class);
+        $listener = app(LeadWonListener::class);
 
         // Mock do stage como "won"
         $wonStage = new Stage(['code' => 'won', 'name' => 'Won']);
@@ -300,7 +301,7 @@ class LegalOrchestratorTest extends MultiDatabaseTestCase
         $result = $this->orchestrator->convertLeadToLegalStructure($lead);
 
         $this->assertDatabaseHas('law_casos', [
-            'id'        => $result['caso']->id,
+            'id'         => $result['caso']->id,
             'prioridade' => 'Alta',
         ]);
     }
@@ -353,7 +354,7 @@ class LegalOrchestratorTest extends MultiDatabaseTestCase
         $result = $this->orchestrator->convertLeadToLegalStructure($lead);
 
         $this->assertDatabaseHas('law_casos', [
-            'id'        => $result['caso']->id,
+            'id'         => $result['caso']->id,
             'prioridade' => 'Crítica',
         ]);
     }
@@ -370,8 +371,8 @@ class LegalOrchestratorTest extends MultiDatabaseTestCase
         $result = $this->orchestrator->convertLeadToLegalStructure($lead);
 
         $this->assertDatabaseHas('law_casos', [
-            'id'        => $result['caso']->id,
-            'area'      => 'Cível',
+            'id'         => $result['caso']->id,
+            'area'       => 'Cível',
             'prioridade' => 'Baixa',
         ]);
     }

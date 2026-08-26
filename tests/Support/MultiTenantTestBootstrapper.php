@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Config;
  * As conexões são lidas das variáveis de ambiente DB_TEST_TENANT_A_*,
  * DB_TEST_TENANT_B_* e DB_TEST_MOTHERSHIP_* definidas em .env.testing.
  *
- * @package Tests\Support
  * @since   v3.55.0 — Etapa 2 da Infraestrutura de Qualidade
  */
 class MultiTenantTestBootstrapper

@@ -17,7 +17,6 @@ use Webkul\User\Models\User;
  *
  * Cobertura: AUTH-FEATURE-001 (migrado → Auth multi-tenant)
  *
- * @package Tests\Feature\Auth
  * @since   v3.55.0 — Etapa 3 da Infraestrutura de Qualidade
  */
 class AuthMultiTenantTest extends MultiDatabaseTestCase
@@ -104,24 +103,24 @@ class AuthMultiTenantTest extends MultiDatabaseTestCase
         /** @var User $adminA */
         $adminA = User::withoutEvents(function () {
             return User::create([
-                'name'     => 'Admin Tenant A',
-                'email'    => 'admin_a@tenanta.test',
-                'password' => bcrypt('password'),
-                'role_id'  => 1,
+                'name'            => 'Admin Tenant A',
+                'email'           => 'admin_a@tenanta.test',
+                'password'        => bcrypt('password'),
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'status'   => 1,
+                'status'          => 1,
             ]);
         });
 
         /** @var User $adminB */
         $adminB = User::withoutEvents(function () {
             return User::create([
-                'name'     => 'Admin Tenant B',
-                'email'    => 'admin_b@tenantb.test',
-                'password' => bcrypt('password'),
-                'role_id'  => 1,
+                'name'            => 'Admin Tenant B',
+                'email'           => 'admin_b@tenantb.test',
+                'password'        => bcrypt('password'),
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'status'   => 1,
+                'status'          => 1,
             ]);
         });
 

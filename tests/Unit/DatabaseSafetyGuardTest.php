@@ -16,9 +16,9 @@ use Tests\Support\DatabaseSafetyGuard;
  * como parâmetro (para compatibilidade com contexto puro Unit sem container).
  *
  * @catalog  SEC-GUARD-001 — tenant-isolation — P0
+ *
  * @since    v3.55.0 — Etapa 2 da Infraestrutura de Qualidade
  */
-
 describe('DatabaseSafetyGuard — Testes Negativos (SEC-GUARD-001)', function () {
 
     // ─────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ describe('DatabaseSafetyGuard — Testes Negativos (SEC-GUARD-001)', function ()
             }
         }
 
-    })->throws(\RuntimeException::class, 'TEST_ENVIRONMENT_ACK inválido ou ausente');
+    })->throws(RuntimeException::class, 'TEST_ENVIRONMENT_ACK inválido ou ausente');
 
     it('aborta se TEST_ENVIRONMENT_ACK tiver valor incorreto', function () {
         $originalAck = getenv('TEST_ENVIRONMENT_ACK');
@@ -55,7 +55,7 @@ describe('DatabaseSafetyGuard — Testes Negativos (SEC-GUARD-001)', function ()
             }
         }
 
-    })->throws(\RuntimeException::class, 'TEST_ENVIRONMENT_ACK inválido ou ausente');
+    })->throws(RuntimeException::class, 'TEST_ENVIRONMENT_ACK inválido ou ausente');
 
     // ─────────────────────────────────────────────────────────
     // 2. Validação de sufixo _test no nome do banco
@@ -63,21 +63,21 @@ describe('DatabaseSafetyGuard — Testes Negativos (SEC-GUARD-001)', function ()
 
     it('aborta se o banco tenant_a não terminar com _test', function () {
         DatabaseSafetyGuard::assertDatabaseSuffixForConnections([
-            'tenant_a' => ['database' => 'advdf2g', 'host' => 'mysql-test'],
-            'tenant_b' => ['database' => 'tenant_b_test', 'host' => 'mysql-test'],
+            'tenant_a'   => ['database' => 'advdf2g', 'host' => 'mysql-test'],
+            'tenant_b'   => ['database' => 'tenant_b_test', 'host' => 'mysql-test'],
             'mothership' => ['database' => 'mothership_test', 'host' => 'mothership-db-test'],
         ]);
 
-    })->throws(\RuntimeException::class, "não termina em '_test'");
+    })->throws(RuntimeException::class, "não termina em '_test'");
 
     it('aborta se o banco mothership não terminar com _test', function () {
         DatabaseSafetyGuard::assertDatabaseSuffixForConnections([
-            'tenant_a' => ['database' => 'tenant_a_test', 'host' => 'mysql-test'],
-            'tenant_b' => ['database' => 'tenant_b_test', 'host' => 'mysql-test'],
+            'tenant_a'   => ['database' => 'tenant_a_test', 'host' => 'mysql-test'],
+            'tenant_b'   => ['database' => 'tenant_b_test', 'host' => 'mysql-test'],
             'mothership' => ['database' => 'mothership_db', 'host' => 'mothership-db-test'],
         ]);
 
-    })->throws(\RuntimeException::class, "não termina em '_test'");
+    })->throws(RuntimeException::class, "não termina em '_test'");
 
     // ─────────────────────────────────────────────────────────
     // 3. Validação de host fora da allowlist
@@ -85,21 +85,21 @@ describe('DatabaseSafetyGuard — Testes Negativos (SEC-GUARD-001)', function ()
 
     it('aborta se o host for um IP de produção remoto', function () {
         DatabaseSafetyGuard::assertHostsForConnections([
-            'tenant_a' => ['host' => '75.119.128.13', 'database' => 'tenant_a_test'],
-            'tenant_b' => ['host' => 'mysql-test', 'database' => 'tenant_b_test'],
+            'tenant_a'   => ['host' => '75.119.128.13', 'database' => 'tenant_a_test'],
+            'tenant_b'   => ['host' => 'mysql-test', 'database' => 'tenant_b_test'],
             'mothership' => ['host' => 'mothership-db-test', 'database' => 'mothership_test'],
         ]);
 
-    })->throws(\RuntimeException::class, 'POSSÍVEL CONEXÃO COM PRODUÇÃO — ABORTANDO');
+    })->throws(RuntimeException::class, 'POSSÍVEL CONEXÃO COM PRODUÇÃO — ABORTANDO');
 
     it('aborta se o host for um domínio de produção externo', function () {
         DatabaseSafetyGuard::assertHostsForConnections([
-            'tenant_a' => ['host' => 'db.suitezap.com.br', 'database' => 'tenant_a_test'],
-            'tenant_b' => ['host' => 'mysql-test', 'database' => 'tenant_b_test'],
+            'tenant_a'   => ['host' => 'db.suitezap.com.br', 'database' => 'tenant_a_test'],
+            'tenant_b'   => ['host' => 'mysql-test', 'database' => 'tenant_b_test'],
             'mothership' => ['host' => 'mothership-db-test', 'database' => 'mothership_test'],
         ]);
 
-    })->throws(\RuntimeException::class, 'POSSÍVEL CONEXÃO COM PRODUÇÃO — ABORTANDO');
+    })->throws(RuntimeException::class, 'POSSÍVEL CONEXÃO COM PRODUÇÃO — ABORTANDO');
 
     // ─────────────────────────────────────────────────────────
     // 4. Validação de Tenant ID
@@ -108,12 +108,12 @@ describe('DatabaseSafetyGuard — Testes Negativos (SEC-GUARD-001)', function ()
     it('aborta se o tenant ID de produção não estiver na allowlist', function () {
         DatabaseSafetyGuard::assertTenantIdAllowed('advdf2g');
 
-    })->throws(\RuntimeException::class, 'não está na allowlist de tenants de teste');
+    })->throws(RuntimeException::class, 'não está na allowlist de tenants de teste');
 
     it('aborta se o tenant ID vazio não estiver na allowlist', function () {
         DatabaseSafetyGuard::assertTenantIdAllowed('');
 
-    })->throws(\RuntimeException::class, 'não está na allowlist de tenants de teste');
+    })->throws(RuntimeException::class, 'não está na allowlist de tenants de teste');
 
     // ─────────────────────────────────────────────────────────
     // 5. Positivos: cenários válidos não lançam exceção
@@ -122,8 +122,8 @@ describe('DatabaseSafetyGuard — Testes Negativos (SEC-GUARD-001)', function ()
     it('passa se todas as conexões tiverem bancos com sufixo _test', function () {
         // Não deve lançar exceção
         DatabaseSafetyGuard::assertDatabaseSuffixForConnections([
-            'tenant_a' => ['database' => 'tenant_a_test', 'host' => 'mysql-test'],
-            'tenant_b' => ['database' => 'tenant_b_test', 'host' => 'mysql-test'],
+            'tenant_a'   => ['database' => 'tenant_a_test', 'host' => 'mysql-test'],
+            'tenant_b'   => ['database' => 'tenant_b_test', 'host' => 'mysql-test'],
             'mothership' => ['database' => 'mothership_test', 'host' => 'mothership-db-test'],
         ]);
 
@@ -132,8 +132,8 @@ describe('DatabaseSafetyGuard — Testes Negativos (SEC-GUARD-001)', function ()
 
     it('passa se todos os hosts estiverem na allowlist', function () {
         DatabaseSafetyGuard::assertHostsForConnections([
-            'tenant_a' => ['host' => 'mysql-test', 'database' => 'tenant_a_test'],
-            'tenant_b' => ['host' => '127.0.0.1', 'database' => 'tenant_b_test'],
+            'tenant_a'   => ['host' => 'mysql-test', 'database' => 'tenant_a_test'],
+            'tenant_b'   => ['host' => '127.0.0.1', 'database' => 'tenant_b_test'],
             'mothership' => ['host' => 'mothership-db-test', 'database' => 'mothership_test'],
         ]);
 

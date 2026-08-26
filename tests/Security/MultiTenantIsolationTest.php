@@ -24,7 +24,6 @@ use Webkul\User\Models\User;
  * - TENANT-SEC-004: Histórico de execuções de IA não vaza entre tenants
  * - TENANT-SEC-005: Filas Redis isoladas pelo prefixo REDIS_PREFIX
  *
- * @package Tests\Security
  * @since   v3.55.0 — Etapa 3 da Infraestrutura de Qualidade
  */
 class MultiTenantIsolationTest extends MultiDatabaseTestCase
@@ -32,33 +31,35 @@ class MultiTenantIsolationTest extends MultiDatabaseTestCase
     use RefreshDatabase;
 
     private User $userA;
+
     private User $userB;
+
     private Person $personA;
+
     private Person $personB;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-
         $this->userA = User::withoutEvents(function () {
             return User::create([
-                'name'     => 'Admin Tenant A',
-                'email'    => 'admin_a@tenant.test',
-                'password' => bcrypt('password'),
-                'role_id'  => 1,
+                'name'            => 'Admin Tenant A',
+                'email'           => 'admin_a@tenant.test',
+                'password'        => bcrypt('password'),
+                'role_id'         => 1,
                 'view_permission' => 'individual', // Tenant A só vê seus próprios registros
-                'status'   => 1,
+                'status'          => 1,
             ]);
         });
         $this->userB = User::withoutEvents(function () {
             return User::create([
-                'name'     => 'Admin Tenant B',
-                'email'    => 'admin_b@tenant.test',
-                'password' => bcrypt('password'),
-                'role_id'  => 1,
+                'name'            => 'Admin Tenant B',
+                'email'           => 'admin_b@tenant.test',
+                'password'        => bcrypt('password'),
+                'role_id'         => 1,
                 'view_permission' => 'global',
-                'status'   => 1,
+                'status'          => 1,
             ]);
         });
         $this->personA = Person::create(['name' => 'Person A', 'emails' => [['value' => 'a@test.com', 'label' => 'work']]]);
@@ -81,22 +82,22 @@ class MultiTenantIsolationTest extends MultiDatabaseTestCase
     {
         // Casos do Tenant A
         $casoA = Caso::create([
-            'titulo'    => 'Caso do Tenant A',
-            'status'    => 'Novo Caso',
-            'area'      => 'Cível',
+            'titulo'     => 'Caso do Tenant A',
+            'status'     => 'Novo Caso',
+            'area'       => 'Cível',
             'prioridade' => 'Baixa',
-            'user_id'   => $this->userA->id,
-            'person_id' => $this->personA->id,
+            'user_id'    => $this->userA->id,
+            'person_id'  => $this->personA->id,
         ]);
 
         // Casos do Tenant B (outro user_id)
         $casoB = Caso::create([
-            'titulo'    => 'Caso do Tenant B',
-            'status'    => 'Novo Caso',
-            'area'      => 'Trabalhista',
+            'titulo'     => 'Caso do Tenant B',
+            'status'     => 'Novo Caso',
+            'area'       => 'Trabalhista',
             'prioridade' => 'Alta',
-            'user_id'   => $this->userB->id,
-            'person_id' => $this->personB->id,
+            'user_id'    => $this->userB->id,
+            'person_id'  => $this->personB->id,
         ]);
 
         // Query do Tenant A filtrada por seu user_id
@@ -118,18 +119,18 @@ class MultiTenantIsolationTest extends MultiDatabaseTestCase
         $leadB = Lead::create(['user_id' => $this->userB->id, 'person_id' => $this->personB->id, 'title' => 'L B', 'lead_pipeline_id' => 1, 'lead_pipeline_stage_id' => 1]);
 
         $processoA = Processo::create([
-            'titulo'   => 'Processo A',
-            'user_id'  => $this->userA->id,
-            'lead_id'  => $leadA->id,
-            'status'   => 'Em Análise',
+            'titulo'      => 'Processo A',
+            'user_id'     => $this->userA->id,
+            'lead_id'     => $leadA->id,
+            'status'      => 'Em Análise',
             'valor_causa' => 5000,
         ]);
 
         $processoB = Processo::create([
-            'titulo'   => 'Processo B',
-            'user_id'  => $this->userB->id,
-            'lead_id'  => $leadB->id,
-            'status'   => 'Em Análise',
+            'titulo'      => 'Processo B',
+            'user_id'     => $this->userB->id,
+            'lead_id'     => $leadB->id,
+            'status'      => 'Em Análise',
             'valor_causa' => 8000,
         ]);
 
@@ -153,12 +154,12 @@ class MultiTenantIsolationTest extends MultiDatabaseTestCase
     public function test_tenant_a_cannot_update_caso_of_tenant_b_via_forged_id(): void
     {
         $casoB = Caso::create([
-            'titulo'    => 'Caso Original do Tenant B',
-            'status'    => 'Novo Caso',
-            'area'      => 'Tributário',
+            'titulo'     => 'Caso Original do Tenant B',
+            'status'     => 'Novo Caso',
+            'area'       => 'Tributário',
             'prioridade' => 'Média',
-            'user_id'   => $this->userB->id,
-            'person_id' => $this->personB->id,
+            'user_id'    => $this->userB->id,
+            'person_id'  => $this->personB->id,
         ]);
 
         // Tenant A tenta fazer update no ID do Caso de B, mas filtrado por seu user_id
@@ -246,11 +247,11 @@ class MultiTenantIsolationTest extends MultiDatabaseTestCase
     public function test_ai_history_does_not_leak_between_tenants(): void
     {
         $template = AssistantTemplate::create([
-            'category'        => 'triagem',
-            'title'           => 'Pré-Triagem',
+            'category'         => 'triagem',
+            'title'            => 'Pré-Triagem',
             'prompt_structure' => 'Analise o lead',
-            'n8n_webhook_url' => 'webhook/pre-triagem-lead',
-            'is_active'       => true,
+            'n8n_webhook_url'  => 'webhook/pre-triagem-lead',
+            'is_active'        => true,
         ]);
 
         $leadA = Lead::create(['user_id' => $this->userA->id, 'title' => 'L A', 'lead_pipeline_id' => 1, 'lead_pipeline_stage_id' => 1]);

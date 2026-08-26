@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\DB;
 use Tests\Support\DatabaseSafetyGuard;
 use Tests\Support\MultiTenantTestBootstrapper;
 
@@ -19,7 +20,6 @@ use Tests\Support\MultiTenantTestBootstrapper;
  *  2. Validação de isolamento via DatabaseSafetyGuard::assertSafe()
  *  3. Preservação do ambiente para cada teste
  *
- * @package Tests
  * @since   v3.55.0 — Etapa 2 da Infraestrutura de Qualidade
  */
 abstract class MultiDatabaseTestCase extends BaseTestCase
@@ -54,7 +54,7 @@ abstract class MultiDatabaseTestCase extends BaseTestCase
     protected function seedCoreData(): void
     {
         // Role id=1 (Administrator) — FK de users.role_id
-        \Illuminate\Support\Facades\DB::table('roles')->insertOrIgnore([
+        DB::table('roles')->insertOrIgnore([
             'id'              => 1,
             'name'            => 'Administrator',
             'description'     => 'Administrator role',
@@ -65,7 +65,7 @@ abstract class MultiDatabaseTestCase extends BaseTestCase
         ]);
 
         // Lead Pipeline id=1 (Default) — FK de leads.lead_pipeline_id
-        \Illuminate\Support\Facades\DB::table('lead_pipelines')->insertOrIgnore([
+        DB::table('lead_pipelines')->insertOrIgnore([
             'id'         => 1,
             'name'       => 'Default',
             'is_default' => 1,
@@ -74,7 +74,7 @@ abstract class MultiDatabaseTestCase extends BaseTestCase
         ]);
 
         // Lead Pipeline Stage id=1 (New) — FK de leads.lead_pipeline_stage_id
-        \Illuminate\Support\Facades\DB::table('lead_pipeline_stages')->insertOrIgnore([
+        DB::table('lead_pipeline_stages')->insertOrIgnore([
             'id'               => 1,
             'code'             => 'new',
             'name'             => 'New',
@@ -84,7 +84,7 @@ abstract class MultiDatabaseTestCase extends BaseTestCase
         ]);
 
         // Default Admin (id=1)
-        \Illuminate\Support\Facades\DB::table('users')->insertOrIgnore([
+        DB::table('users')->insertOrIgnore([
             'id'              => 1,
             'name'            => 'Example Admin',
             'email'           => 'admin@example.com',

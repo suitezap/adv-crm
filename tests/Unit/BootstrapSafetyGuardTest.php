@@ -12,13 +12,12 @@ declare(strict_types=1);
  *
  * @catalog  SEC-GUARD-002 — tenant-isolation
  */
-
 describe('BootstrapSafetyGuard — Trava Global de Pest', function () {
 
     it('bloquearia AuthenticationTest se DB_HOST fosse de produção', function () {
         // Simulamos o estado das variáveis de ambiente de produção que
         // foram usadas inadvertidamente na Etapa 2
-        
+
         $originalAck = getenv('TEST_ENVIRONMENT_ACK');
         $originalHost = getenv('DB_HOST');
         $originalDb = getenv('DB_DATABASE');
@@ -31,12 +30,12 @@ describe('BootstrapSafetyGuard — Trava Global de Pest', function () {
             // Executamos a função definida no tests/Pest.php para avaliar
             // as variáveis do sistema operacional antes do bootstrap do Laravel
             $error = _bootstrapIsolationCheck();
-            
+
             expect($error)->not->toBeNull()
-                          ->toContain('POSSÍVEL CONEXÃO COM PRODUÇÃO — SUÍTE BLOQUEADA')
-                          ->toContain('75.119.128.13')
-                          ->toContain('não está na allowlist');
-                          
+                ->toContain('POSSÍVEL CONEXÃO COM PRODUÇÃO — SUÍTE BLOQUEADA')
+                ->toContain('75.119.128.13')
+                ->toContain('não está na allowlist');
+
         } finally {
             // Restaurar ambiente
             $originalAck !== false ? putenv("TEST_ENVIRONMENT_ACK={$originalAck}") : putenv('TEST_ENVIRONMENT_ACK');
@@ -56,11 +55,11 @@ describe('BootstrapSafetyGuard — Trava Global de Pest', function () {
 
         try {
             $error = _bootstrapIsolationCheck();
-            
+
             expect($error)->not->toBeNull()
-                          ->toContain("DB_DATABASE 'advdf2g' não termina com '_test'")
-                          ->toContain('POSSÍVEL BANCO DE PRODUÇÃO — SUÍTE BLOQUEADA');
-                          
+                ->toContain("DB_DATABASE 'advdf2g' não termina com '_test'")
+                ->toContain('POSSÍVEL BANCO DE PRODUÇÃO — SUÍTE BLOQUEADA');
+
         } finally {
             $originalAck !== false ? putenv("TEST_ENVIRONMENT_ACK={$originalAck}") : putenv('TEST_ENVIRONMENT_ACK');
             $originalHost !== false ? putenv("DB_HOST={$originalHost}") : putenv('DB_HOST');

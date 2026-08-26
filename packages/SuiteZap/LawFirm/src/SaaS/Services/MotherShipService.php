@@ -120,11 +120,12 @@ class MotherShipService
         // Cache de longa duração (1 hora) pois configurações de infra mudam pouco
         return Cache::remember("tenant_{$tenantId}_config", 3600, function () use ($tenantId) {
             try {
-                return \SuiteZap\LawFirm\SaaS\Models\Tenant::on('mothership')
+                return Tenant::on('mothership')
                     ->where('id', $tenantId)
                     ->first();
             } catch (\Exception $e) {
                 Log::warning("[MotherShipService] getTenantConfig falhou para tenant {$tenantId}: ".$e->getMessage());
+
                 return null;
             }
         });

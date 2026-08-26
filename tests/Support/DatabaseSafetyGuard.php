@@ -30,7 +30,6 @@ namespace Tests\Support;
  *  - assertDatabaseSuffixForConnections(array $connections): valida sufixo _test
  *  - assertHostsForConnections(array $connections): valida hosts via allowlist
  *
- * @package Tests\Support
  * @since   v3.55.0 — Etapa 2 da Infraestrutura de Qualidade
  */
 class DatabaseSafetyGuard
@@ -106,7 +105,7 @@ class DatabaseSafetyGuard
 
         if ($env !== 'testing') {
             throw new \RuntimeException(
-                "DatabaseSafetyGuard: APP_ENV deve ser 'testing', mas é '{$env}'. " .
+                "DatabaseSafetyGuard: APP_ENV deve ser 'testing', mas é '{$env}'. ".
                 'Abortando para proteger dados de produção.'
             );
         }
@@ -129,9 +128,9 @@ class DatabaseSafetyGuard
 
         if ($ack !== $expected) {
             throw new \RuntimeException(
-                "DatabaseSafetyGuard: TEST_ENVIRONMENT_ACK inválido ou ausente. " .
-                "Esperado: '{$expected}', recebido: '" . ($ack ?? 'null') . "'. " .
-                'Copie .env.testing.example para .env.testing e execute ' .
+                'DatabaseSafetyGuard: TEST_ENVIRONMENT_ACK inválido ou ausente. '.
+                "Esperado: '{$expected}', recebido: '".($ack ?? 'null')."'. ".
+                'Copie .env.testing.example para .env.testing e execute '.
                 'php artisan key:generate --env=testing'
             );
         }
@@ -150,7 +149,7 @@ class DatabaseSafetyGuard
         foreach (static::REQUIRED_CONNECTIONS as $connection) {
             if (empty($connections[$connection])) {
                 throw new \RuntimeException(
-                    "DatabaseSafetyGuard: Conexão de banco '{$connection}' não está configurada. " .
+                    "DatabaseSafetyGuard: Conexão de banco '{$connection}' não está configurada. ".
                     'O MultiTenantTestBootstrapper deve ser chamado antes.'
                 );
             }
@@ -165,6 +164,7 @@ class DatabaseSafetyGuard
      *   ['connection_name' => ['database' => '...', 'host' => '...'], ...]
      *
      * @param  array<string, array<string, mixed>>  $connections
+     *
      * @throws \RuntimeException
      */
     public static function assertDatabaseSuffixForConnections(array $connections): void
@@ -178,8 +178,8 @@ class DatabaseSafetyGuard
 
             if (! str_ends_with((string) $dbName, static::REQUIRED_DB_SUFFIX)) {
                 throw new \RuntimeException(
-                    "DatabaseSafetyGuard: O banco '{$dbName}' da conexão '{$connectionName}' " .
-                    "não termina em '_test'. " .
+                    "DatabaseSafetyGuard: O banco '{$dbName}' da conexão '{$connectionName}' ".
+                    "não termina em '_test'. ".
                     'ACESSO A BANCO DE PRODUÇÃO BLOQUEADO.'
                 );
             }
@@ -190,6 +190,7 @@ class DatabaseSafetyGuard
      * Valida que todos os hosts nas conexões fornecidas estão na allowlist.
      *
      * @param  array<string, array<string, mixed>>  $connections
+     *
      * @throws \RuntimeException
      */
     public static function assertHostsForConnections(array $connections): void
@@ -203,9 +204,9 @@ class DatabaseSafetyGuard
 
             if (! in_array((string) $host, static::ALLOWED_HOSTS, true)) {
                 throw new \RuntimeException(
-                    "DatabaseSafetyGuard: Host '{$host}' da conexão '{$connectionName}' " .
-                    'não está na allowlist de hosts de teste. ' .
-                    'Hosts permitidos: ' . implode(', ', static::ALLOWED_HOSTS) . '. ' .
+                    "DatabaseSafetyGuard: Host '{$host}' da conexão '{$connectionName}' ".
+                    'não está na allowlist de hosts de teste. '.
+                    'Hosts permitidos: '.implode(', ', static::ALLOWED_HOSTS).'. '.
                     'POSSÍVEL CONEXÃO COM PRODUÇÃO — ABORTANDO.'
                 );
             }
@@ -221,9 +222,9 @@ class DatabaseSafetyGuard
     {
         if (! in_array($tenantId, static::ALLOWED_TENANT_IDS, true)) {
             throw new \RuntimeException(
-                "DatabaseSafetyGuard: Tenant ID '{$tenantId}' não está na allowlist " .
-                'de tenants de teste. ' .
-                'IDs permitidos: ' . implode(', ', static::ALLOWED_TENANT_IDS)
+                "DatabaseSafetyGuard: Tenant ID '{$tenantId}' não está na allowlist ".
+                'de tenants de teste. '.
+                'IDs permitidos: '.implode(', ', static::ALLOWED_TENANT_IDS)
             );
         }
     }
