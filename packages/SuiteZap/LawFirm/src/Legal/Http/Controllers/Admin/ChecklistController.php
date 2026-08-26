@@ -4,6 +4,8 @@ namespace SuiteZap\LawFirm\Legal\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
+use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Legal\Repositories\ChecklistRepository;
 use SuiteZap\LawFirm\Legal\Services\ChecklistTemplates;
 use Webkul\Lead\Repositories\LeadRepository;
@@ -32,7 +34,7 @@ class ChecklistController extends Controller
 
         if ($context === 'processo') {
             $checklist = $this->checklistRepository->getByProcessoId($id);
-            $processo = \SuiteZap\LawFirm\Legal\Models\Processo::find($id);
+            $processo = Processo::find($id);
             $isWon = true; // Processo already exists, so it's "won" or equivalent
             $statusLabel = optional($processo)->status ?? 'Ativo';
         } else {
@@ -43,7 +45,7 @@ class ChecklistController extends Controller
         }
 
         // Fetch Viability Template for AI Analysis in Pre-Screening
-        $viabilityTemplate = \SuiteZap\LawFirm\AI\Models\AssistantTemplate::on('mothership')
+        $viabilityTemplate = AssistantTemplate::on('mothership')
             ->where('id', 1)
             ->first();
 
@@ -223,7 +225,7 @@ class ChecklistController extends Controller
         $formData = $request->input('data');
 
         // Fetch template from mothership
-        $template = \SuiteZap\LawFirm\AI\Models\AssistantTemplate::on('mothership')
+        $template = AssistantTemplate::on('mothership')
             ->where('id', $templateId)
             ->first();
 

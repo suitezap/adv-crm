@@ -2,6 +2,8 @@
 
 namespace SuiteZap\LawFirm\Legal\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +21,7 @@ class DeadlineController extends Controller
     /**
      * Store a newly created deadline.
      *
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     * @return JsonResponse|RedirectResponse
      */
     public function store(Request $request)
     {
@@ -67,7 +69,7 @@ class DeadlineController extends Controller
      * Update the specified deadline.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     * @return JsonResponse|RedirectResponse
      */
     public function update(Request $request, $id)
     {
@@ -122,7 +124,7 @@ class DeadlineController extends Controller
      * Remove the specified deadline.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     * @return JsonResponse|RedirectResponse
      */
     public function destroy(Request $request, $id)
     {
@@ -160,7 +162,7 @@ class DeadlineController extends Controller
      * Toggle the status of the specified deadline.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function toggle(Request $request, $id)
     {

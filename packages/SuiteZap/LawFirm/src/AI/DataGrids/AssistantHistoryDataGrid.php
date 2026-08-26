@@ -3,6 +3,7 @@
 namespace SuiteZap\LawFirm\AI\DataGrids;
 
 use Illuminate\Support\Facades\DB;
+use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 use Webkul\DataGrid\DataGrid;
 
 class AssistantHistoryDataGrid extends DataGrid
@@ -87,7 +88,7 @@ class AssistantHistoryDataGrid extends DataGrid
             'sortable'   => false,
             'searchable' => false,
             'closure'    => function ($row) {
-                $template = \SuiteZap\LawFirm\AI\Models\AssistantTemplate::find($row->template_id);
+                $template = AssistantTemplate::find($row->template_id);
 
                 return $template ? $template->title : 'Desconhecido';
             },

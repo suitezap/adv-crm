@@ -1,9 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use SuiteZap\LawFirm\AI\Http\Controllers\Admin\AssistantController;
+use SuiteZap\LawFirm\AI\Http\Controllers\Admin\AssistantHistoryController;
+use SuiteZap\LawFirm\Atendimento\Http\Middleware\CheckChatwootModule;
 use SuiteZap\LawFirm\SaaS\Http\Controllers\Admin\MothershipTemplateController;
 use SuiteZap\LawFirm\SaaS\Http\Controllers\SaaSController;
-use SuiteZap\LawFirm\Atendimento\Http\Middleware\CheckChatwootModule;
+use SuiteZap\LawFirm\SaaS\Http\Controllers\SaasOrderController;
+use SuiteZap\LawFirm\SaaS\Http\Controllers\SubscriptionCheckoutController;
+use SuiteZap\LawFirm\SaaS\Http\Controllers\TenantBillingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,12 +31,12 @@ Route::get('assinatura', [SaaSController::class, 'index'])
 // -----------------------------------------------
 // SaaS Checkout & Billing (Asaas)
 // -----------------------------------------------
-Route::prefix('checkout')->controller(\SuiteZap\LawFirm\SaaS\Http\Controllers\SubscriptionCheckoutController::class)->group(function () {
+Route::prefix('checkout')->controller(SubscriptionCheckoutController::class)->group(function () {
     Route::post('plan', 'checkoutPlan')->name('admin.lawfirm.saas.checkout.plan');
     Route::post('credits', 'checkoutCredits')->name('admin.lawfirm.saas.checkout.credits');
 });
 
-Route::prefix('billing-info')->controller(\SuiteZap\LawFirm\SaaS\Http\Controllers\TenantBillingController::class)->group(function () {
+Route::prefix('billing-info')->controller(TenantBillingController::class)->group(function () {
     Route::get('', 'index')->name('admin.lawfirm.saas.billing-info.index');
     Route::post('', 'store')->name('admin.lawfirm.saas.billing-info.store');
 });
@@ -39,18 +44,18 @@ Route::prefix('billing-info')->controller(\SuiteZap\LawFirm\SaaS\Http\Controller
 // -----------------------------------------------
 // SaaS Orders (Pedidos / Intenções de Compra) — v3.21
 // -----------------------------------------------
-Route::get('orders', [\SuiteZap\LawFirm\SaaS\Http\Controllers\SaasOrderController::class, 'index'])
+Route::get('orders', [SaasOrderController::class, 'index'])
     ->name('admin.lawfirm.saas.orders.index');
 
 // -----------------------------------------------
 // AI Assistants
 // -----------------------------------------------
-Route::prefix('assistants')->controller(\SuiteZap\LawFirm\AI\Http\Controllers\Admin\AssistantController::class)->group(function () {
+Route::prefix('assistants')->controller(AssistantController::class)->group(function () {
     Route::get('', 'index')->name('lawfirm.assistants.index');
     Route::get('escavai', 'escavai')->name('lawfirm.assistants.escavai');
 
     // History Routes (must come before {slug})
-    Route::prefix('history')->controller(\SuiteZap\LawFirm\AI\Http\Controllers\Admin\AssistantHistoryController::class)->group(function () {
+    Route::prefix('history')->controller(AssistantHistoryController::class)->group(function () {
         Route::get('', 'index')->name('lawfirm.assistants.history.index');
         Route::get('{id}', 'show')->name('lawfirm.assistants.history.show');
     });
@@ -72,7 +77,7 @@ Route::prefix('assistants')->controller(\SuiteZap\LawFirm\AI\Http\Controllers\Ad
 // -----------------------------------------------
 // SAC (Central de Atendimento)
 // -----------------------------------------------
-Route::get('sac', [\SuiteZap\LawFirm\AI\Http\Controllers\Admin\AssistantController::class, 'chatwoot'])
+Route::get('sac', [AssistantController::class, 'chatwoot'])
     ->middleware([CheckChatwootModule::class])
     ->name('lawfirm.assistants.chatwoot');
 

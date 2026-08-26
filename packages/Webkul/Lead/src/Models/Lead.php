@@ -48,7 +48,7 @@ class Lead extends Model implements LeadContract
      * @var array
      */
     protected $casts = [
-        'closed_at' => 'datetime:D M d, Y H:i A',
+        'closed_at'           => 'datetime:D M d, Y H:i A',
         'expected_close_date' => 'date:D M d, Y',
     ];
 
@@ -162,7 +162,7 @@ class Lead extends Model implements LeadContract
      */
     public function getRottenDaysAttribute()
     {
-        if (!$this->stage) {
+        if (! $this->stage) {
             return 0;
         }
 
@@ -170,7 +170,7 @@ class Lead extends Model implements LeadContract
             return 0;
         }
 
-        if (!$this->created_at) {
+        if (! $this->created_at) {
             return 0;
         }
 

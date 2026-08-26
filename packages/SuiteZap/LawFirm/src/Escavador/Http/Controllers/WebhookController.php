@@ -6,8 +6,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorMonitoramento;
+use SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorRequest;
+use SuiteZap\LawFirm\Escavador\Services\EscavadorCacheService;
+use SuiteZap\LawFirm\Escavador\Services\EscavadorService;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
 
 /**
@@ -82,7 +86,7 @@ class WebhookController
 
             // Se falhou uma atualização assincona de processo
             if ($escavadorRequest->processo_id) {
-                $ep = \SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso::where('processo_id', $escavadorRequest->processo_id)->first();
+                $ep = EscavadorProcesso::where('processo_id', $escavadorRequest->processo_id)->first();
                 if ($ep) {
                     $ep->update(['status_atualizacao' => 'erro']);
                 }
@@ -96,7 +100,7 @@ class WebhookController
 
         // Processar os callbacks assíncronos do Refactoring (Resumo IA, Atualização)
         if ($escavadorRequest->processo_id) {
-            $ep = \SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso::where('processo_id', $escavadorRequest->processo_id)->first();
+            $ep = EscavadorProcesso::where('processo_id', $escavadorRequest->processo_id)->first();
 
             if ($ep) {
                 if ($escavadorRequest->type === 'RESUMO_IA') {
@@ -107,8 +111,8 @@ class WebhookController
                         'data_ultima_verificacao' => now(),
                     ]);
                     // Idealmente aqui disparamos o syncMovimentacoes do CacheService de novo
-                    $apiService = app(\SuiteZap\LawFirm\Escavador\Services\EscavadorService::class);
-                    $cacheService = new \SuiteZap\LawFirm\Escavador\Services\EscavadorCacheService($apiService);
+                    $apiService = app(EscavadorService::class);
+                    $cacheService = new EscavadorCacheService($apiService);
                     $cacheService->syncMovimentacoes($ep);
                 }
             }
@@ -221,7 +225,7 @@ class WebhookController
             // A instância precisa ser a padrão do tenant, que o EvolutionService pega do MotherShipService
             $instanceName = 'api'; // Fallback genérico
             // Fix: pass the true arguments for Tenant Config (tenant_id is the correct argument)
-            $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig($monitoramento->tenant_id);
+            $config = MotherShipService::getEvolutionConfig($monitoramento->tenant_id);
             if ($config && isset($config['instance'])) {
                 $instanceName = $config['instance'];
             }

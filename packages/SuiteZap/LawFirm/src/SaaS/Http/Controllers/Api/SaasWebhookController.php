@@ -2,9 +2,11 @@
 
 namespace SuiteZap\LawFirm\SaaS\Http\Controllers\Api;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use Webkul\Admin\Http\Controllers\Controller;
 
 class SaasWebhookController extends Controller
@@ -12,14 +14,14 @@ class SaasWebhookController extends Controller
     /**
      * Handle incoming webhook requests to update SaaS subscription.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function updateSubscription(Request $request)
     {
         // 1. Security Check
         $token = $request->header('X-SAAS-TOKEN');
         // Lê diretamente do BD Mothership garantindo sync com painel global
-        $secret = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getAppConfig('api_secret');
+        $secret = MotherShipService::getAppConfig('api_secret');
 
         if (empty($secret)) {
             $secret = config('lawfirm.saas.webhook_secret');

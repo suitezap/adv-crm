@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use SuiteZap\LawFirm\GED\Http\Controllers\Api\DocumentChecklistApiController;
 use SuiteZap\LawFirm\Legal\Http\Controllers\Api\DeadlineApiController;
 use SuiteZap\LawFirm\Legal\Http\Controllers\Api\ProcessApiController;
+use SuiteZap\LawFirm\SaaS\Http\Controllers\Api\SaasWebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,5 +57,5 @@ Route::group(['prefix' => 'api/lawfirm', 'middleware' => ['api', 'auth:sanctum']
 // SaaS Webhooks (Secured by Token, not User)
 // ===========================================
 Route::group(['prefix' => 'api/lawfirm/saas', 'middleware' => ['api']], function () {
-    Route::post('webhook', [\SuiteZap\LawFirm\SaaS\Http\Controllers\Api\SaasWebhookController::class, 'updateSubscription']);
+    Route::post('webhook', [SaasWebhookController::class, 'updateSubscription']);
 });

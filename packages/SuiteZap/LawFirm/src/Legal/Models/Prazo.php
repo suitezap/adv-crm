@@ -89,8 +89,8 @@ class Prazo extends Model
             return $baseClass;
         }
 
-        $vencimento = \Carbon\Carbon::parse($this->data_vencimento)->startOfDay();
-        $hoje = \Carbon\Carbon::now()->startOfDay();
+        $vencimento = Carbon::parse($this->data_vencimento)->startOfDay();
+        $hoje = Carbon::now()->startOfDay();
         $diffDays = $hoje->diffInDays($vencimento, false);
 
         if ($diffDays <= 0) {
@@ -121,8 +121,8 @@ class Prazo extends Model
             return $baseClass;
         }
 
-        $vencimento = \Carbon\Carbon::parse($this->data_vencimento)->startOfDay();
-        $hoje = \Carbon\Carbon::now()->startOfDay();
+        $vencimento = Carbon::parse($this->data_vencimento)->startOfDay();
+        $hoje = Carbon::now()->startOfDay();
         $diffDays = $hoje->diffInDays($vencimento, false);
 
         if ($diffDays <= 0) {

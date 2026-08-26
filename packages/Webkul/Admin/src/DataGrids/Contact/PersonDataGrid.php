@@ -93,6 +93,7 @@ class PersonDataGrid extends DataGrid
                     } elseif (strlen($val) === 10) {
                         return preg_replace('/(\d{2})(\d{4})(\d{4})/', '($1) $2-$3', $val);
                     }
+
                     return $val;
                 })->join(', ');
             },

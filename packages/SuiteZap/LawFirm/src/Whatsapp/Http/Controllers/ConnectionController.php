@@ -3,8 +3,10 @@
 namespace SuiteZap\LawFirm\Whatsapp\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\Whatsapp\Jobs\SendWhatsappNotification;
 use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
 use Webkul\Admin\Http\Controllers\Controller;
 
@@ -152,7 +154,7 @@ class ConnectionController extends Controller
             $this->service->disconnectInstance($instanceName);
         } catch (\Exception $e) {
             // Apenas loga o erro, mas NÃO PARA a execução.
-            \Illuminate\Support\Facades\Log::warning('Falha ao desconectar API remota, forçando limpeza local: '.$e->getMessage());
+            Log::warning('Falha ao desconectar API remota, forçando limpeza local: '.$e->getMessage());
         }
 
         // Retornar sucesso para o front-end limpar o estado
@@ -190,7 +192,7 @@ class ConnectionController extends Controller
             ], 503);
         }
 
-        \SuiteZap\LawFirm\Whatsapp\Jobs\SendWhatsappNotification::dispatch(
+        SendWhatsappNotification::dispatch(
             $request->phone,
             $request->message,
             [],

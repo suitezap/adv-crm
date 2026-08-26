@@ -66,10 +66,10 @@ class UserController extends Controller
 
         $data = request()->all();
 
-        if (!empty($data['whatsapp'])) {
+        if (! empty($data['whatsapp'])) {
             $cleaned = preg_replace('/\D/', '', $data['whatsapp']);
-            if (strlen($cleaned) >= 10 && !str_starts_with($cleaned, '55')) {
-                $cleaned = '55' . $cleaned;
+            if (strlen($cleaned) >= 10 && ! str_starts_with($cleaned, '55')) {
+                $cleaned = '55'.$cleaned;
             }
             $data['whatsapp'] = $cleaned;
         }
@@ -131,10 +131,10 @@ class UserController extends Controller
 
         $data = request()->all();
 
-        if (!empty($data['whatsapp'])) {
+        if (! empty($data['whatsapp'])) {
             $cleaned = preg_replace('/\D/', '', $data['whatsapp']);
-            if (strlen($cleaned) >= 10 && !str_starts_with($cleaned, '55')) {
-                $cleaned = '55' . $cleaned;
+            if (strlen($cleaned) >= 10 && ! str_starts_with($cleaned, '55')) {
+                $cleaned = '55'.$cleaned;
             }
             $data['whatsapp'] = $cleaned;
         }

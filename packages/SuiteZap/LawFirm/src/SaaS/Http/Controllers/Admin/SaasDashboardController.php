@@ -2,6 +2,7 @@
 
 namespace SuiteZap\LawFirm\SaaS\Http\Controllers\Admin;
 
+use Illuminate\View\View;
 use SuiteZap\LawFirm\SaaS\Services\SaasStorageService;
 use Webkul\Admin\Http\Controllers\Controller;
 
@@ -25,7 +26,7 @@ class SaasDashboardController extends Controller
     /**
      * Display the SaaS subscription dashboard.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function index()
     {

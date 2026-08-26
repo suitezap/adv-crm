@@ -17,7 +17,7 @@ trait Sanitizer
     /**
      * Sanitize an SVG file to remove potentially malicious content.
      */
-    public function sanitizeSvg(string $path, UploadedFile $file, string $disk = null): void
+    public function sanitizeSvg(string $path, UploadedFile $file, ?string $disk = null): void
     {
         if (! $this->isSvgFile($file)) {
             return;

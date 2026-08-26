@@ -1,5 +1,8 @@
 <?php
 
+use Webkul\Admin\Http\Middleware\Bouncer;
+use Webkul\Core\Acl;
+
 /**
  * LawFirm ACL Configuration
  *
@@ -11,8 +14,8 @@
  * IMPORTANT: Every named route in the LawFirm package MUST appear here.
  * Routes not listed bypass Bouncer's authorization check.
  *
- * @see \Webkul\Core\Acl::getRoles()  — builds route→key map from this config
- * @see \Webkul\Admin\Http\Middleware\Bouncer::checkIfAuthorized() — enforces it
+ * @see Acl::getRoles()  — builds route→key map from this config
+ * @see Bouncer::checkIfAuthorized() — enforces it
  */
 
 return [
@@ -410,8 +413,8 @@ return [
         'key'   => 'lawfirm.whatsapp.manage',
         'name'  => 'Gerenciar WhatsApp e Templates',
         'route' => [
-            'admin.lawfirm.whatsapp.index', 
-            'admin.lawfirm.whatsapp.templates'
+            'admin.lawfirm.whatsapp.index',
+            'admin.lawfirm.whatsapp.templates',
         ],
         'sort'  => 1,
     ],
@@ -431,7 +434,7 @@ return [
         'route' => [
             'admin.lawfirm.saas.index',
             'admin.lawfirm.saas.billing-info.index',
-            'lawfirm.saas.transactions'
+            'lawfirm.saas.transactions',
         ],
         'sort'  => 1,
     ],

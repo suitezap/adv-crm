@@ -2,6 +2,7 @@
 
 namespace SuiteZap\LawFirm\Whatsapp\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +19,7 @@ class WhatsappWebhookController extends Controller
 {
     public function __construct(private MessengerService $messenger) {}
 
-    public function handle(Request $request, int $tenantId): \Illuminate\Http\JsonResponse
+    public function handle(Request $request, int $tenantId): JsonResponse
     {
         $event = $request->input('event');
         $payload = $request->all();

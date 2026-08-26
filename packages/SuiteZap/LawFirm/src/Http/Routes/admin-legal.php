@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use SuiteZap\LawFirm\GED\Http\Controllers\ProcessDocumentController;
+use SuiteZap\LawFirm\Legal\Http\Controllers\Admin\DocumentTemplateController;
 use SuiteZap\LawFirm\Legal\Http\Controllers\AgendaController;
 use SuiteZap\LawFirm\Legal\Http\Controllers\CasoController;
 use SuiteZap\LawFirm\Legal\Http\Controllers\DeadlineController;
@@ -114,7 +115,7 @@ Route::prefix('casos')->controller(CasoController::class)->group(function () {
 // -----------------------------------------------
 // Modelos de Documentos CRUD
 // -----------------------------------------------
-Route::prefix('modelos-documentos')->controller(\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\DocumentTemplateController::class)->group(function () {
+Route::prefix('modelos-documentos')->controller(DocumentTemplateController::class)->group(function () {
     Route::get('', 'manage')->name('admin.modelos.index');
     Route::get('create', 'create')->name('admin.modelos.create');
     Route::post('', 'store')->name('admin.modelos.store');
@@ -127,7 +128,7 @@ Route::prefix('modelos-documentos')->controller(\SuiteZap\LawFirm\Legal\Http\Con
     Route::post('layout/{tipo}', 'saveLayout')->name('admin.modelos.layout.save');
 });
 
-Route::prefix('processos')->controller(\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\DocumentTemplateController::class)->group(function () {
+Route::prefix('processos')->controller(DocumentTemplateController::class)->group(function () {
     Route::get('{processoId}/modelos', 'index')->name('admin.processos.modelos.index');
     Route::get('{processoId}/modelos/{templateId}/render', 'render')->name('admin.processos.modelos.render');
 

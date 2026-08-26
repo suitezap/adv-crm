@@ -4,6 +4,7 @@ namespace SuiteZap\LawFirm\Financial\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use SuiteZap\LawFirm\Financial\Models\Financial;
 
 class FinancialDashboardService
 {
@@ -32,7 +33,7 @@ class FinancialDashboardService
     private function getBaseQuery()
     {
         // Usa o Model Financial para aproveitar escopos e conexões do Eloquent
-        $query = \SuiteZap\LawFirm\Financial\Models\Financial::query()
+        $query = Financial::query()
             ->join('processos', 'law_financials.processo_id', '=', 'processos.id')
             ->select('law_financials.*');
 

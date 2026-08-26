@@ -1,5 +1,9 @@
 <?php
 
+use Laravel\Sanctum\Sanctum;
+use Tests\TestCase;
+use Webkul\User\Models\User;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -11,10 +15,10 @@
 |
  */
 
-uses(\Tests\TestCase::class)->in('Feature');
+uses(TestCase::class)->in('Feature');
 
 // Unit tests run without the full Laravel application — pure Mockery
-uses()->afterEach(fn () => \Mockery::close())->in('Unit');
+uses()->afterEach(fn () => Mockery::close())->in('Unit');
 
 /*
 |--------------------------------------------------------------------------
@@ -45,11 +49,11 @@ expect()->extend('toBeOne', function () {
 /**
  * Get default admin which is created on fresh instance.
  *
- * @return \Webkul\User\Models\User
+ * @return User
  */
 function getDefaultAdmin()
 {
-    $admin = \Webkul\User\Models\User::find(1);
+    $admin = User::find(1);
 
     return $admin;
 }
@@ -57,11 +61,11 @@ function getDefaultAdmin()
 /**
  * Sanctum authenticated admin.
  *
- * @return \Webkul\User\Models\User
+ * @return User
  */
 function actingAsSanctumAuthenticatedAdmin()
 {
-    return \Laravel\Sanctum\Sanctum::actingAs(
+    return Sanctum::actingAs(
         getDefaultAdmin(),
         ['*']
     );

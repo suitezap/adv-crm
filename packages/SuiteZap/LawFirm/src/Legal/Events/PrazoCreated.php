@@ -14,7 +14,7 @@ class PrazoCreated
     /**
      * The Prazo instance.
      *
-     * @var \SuiteZap\LawFirm\Legal\Models\Prazo
+     * @var Prazo
      */
     public $prazo;
 

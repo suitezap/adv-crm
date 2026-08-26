@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use SuiteZap\LawFirm\GED\Http\Controllers\ProcessDocumentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 // -----------------------------------------------
 // Document Checklist Routes
 // -----------------------------------------------
-Route::group(['prefix' => 'documentos', 'controller' => \SuiteZap\LawFirm\GED\Http\Controllers\ProcessDocumentController::class], function () {
+Route::group(['prefix' => 'documentos', 'controller' => ProcessDocumentController::class], function () {
     Route::post('import-v2/{processId}', 'importTemplate')->name('lawfirm.documents.import_v2');
     Route::post('add-item/{processId}', 'addItem')->name('lawfirm.documents.add_item');
     Route::post('send-whatsapp-v2/{processId}', 'sendChecklist')->name('lawfirm.documents.send_whatsapp_v2');
@@ -28,7 +29,7 @@ Route::group(['prefix' => 'documentos', 'controller' => \SuiteZap\LawFirm\GED\Ht
 // GED (Gestão Eletrônica de Documentos)
 // -----------------------------------------------
 
-Route::prefix('ged')->controller(\SuiteZap\LawFirm\GED\Http\Controllers\ProcessDocumentController::class)->group(function () {
+Route::prefix('ged')->controller(ProcessDocumentController::class)->group(function () {
     Route::post('store', 'store')->name('admin.lawfirm.ged.store');
     Route::post('upload', 'store')->name('admin.lawfirm.ged.upload'); // Alias for user's template
     Route::delete('{id}', 'destroy')->name('admin.lawfirm.ged.destroy');
@@ -39,8 +40,8 @@ Route::prefix('ged')->controller(\SuiteZap\LawFirm\GED\Http\Controllers\ProcessD
 // -----------------------------------------------
 // Legal Documents (Procuração, Contratos, etc.)
 // -----------------------------------------------
-Route::get('documentos/procuracao/{processId}', [\SuiteZap\LawFirm\GED\Http\Controllers\ProcessDocumentController::class, 'downloadProcuration'])
+Route::get('documentos/procuracao/{processId}', [ProcessDocumentController::class, 'downloadProcuration'])
     ->name('lawfirm.documents.procuration');
 
-Route::get('documentos/contrato/{processId}', [\SuiteZap\LawFirm\GED\Http\Controllers\ProcessDocumentController::class, 'downloadContract'])
+Route::get('documentos/contrato/{processId}', [ProcessDocumentController::class, 'downloadContract'])
     ->name('lawfirm.documents.contract');

@@ -2,7 +2,10 @@
 
 namespace SuiteZap\LawFirm\GED\Services;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use SuiteZap\LawFirm\Legal\Models\Anexo;
@@ -81,7 +84,7 @@ class DocumentService
      *
      * @param  int  $documentId
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function deleteFile($documentId): bool
     {
@@ -107,14 +110,14 @@ class DocumentService
     /**
      * Process uploads from request (single 'anexo' or multiple 'anexos').
      *
-     * @param  array|\Illuminate\Http\Request  $request
+     * @param  array|Request  $request
      */
     public function processUploads(Processo $processo, $request): array
     {
         $files = [];
 
         // Handle Request object or array data
-        if ($request instanceof \Illuminate\Http\Request) {
+        if ($request instanceof Request) {
             if ($request->hasFile('anexos')) {
                 $files = $request->file('anexos');
             } elseif ($request->hasFile('anexo')) {
@@ -138,7 +141,7 @@ class DocumentService
             } catch (\Exception $e) {
                 // Log error but continue processing other files?
                 // matched user snippet behavior of skipping invalid, but here we catch exceptions.
-                \Illuminate\Support\Facades\Log::error('DocumentService::processUploads - Error storing file: '.$e->getMessage());
+                Log::error('DocumentService::processUploads - Error storing file: '.$e->getMessage());
             }
         }
 

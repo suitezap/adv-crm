@@ -2,6 +2,7 @@
 
 namespace SuiteZap\LawFirm\SaaS\Http\Controllers\Admin;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class MothershipTemplateController extends Controller
     /**
      * Lista todos os templates globais (tenant_id = NULL) do Mothership.
      */
-    public function index(Request $request): \Illuminate\Http\JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $this->authorizeMothershipKey($request);
 
@@ -60,7 +61,7 @@ class MothershipTemplateController extends Controller
      *   - tenant_id = NULL  → card disponível para TODOS os tenants com o módulo certo.
      *   - tenant_id = 'xyz' → card exclusivo daquele tenant (override do global).
      */
-    public function upsert(Request $request): \Illuminate\Http\JsonResponse
+    public function upsert(Request $request): JsonResponse
     {
         $this->authorizeMothershipKey($request);
 
@@ -120,7 +121,7 @@ class MothershipTemplateController extends Controller
      * Desativa um template global sem excluí-lo.
      * O card desaparece imediatamente de todos os tenants (após expiração de cache).
      */
-    public function deactivate(Request $request, string $slug): \Illuminate\Http\JsonResponse
+    public function deactivate(Request $request, string $slug): JsonResponse
     {
         $this->authorizeMothershipKey($request);
 
@@ -152,7 +153,7 @@ class MothershipTemplateController extends Controller
      *
      * Fire-and-forget pelo Mothership Panel (timeout 5s, ignora falhas de rede).
      */
-    public function invalidateCache(Request $request): \Illuminate\Http\JsonResponse
+    public function invalidateCache(Request $request): JsonResponse
     {
         $this->authorizeMothershipKey($request);
 

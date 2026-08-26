@@ -2,9 +2,11 @@
 
 namespace SuiteZap\LawFirm\Legal\Http\Controllers;
 
+use SuiteZap\LawFirm\AI\Models\LeadTriagem;
 use SuiteZap\LawFirm\Legal\DataGrids\CasoDataGrid;
 use SuiteZap\LawFirm\Legal\Http\Requests\StoreCasoRequest;
 use SuiteZap\LawFirm\Legal\Http\Requests\UpdateCasoRequest;
+use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Legal\Repositories\CasoRepository;
 use SuiteZap\LawFirm\Legal\Services\CasoService;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -83,7 +85,7 @@ class CasoController extends Controller
         $triagem = null;
         $processoWithLead = $caso->processos->whereNotNull('lead_id')->first();
         if ($processoWithLead) {
-            $triagem = \SuiteZap\LawFirm\AI\Models\LeadTriagem::where('lead_id', $processoWithLead->lead_id)->first();
+            $triagem = LeadTriagem::where('lead_id', $processoWithLead->lead_id)->first();
         }
 
         return view('lawfirm::Legal.casos.show', compact('caso', 'kpis', 'triagem'));
@@ -193,7 +195,7 @@ class CasoController extends Controller
         $term = request('query');
         $casoId = request('caso_id');
 
-        $results = \SuiteZap\LawFirm\Legal\Models\Processo::query()
+        $results = Processo::query()
             ->where(function ($q) use ($term) {
                 $q->where('titulo', 'like', '%'.$term.'%')
                     ->orWhere('numero_cnj', 'like', '%'.$term.'%')
@@ -221,7 +223,7 @@ class CasoController extends Controller
         $processoId = request('processo_id');
 
         $caso = $this->casoRepository->findOrFail($id);
-        $processo = \SuiteZap\LawFirm\Legal\Models\Processo::findOrFail($processoId);
+        $processo = Processo::findOrFail($processoId);
 
         $processo->update(['caso_id' => $caso->id]);
 
@@ -235,7 +237,7 @@ class CasoController extends Controller
      */
     public function unlinkProcesso(int $id, int $processoId)
     {
-        $processo = \SuiteZap\LawFirm\Legal\Models\Processo::where('id', $processoId)
+        $processo = Processo::where('id', $processoId)
             ->where('caso_id', $id)
             ->firstOrFail();
 

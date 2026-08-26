@@ -56,8 +56,8 @@ class ProcessChatwootConversationCreatedJob implements ShouldQueue
     public function handle(): void
     {
         $conversationId = $this->payload['id'] ?? null;
-        $contactName    = $this->payload['meta']['sender']['name'] ?? 'Desconhecido';
-        $inboxId        = $this->payload['inbox_id'] ?? null;
+        $contactName = $this->payload['meta']['sender']['name'] ?? 'Desconhecido';
+        $inboxId = $this->payload['inbox_id'] ?? null;
 
         Log::info('[ProcessChatwootConversationCreated] Nova conversa recebida.', [
             'conversation_id' => $conversationId,
@@ -73,7 +73,7 @@ class ProcessChatwootConversationCreatedJob implements ShouldQueue
 
         // ── Tentar atribuir label inicial 'LD_NOVO' via ChatwootService ──
         try {
-            $service = new ChatwootService();
+            $service = new ChatwootService;
 
             $stagePool = ['LD_NOVO', 'LD_ACOMP', 'LD_QUAL', 'LD_NEG', 'LD_GANHO', 'LD_PERD'];
 

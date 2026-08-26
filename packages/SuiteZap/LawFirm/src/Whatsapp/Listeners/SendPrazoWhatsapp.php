@@ -3,6 +3,7 @@
 namespace SuiteZap\LawFirm\Whatsapp\Listeners;
 
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Legal\Events\PrazoCreated;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
@@ -15,7 +16,7 @@ class SendPrazoWhatsapp
     /**
      * The Evolution service instance.
      *
-     * @var \SuiteZap\LawFirm\Whatsapp\Services\EvolutionService
+     * @var EvolutionService
      */
     protected $evolutionService;
 
@@ -82,7 +83,7 @@ class SendPrazoWhatsapp
                         break;
                     }
                 }
-            } elseif ($contactNumbers instanceof \Illuminate\Support\Collection) {
+            } elseif ($contactNumbers instanceof Collection) {
                 $phoneObj = $contactNumbers->first();
                 $phone = $phoneObj ? $phoneObj->value : null;
             }

@@ -2,8 +2,11 @@
 
 namespace SuiteZap\LawFirm\AI\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use SuiteZap\LawFirm\Contracts\AssistantTemplate as AssistantTemplateContract;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 
 class AssistantTemplate extends Model implements AssistantTemplateContract
 {
@@ -69,7 +72,7 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
      */
     public function getPriceVirtualSuiteCoinsAttribute(): float
     {
-        return \SuiteZap\LawFirm\SaaS\Services\SuiteCoinService::toVirtual(
+        return SuiteCoinService::toVirtual(
             (float) ($this->attributes['price_virtual'] ?? 0)
         );
     }
@@ -77,13 +80,13 @@ class AssistantTemplate extends Model implements AssistantTemplateContract
     /**
      * Scope a query to only include templates for the current tenant or global ones.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeForTenant($query, $tenantId = null)
     {
         // Lógica: Traz templates GLOBAIS (tenant_id null) OU do cliente atual
-        $tenantId = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantId();
+        $tenantId = MotherShipService::getTenantId();
 
         return $query->where(function ($q) use ($tenantId) {
             $q->whereNull('tenant_id'); // Templates Globais

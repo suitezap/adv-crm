@@ -144,7 +144,7 @@ class PrazoDataGrid extends DataGrid
                 $status = strtolower(trim($row->status ?? $row->raw_status ?? ''));
                 $finishedStates = ['concluido', 'concluído', 'finalizado', 'completed', 'done'];
 
-                $date = \Carbon\Carbon::parse($row->processo_data_audiencia);
+                $date = Carbon::parse($row->processo_data_audiencia);
                 $formatted = $date->format('d/m/Y H:i');
 
                 // Se concluído, badge cinza pastel
@@ -152,7 +152,7 @@ class PrazoDataGrid extends DataGrid
                     return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #f3f4f6; color: #1f2937;">'.$formatted.'</span>';
                 }
 
-                $now = \Carbon\Carbon::now()->startOfDay();
+                $now = Carbon::now()->startOfDay();
                 $dateDay = $date->copy()->startOfDay();
 
                 // Passado (Vermelho Pastel)
@@ -329,23 +329,23 @@ class PrazoDataGrid extends DataGrid
 
                 // Tenta formato ISO (Y-m-d) do banco de dados
                 if (preg_match('/^\d{4}-\d{2}-\d{2}/', $rawDate)) {
-                    $dueDate = \Carbon\Carbon::createFromFormat('Y-m-d', substr($rawDate, 0, 10))->startOfDay();
+                    $dueDate = Carbon::createFromFormat('Y-m-d', substr($rawDate, 0, 10))->startOfDay();
                 }
                 // Tenta formato BR (d/m/Y)
                 elseif (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $rawDate)) {
-                    $dueDate = \Carbon\Carbon::createFromFormat('d/m/Y', $rawDate)->startOfDay();
+                    $dueDate = Carbon::createFromFormat('d/m/Y', $rawDate)->startOfDay();
                 }
                 // Fallback
                 else {
                     try {
-                        $dueDate = \Carbon\Carbon::parse($rawDate)->startOfDay();
+                        $dueDate = Carbon::parse($rawDate)->startOfDay();
                     } catch (\Exception $e) {
                         // Data Inválida (Cinza Suave)
                         return '<span class="px-2 py-1 rounded-full text-xs font-semibold" style="background-color: #f3f4f6; color: #1f2937;">Data Inválida</span>';
                     }
                 }
 
-                $now = \Carbon\Carbon::now()->startOfDay();
+                $now = Carbon::now()->startOfDay();
                 $diff = $now->diffInDays($dueDate, false); // false = permite negativos
 
                 // ESTADO 3: Vencido (Passado e não é hoje) - Vermelho Suave

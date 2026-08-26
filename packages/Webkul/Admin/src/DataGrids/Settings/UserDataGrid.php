@@ -78,8 +78,10 @@ class UserDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'closure'    => function ($row) {
-                if (!$row->whatsapp) return '--';
-                
+                if (! $row->whatsapp) {
+                    return '--';
+                }
+
                 $num = preg_replace('/\D/', '', $row->whatsapp);
                 if (str_starts_with($num, '55')) {
                     $num = substr($num, 2);
@@ -90,9 +92,9 @@ class UserDataGrid extends DataGrid
                 } elseif (strlen($num) === 10) {
                     return preg_replace('/(\d{2})(\d{4})(\d{4})/', '($1) $2-$3', $num);
                 }
-                
+
                 return $row->whatsapp;
-            }
+            },
         ]);
 
         $this->addColumn([

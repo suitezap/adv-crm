@@ -2,7 +2,13 @@
 
 namespace SuiteZap\LawFirm\Legal\Http\Requests;
 
+use Carbon\Carbon;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\ValidationException;
+use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\Legal\Rules\Cnpj;
+use SuiteZap\LawFirm\Legal\Rules\Cpf;
 use SuiteZap\LawFirm\Legal\Rules\ValidarCNJ;
 use SuiteZap\LawFirm\Legal\Rules\ValidarCpfCnpj;
 
@@ -52,12 +58,12 @@ class UpdateProcessoRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     $type = $this->input('opposing_party_type');
                     if ($type === 'PF') {
-                        $rule = new \SuiteZap\LawFirm\Legal\Rules\Cpf;
+                        $rule = new Cpf;
                         if (! $rule->passes($attribute, $value)) {
                             $fail('O CPF da parte contrária é inválido.');
                         }
                     } elseif ($type === 'PJ') {
-                        $rule = new \SuiteZap\LawFirm\Legal\Rules\Cnpj;
+                        $rule = new Cnpj;
                         if (! $rule->passes($attribute, $value)) {
                             $fail('O CNPJ da parte contrária é inválido.');
                         }
@@ -80,7 +86,7 @@ class UpdateProcessoRequest extends FormRequest
                     $formats = ['Y-m-d\TH:i', 'Y-m-d H:i', 'Y-m-d H:i:s', 'd-m-Y H:i', 'd/m/Y H:i', 'Y-m-d'];
                     foreach ($formats as $fmt) {
                         try {
-                            $candidate = \Carbon\Carbon::createFromFormat($fmt, $value);
+                            $candidate = Carbon::createFromFormat($fmt, $value);
                             if ($candidate && $candidate->format($fmt) === $value) {
                                 $parsed = $candidate;
                                 break;
@@ -92,7 +98,7 @@ class UpdateProcessoRequest extends FormRequest
                     // Fallback: deixa o Carbon tentar interpretar automaticamente
                     if (! $parsed) {
                         try {
-                            $parsed = \Carbon\Carbon::parse($value);
+                            $parsed = Carbon::parse($value);
                         } catch (\Exception $e) {
                             $fail('Formato de data inválido para Data da Audiência.');
 
@@ -101,10 +107,10 @@ class UpdateProcessoRequest extends FormRequest
                     }
 
                     // Se o processo já tem uma data de audiência salva e é a mesma, deixa passar
-                    $processo = \SuiteZap\LawFirm\Legal\Models\Processo::find($processoId);
+                    $processo = Processo::find($processoId);
                     if ($processo && $processo->data_audiencia) {
                         try {
-                            $existingDay = \Carbon\Carbon::parse($processo->data_audiencia)->format('Y-m-d H:i');
+                            $existingDay = Carbon::parse($processo->data_audiencia)->format('Y-m-d H:i');
                             $incomingDay = $parsed->format('Y-m-d H:i');
                             if ($existingDay === $incomingDay) {
                                 return; // mesma data — permite salvar sem verificar passado
@@ -114,7 +120,7 @@ class UpdateProcessoRequest extends FormRequest
                     }
 
                     // Só bloqueia se for uma data genuinamente NOVA e no passado
-                    if ($parsed->startOfDay()->lt(\Carbon\Carbon::today())) {
+                    if ($parsed->startOfDay()->lt(Carbon::today())) {
                         $fail('A Data da Audiência não pode ser anterior a hoje, a menos que já esteja salva.');
                     }
                 },
@@ -172,9 +178,9 @@ class UpdateProcessoRequest extends FormRequest
      *
      * @return void
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
-    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
+    protected function failedValidation(Validator $validator)
     {
         \Log::warning('UpdateProcessoRequest Validation Failed', [
             'errors'  => $validator->errors()->toArray(),

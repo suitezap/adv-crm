@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use SuiteZap\LawFirm\Financial\DataGrids\FinancialDataGrid;
+use SuiteZap\LawFirm\TenantFinance\Models\TenantAsaasCustomer;
 use SuiteZap\LawFirm\TenantFinance\Models\TenantInvoice;
 use SuiteZap\LawFirm\TenantFinance\Services\TenantAsaasService;
 
@@ -170,7 +171,7 @@ class InvoiceController extends Controller
      */
     public function getCustomerByPerson(int $personId): JsonResponse
     {
-        $customer = \SuiteZap\LawFirm\TenantFinance\Models\TenantAsaasCustomer::where('person_id', $personId)->first();
+        $customer = TenantAsaasCustomer::where('person_id', $personId)->first();
 
         if (! $customer) {
             return response()->json(['exists' => false]);

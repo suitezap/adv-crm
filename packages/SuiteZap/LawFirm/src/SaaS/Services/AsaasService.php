@@ -11,6 +11,7 @@ use SuiteZap\LawFirm\SaaS\Models\InfrastructureNode;
 use SuiteZap\LawFirm\SaaS\Models\SaasOrder;
 use SuiteZap\LawFirm\SaaS\Models\SaasTransaction;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
+use SuiteZap\LawFirm\SaaS\Models\TenantBillingInfo;
 
 /**
  * AsaasService
@@ -161,7 +162,7 @@ class AsaasService
 
         if ($response->failed()) {
             \Log::error("AsaasService::getPaymentLink falhou para o ID {$id}: ".$response->body());
-            throw new \Exception('Erro ao buscar Link de Pagamento no Asaas: '.$response->body());
+            throw new Exception('Erro ao buscar Link de Pagamento no Asaas: '.$response->body());
         }
 
         return $response->json();
@@ -180,7 +181,7 @@ class AsaasService
         $tenantId = MotherShipService::getTenantId();
 
         // 1. Tenta buscar da nova tabela global de Faturamento SaaS (MotherShip)
-        $billing = \SuiteZap\LawFirm\SaaS\Models\TenantBillingInfo::on('mothership')
+        $billing = TenantBillingInfo::on('mothership')
             ->where('tenant_id', $tenantId)
             ->first();
 
@@ -462,7 +463,7 @@ class AsaasService
                     try {
                         $linkData = self::getPaymentLink($payment['paymentLink']);
                         $externalReference = $linkData['externalReference'] ?? null;
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         Log::warning("AsaasService::sync: erro ao buscar PaymentLink {$payment['paymentLink']}: ".$e->getMessage());
                     }
                 }
@@ -500,7 +501,7 @@ class AsaasService
                     'tenant_id'  => $tenantId,
                 ]);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('AsaasService::syncTenantPayments falhou: '.$e->getMessage());
         }
     }

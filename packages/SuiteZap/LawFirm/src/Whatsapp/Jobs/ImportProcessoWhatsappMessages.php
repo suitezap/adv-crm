@@ -2,6 +2,7 @@
 
 namespace SuiteZap\LawFirm\Whatsapp\Jobs;
 
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -143,7 +144,7 @@ class ImportProcessoWhatsappMessages implements ShouldQueue
                 if (is_array($timestamp) && isset($timestamp['low'])) {
                     $timestamp = $timestamp['low'];
                 }
-                $dateTime = \Carbon\Carbon::createFromTimestamp($timestamp);
+                $dateTime = Carbon::createFromTimestamp($timestamp);
 
                 ProcessoWhatsappMessage::updateOrCreate(
                     ['message_id' => $msgId],

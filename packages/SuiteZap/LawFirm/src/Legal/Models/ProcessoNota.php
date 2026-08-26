@@ -4,6 +4,7 @@ namespace SuiteZap\LawFirm\Legal\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Webkul\User\Models\User;
 
 class ProcessoNota extends Model
 {
@@ -38,6 +39,6 @@ class ProcessoNota extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\User\Models\User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

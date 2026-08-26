@@ -2,6 +2,7 @@
 
 namespace SuiteZap\LawFirm\TenantFinance\DataGrids;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
 
@@ -117,11 +118,11 @@ class TenantInvoiceDataGrid extends DataGrid
             'closure'  => function ($row) {
                 return match ($row->status) {
                     'RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH' => '<span class="badge badge-round badge-success">Pago</span>',
-                    'PENDING'   => '<span class="badge badge-round badge-warning">Pendente</span>',
-                    'OVERDUE'   => '<span class="badge badge-round badge-danger">Vencida</span>',
-                    'CANCELED'  => '<span class="badge badge-round badge-dark">Cancelada</span>',
-                    'REFUNDED'  => '<span class="badge badge-round badge-info">Estornada</span>',
-                    default     => '<span class="badge badge-round badge-secondary">'.$row->status.'</span>',
+                    'PENDING'                                   => '<span class="badge badge-round badge-warning">Pendente</span>',
+                    'OVERDUE'                                   => '<span class="badge badge-round badge-danger">Vencida</span>',
+                    'CANCELED'                                  => '<span class="badge badge-round badge-dark">Cancelada</span>',
+                    'REFUNDED'                                  => '<span class="badge badge-round badge-info">Estornada</span>',
+                    default                                     => '<span class="badge badge-round badge-secondary">'.$row->status.'</span>',
                 };
             },
         ]);
@@ -131,7 +132,7 @@ class TenantInvoiceDataGrid extends DataGrid
             'label'    => 'Vencimento',
             'type'     => 'date',
             'sortable' => true,
-            'closure'  => fn ($row) => $row->due_date ? \Carbon\Carbon::parse($row->due_date)->format('d/m/Y') : '—',
+            'closure'  => fn ($row) => $row->due_date ? Carbon::parse($row->due_date)->format('d/m/Y') : '—',
         ]);
 
         $this->addColumn([
