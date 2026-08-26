@@ -28,12 +28,17 @@ package-lock.json
 yarn.lock
 yarn-error.log
 
-# Playwright
+# Playwright & Testing Reports
 node_modules/
 /test-results/
 /blob-report/
+/playwright-report/
 /playwright/.cache/
-
+.pytest_cache/
+__pycache__/
+*.pyc
+reports/*
+!reports/.gitkeep
 /storage/framework/views/*
 
 # Pacote customizado

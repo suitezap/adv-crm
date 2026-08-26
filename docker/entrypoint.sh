@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Iniciando LawFirm SaaS v6.2 (LF v3.54.1)..."
+echo "🚀 Iniciando LawFirm SaaS v6.2 (LF v3.55.1)..."
 
 # 1. Setup Inicial
 cd /var/www/html
@@ -61,7 +61,8 @@ try {
 }
 '
 
-echo "📦 Executing Robust Migration Strategy..."
+if [ "$1" == "apache2-foreground" ] || [ -z "$1" ]; then
+    echo "📦 Executing Robust Migration Strategy..."
 php artisan migrate --force \
     --path=database/migrations \
     --path=packages/Webkul/Attribute/src/Database/Migrations \
@@ -180,8 +181,14 @@ php artisan tinker --execute="
 
     echo 'pt_BR OK';
 " 2>/dev/null
+fi
 
 # 6. Start Process
+# Garante que qualquer log ou arquivo de cache criado pelas migrações/comandos acima (rodados como root)
+# pertença ao www-data antes de iniciarmos o processo final.
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+
 if [ $# -gt 0 ]; then
     if [ "$1" != "apache2-foreground" ]; then
         echo "⚙️ Executando comando em background: $@"

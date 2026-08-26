@@ -1,4 +1,4 @@
-# ⚖️ LawFirm CRM - Documento de Arquitetura (v3.54.1 - DDD & SaaS Multi-Tenant)
+# ⚖️ LawFirm CRM - Documento de Arquitetura (v3.55.1 - DDD & SaaS Multi-Tenant)
 
 > [!NOTE]
 > **Imagem Docker Oficial:** `suitezap/lawfirm` — única imagem canônica. `suitezap/adv-crm` foi descontinuada (v3.54.1). Ver ADR §4.87.
@@ -1376,4 +1376,21 @@ ChatwootWebhookController         valida payload.inbox_id == config['inbox_id'] 
     1. **Segurança e Bug Fixes Críticos (Cherry-Pick Imediato):** Vulnerabilidades reportadas upstream (ex: XSS em Notes `#2542`, SQLi em Rotten Lead `#2583`, IDOR em Agent Record `#2567`, SSRF em Webhooks `#2592`) devem ser aplicadas cirurgicamente por arquivo/diff sem tocar no versionamento do vendor.
     2. **Features de UX Inspiradas:** Melhorias de interface do upstream (ex: toggle de sidebar colapsável com persistência em `localStorage`, filtro por tag em contatos) devem ser implementadas nativamente no LawFirm (via `LawFirmServiceProvider` ou templates próprios), preservando a autonomia do código.
     3. **Migração do Framework (Laravel 12 / Krayin v2.2.x):** Classificada como **iniciativa estrutural isolada**, com planejamento dedicado de 2 a 4 semanas, branch separada, ambiente de staging e matriz de regressão completa nos 10 domínios DDD.
+
+---
+
+### 4.90 ADR: Infraestrutura Permanente de Qualidade, Memória Operacional e Documentação Viva (v3.55.0) — [Implantação em Andamento]
+
+*   **Contexto:** Necessidade de estabelecer um sistema permanente e versionado de governança de qualidade, testes automatizados e memória técnica no repositório, garantindo que qualquer sessão futura de IA ou desenvolvedor humano mantenha rastreabilidade completa e zero regressões.
+*   **Decisões Arquiteturais:**
+    1. **Governança Viva (`quality/`):** Criação do diretório central de qualidade contendo `TEST_CATALOG.yaml` (catálogo formal com estados `planned`, `implemented_unverified`, `active`, `quarantined`, `disabled`, `retired`), `COVERAGE_MATRIX.md` (gerada por script), `KNOWN_GAPS.md` e documentação modular em `quality/modules/`.
+    2. **Validador Estático Automático (`validate_test_docs.py`):** Script em Python com 12 regras de validação que roda no CI/CD e bloqueia inconsistências entre testes de código, catálogo e documentação funcional com **0 falsos-positivos**.
+    3. **Isolamento Multi-Tenant e Multi-Database:** Certificação executada em bancos MySQL dedicados (`mothership_test`, `tenant_a_test`, `tenant_b_test`) com travas `DatabaseSafetyGuard` e sentinela `TEST_ENVIRONMENT_ACK=LAW_FIRM_ISOLATED_TEST`.
+    4. **Stack E2E Playwright Python e Cobertura PCOV:** Suíte E2E desacoplada da imagem de produção via `docker/testing/Dockerfile.playwright` e medição de cobertura PHP via `docker/testing/Dockerfile.php-tests` com **PCOV**.
+    5. **Build Único e Promoção por SHA256 Digest:** A mesma imagem candidata testada no E2E é publicada no Docker Hub e referenciada por seu Digest imutável, sem reconstrução de imagem entre ambientes.
+*   **Status:** **Concluído** (Etapas 1–4: Governança, Validador, Build Candidata e E2E Playwright concluídos em 2026-08-26). Sincronizado com `LawFirmServiceProvider::VERSION = '3.55.1'`.
+*   **Boot Docker E2E (Fixes 2026-08-26):**
+    *   Migrações sequencializadas: `app-tenant-b` depende de `app-tenant-a: service_healthy` via `depends_on` para evitar race conditions na base `mothership_test`.
+    *   Permissões de armazenamento: `chown -R www-data:www-data storage bootstrap/cache` executado imediatamente antes do `exec` final no `entrypoint.sh`, garantindo acesso de escrita para workers.
+    *   Healthcheck expandido: `start_period: 180s`, `retries: 30` para suportar 150+ migrações no boot a frio.
 

@@ -1,0 +1,940 @@
+# quality/TEST_CATALOG.yaml (v2.3)
+# Fonte da Verdade do Catálogo de Testes Automatizados
+tests:
+  # =========================================================================
+  # DOMÍNIO: PLATFORM & AUTH
+  # =========================================================================
+  - id: BASIC-UNIT-001
+    name: "Teste unitário básico de integridade do framework (Pest baseline)"
+    domain: null
+    layer: platform
+    module: governance
+    type: Unit
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/Unit/BasicTest.php
+    documentation: quality/modules/governance.md
+    source_references:
+      - path: tests/Unit/BasicTest.php
+        symbol: "check basic unit test"
+        purpose: "Smoke test nativo do framework"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.0"
+    last_verified_date: "2026-08-22"
+    notes: "Executado com sucesso no ambiente isolado Docker (Tarefa 1478). Todas as assertions passaram."
+
+  - id: AUTH-FEATURE-001
+    name: "Fluxo básico de autenticação, dashboard e logout administrativo"
+    domain: null
+    layer: platform
+    module: auth
+    type: Feature
+    priority: P1
+    status: active
+    automated: true
+    test_file: tests/Feature/AuthenticationTest.php
+    documentation: quality/modules/auth.md
+    source_references:
+      - path: routes/web.php
+        symbol: admin.session.create
+        purpose: "Autenticação de usuários administrativos"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.0"
+    last_verified_date: "2026-08-22"
+    notes: "Executado com sucesso no ambiente isolado Docker (Tarefa 1478), suportado pelo schema mock do MotherShip."
+
+  # =========================================================================
+  # DOMÍNIO: ATENDIMENTO / CHATWOOT
+  # =========================================================================
+  - id: CHATWOOT-FEATURE-001
+    name: "Preservação da invariante account_id / inbox_id do Chatwoot (GUARDRAILS 2026-07-01)"
+    domain: Atendimento
+    layer: domain
+    module: chatwoot
+    type: Feature
+    priority: P0
+    status: active
+    automated: true
+    test_file: tests/Feature/ChatwootConfigTest.php
+    documentation: quality/modules/chatwoot.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Atendimento/Services/ChatwootService.php
+        symbol: ChatwootService::accountUrl
+        purpose: "Mapeamento account_id via chatwoot_inbox_id"
+    dependencies: []
+    external_services:
+      - name: chatwoot
+        mode: mock
+    tenant_scope: cross_tenant_validation
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.0"
+    last_verified_date: "2026-08-22"
+    notes: "Executado com sucesso no ambiente isolado Docker (Tarefa 1478)."
+
+  # =========================================================================
+  # DOMÍNIO: LEGAL (LEGAL ORCHESTRATOR & TRANSAÇÕES)
+  # =========================================================================
+  - id: LEGAL-FEATURE-001
+    name: "Conversão atômica de Lead ganho em Caso e Processo vinculados"
+    domain: Legal
+    layer: domain
+    module: legal-orchestrator
+    type: Feature
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Legal/LegalOrchestratorTest.php
+    documentation: quality/modules/legal-orchestrator.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Legal/Services/LegalOrchestrator.php
+        symbol: LegalOrchestrator::convertLeadToLegalStructure
+        purpose: "Transação atômica Caso + Processo a partir de Lead"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEGAL-FEATURE-002
+    name: "Rollback completo de transação caso a criação do Caso falhe"
+    domain: Legal
+    layer: domain
+    module: legal-orchestrator
+    type: Feature
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Legal/LegalOrchestratorTest.php
+    documentation: quality/modules/legal-orchestrator.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Legal/Services/LegalOrchestrator.php
+        symbol: LegalOrchestrator::convertLeadToLegalStructure
+        purpose: "Proteção de rollback em falha de Caso"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEGAL-FEATURE-003
+    name: "Rollback completo de transação caso a criação do Processo falhe"
+    domain: Legal
+    layer: domain
+    module: legal-orchestrator
+    type: Feature
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Legal/LegalOrchestratorTest.php
+    documentation: quality/modules/legal-orchestrator.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Legal/Services/LegalOrchestrator.php
+        symbol: LegalOrchestrator::convertLeadToLegalStructure
+        purpose: "Proteção de rollback em falha de Processo"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEGAL-FEATURE-004
+    name: "Proteção contra conversão duplicada de Lead já convertido em Processo"
+    domain: Legal
+    layer: domain
+    module: legal-orchestrator
+    type: Feature
+    priority: P1
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Legal/LegalOrchestratorTest.php
+    documentation: quality/modules/legal-orchestrator.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Legal/Listeners/LeadWonListener.php
+        symbol: LeadWonListener::handle
+        purpose: "Guard contra processamento duplicado de Lead ganho"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEGAL-FEATURE-005
+    name: "Priorização de Tags canônicas do Lead para preenchimento de Área e Prioridade"
+    domain: Legal
+    layer: domain
+    module: legal-orchestrator
+    type: Feature
+    priority: P2
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Legal/LegalOrchestratorTest.php
+    documentation: quality/modules/legal-orchestrator.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Legal/Services/LegalOrchestrator.php
+        symbol: LegalOrchestrator::extractAreaAndPrioridade
+        purpose: "Mapeamento prioritário de Tags do Lead"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEGAL-FEATURE-006
+    name: "Fallback para dados de IA (LeadTriagem) quando Tags do Lead estiverem ausentes"
+    domain: Legal
+    layer: domain
+    module: legal-orchestrator
+    type: Feature
+    priority: P2
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Legal/LegalOrchestratorTest.php
+    documentation: quality/modules/legal-orchestrator.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Legal/Services/LegalOrchestrator.php
+        symbol: LegalOrchestrator::extractAreaAndPrioridade
+        purpose: "Fallback para LeadTriagem"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  # =========================================================================
+  # DOMÍNIO: AI (ASSISTENTES, N8N & SUITECOINS)
+  # =========================================================================
+  - id: LEAD-AI-001
+    name: "Execução assíncrona do assistente 'pre-triagem-lead' (Análise de Fatos)"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AiAssistantTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Http/Controllers/Admin/AssistantController.php
+        symbol: AssistantController::execute
+        purpose: "Disparo do assistente de fatos na ficha do Lead"
+    dependencies: ["mysql", "redis"]
+    external_services:
+      - name: n8n
+        mode: mock
+      - name: mothership
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-AI-002
+    name: "Execução assíncrona do assistente 'pre-triagem-checklist' (Checklist Documental)"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P1
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AiAssistantTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Http/Controllers/Admin/AssistantController.php
+        symbol: AssistantController::execute
+        purpose: "Geração de checklist para o Lead"
+    dependencies: ["mysql", "redis"]
+    external_services:
+      - name: n8n
+        mode: mock
+      - name: mothership
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-AI-003
+    name: "Execução assíncrona do assistente 'gerador-proposta' (Proposta de Honorários)"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P1
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AiAssistantTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Http/Controllers/Admin/AssistantController.php
+        symbol: AssistantController::execute
+        purpose: "Geração de proposta comercial na ficha do Lead"
+    dependencies: ["mysql", "redis"]
+    external_services:
+      - name: n8n
+        mode: mock
+      - name: mothership
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-AI-004
+    name: "Execução assíncrona do assistente 'script-vendas' (Script de Vendas e Objeções)"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P1
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AiAssistantTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Http/Controllers/Admin/AssistantController.php
+        symbol: AssistantController::execute
+        purpose: "Geração de script comercial na ficha do Lead"
+    dependencies: ["mysql", "redis"]
+    external_services:
+      - name: n8n
+        mode: mock
+      - name: mothership
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-AI-005
+    name: "Transições canônicas de status do histórico: queued -> processing -> completed/failed"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P1
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AiAssistantTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Jobs/ProcessAiAssistant.php
+        symbol: ProcessAiAssistant::handle
+        purpose: "Ciclo de vida do status da execução"
+    dependencies: ["mysql", "redis"]
+    external_services:
+      - name: n8n
+        mode: mock
+      - name: mothership
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-AI-006
+    name: "Persistência íntegra do Markdown bruto em generated_content sem mutação backend"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P1
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AiAssistantTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Jobs/ProcessAiAssistant.php
+        symbol: ProcessAiAssistant::handle
+        purpose: "Armazenamento do Markdown retornado pelo N8N"
+    dependencies: ["mysql"]
+    external_services:
+      - name: n8n
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-AI-007
+    name: "Débito único de SuiteCoins no MotherShip e registro em saas_transactions no tenant"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AiAssistantTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Http/Controllers/Admin/AssistantController.php
+        symbol: AssistantController::execute
+        purpose: "Débito financeiro prévio do assistente"
+    dependencies: ["mysql"]
+    external_services:
+      - name: mothership
+        mode: mock
+    tenant_scope: cross_tenant_validation
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-AI-008
+    name: "Falha HTTP do N8N marca histórico como failed sem derrubar o worker da fila"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AiAssistantTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Jobs/ProcessAiAssistant.php
+        symbol: ProcessAiAssistant::handle
+        purpose: "Degradação graciosa e proteção do queue worker"
+    dependencies: ["mysql", "redis"]
+    external_services:
+      - name: n8n
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-AI-009
+    name: "N8N ausente ou desconfigurado retorna contrato HTTP 503 no Controller"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P1
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AiAssistantTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Http/Controllers/Admin/AssistantController.php
+        symbol: AssistantController::execute
+        purpose: "Retorno 503 quando n8n_node_id ausente"
+    dependencies: ["mysql"]
+    external_services:
+      - name: mothership
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-AI-010
+    name: "Saldo insuficiente de SuiteCoins bloqueia execução antes do débito e do dispatch"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AiAssistantTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Http/Controllers/Admin/AssistantController.php
+        symbol: AssistantController::execute
+        purpose: "Guard 402 de saldo insuficiente"
+    dependencies: ["mysql"]
+    external_services:
+      - name: mothership
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-AI-011
+    name: "Paginação e isolamento de consultas do histórico de execuções de IA"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P2
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AiAssistantTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Http/Controllers/Admin/AssistantHistoryController.php
+        symbol: AssistantHistoryController::index
+        purpose: "Listagem tenant-scoped de execuções"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-AI-012
+    name: "Idempotência e ausência de débito duplicado em retentativas"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P1
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AiAssistantTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Http/Controllers/Admin/AssistantController.php
+        symbol: AssistantController::execute
+        purpose: "Proteção contra duplo débito em cliques repetidos"
+    dependencies: ["mysql"]
+    external_services:
+      - name: mothership
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: "Registrado no KNOWN_GAPS que falha no Job não produz estorno automático."
+
+  # =========================================================================
+  # DOMÍNIO: SECURITY & ISOLAMENTO MULTI-TENANT
+  # =========================================================================
+  - id: TENANT-SEC-001
+    name: "Tenant A não pode visualizar ou listar Casos e Processos do Tenant B"
+    domain: SaaS
+    layer: platform
+    module: tenant-isolation
+    type: Security
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Security/MultiTenantIsolationTest.php
+    documentation: quality/modules/tenant-isolation.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Legal/Models/Caso.php
+        symbol: Caso::class
+        purpose: "Isolamento de banco entre tenants"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: TENANT-SEC-002
+    name: "Tenant A não pode alterar, atualizar ou excluir registros do Tenant B via ID forjado"
+    domain: SaaS
+    layer: platform
+    module: tenant-isolation
+    type: Security
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Security/MultiTenantIsolationTest.php
+    documentation: quality/modules/tenant-isolation.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Legal/Http/Controllers/ProcessoController.php
+        symbol: ProcessoController::update
+        purpose: "Bloqueio de mutação cross-tenant"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: TENANT-SEC-003
+    name: "Tentativa de acesso a recurso de outro tenant resulta estritamente em HTTP 403 ou 404"
+    domain: SaaS
+    layer: platform
+    module: tenant-isolation
+    type: Security
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Security/MultiTenantIsolationTest.php
+    documentation: quality/modules/tenant-isolation.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Legal/Http/Controllers/ProcessoController.php
+        symbol: ProcessoController::show
+        purpose: "Retorno seguro 403/404 em IDs não pertencentes ao tenant"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: TENANT-SEC-004
+    name: "Histórico de execuções de IA não vaza entre instâncias de tenants distintos"
+    domain: SaaS
+    layer: platform
+    module: tenant-isolation
+    type: Security
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Security/MultiTenantIsolationTest.php
+    documentation: quality/modules/tenant-isolation.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Models/AssistantHistory.php
+        symbol: AssistantHistory::class
+        purpose: "Isolamento de histórico de IA"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: TENANT-SEC-005
+    name: "Consumo de filas Redis isolado estritamente pelo prefixo REDIS_PREFIX por tenant"
+    domain: SaaS
+    layer: platform
+    module: tenant-isolation
+    type: Security
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Security/MultiTenantIsolationTest.php
+    documentation: quality/modules/tenant-isolation.md
+    source_references:
+      - path: docker-stack-template.yml
+        symbol: REDIS_PREFIX
+        purpose: "Isolamento de Jobs Redis no Swarm"
+    dependencies: ["redis"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: SEC-GUARD-001
+    name: "Trava anti-contaminação DatabaseSafetyGuard com sentinel, allowlist e sufixo _test"
+    domain: SaaS
+    layer: platform
+    module: tenant-isolation
+    type: Unit
+    priority: P0
+    status: active
+    automated: true
+    test_file: tests/Unit/DatabaseSafetyGuardTest.php
+    documentation: quality/modules/tenant-isolation.md
+    source_references:
+      - path: tests/Support/DatabaseSafetyGuard.php
+        symbol: DatabaseSafetyGuard::assertSafe
+        purpose: "Ponto de entrada principal da trava de isolamento"
+      - path: tests/Support/DatabaseSafetyGuard.php
+        symbol: DatabaseSafetyGuard::assertSentinelToken
+        purpose: "Validação de TEST_ENVIRONMENT_ACK"
+      - path: tests/Support/DatabaseSafetyGuard.php
+        symbol: DatabaseSafetyGuard::assertDatabaseSuffixForConnections
+        purpose: "Bloqueio de bancos sem sufixo _test"
+      - path: tests/Support/DatabaseSafetyGuard.php
+        symbol: DatabaseSafetyGuard::assertHostsForConnections
+        purpose: "Allowlist de hosts de teste"
+      - path: tests/Unit/DatabaseSafetyGuardTest.php
+        symbol: "DatabaseSafetyGuard — Testes Negativos (SEC-GUARD-001)"
+        purpose: "12 testes negativos e positivos da trava"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.0"
+    last_verified_date: "2026-08-22"
+    notes: "Executado com sucesso no ambiente isolado Docker (Tarefa 1478). A suíte Pest roda normalmente com a trava ativa."
+
+  - id: SAAS-FEATURE-001
+    name: "Integração e integridade de saldo de SuiteCoins entre Tenant e MotherShip"
+    domain: SaaS
+    layer: domain
+    module: tenant-isolation
+    type: Feature
+    priority: P1
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/SaaS/SuiteCoinIntegrationTest.php
+    documentation: quality/modules/tenant-isolation.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/SaaS/Services/SuiteCoinService.php
+        symbol: SuiteCoinService::class
+        purpose: "Transações e conciliação de SuiteCoins"
+    dependencies: ["mysql"]
+    external_services:
+      - name: mothership
+        mode: mock
+    tenant_scope: cross_tenant_validation
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  # =========================================================================
+  # DOMÍNIO: INTEGRIDADE ESTÁTICA (GOVERNANÇA & MÓDULOS SUSPENSOS)
+  # =========================================================================
+  - id: DOCS-VAL-001
+    name: "Suíte de testes unitários do validador documental validate_test_docs.py"
+    domain: null
+    layer: governance
+    module: governance
+    type: Unit
+    priority: P0
+    status: active
+    automated: true
+    test_file: quality/scripts/tests/test_validate_test_docs.py
+    documentation: quality/modules/governance.md
+    source_references:
+      - path: quality/scripts/validate_test_docs.py
+        symbol: validate_catalog
+        purpose: "12 regras de validação estática documental"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.0"
+    last_verified_date: "2026-08-21"
+    notes: "Validado via pytest com 5/5 testes unitários passando no Python 3.14."
+
+  # =========================================================================
+  # DOMÍNIO: E2E (PLAYWRIGHT PYTHON NO NAVEGADOR)
+  # =========================================================================
+  - id: LEAD-E2E-001
+    name: "Fluxo E2E: Login -> Ficha do Lead -> Disparo das 4 ferramentas de IA -> Histórico e Telemetria"
+    domain: AI
+    layer: e2e
+    module: ai-assistant
+    type: E2E
+    priority: P1
+    status: planned
+    automated: false
+    test_file: tests/e2e/workflows/test_lead_ai_workflow.py
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Resources/views/leads/lead-tools-panel.blade.php
+        symbol: lfToolsPanel
+        purpose: "Execução das ferramentas de IA na UI"
+    dependencies: ["mysql", "redis", "mock-server"]
+    external_services:
+      - name: n8n
+        mode: mock
+      - name: mothership
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-E2E-002
+    name: "Fluxo E2E: Ganho de Lead na interface -> Confirmação visual da conversão em Caso e Processo"
+    domain: Legal
+    layer: e2e
+    module: legal-orchestrator
+    type: E2E
+    priority: P1
+    status: planned
+    automated: false
+    test_file: tests/e2e/workflows/test_lead_conversion_workflow.py
+    documentation: quality/modules/legal-orchestrator.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Resources/views/leads/lead-tools-panel.blade.php
+        symbol: lead-tools-panel
+        purpose: "Badge de Lead Ganho e criação automática de processo"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: LEAD-E2E-003
+    name: "Validação E2E no DOM: Renderização de Markdown via marked.js e sanitização ativa contra XSS via DOMPurify"
+    domain: AI
+    layer: e2e
+    module: ai-assistant
+    type: E2E
+    priority: P0
+    status: planned
+    automated: false
+    test_file: tests/e2e/workflows/test_lead_ai_workflow.py
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Resources/views/leads/lead-tools-panel.blade.php
+        symbol: DOMPurify.sanitize
+        purpose: "Sanitização no frontend antes da inserção no DOM"
+    dependencies: ["mock-server"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: null
+
+  - id: CHATWOOT-E2E-001
+    name: "Acesso isolado ao menu SAC, ACL, middleware de add-on e iframe do Chatwoot (sem requisições externas)"
+    domain: Atendimento
+    layer: e2e
+    module: chatwoot
+    type: E2E
+    priority: P1
+    status: planned
+    automated: false
+    test_file: tests/e2e/workflows/test_chatwoot_sac_workflow.py
+    documentation: quality/modules/chatwoot.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Config/menu.php
+        symbol: "'key' => 'sac'"
+        purpose: "Menu visível apenas se a permissão lawfirm.assistants.chatwoot existir"
+      - path: packages/SuiteZap/LawFirm/src/Http/Routes/admin-saas.php
+        symbol: Route::get('sac')
+        purpose: "Rota nomeada lawfirm.assistants.chatwoot"
+      - path: packages/SuiteZap/LawFirm/src/AI/Http/Controllers/Admin/AssistantController.php
+        symbol: AssistantController::chatwoot
+        purpose: "Renderização da view de SAC"
+      - path: packages/SuiteZap/LawFirm/src/Atendimento/Http/Middleware/CheckChatwootModule.php
+        symbol: CheckChatwootModule
+        purpose: "Bloqueio (403) para assinaturas sem o add-on CHATWOOT ativo"
+      - path: packages/SuiteZap/LawFirm/src/SaaS/Services/MotherShipService.php
+        symbol: MotherShipService::getCurrentSubscription
+        purpose: "Busca e validação da assinatura estritamente ao tenant logado (isolamento)"
+      - path: packages/SuiteZap/LawFirm/src/Resources/views/admin/assistants/chatwoot.blade.php
+        symbol: "<iframe>"
+        purpose: "Carregamento isolado da interface do Chatwoot via injeção de URL"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: "Este teste apenas interage com a UI (menu, 403 e renderização de view) simulando a assinatura no banco. Não faz acessos reais à API do Chatwoot."
+
+  # =========================================================================
+  # DOMÍNIO: E2E — PLAYWRIGHT (Isolamento Multi-Tenant via Docker Compose)
+  # =========================================================================
+  - id: E2E-LEAD-001
+    name: "Fluxo E2E de conversão de lead: criação, movimentação de funil e conversão em processo jurídico"
+    domain: Legal
+    layer: e2e
+    module: lead
+    type: E2E
+    priority: P1
+    status: active
+    automated: true
+    test_file: tests/e2e/workflows/test_lead_conversion_workflow.py
+    documentation: quality/modules/lead.md
+    source_references:
+      - path: tests/e2e/pages/login_page.py
+        symbol: LoginPage
+        purpose: "Page Object de Login para autenticação do tenant"
+      - path: tests/e2e/pages/lead_page.py
+        symbol: LeadPage
+        purpose: "Page Object de Leads (criação, movimentação de estágio, conversão)"
+    dependencies: ["mysql", "redis", "app-tenant-a"]
+    external_services:
+      - name: mock-server (WireMock)
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.0"
+    last_verified_date: "2026-08-26"
+    notes: "Executado via Docker Compose (9 serviços). 2 testes passaram (exit 0). Requer start_period=180s para boot frio das migrações."
+
+  - id: E2E-AI-001
+    name: "Fluxo E2E de triagem inteligente de lead via assistente de IA com mock WireMock"
+    domain: AI
+    layer: e2e
+    module: ai-assistant
+    type: E2E
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/e2e/workflows/test_lead_ai_workflow.py
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: tests/e2e/pages/lead_page.py
+        symbol: LeadPage
+        purpose: "Page Object compartilhado de Leads"
+    dependencies: ["mysql", "redis", "app-tenant-a", "mock-server"]
+    external_services:
+      - name: mock-server (WireMock)
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.0"
+    last_verified_date: "2026-08-26"
+    notes: "1 teste passou (exit 0). Valida que o assistente de IA consome o endpoint mock e não realiza chamadas externas reais. AI_REAL_TESTS=false obrigatório."
