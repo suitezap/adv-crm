@@ -1,0 +1,130 @@
+name: LawFirm CI/CD
+
+on:
+  push:
+    branches:
+      - law-firm-custom
+  pull_request:
+    branches:
+      - law-firm-custom
+  workflow_dispatch:
+
+jobs:
+  quality-validate:
+    name: Document & Quality Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate Test Documentation
+        run: python quality/scripts/validate_test_docs.py
+
+  pest-backend:
+    name: Backend Tests (Pest - Unit, Feature, Security)
+    runs-on: ubuntu-latest
+    needs: quality-validate
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite3, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
+          coverage: none
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Boot Isolated Database Environment
+        run: |
+          docker compose -f docker-compose.test.yml up -d mysql-test mothership-db-test redis-test
+
+      - name: Wait for MySQL Health
+        run: |
+          echo "Waiting for mysql-test..."
+          timeout 60 bash -c 'until docker exec $(docker compose -f docker-compose.test.yml ps -q mysql-test) mysqladmin ping -h 127.0.0.1 -uroot -proot_test_password >/dev/null 2>&1; do sleep 2; done'
+          echo "Waiting for mothership-db-test..."
+          timeout 60 bash -c 'until docker exec $(docker compose -f docker-compose.test.yml ps -q mothership-db-test) mysqladmin ping -h 127.0.0.1 -uroot -proot_test_password >/dev/null 2>&1; do sleep 2; done'
+
+      - name: Run Pest Test Suites
+        run: |
+          docker compose -f docker-compose.test.yml run --rm php-tests vendor/bin/pest --testsuite=Unit,Feature,Security
+
+  e2e-playwright:
+    name: E2E Tests (Playwright Python Docker)
+    runs-on: ubuntu-latest
+    needs: pest-backend
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Candidate Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: suitezap/lawfirm:candidate-local
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Rotate Docker Cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache || true
+
+      - name: Boot E2E Swarm Stack
+        run: |
+          docker compose -f docker-compose.test.yml --profile e2e up -d
+
+      - name: Wait for Target Services Health
+        run: |
+          echo "Waiting for app-tenant-a to become healthy (max 180s)..."
+          timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} $(docker compose -f docker-compose.test.yml ps -q app-tenant-a))" == "healthy" ]; do sleep 5; done'
+          
+          echo "Waiting for app-tenant-b to become healthy (max 180s)..."
+          timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} $(docker compose -f docker-compose.test.yml ps -q app-tenant-b))" == "healthy" ]; do sleep 5; done'
+
+      - name: Run E2E Playwright Tests
+        run: |
+          docker compose -f docker-compose.test.yml --profile e2e run --rm playwright-test pytest tests/e2e/ -v
+
+      - name: Upload Test Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-e2e-report
+          path: reports/e2e/
+          retention-days: 7
