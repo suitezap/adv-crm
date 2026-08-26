@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\Financial\Models\Financial;
 use SuiteZap\LawFirm\TenantFinance\Models\TenantAsaasSetting;
 use SuiteZap\LawFirm\TenantFinance\Models\TenantInvoice;
 
@@ -70,7 +71,7 @@ class TenantAsaasWebhookController extends Controller
 
                 // Sincronizar com law_financials se vinculado
                 if ($invoice->financial_id) {
-                    \SuiteZap\LawFirm\Financial\Models\Financial::where('id', $invoice->financial_id)
+                    Financial::where('id', $invoice->financial_id)
                         ->update([
                             'status'       => 'pago',
                             'payment_date' => $payment['paymentDate'] ?? now(),

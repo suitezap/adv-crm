@@ -3,14 +3,23 @@
 namespace SuiteZap\LawFirm\Financial\Http\Controllers;
 
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use SuiteZap\LawFirm\Financial\Models\Financial;
 use SuiteZap\LawFirm\Financial\Services\FinancialDashboardService;
 use SuiteZap\LawFirm\Financial\Services\FinancialService;
+use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
+use SuiteZap\LawFirm\TenantFinance\Services\TenantAsaasService;
 use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
+use Webkul\User\Models\User;
 
 class FinancialController extends Controller
 {
@@ -45,7 +54,7 @@ class FinancialController extends Controller
     /**
      * Display the financial dashboard.
      *
-     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
+     * @return View|JsonResponse
      */
     public function index(Request $request)
     {
@@ -54,7 +63,7 @@ class FinancialController extends Controller
         $endDate = $request->input('end_date');
 
         // Passa usuários para o filtro de responsável
-        $users = \Webkul\User\Models\User::all();
+        $users = User::all();
 
         // Obtém todas as métricas do Service
         $metrics = $this->dashboardService->getAllMetrics($startDate, $endDate);
@@ -84,7 +93,7 @@ class FinancialController extends Controller
      * Realiza a baixa rápida (Quick Pay) de um lançamento financeiro.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function quickPay(Request $request, $id)
     {
@@ -112,13 +121,13 @@ class FinancialController extends Controller
      * S3 Compatible: Converte logo para base64 data URI.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function downloadReceipt($id)
     {
         abort_if(! bouncer()->hasPermission('lawfirm.financeiro.view'), 401, 'This action is unauthorized');
 
-        $transaction = \SuiteZap\LawFirm\Financial\Models\Financial::with('processo.person')->findOrFail($id);
+        $transaction = Financial::with('processo.person')->findOrFail($id);
 
         // 1. Busca as Configurações Globais do Escritório
         $companyName = core()->getConfigData('lawfirm.settings.general.company_name') ?? 'Escritório de Advocacia';
@@ -140,7 +149,7 @@ class FinancialController extends Controller
         }
 
         // 3. Envia tudo para a View
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('lawfirm::financial.pdf.receipt', compact(
+        $pdf = Pdf::loadView('lawfirm::financial.pdf.receipt', compact(
             'transaction',
             'companyName',
             'logoBase64',
@@ -157,7 +166,7 @@ class FinancialController extends Controller
      * Store or update financials for a specific process.
      *
      * @param  int  $processId
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     * @return RedirectResponse|JsonResponse
      */
     public function storeProcessFinancials(Request $request, $processId)
     {
@@ -181,12 +190,12 @@ class FinancialController extends Controller
             'financeiros.*.emit_asaas'          => 'nullable|boolean',
         ]);
 
-        $processo = \SuiteZap\LawFirm\Legal\Models\Processo::with('person')->findOrFail($processId);
+        $processo = Processo::with('person')->findOrFail($processId);
 
         $this->financialService->syncFinancials($processo, $request->input('financeiros', []));
 
         // ── Asaas Integration: emit invoices for items marked with emit_asaas ──
-        $asaasService = app(\SuiteZap\LawFirm\TenantFinance\Services\TenantAsaasService::class);
+        $asaasService = app(TenantAsaasService::class);
 
         if ($asaasService->isConfigured()) {
             $financeiros = $request->input('financeiros', []);
@@ -223,13 +232,13 @@ class FinancialController extends Controller
 
                 // Fetch CPF/CNPJ from person_details or organization_details
                 $cpfCnpj = '';
-                $personDetail = \Illuminate\Support\Facades\DB::table('law_person_details')
+                $personDetail = DB::table('law_person_details')
                     ->where('person_id', $person->id)
                     ->first();
                 if ($personDetail && ! empty($personDetail->cpf)) {
                     $cpfCnpj = preg_replace('/\D/', '', $personDetail->cpf);
                 } else {
-                    $orgDetail = \Illuminate\Support\Facades\DB::table('law_organization_details')
+                    $orgDetail = DB::table('law_organization_details')
                         ->where('organization_id', $person->organization_id ?? 0)
                         ->first();
                     if ($orgDetail && ! empty($orgDetail->cnpj)) {
@@ -289,7 +298,7 @@ class FinancialController extends Controller
      * and instance resolution to MotherShipService (Zero .env compliance).
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function sendWhatsappBilling($id, EvolutionService $evolutionService)
     {
@@ -302,7 +311,7 @@ class FinancialController extends Controller
             $billing = $this->financialService->prepareBillingWhatsapp($financial);
 
             // ✅ COMPLIANCE (Zero .env): lê instância EXCLUSIVAMENTE do MotherShip
-            $evolutionConfig = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
+            $evolutionConfig = MotherShipService::getEvolutionConfig();
             $instanceName = $evolutionConfig['instance'] ?? null;
 
             if (empty($instanceName)) {

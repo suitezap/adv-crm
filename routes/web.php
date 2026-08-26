@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use SuiteZap\LawFirm\Http\Controllers\Admin\Whatsapp\ConnectionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,7 +19,8 @@ Route::get('/', function () {
 });
 
 Route::get('/saas-debug/whatsapp-test', function () {
-    $controller = app(\SuiteZap\LawFirm\Http\Controllers\Admin\Whatsapp\ConnectionController::class);
+    $controller = app(ConnectionController::class);
     $response = $controller->status();
+
     return $response;
 });

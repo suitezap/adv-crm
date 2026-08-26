@@ -2,6 +2,8 @@
 
 namespace SuiteZap\LawFirm\Legal\DataGrids;
 
+use Carbon\Carbon;
+
 class LeadProcessosDataGrid extends ProcessoDataGrid
 {
     /**
@@ -69,7 +71,7 @@ class LeadProcessosDataGrid extends ProcessoDataGrid
                     return '-';
                 }
 
-                return \Carbon\Carbon::parse($row->data_audiencia)->format('d/m/Y H:i');
+                return Carbon::parse($row->data_audiencia)->format('d/m/Y H:i');
             },
         ]);
 

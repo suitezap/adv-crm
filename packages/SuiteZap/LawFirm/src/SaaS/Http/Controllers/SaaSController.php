@@ -5,7 +5,10 @@ namespace SuiteZap\LawFirm\SaaS\Http\Controllers;
 use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
+use SuiteZap\LawFirm\SaaS\Services\AsaasService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 use Webkul\User\Models\User;
@@ -17,7 +20,7 @@ class SaaSController extends Controller
     /**
      * Display the subscription dashboard.
      */
-    public function index(\Illuminate\Http\Request $request)
+    public function index(Request $request)
     {
         $tenantId = MotherShipService::getTenantId() ?? 'default';
         $syncCacheKey = 'asaas_sync_last_run_'.$tenantId;
@@ -26,17 +29,17 @@ class SaaSController extends Controller
         // Pagamento retornado do checkout — força sync imediato e invalida cache da subscription
         $isPaymentReturn = $request->has('payment');
         if ($isPaymentReturn) {
-            \Illuminate\Support\Facades\Cache::forget($syncCacheKey);    // ignora throttle
-            \Illuminate\Support\Facades\Cache::forget($subCacheKey);     // subscription atualizada após sync
-            \Illuminate\Support\Facades\Cache::forget('asaas_node_config');
+            Cache::forget($syncCacheKey);    // ignora throttle
+            Cache::forget($subCacheKey);     // subscription atualizada após sync
+            Cache::forget('asaas_node_config');
         }
 
         // Sincroniza pagamentos pendentes (throttled: 1x a cada 60s fora do fluxo de retorno)
-        if (! \Illuminate\Support\Facades\Cache::has($syncCacheKey)) {
-            \SuiteZap\LawFirm\SaaS\Services\AsaasService::syncTenantPayments();
-            \Illuminate\Support\Facades\Cache::put($syncCacheKey, true, 60); // throttle 60 segundos
+        if (! Cache::has($syncCacheKey)) {
+            AsaasService::syncTenantPayments();
+            Cache::put($syncCacheKey, true, 60); // throttle 60 segundos
             // Invalida cache da subscription para refletir créditos adicionados pelo sync
-            \Illuminate\Support\Facades\Cache::forget($subCacheKey);
+            Cache::forget($subCacheKey);
         }
 
         // 1. Busca dados do MotherShip

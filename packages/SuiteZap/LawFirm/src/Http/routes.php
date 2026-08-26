@@ -1,7 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
+use Illuminate\View\FileViewFinder;
+use SuiteZap\LawFirm\Atendimento\Http\Controllers\ChatwootWebhookController;
 use SuiteZap\LawFirm\Escavador\Http\Controllers\WebhookController;
+use SuiteZap\LawFirm\Legal\Http\Controllers\Admin\ChecklistController;
+use SuiteZap\LawFirm\Legal\Http\Controllers\PublicPortal\CustomerPortalController;
+use SuiteZap\LawFirm\SaaS\Http\Controllers\AsaasWebhookController;
+use SuiteZap\LawFirm\TenantFinance\Http\Controllers\TenantAsaasWebhookController;
+use SuiteZap\LawFirm\Whatsapp\Http\Controllers\WhatsappWebhookController;
 
 // ============================================================================
 // PUBLIC WEBHOOK — /api/webhooks/escavador (sem auth, sem CSRF)
@@ -11,18 +19,18 @@ Route::middleware(['api'])->group(function () {
     Route::post('api/webhooks/escavador', [WebhookController::class, 'handle'])
         ->name('webhooks.escavador');
 
-    Route::post('api/webhooks/asaas', [\SuiteZap\LawFirm\SaaS\Http\Controllers\AsaasWebhookController::class, 'handle'])
+    Route::post('api/webhooks/asaas', [AsaasWebhookController::class, 'handle'])
         ->name('webhooks.asaas');
 
-    Route::post('api/webhooks/tenant-asaas', [\SuiteZap\LawFirm\TenantFinance\Http\Controllers\TenantAsaasWebhookController::class, 'handle'])
+    Route::post('api/webhooks/tenant-asaas', [TenantAsaasWebhookController::class, 'handle'])
         ->name('webhooks.tenant_asaas');
 
     // ── Chatwoot Atendimento Webhook (CSRF-exempt — receives Chatwoot callbacks) ──
-    Route::post('api/webhooks/chatwoot', [\SuiteZap\LawFirm\Atendimento\Http\Controllers\ChatwootWebhookController::class, 'handle'])
+    Route::post('api/webhooks/chatwoot', [ChatwootWebhookController::class, 'handle'])
         ->name('webhooks.chatwoot');
 
     // ── WhatsApp Messenger Inbox Webhook (CSRF-exempt — receives Evolution API callbacks) ──
-    Route::post('api/webhooks/whatsapp-messenger/{tenantId}', [\SuiteZap\LawFirm\Whatsapp\Http\Controllers\WhatsappWebhookController::class, 'handle'])
+    Route::post('api/webhooks/whatsapp-messenger/{tenantId}', [WhatsappWebhookController::class, 'handle'])
         ->name('webhooks.whatsapp_messenger');
 });
 
@@ -30,11 +38,11 @@ Route::middleware(['api'])->group(function () {
 // PUBLIC WEB ROUTES (Customer Portal)
 // ============================================================================
 Route::middleware(['web'])->group(function () {
-    Route::get('portal/processo/{id}', [\SuiteZap\LawFirm\Legal\Http\Controllers\PublicPortal\CustomerPortalController::class, 'index'])
+    Route::get('portal/processo/{id}', [CustomerPortalController::class, 'index'])
         ->name('lawfirm.public.portal.index');
-    Route::post('portal/processo/{id}/update', [\SuiteZap\LawFirm\Legal\Http\Controllers\PublicPortal\CustomerPortalController::class, 'update'])
+    Route::post('portal/processo/{id}/update', [CustomerPortalController::class, 'update'])
         ->name('lawfirm.public.portal.update');
-    Route::post('portal/processo/{id}/upload', [\SuiteZap\LawFirm\Legal\Http\Controllers\PublicPortal\CustomerPortalController::class, 'upload'])
+    Route::post('portal/processo/{id}/upload', [CustomerPortalController::class, 'upload'])
         ->name('lawfirm.public.portal.upload');
 });
 
@@ -120,8 +128,11 @@ Route::middleware(['web', 'user'])
 
                 return response()->json([
                     'view_name' => $viewName,
-                    'exists'    => \Illuminate\Support\Facades\View::exists($viewName),
-                    'hints'     => (function() { /** @var \Illuminate\View\FileViewFinder $finder */ $finder = app('view')->getFinder(); return $finder->getHints(); })(),
+                    'exists'    => View::exists($viewName),
+                    'hints'     => (function () { /** @var FileViewFinder $finder */ $finder = app('view')->getFinder();
+
+                        return $finder->getHints();
+                    })(),
                 ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
             })->name('admin.lawfirm.debug_view');
 
@@ -141,19 +152,19 @@ Route::middleware(['web', 'user'])
 
         // Checklist Module
         Route::prefix('checklist')->group(function () {
-            Route::get('/{leadId}', [\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\ChecklistController::class, 'show'])
+            Route::get('/{leadId}', [ChecklistController::class, 'show'])
                 ->name('lawfirm.checklist.show');
 
-            Route::post('/{leadId}/init', [\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\ChecklistController::class, 'initialize'])
+            Route::post('/{leadId}/init', [ChecklistController::class, 'initialize'])
                 ->name('lawfirm.checklist.init');
 
-            Route::post('/{leadId}/save', [\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\ChecklistController::class, 'saveProgress'])
+            Route::post('/{leadId}/save', [ChecklistController::class, 'saveProgress'])
                 ->name('lawfirm.checklist.save');
 
-            Route::post('/{leadId}/validate-ai', [\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\ChecklistController::class, 'validateWithAi'])
+            Route::post('/{leadId}/validate-ai', [ChecklistController::class, 'validateWithAi'])
                 ->name('lawfirm.checklist.validate');
 
-            Route::post('/{leadId}/execute-ai', [\SuiteZap\LawFirm\Legal\Http\Controllers\Admin\ChecklistController::class, 'executeAi'])
+            Route::post('/{leadId}/execute-ai', [ChecklistController::class, 'executeAi'])
                 ->name('lawfirm.checklist.execute-ai');
         });
     });

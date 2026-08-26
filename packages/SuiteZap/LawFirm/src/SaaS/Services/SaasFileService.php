@@ -2,7 +2,10 @@
 
 namespace SuiteZap\LawFirm\SaaS\Services;
 
+use Aws\S3\Exception\S3Exception;
+use Aws\S3\S3Client;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class SaasFileService
@@ -160,7 +163,7 @@ class SaasFileService
 
             $disk = $this->getDisk();
 
-            /** @var \Aws\S3\S3Client $client */
+            /** @var S3Client $client */
             $client = $disk->getClient();
             $bucket = config('filesystems.disks.s3.bucket');
 
@@ -170,17 +173,17 @@ class SaasFileService
 
             try {
                 $client->headBucket(['Bucket' => $bucket]);
-            } catch (\Aws\S3\Exception\S3Exception $e) {
+            } catch (S3Exception $e) {
                 // Se bucket não existir, cria
                 if ($e->getStatusCode() == 404 || str_contains((string) $e->getAwsErrorCode(), 'NoSuchBucket') || str_contains((string) $e->getAwsErrorCode(), 'NotFound')) {
                     $client->createBucket(['Bucket' => $bucket]);
-                    \Illuminate\Support\Facades\Log::info("SAAS INFO: Bucket '{$bucket}' criado automaticamente (JIT) no S3/MinIO.");
+                    Log::info("SAAS INFO: Bucket '{$bucket}' criado automaticamente (JIT) no S3/MinIO.");
                 } else {
                     throw $e;
                 }
             }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('SAAS ERRO: Falha ao garantir/criar bucket no MinIO: '.$e->getMessage());
+            Log::error('SAAS ERRO: Falha ao garantir/criar bucket no MinIO: '.$e->getMessage());
         }
     }
 
@@ -207,7 +210,7 @@ class SaasFileService
         try {
             return $this->getDisk()->allFiles($directory);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('SaasFileService::listAll falhou: '.$e->getMessage());
+            Log::error('SaasFileService::listAll falhou: '.$e->getMessage());
 
             return [];
         }

@@ -4,16 +4,21 @@ namespace SuiteZap\LawFirm\GED\Http\Controllers;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\GED\Models\ProcessDocument;
 use SuiteZap\LawFirm\GED\Services\DocumentService;
+use SuiteZap\LawFirm\Legal\Models\Anexo;
 use SuiteZap\LawFirm\Legal\Models\ChecklistTemplate;
 use SuiteZap\LawFirm\Legal\Models\LawPersonDetail;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
+use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
 
 class ProcessDocumentController extends Controller
 {
@@ -30,7 +35,7 @@ class ProcessDocumentController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     * @return RedirectResponse|JsonResponse
      */
     public function store(Request $request)
     {
@@ -70,7 +75,7 @@ class ProcessDocumentController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     * @return RedirectResponse|JsonResponse
      */
     public function destroy($id)
     {
@@ -96,7 +101,7 @@ class ProcessDocumentController extends Controller
      * Remove the specified checklist item from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     * @return JsonResponse|RedirectResponse
      */
     public function destroyChecklistItem($id)
     {
@@ -122,12 +127,12 @@ class ProcessDocumentController extends Controller
      * Download the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * @return Response|RedirectResponse
      */
     public function download($id)
     {
         try {
-            $document = \SuiteZap\LawFirm\GED\Models\ProcessDocument::findOrFail($id);
+            $document = ProcessDocument::findOrFail($id);
 
             if (empty($document->file_path)) {
                 return redirect()->back()->with('error', 'Arquivo não encontrado (Caminho vazio).');
@@ -158,7 +163,7 @@ class ProcessDocumentController extends Controller
     public function downloadAttachment($id)
     {
         try {
-            $anexo = \SuiteZap\LawFirm\Legal\Models\Anexo::findOrFail($id);
+            $anexo = Anexo::findOrFail($id);
 
             $path = $anexo->path;
             if (empty($path)) {
@@ -262,7 +267,7 @@ class ProcessDocumentController extends Controller
                 );
 
                 // 6. Enviar via Service
-                $evolutionService = app(\SuiteZap\LawFirm\Whatsapp\Services\EvolutionService::class);
+                $evolutionService = app(EvolutionService::class);
                 $config = MotherShipService::getEvolutionConfig();
 
                 if (! $config || empty($config['instance'])) {
@@ -293,7 +298,7 @@ class ProcessDocumentController extends Controller
      * Add a single item to the checklist manually.
      *
      * @param  int  $processId
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     * @return JsonResponse|RedirectResponse
      */
     public function addItem(Request $request, $processId)
     {
@@ -410,7 +415,7 @@ class ProcessDocumentController extends Controller
             );
 
             // 6. Enviar via Service
-            $evolutionService = app(\SuiteZap\LawFirm\Whatsapp\Services\EvolutionService::class);
+            $evolutionService = app(EvolutionService::class);
 
             $config = MotherShipService::getEvolutionConfig();
 

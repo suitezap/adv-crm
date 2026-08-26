@@ -19,9 +19,13 @@
  * @see GUARDRAILS.md — Incidente 2026-07-01
  */
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\Atendimento\Http\Controllers\ChatwootWebhookController;
 use SuiteZap\LawFirm\Atendimento\Services\ChatwootService;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 
 // ---------------------------------------------------------------------------
 // Helper: instancia ChatwootService sem banco, injetando config diretamente
@@ -293,8 +297,7 @@ describe('access_token (User Token) — nunca usado em POST /messages', function
 
         $service->sendMessage(1, 'Olá, mundo!');
 
-        Http::assertSent(fn ($req) =>
-            $req->hasHeader('api_access_token', 'BOT_TOKEN_XYZ')
+        Http::assertSent(fn ($req) => $req->hasHeader('api_access_token', 'BOT_TOKEN_XYZ')
             && str_contains($req->url(), '/messages')
         );
     });
@@ -309,8 +312,7 @@ describe('access_token (User Token) — nunca usado em POST /messages', function
 
         $service->sendMessage(1, 'Olá, mundo!');
 
-        Http::assertNotSent(fn ($req) =>
-            $req->hasHeader('api_access_token', 'USER_ACCESS_TOKEN_ABC')
+        Http::assertNotSent(fn ($req) => $req->hasHeader('api_access_token', 'USER_ACCESS_TOKEN_ABC')
             && str_contains($req->url(), '/messages')
         );
     });
@@ -366,15 +368,14 @@ describe('sendAssistantMessage() — botHeaders e fallback de assistant_inbox_id
         Http::fake(['*' => Http::response(['id' => 1], 200)]);
 
         $service = makeChatwootServiceWithConfig([
-            'api_key'      => 'BOT_TOKEN_XYZ',
-            'access_token' => 'USER_ACCESS_TOKEN_ABC',
+            'api_key'            => 'BOT_TOKEN_XYZ',
+            'access_token'       => 'USER_ACCESS_TOKEN_ABC',
             'assistant_inbox_id' => 55,
         ]);
 
         $service->sendAssistantMessage(1, 'Olá do Assistente!');
 
-        Http::assertSent(fn ($req) =>
-            $req->hasHeader('api_access_token', 'BOT_TOKEN_XYZ')
+        Http::assertSent(fn ($req) => $req->hasHeader('api_access_token', 'BOT_TOKEN_XYZ')
             && str_contains($req->url(), '/messages')
         );
     });
@@ -416,33 +417,33 @@ describe('ChatwootWebhookController — usa access_token como secret HMAC', func
     it('valida assinatura HMAC corretamente com o access_token do tenant', function () {
         // Mocking cache to bypass DB and inject our config
         config(['lawfirm.tenant_id' => 'tenant_test']);
-        \Illuminate\Support\Facades\Cache::shouldReceive('remember')
-            ->with('tenant_tenant_test_config', \Mockery::any(), \Mockery::any())
+        Cache::shouldReceive('remember')
+            ->with('tenant_tenant_test_config', Mockery::any(), Mockery::any())
             ->andReturn((object) [
-                'chatwoot_node_id' => 1,
-                'chatwoot_inbox_id' => 99,
-                'chatwoot_channel_inbox_id' => 42,
+                'chatwoot_node_id'            => 1,
+                'chatwoot_inbox_id'           => 99,
+                'chatwoot_channel_inbox_id'   => 42,
                 'chatwoot_assistant_inbox_id' => 55,
-                'chatwoot_webhook_token' => 'SECRET_USER_TOKEN',
+                'chatwoot_webhook_token'      => 'SECRET_USER_TOKEN',
             ]);
 
-        \Illuminate\Support\Facades\Cache::shouldReceive('remember')
-            ->with('chatwoot_node_1', \Mockery::any(), \Mockery::any())
+        Cache::shouldReceive('remember')
+            ->with('chatwoot_node_1', Mockery::any(), Mockery::any())
             ->andReturn((object) [
-                'base_url' => 'https://chat.test',
-                'api_key' => 'NODE_BOT_TOKEN',
+                'base_url'  => 'https://chat.test',
+                'api_key'   => 'NODE_BOT_TOKEN',
                 'meta_data' => ['account_id' => 99],
             ]);
 
         $payload = '{"event":"conversation_created","id":123,"inbox":{"id":42}}';
-        $signature = 'sha1=' . hash_hmac('sha1', $payload, 'SECRET_USER_TOKEN');
+        $signature = 'sha1='.hash_hmac('sha1', $payload, 'SECRET_USER_TOKEN');
 
-        $request = \Illuminate\Http\Request::create('/api/webhooks/chatwoot', 'POST', [], [], [], [
+        $request = Request::create('/api/webhooks/chatwoot', 'POST', [], [], [], [
             'HTTP_X_CHATWOOT_SIGNATURE' => $signature,
             'CONTENT_TYPE'              => 'application/json',
         ], $payload);
 
-        $controller = new \SuiteZap\LawFirm\Atendimento\Http\Controllers\ChatwootWebhookController();
+        $controller = new ChatwootWebhookController;
         $response = $controller->handle($request);
 
         if ($response->getData()->status !== 'ok') {
@@ -462,25 +463,25 @@ describe('MotherShipService::getChatwootConfig() — mapeamento de tokens e IDs'
 
     it('mapeia account_id a partir de chatwoot_inbox_id e inbox_id a partir de chatwoot_channel_inbox_id', function () {
         config(['lawfirm.tenant_id' => 'tenant_test']);
-        \Illuminate\Support\Facades\Cache::shouldReceive('remember')
-            ->with('tenant_tenant_test_config', \Mockery::any(), \Mockery::any())
+        Cache::shouldReceive('remember')
+            ->with('tenant_tenant_test_config', Mockery::any(), Mockery::any())
             ->andReturn((object) [
-                'chatwoot_node_id' => 1,
-                'chatwoot_inbox_id' => 99, // BUG HISTÓRICO: Nome confuso, mas guarda o account_id
-                'chatwoot_channel_inbox_id' => 42, // Nome correto do inbox
+                'chatwoot_node_id'            => 1,
+                'chatwoot_inbox_id'           => 99, // BUG HISTÓRICO: Nome confuso, mas guarda o account_id
+                'chatwoot_channel_inbox_id'   => 42, // Nome correto do inbox
                 'chatwoot_assistant_inbox_id' => 55,
-                'chatwoot_webhook_token' => 'USER_TOKEN',
+                'chatwoot_webhook_token'      => 'USER_TOKEN',
             ]);
 
-        \Illuminate\Support\Facades\Cache::shouldReceive('remember')
-            ->with('chatwoot_node_1', \Mockery::any(), \Mockery::any())
+        Cache::shouldReceive('remember')
+            ->with('chatwoot_node_1', Mockery::any(), Mockery::any())
             ->andReturn((object) [
-                'base_url' => 'https://chat.test',
-                'api_key' => 'NODE_BOT_TOKEN',
+                'base_url'  => 'https://chat.test',
+                'api_key'   => 'NODE_BOT_TOKEN',
                 'meta_data' => [], // Forçando a ler do tenant legado
             ]);
 
-        $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getChatwootConfig();
+        $config = MotherShipService::getChatwootConfig();
 
         expect($config['account_id'])->toBe(99);
         expect($config['inbox_id'])->toBe(42);

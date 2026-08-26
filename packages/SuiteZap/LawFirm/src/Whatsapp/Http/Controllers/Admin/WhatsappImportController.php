@@ -2,8 +2,10 @@
 
 namespace SuiteZap\LawFirm\Whatsapp\Http\Controllers\Admin;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Validation\ValidationException;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Legal\Models\WhatsappImport;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
@@ -51,7 +53,7 @@ class WhatsappImportController extends Controller
                 'message' => 'Importação agendada com sucesso. Você será notificado no WhatsApp ao final do processo.',
             ]);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'error'   => 'Erro de validação: '.collect($e->errors())->flatten()->first(),
@@ -137,7 +139,7 @@ class WhatsappImportController extends Controller
                 'message' => 'Importação removida com sucesso.',
             ]);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'error'   => 'Importação não encontrada.',

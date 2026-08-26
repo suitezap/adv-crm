@@ -2,9 +2,12 @@
 
 namespace SuiteZap\LawFirm\Legal\Http\Controllers;
 
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use SuiteZap\LawFirm\Database\Seeders\LegalPipelineSeeder;
 use SuiteZap\LawFirm\Legal\Models\Caso;
 use SuiteZap\LawFirm\Legal\Models\LegalPipeline;
@@ -28,7 +31,7 @@ class LegalKanbanController extends Controller
     /**
      * Display the Kanban board.
      *
-     * @return \Illuminate\Contracts\View\View
+     * @return View
      */
     public function index()
     {
@@ -72,7 +75,7 @@ class LegalKanbanController extends Controller
         // Build a JSON map of processos keyed by caso_id for the JS tooltip.
         // This avoids ALL Blade scope / Eloquent dynamic property issues.
         $casoIds = $casos->pluck('id')->toArray();
-        $rawProcessos = \Illuminate\Support\Facades\DB::table('processos')
+        $rawProcessos = DB::table('processos')
             ->whereIn('caso_id', $casoIds)
             ->whereNotNull('caso_id')
             ->select(['id', 'titulo', 'status', 'caso_id'])
@@ -82,7 +85,7 @@ class LegalKanbanController extends Controller
         foreach ($rawProcessos as $p) {
             $key = (int) $p->caso_id;
             $tooltipMap[$key][] = [
-                'titulo' => \Illuminate\Support\Str::limit($p->titulo ?? 'Processo #'.$p->id, 38),
+                'titulo' => Str::limit($p->titulo ?? 'Processo #'.$p->id, 38),
                 'status' => $p->status ?? '—',
             ];
         }

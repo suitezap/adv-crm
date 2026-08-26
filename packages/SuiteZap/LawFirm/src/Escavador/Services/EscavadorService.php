@@ -2,12 +2,15 @@
 
 namespace SuiteZap\LawFirm\Escavador\Services;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorRequest;
 use SuiteZap\LawFirm\SaaS\Models\InfrastructureNode;
+use SuiteZap\LawFirm\SaaS\Models\SaasTransaction;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 
 /**
@@ -434,7 +437,7 @@ class EscavadorService
     ): array {
         // ── 1. Validar tipo de serviço e custo dinâmico ────────────────────
         $serviceType = strtoupper($serviceType);
-        $prices = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEscavadorPrices();
+        $prices = MotherShipService::getEscavadorPrices();
 
         if (! array_key_exists($serviceType, $prices)) {
             return [
@@ -471,7 +474,7 @@ class EscavadorService
 
         // ── 2b. Verificar Janela de Cache (24h default) ────────────────────
         $requestHash = md5(json_encode(collect($data)->sortKeys()->toArray()));
-        $cacheHours = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEscavadorCacheWindowHours();
+        $cacheHours = MotherShipService::getEscavadorCacheWindowHours();
 
         if ($cacheHours > 0) {
             $cachedRequest = EscavadorRequest::where('tenant_id', $tenantId)
@@ -557,7 +560,7 @@ class EscavadorService
         ]);
 
         if ($apiResult['success']) {
-            \SuiteZap\LawFirm\SaaS\Models\SaasTransaction::create([
+            SaasTransaction::create([
                 'tenant_id'      => $tenantId,
                 'type'           => 'debit',
                 'amount'         => $costBrlWithMarkup,
@@ -597,10 +600,10 @@ class EscavadorService
      * Cadastra um novo certificado digital via upload multipart (.pfx / .p12).
      * POST api/v2/certificados-digitais
      *
-     * @param  \Illuminate\Http\UploadedFile  $file  Arquivo do certificado (.pfx ou .p12)
+     * @param  UploadedFile  $file  Arquivo do certificado (.pfx ou .p12)
      * @param  string  $senha  Senha do certificado
      */
-    public function cadastrarCertificadoComArquivo(\Illuminate\Http\UploadedFile $file, string $senha, bool $playground = false): array
+    public function cadastrarCertificadoComArquivo(UploadedFile $file, string $senha, bool $playground = false): array
     {
         $apiKey = $this->getApiKey('v2', $playground);
 
@@ -617,7 +620,7 @@ class EscavadorService
         $url = rtrim(self::BASE_URL_V2, '/').'/certificados-digitais';
 
         try {
-            $response = \Illuminate\Support\Facades\Http::withToken($apiKey)
+            $response = Http::withToken($apiKey)
                 ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
                 ->timeout(60)
                 ->attach('file', file_get_contents($file->getRealPath()), $file->getClientOriginalName())
@@ -638,7 +641,7 @@ class EscavadorService
             $errorBody = $response->json();
             $errorMsg = $errorBody['error'] ?? $errorBody['message'] ?? 'Erro desconhecido ao cadastrar certificado.';
 
-            \Illuminate\Support\Facades\Log::warning('Escavador certificado upload error', [
+            Log::warning('Escavador certificado upload error', [
                 'url'    => $url,
                 'status' => $response->status(),
                 'body'   => $errorBody,
@@ -652,7 +655,7 @@ class EscavadorService
                 'status_code'  => $response->status(),
             ];
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Escavador certificado upload exception', [
+            Log::error('Escavador certificado upload exception', [
                 'url'     => $url,
                 'message' => $e->getMessage(),
             ]);

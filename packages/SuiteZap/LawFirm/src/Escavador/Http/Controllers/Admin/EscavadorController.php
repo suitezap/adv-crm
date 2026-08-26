@@ -3,12 +3,14 @@
 namespace SuiteZap\LawFirm\Escavador\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso;
 use SuiteZap\LawFirm\Escavador\Services\EscavadorCacheService;
 use SuiteZap\LawFirm\Escavador\Services\EscavadorService;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 use Webkul\Admin\Http\Controllers\Controller;
 
 /**
@@ -247,7 +249,7 @@ class EscavadorController extends Controller
             'service_type' => [
                 'required',
                 'string',
-                \Illuminate\Validation\Rule::in(array_keys(EscavadorService::SERVICE_MAP)),
+                Rule::in(array_keys(EscavadorService::SERVICE_MAP)),
             ],
             'data'        => 'sometimes|array',
             'processo_id' => 'sometimes|nullable|integer',
@@ -298,7 +300,7 @@ class EscavadorController extends Controller
             // legacy key — mantido para compatibilidade (remover em v4.x)
             'ai_tokens_balance' => $subscription ? (float) $subscription->suitecoin_balance : 0.0,
             // taxa de conversão BRL→Ƶ para cálculo no front-end
-            'suitecoin_rate'    => \SuiteZap\LawFirm\SaaS\Services\SuiteCoinService::getRate(),
+            'suitecoin_rate'    => SuiteCoinService::getRate(),
             'tenant_id'         => $tenantId,
         ]);
     }

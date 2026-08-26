@@ -2,7 +2,10 @@
 
 namespace SuiteZap\LawFirm\SaaS\Services;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
@@ -98,7 +101,7 @@ class MotherShipService
             return true;
         }
 
-        $currentCount = \Webkul\User\Models\User::where('status', 1)->count();
+        $currentCount = User::where('status', 1)->count();
 
         return $currentCount < $limit;
     }
@@ -121,9 +124,7 @@ class MotherShipService
                     ->where('id', $tenantId)
                     ->first();
             } catch (\Exception $e) {
-                // Falha silenciosa — tabela pode não existir durante migrations ou bootstrap de testes
                 Log::warning("[MotherShipService] getTenantConfig falhou para tenant {$tenantId}: ".$e->getMessage());
-
                 return null;
             }
         });
@@ -136,7 +137,7 @@ class MotherShipService
     {
         return Cache::remember("mothership_app_config_{$key}", 300, function () use ($key) {
             try {
-                return \Illuminate\Support\Facades\DB::connection('mothership')
+                return DB::connection('mothership')
                     ->table('app_config')
                     ->where('key', $key)
                     ->value('value');
@@ -175,7 +176,7 @@ class MotherShipService
                     return $defaults;
                 }
 
-                $response = \Illuminate\Support\Facades\Http::timeout(5)
+                $response = Http::timeout(5)
                     ->withHeaders(['X-Api-Secret' => $apiSecret])
                     ->get("{$baseUrl}/api/exchange_rate.php");
 
@@ -203,8 +204,8 @@ class MotherShipService
     /**
      * Retorna a configuração da Evolution API para o Tenant atual.
      * Prioriza o banco de dados MotherShip. Retorna null se não configurado.
-     * 
-     * @param string $type 'default' ou 'atendimento'
+     *
+     * @param  string  $type  'default' ou 'atendimento'
      */
     public static function getEvolutionConfig(string $type = 'default')
     {
@@ -217,8 +218,8 @@ class MotherShipService
 
         // 2. Busca o Nó de Infraestrutura (Servidor onde o WhatsApp está rodando)
         // Usamos cache curto aqui para não sobrecarregar o banco de infra
-        $node = \Illuminate\Support\Facades\Cache::remember("infra_node_{$tenantConfig->evolution_node_id}", 300, function () use ($tenantConfig) {
-            return \SuiteZap\LawFirm\SaaS\Models\InfrastructureNode::on('mothership')
+        $node = Cache::remember("infra_node_{$tenantConfig->evolution_node_id}", 300, function () use ($tenantConfig) {
+            return InfrastructureNode::on('mothership')
                 ->find($tenantConfig->evolution_node_id);
         });
 
@@ -230,9 +231,9 @@ class MotherShipService
         if ($type === 'atendimento') {
             // Prioriza o nome explicitamente configurado no MotherShip.
             // Fallback: sufixo _atendimento para compatibilidade com tenants legados.
-            $instanceName = !empty($tenantConfig->evolution_assistente_name)
+            $instanceName = ! empty($tenantConfig->evolution_assistente_name)
                 ? $tenantConfig->evolution_assistente_name
-                : $instanceName . '_atendimento';
+                : $instanceName.'_atendimento';
         }
 
         return [
@@ -345,7 +346,7 @@ class MotherShipService
      *
      * @param  string  $tenantId  ID do tenant atual
      * @param  array  $activeModules  Módulos ativos da assinatura (ex: ['LEGAL', 'AI'])
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public static function getAvailableAssistants(string $tenantId, array $activeModules)
     {
@@ -375,7 +376,7 @@ class MotherShipService
     public static function getEscavadorMarkup(): float
     {
         return Cache::remember('escavador_markup', 3600, function () {
-            $val = \Illuminate\Support\Facades\DB::connection('mothership')->table('app_config')
+            $val = DB::connection('mothership')->table('app_config')
                 ->where('key', 'escavador_markup_percent')->value('value');
 
             return $val !== null ? (float) $val : 100.0;
@@ -385,7 +386,7 @@ class MotherShipService
     public static function getEscavadorCacheWindowHours(): int
     {
         return Cache::remember('escavador_cache_window_hours', 3600, function () {
-            $val = \Illuminate\Support\Facades\DB::connection('mothership')->table('app_config')
+            $val = DB::connection('mothership')->table('app_config')
                 ->where('key', 'escavador_cache_window_hours')->value('value');
 
             return $val !== null ? (int) $val : 24;
@@ -402,7 +403,7 @@ class MotherShipService
     public static function getEscavadorPrices(): array
     {
         return Cache::remember('escavador_prices', 3600, function () {
-            $configs = \Illuminate\Support\Facades\DB::connection('mothership')->table('app_config')
+            $configs = DB::connection('mothership')->table('app_config')
                 ->where('key', 'like', 'escavador_price_%')
                 ->orWhere('key', 'like', 'datajud_price_%')
                 ->pluck('value', 'key');

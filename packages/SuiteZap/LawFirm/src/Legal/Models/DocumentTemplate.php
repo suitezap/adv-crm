@@ -2,6 +2,7 @@
 
 namespace SuiteZap\LawFirm\Legal\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Webkul\User\Models\User;
@@ -54,8 +55,8 @@ class DocumentTemplate extends Model
     /**
      * Scope a query to only include active templates.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeActive($query)
     {
@@ -66,8 +67,8 @@ class DocumentTemplate extends Model
      * Scope a query to include templates for a specific area,
      * plus templates that are available for all areas (area_direito is null).
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeForArea($query, ?string $area)
     {

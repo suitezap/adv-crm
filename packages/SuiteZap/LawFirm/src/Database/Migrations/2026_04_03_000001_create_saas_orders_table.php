@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use SuiteZap\LawFirm\SaaS\Models\SaasOrder;
 
 /**
  * Cria a tabela saas_orders — "Intenção de Compra" do módulo SaaS.
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Proporção: R$ 1,00 = 1 Crédito de IA (1:1).
  *
- * @see \SuiteZap\LawFirm\SaaS\Models\SaasOrder
+ * @see SaasOrder
  */
 return new class extends Migration
 {

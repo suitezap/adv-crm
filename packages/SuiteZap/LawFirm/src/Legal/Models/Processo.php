@@ -2,12 +2,19 @@
 
 namespace SuiteZap\LawFirm\Legal\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorMonitoramento;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso;
 use SuiteZap\LawFirm\Financial\Models\Financial;
+use SuiteZap\LawFirm\GED\Models\ProcessDocument;
+use Webkul\Contact\Models\Organization;
+use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Lead;
+use Webkul\User\Models\User;
 
 class Processo extends Model
 {
@@ -130,7 +137,7 @@ class Processo extends Model
      */
     public function lead(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\Lead\Models\Lead::class);
+        return $this->belongsTo(Lead::class);
     }
 
     /**
@@ -138,7 +145,7 @@ class Processo extends Model
      */
     public function person(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\Contact\Models\Person::class);
+        return $this->belongsTo(Person::class);
     }
 
     /**
@@ -146,7 +153,7 @@ class Processo extends Model
      */
     public function organization(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\Contact\Models\Organization::class);
+        return $this->belongsTo(Organization::class);
     }
 
     /**
@@ -160,7 +167,7 @@ class Processo extends Model
     /**
      * Get the prazos (deadlines) for the processo.
      */
-    public function prazos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function prazos(): HasMany
     {
         return $this->hasMany(Prazo::class);
     }
@@ -168,7 +175,7 @@ class Processo extends Model
     /**
      * Get the notes (notas) for the processo.
      */
-    public function notas(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function notas(): HasMany
     {
         return $this->hasMany(ProcessoNota::class)->orderBy('created_at', 'desc');
     }
@@ -176,7 +183,7 @@ class Processo extends Model
     /**
      * Get the financials (revenues/expenses) for the processo.
      */
-    public function financeiros(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function financeiros(): HasMany
     {
         return $this->hasMany(Financial::class);
     }
@@ -186,7 +193,7 @@ class Processo extends Model
      */
     public function responsavel(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\User\Models\User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
@@ -285,8 +292,8 @@ class Processo extends Model
             return $defaultClass;
         }
 
-        $audiencia = \Carbon\Carbon::parse($this->data_audiencia)->startOfDay();
-        $hoje = \Carbon\Carbon::now()->startOfDay();
+        $audiencia = Carbon::parse($this->data_audiencia)->startOfDay();
+        $hoje = Carbon::now()->startOfDay();
         $diffDays = $hoje->diffInDays($audiencia, false);
 
         if ($diffDays <= 0) {
@@ -304,7 +311,7 @@ class Processo extends Model
     /**
      * Get the attachments (GED) for the processo.
      */
-    public function anexos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function anexos(): HasMany
     {
         return $this->hasMany(Anexo::class);
     }
@@ -312,9 +319,9 @@ class Processo extends Model
     /**
      * Get the documents (GED) for the processo.
      */
-    public function documents(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function documents(): HasMany
     {
-        return $this->hasMany(\SuiteZap\LawFirm\GED\Models\ProcessDocument::class);
+        return $this->hasMany(ProcessDocument::class);
     }
 
     /**
@@ -322,13 +329,13 @@ class Processo extends Model
      */
     public function checklists()
     {
-        return $this->hasMany(\SuiteZap\LawFirm\Legal\Models\CaseChecklist::class, 'processo_id');
+        return $this->hasMany(CaseChecklist::class, 'processo_id');
     }
 
     /**
      * Get the imported WhatsApp messages for the processo.
      */
-    public function whatsappMessages(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function whatsappMessages(): HasMany
     {
         return $this->hasMany(ProcessoWhatsappMessage::class)->orderBy('message_timestamp', 'asc');
     }
@@ -336,7 +343,7 @@ class Processo extends Model
     /**
      * Get the WhatsApp import sessions for the processo.
      */
-    public function whatsappImports(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function whatsappImports(): HasMany
     {
         return $this->hasMany(WhatsappImport::class, 'processo_id')->orderBy('created_at', 'desc');
     }
@@ -352,7 +359,7 @@ class Processo extends Model
     /**
      * Get the escavador monitoramentos linked to this process.
      */
-    public function escavadorMonitoramentos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function escavadorMonitoramentos(): HasMany
     {
         return $this->hasMany(EscavadorMonitoramento::class, 'processo_id');
     }

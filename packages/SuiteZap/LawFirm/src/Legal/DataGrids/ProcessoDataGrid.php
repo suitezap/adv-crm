@@ -2,6 +2,8 @@
 
 namespace SuiteZap\LawFirm\Legal\DataGrids;
 
+use Carbon\Carbon;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
 
@@ -126,8 +128,8 @@ class ProcessoDataGrid extends DataGrid
                     return '-';
                 }
 
-                $date = \Carbon\Carbon::parse($row->data_audiencia);
-                $now = \Carbon\Carbon::now()->startOfDay();
+                $date = Carbon::parse($row->data_audiencia);
+                $now = Carbon::now()->startOfDay();
                 $diff = $now->diffInDays($date, false);
 
                 $formatted = $date->format('d/m/Y H:i');
@@ -162,7 +164,7 @@ class ProcessoDataGrid extends DataGrid
     /**
      * Override sort to keep NULL data_audiencia values last.
      *
-     * @return \Illuminate\Database\Query\Builder
+     * @return Builder
      */
     protected function processRequestedSorting($requestedSort)
     {

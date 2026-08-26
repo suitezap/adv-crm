@@ -81,7 +81,7 @@ class TenantBillingController extends Controller
             }
 
             return redirect()->back()->with('success', 'Dados atualizados com sucesso!');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,

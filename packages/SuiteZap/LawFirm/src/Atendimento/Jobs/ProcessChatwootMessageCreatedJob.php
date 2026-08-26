@@ -8,7 +8,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use SuiteZap\LawFirm\Atendimento\Services\ChatwootService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 
 /**
@@ -56,11 +55,11 @@ class ProcessChatwootMessageCreatedJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $messageType    = $this->payload['message_type'] ?? null;
+        $messageType = $this->payload['message_type'] ?? null;
         $conversationId = $this->payload['conversation']['id'] ?? null;
-        $inboxId        = $this->payload['inbox_id'] ?? null;
-        $senderName     = $this->payload['sender']['name'] ?? 'Desconhecido';
-        $content        = substr($this->payload['content'] ?? '', 0, 80);
+        $inboxId = $this->payload['inbox_id'] ?? null;
+        $senderName = $this->payload['sender']['name'] ?? 'Desconhecido';
+        $content = substr($this->payload['content'] ?? '', 0, 80);
 
         // ── Filtros de segurança — evita loops e mensagens de sistema ──
         if (in_array($messageType, ['outgoing', 'activity'], true)) {
@@ -90,14 +89,14 @@ class ProcessChatwootMessageCreatedJob implements ShouldQueue
             return;
         }
 
-        $humanInboxId     = (int) ($config['inbox_id'] ?? 0);
+        $humanInboxId = (int) ($config['inbox_id'] ?? 0);
         $assistantInboxId = (int) ($config['assistant_inbox_id'] ?? 0);
-        $currentInboxId   = (int) $inboxId;
+        $currentInboxId = (int) $inboxId;
 
         if ($assistantInboxId > 0 && $currentInboxId === $assistantInboxId) {
             // Mensagem chegou no inbox da IA — futuro: disparar AI Job
             Log::info('[ProcessChatwootMessageCreated] Roteado para Inbox IA.', [
-                'conversation_id'   => $conversationId,
+                'conversation_id'    => $conversationId,
                 'assistant_inbox_id' => $assistantInboxId,
             ]);
 

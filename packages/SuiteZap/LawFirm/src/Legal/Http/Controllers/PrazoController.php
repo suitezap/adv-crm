@@ -3,11 +3,15 @@
 namespace SuiteZap\LawFirm\Legal\Http\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use SuiteZap\LawFirm\Legal\DataGrids\PrazoDataGrid;
 use SuiteZap\LawFirm\Legal\Events\PrazoCreated;
 use SuiteZap\LawFirm\Legal\Models\Prazo;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
 use Webkul\Admin\Http\Controllers\Controller;
 
@@ -27,7 +31,7 @@ class PrazoController extends Controller
      * Send manual WhatsApp notification.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function notifyClient($id)
     {
@@ -73,7 +77,7 @@ class PrazoController extends Controller
             );
 
             // 5. Enviar via Service
-            $config = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getEvolutionConfig();
+            $config = MotherShipService::getEvolutionConfig();
             $instanceName = $config['instance'] ?? null;
 
             if (empty($instanceName)) {
@@ -99,7 +103,7 @@ class PrazoController extends Controller
      * Toggle WhatsApp automated notifications (Robô Agendador) for a Prazo.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     * @return JsonResponse|RedirectResponse
      */
     public function toggleNotify($id)
     {
@@ -133,7 +137,7 @@ class PrazoController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
+     * @return View|JsonResponse
      */
     public function index()
     {
@@ -147,7 +151,7 @@ class PrazoController extends Controller
     /**
      * Store a newly created deadline in storage.
      *
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     * @return RedirectResponse|JsonResponse
      */
     public function store(Request $request)
     {
@@ -187,7 +191,7 @@ class PrazoController extends Controller
      * Show the form for editing the specified deadline.
      *
      * @param  int  $id
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function edit($id)
     {
@@ -202,7 +206,7 @@ class PrazoController extends Controller
      * Update the specified deadline in storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function update(Request $request, $id)
     {
@@ -236,7 +240,7 @@ class PrazoController extends Controller
      * Mark the specified deadline as concluded.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function concluir($id)
     {
@@ -258,7 +262,7 @@ class PrazoController extends Controller
      * Remove the specified deadline from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function destroy($id)
     {

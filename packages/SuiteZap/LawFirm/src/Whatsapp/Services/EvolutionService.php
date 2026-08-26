@@ -3,6 +3,7 @@
 namespace SuiteZap\LawFirm\Whatsapp\Services;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 
@@ -88,7 +89,7 @@ class EvolutionService
 
             return ['success' => true, 'data' => $body];
 
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             // 4xx errors
             $response = $e->getResponse();
             $body = json_decode($response->getBody(), true);

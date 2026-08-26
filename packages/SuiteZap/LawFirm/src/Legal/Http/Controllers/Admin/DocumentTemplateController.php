@@ -12,6 +12,7 @@ use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Legal\Repositories\DocumentTemplateRepository;
 use SuiteZap\LawFirm\Legal\Services\DocumentTemplateService;
 use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class DocumentTemplateController extends Controller
 {
@@ -88,7 +89,7 @@ class DocumentTemplateController extends Controller
      * Show the form for editing a local template.
      * Global templates (Mothership) are read-only and cannot be edited by tenants.
      *
-     * @throws \Symfony\Component\HttpKernel\Exception\HttpException HTTP 403 if global template
+     * @throws HttpException HTTP 403 if global template
      */
     public function edit(int $id)
     {
@@ -106,7 +107,7 @@ class DocumentTemplateController extends Controller
      * Update a local template.
      * Global templates (Mothership) are rejected with HTTP 403 — they are read-only.
      *
-     * @throws \Symfony\Component\HttpKernel\Exception\HttpException HTTP 403 if global template
+     * @throws HttpException HTTP 403 if global template
      */
     public function update(Request $request, int $id)
     {
@@ -141,7 +142,7 @@ class DocumentTemplateController extends Controller
      * Remove a local template.
      * Global templates (Mothership) cannot be deleted by tenants — HTTP 403.
      *
-     * @throws \Symfony\Component\HttpKernel\Exception\HttpException HTTP 403 if global template
+     * @throws HttpException HTTP 403 if global template
      */
     public function destroy(int $id)
     {

@@ -3,7 +3,9 @@
 namespace SuiteZap\LawFirm\Legal\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Validator;
 use SuiteZap\LawFirm\Http\Resources\DeadlineResource;
 use SuiteZap\LawFirm\Legal\Models\Prazo;
@@ -13,7 +15,7 @@ class DeadlineApiController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     * @return AnonymousResourceCollection
      */
     public function index()
     {
@@ -36,7 +38,7 @@ class DeadlineApiController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function store(Request $request)
     {
@@ -62,7 +64,7 @@ class DeadlineApiController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return DeadlineResource|\Illuminate\Http\JsonResponse
+     * @return DeadlineResource|JsonResponse
      */
     public function show($id)
     {
@@ -79,7 +81,7 @@ class DeadlineApiController extends Controller
      * Update the specified resource in storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function update(Request $request, $id)
     {
@@ -101,7 +103,7 @@ class DeadlineApiController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function destroy($id)
     {

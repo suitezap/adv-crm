@@ -4,6 +4,7 @@ namespace SuiteZap\LawFirm\Whatsapp\Commands;
 
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Legal\Models\Prazo;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
@@ -230,7 +231,7 @@ class SendScheduledPrazoNotifications extends Command
         $phone = null;
         if (is_array($contacts)) {
             $phone = $contacts[0]['value'] ?? null;
-        } elseif ($contacts instanceof \Illuminate\Support\Collection) {
+        } elseif ($contacts instanceof Collection) {
             $first = $contacts->first();
             $phone = $first ? (is_object($first) ? $first->value : $first['value'] ?? null) : null;
         }

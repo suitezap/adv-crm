@@ -2,6 +2,7 @@
 
 namespace SuiteZap\LawFirm\AI\Http\Controllers\Admin;
 
+use Illuminate\View\View;
 use SuiteZap\LawFirm\AI\DataGrids\AssistantHistoryDataGrid;
 use SuiteZap\LawFirm\AI\Models\AssistantHistory;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -11,7 +12,7 @@ class AssistantHistoryController extends Controller
     /**
      * View history datagrid
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function index()
     {
@@ -26,7 +27,7 @@ class AssistantHistoryController extends Controller
      * Show details of a specific AI execution
      *
      * @param  int  $id
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function show($id)
     {

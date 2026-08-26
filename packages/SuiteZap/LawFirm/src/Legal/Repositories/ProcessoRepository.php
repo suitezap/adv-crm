@@ -2,6 +2,7 @@
 
 namespace SuiteZap\LawFirm\Legal\Repositories;
 
+use SuiteZap\LawFirm\Legal\Models\Processo;
 use Webkul\Core\Eloquent\Repository;
 
 class ProcessoRepository extends Repository
@@ -13,6 +14,6 @@ class ProcessoRepository extends Repository
      */
     public function model()
     {
-        return \SuiteZap\LawFirm\Legal\Models\Processo::class;
+        return Processo::class;
     }
 }

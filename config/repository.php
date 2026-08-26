@@ -1,4 +1,7 @@
 <?php
+
+use League\Fractal\Serializer\DataArraySerializer;
+
 /*
 |--------------------------------------------------------------------------
 | Prettus Repository Config
@@ -15,7 +18,7 @@ return [
     |
     */
     'pagination' => [
-        'limit' => 15
+        'limit' => 15,
     ],
 
     /*
@@ -32,9 +35,9 @@ return [
     */
     'fractal'    => [
         'params'     => [
-            'include' => 'include'
+            'include' => 'include',
         ],
-        'serializer' => League\Fractal\Serializer\DataArraySerializer::class
+        'serializer' => DataArraySerializer::class,
     ],
 
     /*
@@ -106,7 +109,7 @@ return [
                 'create' => true,
                 'update' => true,
                 'delete' => true,
-            ]
+            ],
         ],
 
         'params'     => [
@@ -119,7 +122,7 @@ return [
             | Ex: http://prettus.local/?search=lorem&skipCache=true
             |
             */
-            'skipCache' => 'skipCache'
+            'skipCache' => 'skipCache',
         ],
 
         /*
@@ -139,8 +142,8 @@ return [
        */
         'allowed'    => [
             'only'   => null,
-            'except' => null
-        ]
+            'except' => null,
+        ],
     ],
 
     /*
@@ -170,7 +173,7 @@ return [
         'acceptedConditions' => [
             '=',
             'like',
-            'in'
+            'in',
         ],
         /*
         |--------------------------------------------------------------------------
@@ -218,8 +221,8 @@ return [
             'sortedBy'     => 'sortedBy',
             'with'         => 'with',
             'searchJoin'   => 'searchJoin',
-            'withCount'    => 'withCount'
-        ]
+            'withCount'    => 'withCount',
+        ],
     ],
     /*
     |--------------------------------------------------------------------------
@@ -228,10 +231,10 @@ return [
     |
     */
     'generator'  => [
-        'basePath'      => app()->path(),
-        'rootNamespace' => 'App\\',
+        'basePath'          => app()->path(),
+        'rootNamespace'     => 'App\\',
         'stubsOverridePath' => app()->path(),
-        'paths'         => [
+        'paths'             => [
             'models'       => 'Entities',
             'repositories' => 'Repositories',
             'interfaces'   => 'Repositories',
@@ -240,7 +243,7 @@ return [
             'validators'   => 'Validators',
             'controllers'  => 'Http/Controllers',
             'provider'     => 'RepositoryServiceProvider',
-            'criteria'     => 'Criteria'
-        ]
-    ]
+            'criteria'     => 'Criteria',
+        ],
+    ],
 ];

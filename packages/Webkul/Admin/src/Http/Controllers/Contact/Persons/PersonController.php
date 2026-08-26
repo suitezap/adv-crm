@@ -59,10 +59,10 @@ class PersonController extends Controller
 
         if (isset($data['contact_numbers']) && is_array($data['contact_numbers'])) {
             foreach ($data['contact_numbers'] as &$contact) {
-                if (!empty($contact['value'])) {
+                if (! empty($contact['value'])) {
                     $cleaned = preg_replace('/\D/', '', $contact['value']);
-                    if (strlen($cleaned) >= 10 && !str_starts_with($cleaned, '55')) {
-                        $cleaned = '55' . $cleaned;
+                    if (strlen($cleaned) >= 10 && ! str_starts_with($cleaned, '55')) {
+                        $cleaned = '55'.$cleaned;
                     }
                     $contact['value'] = $cleaned;
                 }
@@ -75,7 +75,7 @@ class PersonController extends Controller
 
         if (request()->ajax()) {
             return response()->json([
-                'data' => $person,
+                'data'    => $person,
                 'message' => trans('admin::app.contacts.persons.index.create-success'),
             ]);
         }
@@ -116,10 +116,10 @@ class PersonController extends Controller
 
         if (isset($data['contact_numbers']) && is_array($data['contact_numbers'])) {
             foreach ($data['contact_numbers'] as &$contact) {
-                if (!empty($contact['value'])) {
+                if (! empty($contact['value'])) {
                     $cleaned = preg_replace('/\D/', '', $contact['value']);
-                    if (strlen($cleaned) >= 10 && !str_starts_with($cleaned, '55')) {
-                        $cleaned = '55' . $cleaned;
+                    if (strlen($cleaned) >= 10 && ! str_starts_with($cleaned, '55')) {
+                        $cleaned = '55'.$cleaned;
                     }
                     $contact['value'] = $cleaned;
                 }
@@ -132,7 +132,7 @@ class PersonController extends Controller
 
         if (request()->ajax()) {
             return response()->json([
-                'data' => $person,
+                'data'    => $person,
                 'message' => trans('admin::app.contacts.persons.index.update-success'),
             ], 200);
         }

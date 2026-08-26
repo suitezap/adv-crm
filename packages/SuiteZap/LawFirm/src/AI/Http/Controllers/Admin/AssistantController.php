@@ -2,6 +2,7 @@
 
 namespace SuiteZap\LawFirm\AI\Http\Controllers\Admin;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -258,7 +259,7 @@ class AssistantController extends Controller
      * Check status of an AI execution.
      *
      * @param  int  $id  History ID
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function checkStatus($id)
     {

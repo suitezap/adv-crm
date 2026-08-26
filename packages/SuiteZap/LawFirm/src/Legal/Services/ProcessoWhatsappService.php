@@ -2,6 +2,7 @@
 
 namespace SuiteZap\LawFirm\Legal\Services;
 
+use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Legal\Repositories\ProcessoRepository;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
@@ -25,7 +26,7 @@ class ProcessoWhatsappService
     /**
      * Extract the first phone number from a Processo's associated Person.
      */
-    private function resolvePhone(\SuiteZap\LawFirm\Legal\Models\Processo $processo): ?string
+    private function resolvePhone(Processo $processo): ?string
     {
         if (! $processo->person) {
             return null;
@@ -42,7 +43,7 @@ class ProcessoWhatsappService
     /**
      * Build the portal link for a given Processo.
      */
-    private function buildPortalLink(\SuiteZap\LawFirm\Legal\Models\Processo $processo): string
+    private function buildPortalLink(Processo $processo): string
     {
         return route('lawfirm.public.portal.index', [
             'id'    => $processo->id,

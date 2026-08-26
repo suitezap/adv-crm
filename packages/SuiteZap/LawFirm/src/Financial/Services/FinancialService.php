@@ -135,7 +135,7 @@ class FinancialService
             }
         } elseif (is_string($contactNumbers)) {
             $phone = $contactNumbers;
-        } elseif ($contactNumbers instanceof \Illuminate\Support\Collection) {
+        } elseif ($contactNumbers instanceof Collection) {
             $phoneObj = $contactNumbers->first();
             $phone = $phoneObj ? $phoneObj->value : null;
         }

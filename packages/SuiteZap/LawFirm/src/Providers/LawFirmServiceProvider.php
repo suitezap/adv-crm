@@ -2,14 +2,42 @@
 
 namespace SuiteZap\LawFirm\Providers;
 
+use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
+use SuiteZap\LawFirm\AI\Console\SyncAssistantPricing;
+use SuiteZap\LawFirm\Console\Commands\CalculateStorageUsage;
+use SuiteZap\LawFirm\Console\Commands\PublishAiTemplatesCommand;
+use SuiteZap\LawFirm\GED\Observers\LeadAttachmentObserver;
+use SuiteZap\LawFirm\GED\Observers\LeadObserver;
+use SuiteZap\LawFirm\Http\Middleware\CheckSubscriptionStatus;
+use SuiteZap\LawFirm\Legal\DataGrids\SafeActivityDataGrid;
 use SuiteZap\LawFirm\Legal\Events\PrazoCreated;
+use SuiteZap\LawFirm\Legal\Listeners\LeadWonListener;
+use SuiteZap\LawFirm\Legal\Listeners\SyncLeadStageToChatwootListener;
+use SuiteZap\LawFirm\Legal\Models\LawOrganizationDetail;
+use SuiteZap\LawFirm\Legal\Models\LawPersonDetail;
+use SuiteZap\LawFirm\Legal\Models\Prazo;
+use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\Legal\Observers\ActivityObserver;
+use SuiteZap\LawFirm\Legal\Observers\PrazoObserver;
+use SuiteZap\LawFirm\Legal\Observers\ProcessoObserver;
+use SuiteZap\LawFirm\Legal\Rules\Cnpj;
+use SuiteZap\LawFirm\Legal\Rules\Cpf;
+use SuiteZap\LawFirm\SaaS\Observers\UserObserver;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
+use SuiteZap\LawFirm\Whatsapp\Commands\SendScheduledPrazoNotifications;
 use SuiteZap\LawFirm\Whatsapp\Listeners\SendPrazoWhatsapp;
+use Webkul\Activity\Models\Activity;
+use Webkul\Admin\DataGrids\Activity\ActivityDataGrid;
+use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\LeadAttachment;
+use Webkul\User\Models\User;
 
 class LawFirmServiceProvider extends ServiceProvider
 {
@@ -32,7 +60,7 @@ class LawFirmServiceProvider extends ServiceProvider
         try {
             // Só tenta configurar se não estiver rodando no console (artisan) para evitar erros em migrations
             if (! app()->runningInConsole()) {
-                \SuiteZap\LawFirm\SaaS\Services\MotherShipService::configureTenantStorage();
+                MotherShipService::configureTenantStorage();
             }
         } catch (\Exception $e) {
             // Falha silenciosa para não derrubar o sistema se o MotherShip estiver offline
@@ -43,9 +71,9 @@ class LawFirmServiceProvider extends ServiceProvider
         // ====================================================================
         // VERIFICAÇÃO DE ASSINATURA SAAS
         // ====================================================================
-        /** @var \Illuminate\Routing\Router $router */
+        /** @var Router $router */
         $router = $this->app['router'];
-        $router->pushMiddlewareToGroup('web', \SuiteZap\LawFirm\Http\Middleware\CheckSubscriptionStatus::class);
+        $router->pushMiddlewareToGroup('web', CheckSubscriptionStatus::class);
 
         // ====================================================================
         // 1. CARREGAR ROTAS
@@ -96,13 +124,13 @@ class LawFirmServiceProvider extends ServiceProvider
         // ====================================================================
         if ($this->app->runningInConsole()) {
             $this->commands([
-                \SuiteZap\LawFirm\Console\Commands\CalculateStorageUsage::class,
+                CalculateStorageUsage::class,
                 // Gerenciamento de templates de IA no Mothership (zero-deploy sync)
-                \SuiteZap\LawFirm\Console\Commands\PublishAiTemplatesCommand::class,
+                PublishAiTemplatesCommand::class,
                 // Robô Agendador de Prazos via WhatsApp
-                \SuiteZap\LawFirm\Whatsapp\Commands\SendScheduledPrazoNotifications::class,
+                SendScheduledPrazoNotifications::class,
                 // Sincronização de preços de assistentes em SuiteCoins (Ƶ)
-                \SuiteZap\LawFirm\AI\Console\SyncAssistantPricing::class,
+                SyncAssistantPricing::class,
             ]);
         }
 
@@ -156,10 +184,10 @@ class LawFirmServiceProvider extends ServiceProvider
         // Register anonymous components path for package components
         $componentsPath = __DIR__.'/../Resources/views/components';
         if (is_dir($componentsPath)) {
-            \Illuminate\Support\Facades\Blade::anonymousComponentPath($componentsPath, 'lawfirm');
+            Blade::anonymousComponentPath($componentsPath, 'lawfirm');
         }
 
-        \Illuminate\Support\Facades\Blade::component('lawfirm::assistant-panel', 'assistant-panel');
+        Blade::component('lawfirm::assistant-panel', 'assistant-panel');
 
         // ====================================================================
         // OCULTAR MENUS CORE (CORREIO/ORÇAMENTO)
@@ -181,12 +209,12 @@ class LawFirmServiceProvider extends ServiceProvider
                 }
 
                 // Oculta o menu SAC (Chatwoot) se o módulo CHATWOOT não estiver ativo na assinatura
-                if ($item['key'] === 'sac' && ! \SuiteZap\LawFirm\SaaS\Services\MotherShipService::isModuleActive('CHATWOOT')) {
+                if ($item['key'] === 'sac' && ! MotherShipService::isModuleActive('CHATWOOT')) {
                     return false;
                 }
 
                 // Oculta o sub-menu de Cobranças se o módulo TENANT_FINANCE não estiver ativo
-                if ($item['key'] === 'financeiro.cobrancas' && ! \SuiteZap\LawFirm\SaaS\Services\MotherShipService::isModuleActive('TENANT_FINANCE')) {
+                if ($item['key'] === 'financeiro.cobrancas' && ! MotherShipService::isModuleActive('TENANT_FINANCE')) {
                     return false;
                 }
 
@@ -232,8 +260,8 @@ class LawFirmServiceProvider extends ServiceProvider
 
         // ✅ OVERRIDE: ActivityDataGrid (Defensive Coding)
         $this->app->bind(
-            \Webkul\Admin\DataGrids\Activity\ActivityDataGrid::class,
-            \SuiteZap\LawFirm\Legal\DataGrids\SafeActivityDataGrid::class
+            ActivityDataGrid::class,
+            SafeActivityDataGrid::class
         );
     }
 
@@ -244,23 +272,23 @@ class LawFirmServiceProvider extends ServiceProvider
      */
     protected function registerObservers()
     {
-        \SuiteZap\LawFirm\Legal\Models\Processo::observe(\SuiteZap\LawFirm\Legal\Observers\ProcessoObserver::class);
-        \SuiteZap\LawFirm\Legal\Models\Prazo::observe(\SuiteZap\LawFirm\Legal\Observers\PrazoObserver::class);
+        Processo::observe(ProcessoObserver::class);
+        Prazo::observe(PrazoObserver::class);
 
         // ✅ Sincronização Reversa Krayin -> LawFirm
-        \Webkul\Activity\Models\Activity::observe(\SuiteZap\LawFirm\Legal\Observers\ActivityObserver::class);
+        Activity::observe(ActivityObserver::class);
 
         // ✅ REGISTRO DO OBSERVER SAAS
         // Intercepta qualquer criação de usuário no sistema para validar limites do plano
-        \Webkul\User\Models\User::observe(\SuiteZap\LawFirm\SaaS\Observers\UserObserver::class);
+        User::observe(UserObserver::class);
 
         // ✅ REGISTRO DO OBSERVER DE LIMPEZA S3
         // Apaga arquivos do S3/MinIO quando um Lead/Processo é excluído
-        \Webkul\Lead\Models\Lead::observe(\SuiteZap\LawFirm\GED\Observers\LeadObserver::class);
+        Lead::observe(LeadObserver::class);
 
         // ✅ REGISTRO DO OBSERVER DE LIMPEZA S3 (Anexos Individuais)
         // Apaga arquivos do S3/MinIO quando um anexo individual é removido
-        \Webkul\Lead\Models\LeadAttachment::observe(\SuiteZap\LawFirm\GED\Observers\LeadAttachmentObserver::class);
+        LeadAttachment::observe(LeadAttachmentObserver::class);
     }
 
     /**
@@ -274,9 +302,9 @@ class LawFirmServiceProvider extends ServiceProvider
         // Lead: Atualização pós-save
         // ---------------------------------------------------------------------
         Event::listen('sales.lead.update.after', 'SuiteZap\\LawFirm\\Legal\\Listeners\\LeadUpdatedListener@handle');
-        Event::listen('lead.update.after', \SuiteZap\LawFirm\Legal\Listeners\LeadWonListener::class);
-        Event::listen('lead.create.after', \SuiteZap\LawFirm\Legal\Listeners\SyncLeadStageToChatwootListener::class);
-        Event::listen('lead.update.after', \SuiteZap\LawFirm\Legal\Listeners\SyncLeadStageToChatwootListener::class);
+        Event::listen('lead.update.after', LeadWonListener::class);
+        Event::listen('lead.create.after', SyncLeadStageToChatwootListener::class);
+        Event::listen('lead.update.after', SyncLeadStageToChatwootListener::class);
 
         // ---------------------------------------------------------------------
         // CONTATOS: Persistência de Dados (Substituindo Observers)
@@ -286,7 +314,7 @@ class LawFirmServiceProvider extends ServiceProvider
         Event::listen('contacts.person.create.before', function () {
             if (request()->has('law_details')) {
                 $validator = Validator::make(request()->all(), [
-                    'law_details.cpf' => ['nullable', new \SuiteZap\LawFirm\Legal\Rules\Cpf],
+                    'law_details.cpf' => ['nullable', new Cpf],
                 ]);
 
                 if ($validator->fails()) {
@@ -298,7 +326,7 @@ class LawFirmServiceProvider extends ServiceProvider
         Event::listen('contacts.person.update.before', function () {
             if (request()->has('law_details')) {
                 $validator = Validator::make(request()->all(), [
-                    'law_details.cpf' => ['nullable', new \SuiteZap\LawFirm\Legal\Rules\Cpf],
+                    'law_details.cpf' => ['nullable', new Cpf],
                 ]);
 
                 if ($validator->fails()) {
@@ -316,7 +344,7 @@ class LawFirmServiceProvider extends ServiceProvider
                     $data['type'] = 'PF';
                 }
 
-                \SuiteZap\LawFirm\Legal\Models\LawPersonDetail::updateOrCreate(['person_id' => $person->id], $data);
+                LawPersonDetail::updateOrCreate(['person_id' => $person->id], $data);
             }
         });
 
@@ -325,7 +353,7 @@ class LawFirmServiceProvider extends ServiceProvider
                 $data = request('law_details');
                 $data['person_id'] = $person->id;
 
-                \SuiteZap\LawFirm\Legal\Models\LawPersonDetail::updateOrCreate(['person_id' => $person->id], $data);
+                LawPersonDetail::updateOrCreate(['person_id' => $person->id], $data);
             }
         });
 
@@ -333,7 +361,7 @@ class LawFirmServiceProvider extends ServiceProvider
         Event::listen('contacts.organization.create.before', function () {
             if (request()->has('law_org_details')) {
                 $validator = Validator::make(request()->all(), [
-                    'law_org_details.cnpj' => ['nullable', new \SuiteZap\LawFirm\Legal\Rules\Cnpj],
+                    'law_org_details.cnpj' => ['nullable', new Cnpj],
                 ]);
 
                 if ($validator->fails()) {
@@ -345,7 +373,7 @@ class LawFirmServiceProvider extends ServiceProvider
         Event::listen('contacts.organization.update.before', function () {
             if (request()->has('law_org_details')) {
                 $validator = Validator::make(request()->all(), [
-                    'law_org_details.cnpj' => ['nullable', new \SuiteZap\LawFirm\Legal\Rules\Cnpj],
+                    'law_org_details.cnpj' => ['nullable', new Cnpj],
                 ]);
 
                 if ($validator->fails()) {
@@ -359,7 +387,7 @@ class LawFirmServiceProvider extends ServiceProvider
             if (request()->has('law_org_details')) {
                 $data = request('law_org_details');
                 $data['organization_id'] = $organization->id;
-                \SuiteZap\LawFirm\Legal\Models\LawOrganizationDetail::updateOrCreate(['organization_id' => $organization->id], $data);
+                LawOrganizationDetail::updateOrCreate(['organization_id' => $organization->id], $data);
             }
         });
 
@@ -367,7 +395,7 @@ class LawFirmServiceProvider extends ServiceProvider
             if (request()->has('law_org_details')) {
                 $data = request('law_org_details');
                 $data['organization_id'] = $organization->id;
-                \SuiteZap\LawFirm\Legal\Models\LawOrganizationDetail::updateOrCreate(['organization_id' => $organization->id], $data);
+                LawOrganizationDetail::updateOrCreate(['organization_id' => $organization->id], $data);
             }
         });
 
@@ -449,11 +477,11 @@ class LawFirmServiceProvider extends ServiceProvider
     {
         // Dashboard Widget - Dados
         View::composer('lawfirm::admin.dashboard.widgets.law-firm-overview', function ($view) {
-            $activeCount = \SuiteZap\LawFirm\Legal\Models\Processo::where('status', 'Ativo')->count();
-            $totalValorCausa = \SuiteZap\LawFirm\Legal\Models\Processo::where('status', 'Ativo')->sum('valor_causa');
-            $totalValorGanho = \SuiteZap\LawFirm\Legal\Models\Processo::whereIn('status', ['Encerrado', 'Arquivado', 'Concluído'])->sum('valor_causa');
+            $activeCount = Processo::where('status', 'Ativo')->count();
+            $totalValorCausa = Processo::where('status', 'Ativo')->sum('valor_causa');
+            $totalValorGanho = Processo::whereIn('status', ['Encerrado', 'Arquivado', 'Concluído'])->sum('valor_causa');
 
-            $upcomingHearings = \SuiteZap\LawFirm\Legal\Models\Processo::query()
+            $upcomingHearings = Processo::query()
                 ->where('status', 'Ativo')
                 ->whereNotNull('data_audiencia')
                 ->whereBetween('data_audiencia', [now()->startOfDay(), now()->addDays(7)->endOfDay()])

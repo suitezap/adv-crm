@@ -5,9 +5,11 @@ namespace SuiteZap\LawFirm\Legal\Http\Controllers\PublicPortal;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\GED\Services\DocumentService;
 use SuiteZap\LawFirm\Legal\Models\LawOrganizationDetail;
 use SuiteZap\LawFirm\Legal\Models\LawPersonDetail;
 use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 
@@ -51,7 +53,7 @@ class CustomerPortalController extends Controller
         // Fetch office settings
         $settings = core()->getConfigData('lawfirm.settings.general');
         // CC fix (audit 2026-05-29): Storage::url() direto removido — usa SaasFileService->url() para compliance Regra 2.2.
-        $logoUrl = isset($settings['logo']) ? app(\SuiteZap\LawFirm\SaaS\Services\SaasFileService::class)->url($settings['logo']) : null;
+        $logoUrl = isset($settings['logo']) ? app(SaasFileService::class)->url($settings['logo']) : null;
         $officeName = $settings['company_name'] ?? 'Escritório de Advocacia';
         $officeWebsite = $settings['website'] ?? null;
         $contactWhatsapp = $settings['contact_whatsapp'] ?? null;
@@ -158,7 +160,7 @@ class CustomerPortalController extends Controller
     /**
      * Process document upload.
      */
-    public function upload($id, Request $request, \SuiteZap\LawFirm\SaaS\Services\SaasFileService $fileService)
+    public function upload($id, Request $request, SaasFileService $fileService)
     {
         if (! $this->verifyToken($id, $request->input('token'))) {
             return response()->json(['success' => false, 'message' => 'Token inválido.'], 403);
@@ -171,7 +173,7 @@ class CustomerPortalController extends Controller
                 $file = $request->file('file');
 
                 // Use the standard DocumentService so files show up in CRM's "Arquivos do Processo" (as Anexo model)
-                app(\SuiteZap\LawFirm\GED\Services\DocumentService::class)->storeFile($file, $processo);
+                app(DocumentService::class)->storeFile($file, $processo);
 
                 return response()->json(['success' => true]);
             } catch (\Exception $e) {

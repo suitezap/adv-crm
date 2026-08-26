@@ -4,6 +4,8 @@ namespace SuiteZap\LawFirm\Legal\Services;
 
 use Carbon\Carbon;
 use SuiteZap\LawFirm\Legal\Models\DocumentTemplate;
+use SuiteZap\LawFirm\Legal\Models\LawOrganizationDetail;
+use SuiteZap\LawFirm\Legal\Models\LawPersonDetail;
 use SuiteZap\LawFirm\Legal\Models\MothershipDocumentTemplate;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
@@ -100,7 +102,7 @@ class DocumentTemplateService
                 $variables['cliente_nome'] = $processo->person->name ?? '';
 
                 // detail is a separate law_person_details record (may be null if never filled)
-                $personDetail = \SuiteZap\LawFirm\Legal\Models\LawPersonDetail::where('person_id', $processo->person->id)->first();
+                $personDetail = LawPersonDetail::where('person_id', $processo->person->id)->first();
                 $variables['cliente_cpf'] = $personDetail->cpf ?? '';
                 $variables['cliente_rg'] = $personDetail->rg ?? '';
                 $variables['cliente_estado_civil'] = $personDetail->estado_civil ?? '';
@@ -125,7 +127,7 @@ class DocumentTemplateService
             if ($processo->organization) {
                 $variables['empresa_nome'] = $processo->organization->name ?? '';
                 // detail is a separate law_organization_details record (may be null)
-                $orgDetail = \SuiteZap\LawFirm\Legal\Models\LawOrganizationDetail::where('organization_id', $processo->organization->id)->first();
+                $orgDetail = LawOrganizationDetail::where('organization_id', $processo->organization->id)->first();
                 $variables['empresa_cnpj'] = $orgDetail->cnpj ?? '';
             }
 

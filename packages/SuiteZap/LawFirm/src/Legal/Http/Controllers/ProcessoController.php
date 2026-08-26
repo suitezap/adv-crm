@@ -2,10 +2,21 @@
 
 namespace SuiteZap\LawFirm\Legal\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
+use SuiteZap\LawFirm\AI\Models\LeadTriagem;
 use SuiteZap\LawFirm\Financial\Services\FinancialService;
 use SuiteZap\LawFirm\GED\Services\DocumentService;
+use SuiteZap\LawFirm\Legal\DataGrids\LeadProcessosDataGrid;
+use SuiteZap\LawFirm\Legal\DataGrids\OrganizationProcessosDataGrid;
+use SuiteZap\LawFirm\Legal\DataGrids\PersonProcessosDataGrid;
 use SuiteZap\LawFirm\Legal\DataGrids\ProcessoDataGrid;
+use SuiteZap\LawFirm\Legal\Http\Requests\StoreProcessoRequest;
+use SuiteZap\LawFirm\Legal\Http\Requests\UpdateProcessoRequest;
+use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Legal\Repositories\ProcessoRepository;
 use SuiteZap\LawFirm\Legal\Services\DeadlineService;
 use SuiteZap\LawFirm\Legal\Services\ProcessoNotaService;
@@ -21,70 +32,70 @@ class ProcessoController extends Controller
     /**
      * ProcessoRepository object
      *
-     * @var \SuiteZap\LawFirm\Legal\Repositories\ProcessoRepository
+     * @var ProcessoRepository
      */
     protected $processoRepository;
 
     /**
      * PersonRepository object
      *
-     * @var \Webkul\Contact\Repositories\PersonRepository
+     * @var PersonRepository
      */
     protected $personRepository;
 
     /**
      * OrganizationRepository object
      *
-     * @var \Webkul\Contact\Repositories\OrganizationRepository
+     * @var OrganizationRepository
      */
     protected $organizationRepository;
 
     /**
      * LeadRepository object
      *
-     * @var \Webkul\Lead\Repositories\LeadRepository
+     * @var LeadRepository
      */
     protected $leadRepository;
 
     /**
      * ActivityRepository object
      *
-     * @var \Webkul\Activity\Repositories\ActivityRepository
+     * @var ActivityRepository
      */
     protected $activityRepository;
 
     /**
      * DocumentService object
      *
-     * @var \SuiteZap\LawFirm\GED\Services\DocumentService
+     * @var DocumentService
      */
     protected $documentService;
 
     /**
      * DeadlineService object
      *
-     * @var \SuiteZap\LawFirm\Legal\Services\DeadlineService
+     * @var DeadlineService
      */
     protected $deadlineService;
 
     /**
      * FinancialService object
      *
-     * @var \SuiteZap\LawFirm\Financial\Services\FinancialService
+     * @var FinancialService
      */
     protected $financialService;
 
     /**
      * ProcessoNotaService object
      *
-     * @var \SuiteZap\LawFirm\Legal\Services\ProcessoNotaService
+     * @var ProcessoNotaService
      */
     protected $processoNotaService;
 
     /**
      * ProcessoWhatsappService object
      *
-     * @var \SuiteZap\LawFirm\Legal\Services\ProcessoWhatsappService
+     * @var ProcessoWhatsappService
      */
     protected $processoWhatsappService;
 
@@ -121,7 +132,7 @@ class ProcessoController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
+     * @return View|JsonResponse
      */
     public function index()
     {
@@ -136,39 +147,39 @@ class ProcessoController extends Controller
      * Display a listing of the resource for a specific lead.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function leadProcessos($id)
     {
-        return app(\SuiteZap\LawFirm\Legal\DataGrids\LeadProcessosDataGrid::class)->process();
+        return app(LeadProcessosDataGrid::class)->process();
     }
 
     /**
      * Display a listing of the resource for a specific person.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function personProcessos($id)
     {
-        return app(\SuiteZap\LawFirm\Legal\DataGrids\PersonProcessosDataGrid::class)->process();
+        return app(PersonProcessosDataGrid::class)->process();
     }
 
     /**
      * Display a listing of the resource for a specific organization.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function organizationProcessos($id)
     {
-        return app(\SuiteZap\LawFirm\Legal\DataGrids\OrganizationProcessosDataGrid::class)->process();
+        return app(OrganizationProcessosDataGrid::class)->process();
     }
 
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function create()
     {
@@ -190,9 +201,9 @@ class ProcessoController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
-    public function store(\SuiteZap\LawFirm\Legal\Http\Requests\StoreProcessoRequest $request)
+    public function store(StoreProcessoRequest $request)
     {
         $data = $request->validated();
 
@@ -243,7 +254,7 @@ class ProcessoController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function show($id)
     {
@@ -276,7 +287,7 @@ class ProcessoController extends Controller
         // Get LeadTriagem if lead exists
         $triagem = null;
         if ($processo->lead_id) {
-            $triagem = \SuiteZap\LawFirm\AI\Models\LeadTriagem::where('lead_id', $processo->lead_id)->first();
+            $triagem = LeadTriagem::where('lead_id', $processo->lead_id)->first();
         }
 
         return view('lawfirm::admin.processos.show', compact('processo', 'triagem'));
@@ -286,13 +297,13 @@ class ProcessoController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function edit($id)
     {
         abort_if(! bouncer()->hasPermission('lawfirm.processos.edit'), 401, 'This action is unauthorized');
 
-        $processo = \SuiteZap\LawFirm\Legal\Models\Processo::with([
+        $processo = Processo::with([
             'person',
             'lead',
             'responsavel',
@@ -316,9 +327,9 @@ class ProcessoController extends Controller
      * Update the specified resource in storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
-    public function update(\SuiteZap\LawFirm\Legal\Http\Requests\UpdateProcessoRequest $request, $id)
+    public function update(UpdateProcessoRequest $request, $id)
     {
         $data = $request->validated();
 
@@ -365,7 +376,7 @@ class ProcessoController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function destroy($id)
     {
@@ -393,7 +404,7 @@ class ProcessoController extends Controller
     /**
      * Mass destroy the specified resources from storage.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function massDestroy()
     {
@@ -434,7 +445,7 @@ class ProcessoController extends Controller
     /**
      * Search person results.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function searchPerson()
     {
@@ -450,7 +461,7 @@ class ProcessoController extends Controller
     /**
      * Search organization results.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function searchOrganization()
     {
@@ -466,7 +477,7 @@ class ProcessoController extends Controller
     /**
      * Search lead results.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function searchLead()
     {
@@ -496,7 +507,7 @@ class ProcessoController extends Controller
                 session()->flash('success', 'Solicitação de cadastro enviada via WhatsApp!');
             }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Erro ao enviar solicitação de cadastro: '.$e->getMessage());
+            Log::error('Erro ao enviar solicitação de cadastro: '.$e->getMessage());
             session()->flash('error', 'Erro ao enviar mensagem: '.$e->getMessage());
         }
 
@@ -520,7 +531,7 @@ class ProcessoController extends Controller
                 session()->flash('success', 'Solicitação de documentos pendentes enviada via WhatsApp!');
             }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Erro ao enviar solicitação de documentos: '.$e->getMessage());
+            Log::error('Erro ao enviar solicitação de documentos: '.$e->getMessage());
             session()->flash('error', 'Erro ao enviar mensagem: '.$e->getMessage());
         }
 

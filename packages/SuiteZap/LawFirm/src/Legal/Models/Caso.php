@@ -5,6 +5,9 @@ namespace SuiteZap\LawFirm\Legal\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Webkul\Contact\Models\Organization;
+use Webkul\Contact\Models\Person;
+use Webkul\User\Models\User;
 
 class Caso extends Model
 {
@@ -55,7 +58,7 @@ class Caso extends Model
      */
     public function responsavel(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\User\Models\User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
@@ -63,7 +66,7 @@ class Caso extends Model
      */
     public function person(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\Contact\Models\Person::class);
+        return $this->belongsTo(Person::class);
     }
 
     /**
@@ -71,7 +74,7 @@ class Caso extends Model
      */
     public function organization(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\Contact\Models\Organization::class);
+        return $this->belongsTo(Organization::class);
     }
 
     // ─── Computed Attributes ────────────────────────────────

@@ -2,6 +2,7 @@
 
 namespace SuiteZap\LawFirm\Legal\Repositories;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Legal\Models\DocumentTemplate;
@@ -49,7 +50,7 @@ class DocumentTemplateRepository
      *
      * @return DocumentTemplate|MothershipDocumentTemplate
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function findByUniqueId(string $uniqueId)
     {

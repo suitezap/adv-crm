@@ -2,6 +2,8 @@
 
 namespace SuiteZap\LawFirm\Escavador\Http\Controllers\Admin;
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\View\View;
 use SuiteZap\LawFirm\Escavador\DataGrids\EscavadorMonitoramentoDataGrid;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorMonitoramento;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -11,7 +13,7 @@ class EscavadorMonitoramentoController extends Controller
     /**
      * Display a listing of monitoramentos.
      *
-     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
+     * @return View|JsonResponse
      */
     public function index()
     {
@@ -25,7 +27,7 @@ class EscavadorMonitoramentoController extends Controller
     /**
      * Show the form for creating a new monitoramento.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function create()
     {
@@ -36,7 +38,7 @@ class EscavadorMonitoramentoController extends Controller
      * Toggle WhatsApp notification preference for a monitoring.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function toggleWhatsapp($id)
     {

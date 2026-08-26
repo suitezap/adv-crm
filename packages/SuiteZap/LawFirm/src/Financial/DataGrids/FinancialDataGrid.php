@@ -2,6 +2,7 @@
 
 namespace SuiteZap\LawFirm\Financial\DataGrids;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
 
@@ -164,7 +165,7 @@ class FinancialDataGrid extends DataGrid
                     return '-';
                 }
 
-                return \Carbon\Carbon::parse($row->data_vencimento)->format('d/m/Y');
+                return Carbon::parse($row->data_vencimento)->format('d/m/Y');
             },
         ]);
 
@@ -302,16 +303,16 @@ class FinancialDataGrid extends DataGrid
                 if ($rawDate) {
                     // Tenta formato ISO (Y-m-d) primeiro, depois BR (d/m/Y)
                     try {
-                        $dataVencimento = \Carbon\Carbon::parse($rawDate);
+                        $dataVencimento = Carbon::parse($rawDate);
                     } catch (\Exception $e) {
                         try {
-                            $dataVencimento = \Carbon\Carbon::createFromFormat('d/m/Y', $rawDate);
+                            $dataVencimento = Carbon::createFromFormat('d/m/Y', $rawDate);
                         } catch (\Exception $e2) {
                             $dataVencimento = null;
                         }
                     }
                 }
-                $hoje = \Carbon\Carbon::now()->startOfDay();
+                $hoje = Carbon::now()->startOfDay();
 
                 // O frontend cuidará da confirmação e do disparo Ajax
                 return '<button type="button" onclick="sendWhatsappBilling('.$row->id.')" class="px-2 py-1 rounded bg-green-500 text-white text-xs font-bold hover:bg-green-600 inline-block text-center" title="Enviar Cobrança">
