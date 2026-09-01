@@ -166,8 +166,19 @@ Actions:
 Result:
 DONE
 
-## 2026-08-31 - Sincronização Completa de Tags Chatwoot
-- **Objetivo**: Sincronizar todas as tags do Lead (área, urgência, estágio) no Chatwoot.
-- **Ação**: Atualizado \SyncLeadStageToChatwootListener\ para buscar um pool dinâmico do \Tag::all()\ e amarrados os eventos \leads.tag.create.after\ e \leads.tag.delete.after\ no \LawFirmServiceProvider\.
-- **Status**: \DONE\
+## 2026-08-31 - Urgência LawFirm → Prioridade Chatwoot
+
+- **Objetivo**: Tags de urgência (`Baixa`, `Média`, `Alta`, `Crítica`) passam a controlar o campo Priority nativo das conversas Chatwoot, sem aparecer como labels.
+- **Auditoria realizada**:
+  - Schema `tags`: sem coluna `category` → fallback por constante `URGENCY_TAG_MAP` documentado.
+  - API real testada: `toggle_priority('none')` retorna HTTP 500 nesta versão; reset via `PATCH conversations/{id}` com `priority: null` retorna 200.
+- **Mapeamento confirmado**: Baixa→low | Média→medium | Alta→high | Crítica→urgent | (sem urgência)→null.
+- **Arquivos modificados**:
+  - `SyncLeadStageToChatwootListener.php`: adicionado `URGENCY_TAG_MAP`, `URGENCY_PRIORITY_ORDER`, `resolveUrgencyTagNames()`, `resolveChatwootPriorityFromLead()`, exclusão de urgências do desired label set, chamada a `syncConversationsPriority()` em `handle()`.
+  - `ChatwootService.php`: adicionados `updateConversationPriority()` e `syncConversationsPriority()`.
+  - `LawFirmServiceProvider.php`: **não modificado** (eventos já registrados).
+- **Testes executados** (lead 70 / contact 80 / convs 86 e 171):
+  - A Baixa→low: PASS | B Média→medium: PASS | C Alta→high: PASS | D Crítica→urgent: PASS
+  - E Troca low→high: PASS | F Remove→null: PASS | G Labels preservadas: PASS | H Urgency excl labels: PASS
+- **Status**: DONE
 

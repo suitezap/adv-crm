@@ -228,6 +228,102 @@ class ChatwootService
     }
 
     // =========================================================================
+    // Priority (Management — User Access Token required)
+    // =========================================================================
+
+    /**
+     * Set or reset the priority of a single Chatwoot conversation.
+     *
+     * Accepted non-null values (confirmed against installed instance):
+     *   'low' | 'medium' | 'high' | 'urgent'
+     *
+     * To RESET the priority (no urgency on lead), pass null.
+     * NOTE: toggle_priority('none') returns 500 on this Chatwoot version;
+     *       we use PATCH conversations/{id} with priority=null instead.
+     *
+     * @param  int          $convId    Chatwoot conversation ID
+     * @param  string|null  $priority  'low'|'medium'|'high'|'urgent'|null
+     * @return bool
+     */
+    public function updateConversationPriority(int $convId, ?string $priority): bool
+    {
+        try {
+            if ($priority !== null) {
+                // Set a specific priority level via toggle_priority
+                $url      = $this->accountUrl("conversations/{$convId}/toggle_priority");
+                $response = Http::timeout(10)
+                    ->withHeaders($this->managementHeaders())
+                    ->post($url, ['priority' => $priority]);
+            } else {
+                // Reset priority — PATCH with null (toggle_priority('none') = 500 on this version)
+                $url      = $this->accountUrl("conversations/{$convId}");
+                $response = Http::timeout(10)
+                    ->withHeaders($this->managementHeaders())
+                    ->patch($url, ['priority' => null]);
+            }
+
+            if (! $response->successful()) {
+                Log::warning('[ChatwootService] updateConversationPriority falhou.', [
+                    'conversation_id' => $convId,
+                    'priority'        => $priority,
+                    'status'          => $response->status(),
+                ]);
+
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('[ChatwootService] updateConversationPriority exception: '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Apply a priority to ALL open/pending conversations of a given contact.
+     *
+     * Mirrors the scope used by syncContactLabels() — only open and pending
+     * conversations are touched. Resolved/snoozed conversations are skipped.
+     *
+     * @param  int          $contactId  Chatwoot contact_id
+     * @param  string|null  $priority   'low'|'medium'|'high'|'urgent'|null (null = reset)
+     * @return bool True if at least one conversation was updated
+     */
+    public function syncConversationsPriority(int $contactId, ?string $priority): bool
+    {
+        $conversations = $this->getContactConversations($contactId);
+
+        if (empty($conversations)) {
+            return false;
+        }
+
+        $atLeastOne = false;
+
+        foreach ($conversations as $conversation) {
+            $convId = $conversation['id'] ?? null;
+            $status = $conversation['status'] ?? 'resolved';
+
+            if (! in_array($status, ['open', 'pending'], true) || ! $convId) {
+                continue;
+            }
+
+            $success = $this->updateConversationPriority((int) $convId, $priority);
+
+            if ($success) {
+                $atLeastOne = true;
+                Log::info('[ChatwootService] syncConversationsPriority: prioridade sincronizada.', [
+                    'contact_id'      => $contactId,
+                    'conversation_id' => $convId,
+                    'priority'        => $priority,
+                ]);
+            }
+        }
+
+        return $atLeastOne;
+    }
+
+    // =========================================================================
     // Contacts (Management — User Access Token required)
     // =========================================================================
 

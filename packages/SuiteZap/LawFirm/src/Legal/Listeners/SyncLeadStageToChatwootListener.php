@@ -73,6 +73,31 @@ class SyncLeadStageToChatwootListener implements ShouldQueue
     ];
 
     /**
+     * Maps CRM urgency tag names (exact, original case) → Chatwoot priority value.
+     *
+     * FALLBACK: The tags table has no 'category' column, so urgency is identified
+     * by this explicit map. If new urgency tags are created in the CRM they must
+     * be added here manually.
+     *
+     * Priority hierarchy (highest → lowest): urgent > high > medium > low
+     *
+     * Confirmed accepted values on this Chatwoot installation:
+     *   'low' | 'medium' | 'high' | 'urgent'
+     * Reset value: null  (toggle_priority('none') returns HTTP 500 on this version)
+     */
+    private const URGENCY_TAG_MAP = [
+        'Baixa'   => 'low',
+        'Média'   => 'medium',
+        'Alta'    => 'high',
+        'Crítica' => 'urgent',
+    ];
+
+    /**
+     * Priority order for conflict resolution (highest wins when multiple urgencies present).
+     */
+    private const URGENCY_PRIORITY_ORDER = ['urgent' => 4, 'high' => 3, 'medium' => 2, 'low' => 1];
+
+    /**
      * Handle the 'lead.update.after' event.
      *
      * @param  Lead|mixed  $lead
@@ -128,6 +153,10 @@ class SyncLeadStageToChatwootListener implements ShouldQueue
             }
 
             $service->syncContactLabels($contactId, $allCrmTagSlugs, $crmDynamicPool);
+
+            // ── Sync urgency → Chatwoot conversation priority ─────────────────
+            $priority = $this->resolveChatwootPriorityFromLead($lead);
+            $service->syncConversationsPriority($contactId, $priority);
         } catch (\RuntimeException $e) {
             // ChatwootService constructor throws RuntimeException if config is empty.
             // This is an extra safety net — getChatwootConfig() check above should prevent this.
@@ -200,9 +229,17 @@ class SyncLeadStageToChatwootListener implements ShouldQueue
             }
         }
 
-        // 2. Generic Tags
+        // 2. Generic Tags — urgency tags are excluded from desired labels;
+        //    they control the Chatwoot Priority field instead.
+        $urgencyNames = $this->resolveUrgencyTagNames();
+
         if ($lead->tags) {
             foreach ($lead->tags as $tag) {
+                // Skip urgency tags — they go to Priority, not Labels
+                if (in_array($tag->name, $urgencyNames, true)) {
+                    continue;
+                }
+
                 // Rule: Previdenciário -> previdenciário (preserves accents)
                 $slugs[] = mb_strtolower(trim($tag->name), 'UTF-8');
             }
@@ -231,5 +268,57 @@ class SyncLeadStageToChatwootListener implements ShouldQueue
         $pool = array_merge($pool, self::LEAD_STAGE_POOL);
 
         return array_values(array_unique($pool));
+    }
+
+    /**
+     * Returns the canonical (original-case) urgency tag names.
+     * Used to exclude urgency from desired Chatwoot labels
+     * while preserving them in the controlled pool for legacy cleanup.
+     *
+     * @return string[]
+     */
+    private function resolveUrgencyTagNames(): array
+    {
+        return array_keys(self::URGENCY_TAG_MAP);
+    }
+
+    /**
+     * Determine the Chatwoot priority value from the lead's current urgency tags.
+     *
+     * Strategy:
+     *  - Returns null if no urgency tag is present (resets Priority in Chatwoot).
+     *  - If multiple urgency tags exist (data anomaly), picks the highest.
+     *  - Logs anomaly but does NOT abort synchronisation.
+     *
+     * @return string|null 'low'|'medium'|'high'|'urgent'|null
+     */
+    private function resolveChatwootPriorityFromLead(Lead $lead): ?string
+    {
+        $found = [];
+
+        foreach ($lead->tags as $tag) {
+            $priority = self::URGENCY_TAG_MAP[$tag->name] ?? null;
+            if ($priority !== null) {
+                $found[] = $priority;
+            }
+        }
+
+        if (empty($found)) {
+            return null;
+        }
+
+        if (count($found) > 1) {
+            Log::warning('[SyncLeadStageToChatwootListener] Múltiplas urgências detectadas — usando a mais alta.', [
+                'lead_id'         => $lead->id,
+                'urgencies_found' => $found,
+            ]);
+        }
+
+        // Sort by priority order descending and pick the first (highest)
+        usort($found, fn ($a, $b) =>
+            (self::URGENCY_PRIORITY_ORDER[$b] ?? 0) <=> (self::URGENCY_PRIORITY_ORDER[$a] ?? 0)
+        );
+
+        return $found[0];
     }
 }

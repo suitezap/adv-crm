@@ -340,7 +340,26 @@
                      * Direct key assignment on a reactive object that starts as {} loses
                      * reactivity in Vue 3 Options API — the key must exist at data() time.
                      */
-                    stageLeads: @json($pipeline->stages->mapWithKeys(fn($s) => [$s->sort_order => ['id' => $s->id, 'name' => $s->name, 'code' => $s->code, 'sort_order' => $s->sort_order, 'lead_value' => 0, 'leads' => ['data' => [], 'meta' => ['total' => 0, 'current_page' => 1, 'last_page' => 1]]]])->toArray()),
+                    @php
+                        $stageLeadsSeed = $pipeline->stages->mapWithKeys(fn($s) => [
+                            $s->sort_order => [
+                                'id' => $s->id,
+                                'name' => $s->name,
+                                'code' => $s->code,
+                                'sort_order' => $s->sort_order,
+                                'lead_value' => 0,
+                                'leads' => [
+                                    'data' => [],
+                                    'meta' => [
+                                        'total' => 0,
+                                        'current_page' => 1,
+                                        'last_page' => 1
+                                    ]
+                                ]
+                            ]
+                        ])->toArray();
+                    @endphp
+                    stageLeads: @json($stageLeadsSeed),
 
                     isLoading: true,
 
