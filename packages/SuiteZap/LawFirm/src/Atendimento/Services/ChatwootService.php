@@ -241,22 +241,21 @@ class ChatwootService
      * NOTE: toggle_priority('none') returns 500 on this Chatwoot version;
      *       we use PATCH conversations/{id} with priority=null instead.
      *
-     * @param  int          $convId    Chatwoot conversation ID
+     * @param  int  $convId  Chatwoot conversation ID
      * @param  string|null  $priority  'low'|'medium'|'high'|'urgent'|null
-     * @return bool
      */
     public function updateConversationPriority(int $convId, ?string $priority): bool
     {
         try {
             if ($priority !== null) {
                 // Set a specific priority level via toggle_priority
-                $url      = $this->accountUrl("conversations/{$convId}/toggle_priority");
+                $url = $this->accountUrl("conversations/{$convId}/toggle_priority");
                 $response = Http::timeout(10)
                     ->withHeaders($this->managementHeaders())
                     ->post($url, ['priority' => $priority]);
             } else {
                 // Reset priority — PATCH with null (toggle_priority('none') = 500 on this version)
-                $url      = $this->accountUrl("conversations/{$convId}");
+                $url = $this->accountUrl("conversations/{$convId}");
                 $response = Http::timeout(10)
                     ->withHeaders($this->managementHeaders())
                     ->patch($url, ['priority' => null]);
@@ -286,8 +285,8 @@ class ChatwootService
      * Mirrors the scope used by syncContactLabels() — only open and pending
      * conversations are touched. Resolved/snoozed conversations are skipped.
      *
-     * @param  int          $contactId  Chatwoot contact_id
-     * @param  string|null  $priority   'low'|'medium'|'high'|'urgent'|null (null = reset)
+     * @param  int  $contactId  Chatwoot contact_id
+     * @param  string|null  $priority  'low'|'medium'|'high'|'urgent'|null (null = reset)
      * @return bool True if at least one conversation was updated
      */
     public function syncConversationsPriority(int $contactId, ?string $priority): bool

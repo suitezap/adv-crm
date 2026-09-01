@@ -315,8 +315,7 @@ class SyncLeadStageToChatwootListener implements ShouldQueue
         }
 
         // Sort by priority order descending and pick the first (highest)
-        usort($found, fn ($a, $b) =>
-            (self::URGENCY_PRIORITY_ORDER[$b] ?? 0) <=> (self::URGENCY_PRIORITY_ORDER[$a] ?? 0)
+        usort($found, fn ($a, $b) => (self::URGENCY_PRIORITY_ORDER[$b] ?? 0) <=> (self::URGENCY_PRIORITY_ORDER[$a] ?? 0)
         );
 
         return $found[0];
