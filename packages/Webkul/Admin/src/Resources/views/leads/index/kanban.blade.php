@@ -335,7 +335,12 @@
 
                     stages: @json($pipeline->stages->toArray()),
 
-                    stageLeads: {},
+                    /**
+                     * Pre-seed all stage keys so Vue 3 reactivity tracks them from init.
+                     * Direct key assignment on a reactive object that starts as {} loses
+                     * reactivity in Vue 3 Options API — the key must exist at data() time.
+                     */
+                    stageLeads: @json($pipeline->stages->mapWithKeys(fn($s) => [$s->sort_order => ['id' => $s->id, 'name' => $s->name, 'code' => $s->code, 'sort_order' => $s->sort_order, 'lead_value' => 0, 'leads' => ['data' => [], 'meta' => ['total' => 0, 'current_page' => 1, 'last_page' => 1]]]])->toArray()),
 
                     isLoading: true,
 
@@ -389,7 +394,7 @@
                             this.get()
                                 .then(response => {
                                     for (let [sortOrder, data] of Object.entries(response.data)) {
-                                        this.stageLeads[sortOrder] = data;
+                                        Object.assign(this.stageLeads[sortOrder] ??= {}, data);
                                     }
                                 });
 
@@ -400,7 +405,7 @@
                     this.get()
                         .then(response => {
                             for (let [sortOrder, data] of Object.entries(response.data)) {
-                                this.stageLeads[sortOrder] = data;
+                                Object.assign(this.stageLeads[sortOrder] ??= {}, data);
                             }
                         });
                 },
@@ -477,7 +482,7 @@
                     this.get()
                         .then(response => {
                             for (let [sortOrder, data] of Object.entries(response.data)) {
-                                this.stageLeads[sortOrder] = data;
+                                Object.assign(this.stageLeads[sortOrder] ??= {}, data);
                             }
                         });
                 },
@@ -497,7 +502,7 @@
                     this.get()
                         .then(response => {
                             for (let [sortOrder, data] of Object.entries(response.data)) {
-                                this.stageLeads[sortOrder] = data;
+                                Object.assign(this.stageLeads[sortOrder] ??= {}, data);
                             }
                         });
                 },
@@ -512,8 +517,8 @@
                     this.get(params)
                         .then(response => {
                             for (let [sortOrder, data] of Object.entries(response.data)) {
-                                if (! this.stageLeads[sortOrder]) {
-                                    this.stageLeads[sortOrder] = data;
+                                if (! this.stageLeads[sortOrder]?.leads) {
+                                    Object.assign(this.stageLeads[sortOrder] ??= {}, data);
                                 } else {
                                     this.stageLeads[sortOrder].leads.data = this.stageLeads[sortOrder].leads.data.concat(data.leads.data);
 
@@ -568,8 +573,18 @@
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
                         })
                         .catch(error => {
-                            this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
-                        });;
+                            this.$emitter.emit('add-flash', { type: 'error', message: error.response?.data?.message ?? error.message });
+
+                            /**
+                             * Rollback visual: re-fetch from server so the card
+                             * returns to its real stage if the API call failed.
+                             */
+                            this.get().then(response => {
+                                for (let [sortOrder, data] of Object.entries(response.data)) {
+                                    Object.assign(this.stageLeads[sortOrder] ??= {}, data);
+                                }
+                            });
+                        });
                 },
 
                 /**
@@ -599,7 +614,7 @@
                             this.get()
                                 .then(response => {
                                     for (let [sortOrder, data] of Object.entries(response.data)) {
-                                        this.stageLeads[sortOrder] = data;
+                                        Object.assign(this.stageLeads[sortOrder] ??= {}, data);
                                     }
                                 });
 
@@ -640,7 +655,7 @@
                     this.get()
                         .then(response => {
                             for (let [sortOrder, data] of Object.entries(response.data)) {
-                                this.stageLeads[sortOrder] = data;
+                                Object.assign(this.stageLeads[sortOrder] ??= {}, data);
                             }
                         });
                 },

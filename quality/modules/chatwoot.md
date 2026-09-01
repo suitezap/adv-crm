@@ -20,11 +20,16 @@ Centralizar o atendimento multicanal, live chat e distribuição de tickets no C
 
 ## 4. Comportamentos Conhecidos
 - **Invariantes Críticas de Mapeamento**:
-  - `account_id` $\leftrightarrow$ `chatwoot_inbox_id` (legado)
+  - `account_id` $\leftrightarrow$ `chatwoot_inbox_id` (legado) ou `meta_data.account_id` do nó de infraestrutura
   - `inbox_id` $\leftrightarrow$ `chatwoot_channel_inbox_id` (canal de atendimento humano)
   - `assistant_inbox_id` $\leftrightarrow$ `chatwoot_assistant_inbox_id` (canal de IA com fallback e `Log::warning`)
   - `access_token` $\leftrightarrow$ `chatwoot_webhook_token` (User Access Token para `/labels`, `/contacts` e HMAC)
   - `api_key` $\leftrightarrow$ `node.api_key` (Bot Token para `POST /messages`)
+- **Sanitização de `base_url`**: `MotherShipService::getChatwootConfig()` extrai estritamente `scheme + host (+ port)` via `parse_url()` para evitar que caminhos de login (`/app/login`) registrados no nó causem erro HTTP 406 em rotas de API.
+- **Sincronização de Tags de Funil (Kanban $\leftrightarrow$ Chatwoot)**:
+  - Evento `lead.update.after` dispara `SyncLeadStageToChatwootListener`.
+  - Mapeamento: `new` $\rightarrow$ `ld_novo`, `follow-up` $\rightarrow$ `ld_acomp`, `prospect` $\rightarrow$ `ld_qual`, `negotiation` $\rightarrow$ `ld_neg`, `won` $\rightarrow$ `ld_ganho`, `lost` $\rightarrow$ `ld_perd`.
+  - Método `syncContactLabels()` realiza swap atômico da tag de estágio nas conversas abertas, preservando tags de outras categorias (`Lead`, `org_whats`, etc.).
 - **Acesso ao Menu SAC**: Exige usuário com permissão ACL `lawfirm.assistants.chatwoot` e tenant com add-on `CHATWOOT` ativo.
 - **Zero Dependência de Whaticket**: Nenhuma rota, migration ou biblioteca de Whaticket é necessária ou existe no projeto.
 
@@ -35,5 +40,5 @@ Centralizar o atendimento multicanal, live chat e distribuição de tickets no C
 - Testes E2E de navegação no painel SAC mapeados para automação via mock local nas fases subsequentes.
 
 ## 7. Última Revisão
-- Data: 2026-08-21
-- Versão: v3.55.0
+- Data: 2026-08-28
+- Versão: v3.55.1 (Normalização de URL Chatwoot & Reatividade Kanban de Leads)

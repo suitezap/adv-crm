@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Atendimento\Services\ChatwootService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use Webkul\Lead\Models\Lead;
+use Webkul\Tag\Models\Tag;
 
 /**
  * SyncLeadStageToChatwootListener
@@ -35,24 +36,39 @@ class SyncLeadStageToChatwootListener implements ShouldQueue
     public int $tries = 1;
 
     /**
-     * Maps lead_pipeline_stages.code → Chatwoot label slug.
-     * Based on tag_mapping_documentation.md §3 (Leads — Tons Frios).
+     * Maps lead_pipeline_stages.code or name slug → Chatwoot label slug.
+     * Compatible with the 6 official lead tags in Chatwoot:
+     *   - ld_novo   (Novo)
+     *   - ld_acomp  (Acompanhamento)
+     *   - ld_qual   (Qualificado)
+     *   - ld_neg    (Em negociação)
+     *   - ld_ganho  (Ganho)
+     *   - ld_perd   (Perdido)
      */
     private const STAGE_LABEL_MAP = [
-        'new'         => 'LD_NOVO',
-        'follow-up'   => 'LD_ACOMP',
-        'prospect'    => 'LD_QUAL',
-        'negotiation' => 'LD_NEG',
-        'won'         => ['CLI_CONV', 'CAS_NOVO'],
-        'lost'        => 'LD_PERD',
+        'new'            => 'ld_novo',
+        'novo'           => 'ld_novo',
+        'follow-up'      => 'ld_acomp',
+        'follow_up'      => 'ld_acomp',
+        'acompanhamento' => 'ld_acomp',
+        'prospect'       => 'ld_qual',
+        'qualificado'    => 'ld_qual',
+        'negotiation'    => 'ld_neg',
+        'negociacao'     => 'ld_neg',
+        'won'            => 'ld_ganho',
+        'ganho'          => 'ld_ganho',
+        'lost'           => 'ld_perd',
+        'perdido'        => 'ld_perd',
     ];
 
     /**
      * All Lead stage labels — used to strip previous stage before adding new one.
+     * Includes uppercase/legacy variants for thorough cleanup.
      */
     private const LEAD_STAGE_POOL = [
+        'ld_novo', 'ld_acomp', 'ld_qual', 'ld_neg', 'ld_ganho', 'ld_perd',
         'LD_NOVO', 'LD_ACOMP', 'LD_QUAL', 'LD_NEG', 'LD_GANHO', 'LD_PERD',
-        'CLI_CONV', 'CAS_NOVO',
+        'Lead', 'lead', 'CLI_CONV', 'CAS_NOVO', 'cli_conv', 'cas_novo',
     ];
 
     /**
@@ -76,23 +92,13 @@ class SyncLeadStageToChatwootListener implements ShouldQueue
             return;
         }
 
-        // ── Resolve stage ─────────────────────────────────────────────────────
-        $lead->loadMissing('stage');
+        // ── Resolve All Tags ──────────────────────────────────────────────────
+        $lead->load(['stage', 'tags', 'person']);
 
-        if (! $lead->stage) {
-            return;
-        }
-
-        $stageCode = strtolower($lead->stage->code ?? '');
-        $stageLabel = self::STAGE_LABEL_MAP[$stageCode] ?? null;
-
-        if (! $stageLabel) {
-            // Stage code not in map — skip silently.
-            return;
-        }
+        $allCrmTagSlugs = $this->resolveAllCrmTagSlugs($lead);
+        $crmDynamicPool = $this->getDynamicCrmTagPool();
 
         // ── Resolve phone from person contacts ────────────────────────────────
-        $lead->loadMissing('person');
 
         $phone = $this->resolvePhone($lead);
 
@@ -120,7 +126,7 @@ class SyncLeadStageToChatwootListener implements ShouldQueue
                 return;
             }
 
-            $service->syncContactLabels($contactId, $stageLabel, self::LEAD_STAGE_POOL);
+            $service->syncContactLabels($contactId, $allCrmTagSlugs, $crmDynamicPool);
         } catch (\RuntimeException $e) {
             // ChatwootService constructor throws RuntimeException if config is empty.
             // This is an extra safety net — getChatwootConfig() check above should prevent this.
@@ -172,5 +178,57 @@ class SyncLeadStageToChatwootListener implements ShouldQueue
         }
 
         return '+'.$digits;
+    }
+
+    /**
+     * Resolve all Chatwoot labels for the given lead.
+     * Includes the stage label (if mapped) and all attached CRM tags.
+     */
+    private function resolveAllCrmTagSlugs(Lead $lead): array
+    {
+        $slugs = [];
+
+        // 1. Stage Tag
+        if ($lead->stage) {
+            $stageCode = strtolower(trim($lead->stage->code ?? ''));
+            $stageNameSlug = \Illuminate\Support\Str::slug($lead->stage->name ?? '');
+            $stageLabel = self::STAGE_LABEL_MAP[$stageCode] ?? self::STAGE_LABEL_MAP[$stageNameSlug] ?? null;
+
+            if ($stageLabel) {
+                $slugs[] = $stageLabel;
+            }
+        }
+
+        // 2. Generic Tags
+        if ($lead->tags) {
+            foreach ($lead->tags as $tag) {
+                // Rule: Previdenciário -> previdenciário (preserves accents)
+                $slugs[] = mb_strtolower(trim($tag->name), 'UTF-8');
+            }
+        }
+
+        return array_values(array_unique($slugs));
+    }
+
+    /**
+     * Build the dynamic pool of all CRM tags to control what can be removed from Chatwoot.
+     */
+    private function getDynamicCrmTagPool(): array
+    {
+        $pool = [];
+
+        try {
+            $tagNames = Tag::pluck('name');
+            foreach ($tagNames as $name) {
+                $pool[] = mb_strtolower(trim($name), 'UTF-8');
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[SyncLeadStageToChatwootListener] Erro ao carregar pool de tags: '.$e->getMessage());
+        }
+
+        // Always merge the hardcoded stage pool for safety/backwards compatibility
+        $pool = array_merge($pool, self::LEAD_STAGE_POOL);
+
+        return array_values(array_unique($pool));
     }
 }

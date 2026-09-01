@@ -1,4 +1,4 @@
-# Antigravity Log
+# Antigravity Log (Append-Only)
 
 ## [2026-08-26 12:40] CI-001
 
@@ -36,3 +36,138 @@ IMPLEMENTED_NOT_VERIFIED
 
 Next recommended action:
 O desenvolvedor humano precisa commitar as alterações e disparar o GitHub Actions realizando o push na branch law-firm-custom.
+
+---
+
+## [2026-08-26 23:20] GOV-001 — Project Baseline
+
+Agent:
+Antigravity
+
+Role:
+ORCHESTRATOR
+
+Branch:
+law-firm-custom
+
+Current Head:
+11f5b4e7e0812e53d5d0e70353326112386f18e6
+
+Reference Base:
+660f4f10b8c9b856805d1ea9da23a4ad8c0797b5 (previous-baseline / Etapa 4 Qualidade)
+
+Objective:
+Registrar o baseline canônico completo do LawFirm CRM, auditando versões, branch, commits e status de qualidade sem alterar código funcional.
+
+Files created:
+- .ai/BASELINE.md
+
+Actions:
+- Mapeou commit HEAD (`11f5b4e7...`) e Reference Base (`660f4f10...`).
+- Realizou auditoria programática de versões: `DOCUMENTED_VERSION` (v3.55.1), `CODE_VERSION` (3.55.1), `CHANGELOG_VERSION` (v3.54.1 raiz / v3.55.1 quality), `IMAGE_VERSION` (candidate-local / latest).
+- Documentou a discrepância `BASELINE_VERSION_MISMATCH` no `BASELINE.md` sem modificações arbitrárias.
+- Mapeou os 7 domínios DDD ativos, módulos suspensos e infraestrutura de 35 testes em `quality/TEST_CATALOG.yaml`.
+
+Result:
+DONE
+
+---
+
+## [2026-08-26 23:25] GOV-002 — Multi-Agent Governance Bootstrap
+
+Agent:
+Antigravity
+
+Role:
+ORCHESTRATOR
+
+Branch:
+law-firm-custom
+
+Current Head:
+11f5b4e7e0812e53d5d0e70353326112386f18e6
+
+Objective:
+Implantar a estrutura completa de governança multiagente compartilhada, protocolo de locks, biblioteca de shared skills, regras de transporte Syncthing e preparar o handoff formal para a tarefa HERMES-001.
+
+Files created / updated:
+- AGENTS.md
+- .ai/CURRENT.md
+- .ai/TASKS.md
+- .ai/ROADMAP.md
+- .ai/LOG_INDEX.md
+- .ai/AGENTS_REGISTRY.md
+- .ai/DECISIONS.md
+- .ai/LESSONS.md
+- .ai/locks/README.md
+- .ai/handoffs/README.md
+- .ai/handoffs/HANDOFF-HERMES-001.md
+- .ai/incidents/README.md
+- .ai/logs/HERMES.md
+- .ai/logs/OPENCODE.md
+- .agents/rules/README.md
+- .agents/skills/project-bootstrap/SKILL.md
+- .agents/skills/context-budget/SKILL.md
+- .agents/skills/task-claim/SKILL.md
+- .agents/skills/handoff/SKILL.md
+- .agents/skills/sync-safety/SKILL.md
+- .agents/skills/safe-code-change/SKILL.md
+- .agents/skills/hermes-qa/SKILL.md
+- .agents/skills/test-gate/SKILL.md
+
+Actions:
+- Formalizou os 3 agentes no `AGENTS_REGISTRY.md` (Antigravity, Hermes, OpenCode).
+- Criou o protocolo de locks em `.ai/locks/README.md` com proibição de remoção não-autorizada (`STALE_LOCK_SUSPECTED`).
+- Documentou regras estritas de transporte e concorrência do Syncthing (stop write em `sync-conflict-*`, workspace isolado na VPS, exclusão de `.git/`).
+- Criou 8 shared skills modulares em `.agents/skills/`.
+- Estruturou o handoff formal em `.ai/handoffs/HANDOFF-HERMES-001.md`.
+- Registrou no roadmap as tasks bloqueadas `QA-ENV-001`, `QA-DATA-001`, `QA-HARNESS-001`, `QA-JUR-001` e a futura task de higiene Docker `DOCKER-001`.
+
+Result:
+DONE
+
+---
+
+## [2026-08-26 23:30] GOV-HARDENING — Documental Hardening & Lock Specification
+
+Agent:
+Antigravity
+
+Role:
+ORCHESTRATOR
+
+Branch:
+law-firm-custom
+
+Current Head:
+11f5b4e7e0812e53d5d0e70353326112386f18e6
+
+Objective:
+Executar o hardening documental final: explicitar diretrizes de versionamento da imagem Docker (`suitezap/lawfirm:latest` como estado observado), enriquecer formato de lock com `last_checkpoint_at`, formalizar a saída exigida `.ai/handoffs/RESULT-HERMES-001.md`, incluir validação de shared skills na VPS e criar task documental `DOC-001`.
+
+Files updated:
+- .ai/BASELINE.md
+- .ai/DECISIONS.md
+- .ai/locks/README.md
+- .agents/skills/task-claim/SKILL.md
+- .ai/handoffs/HANDOFF-HERMES-001.md
+- .ai/TASKS.md
+- .ai/LOG_INDEX.md
+- .ai/CURRENT.md
+- walkthrough.md
+
+Actions:
+- Documentou explicitamente em `.ai/BASELINE.md` e `.ai/DECISIONS.md` que `suitezap/lawfirm:latest` é apenas estado observado e produção exige tag/digest imutável.
+- Adicionou `last_checkpoint_at` ao protocolo de lock em `.ai/locks/README.md` e na skill `task-claim`.
+- Estruturou o template canônico de saída formal em `.ai/handoffs/RESULT-HERMES-001.md` dentro de `HANDOFF-HERMES-001.md`.
+- Incluiu a validação de carregamento das 8 shared skills na VPS como critério obrigatório de aceite.
+- Cadastrou a task `DOC-001` (Consolidate Root Changelog Version) em `.ai/TASKS.md` e `.ai/LOG_INDEX.md`.
+
+Result:
+DONE
+
+## 2026-08-31 - Sincronização Completa de Tags Chatwoot
+- **Objetivo**: Sincronizar todas as tags do Lead (área, urgência, estágio) no Chatwoot.
+- **Ação**: Atualizado \SyncLeadStageToChatwootListener\ para buscar um pool dinâmico do \Tag::all()\ e amarrados os eventos \leads.tag.create.after\ e \leads.tag.delete.after\ no \LawFirmServiceProvider\.
+- **Status**: \DONE\
+

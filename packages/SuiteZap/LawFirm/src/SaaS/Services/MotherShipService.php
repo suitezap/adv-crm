@@ -548,8 +548,18 @@ class MotherShipService
             ? $node->meta_data
             : (json_decode($node->meta_data, true) ?? []);
 
+        // ── Normalise base_url ──────────────────────────────────────────────────
+        // The DB may contain a full dashboard URL (e.g. "https://host/app/login").
+        // We only want scheme + host (+ port) so API paths are constructed correctly.
+        $rawBaseUrl = rtrim($node->base_url ?? '', '/');
+        $parsedUrl  = parse_url($rawBaseUrl);
+        $baseUrl    = ($parsedUrl['scheme'] ?? 'https') . '://' . ($parsedUrl['host'] ?? '');
+        if (! empty($parsedUrl['port'])) {
+            $baseUrl .= ':' . $parsedUrl['port'];
+        }
+
         return [
-            'base_url'           => rtrim($node->base_url, '/'),
+            'base_url'           => $baseUrl,
             'api_key'            => $node->api_key,                                                  // Bot token — POST /messages
             'account_id'         => $meta['account_id'] ?? $tenantConfig->chatwoot_inbox_id ?? null, // ID numérico da CONTA Chatwoot
             'inbox_id'           => $tenantConfig->chatwoot_channel_inbox_id ?? null,                // Inbox Atendimento Humano

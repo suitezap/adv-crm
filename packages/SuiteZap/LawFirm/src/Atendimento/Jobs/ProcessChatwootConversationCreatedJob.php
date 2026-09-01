@@ -71,15 +71,15 @@ class ProcessChatwootConversationCreatedJob implements ShouldQueue
             return;
         }
 
-        // ── Tentar atribuir label inicial 'LD_NOVO' via ChatwootService ──
+        // ── Tentar atribuir label inicial 'ld_novo' via ChatwootService ──
         try {
             $service = new ChatwootService;
 
-            $stagePool = ['LD_NOVO', 'LD_ACOMP', 'LD_QUAL', 'LD_NEG', 'LD_GANHO', 'LD_PERD'];
+            $stagePool = ['ld_novo', 'ld_acomp', 'ld_qual', 'ld_neg', 'ld_ganho', 'ld_perd'];
 
-            $service->addLabels((int) $conversationId, ['LD_NOVO']);
+            $service->addLabels((int) $conversationId, ['ld_novo']);
 
-            Log::info('[ProcessChatwootConversationCreated] Label LD_NOVO atribuída.', [
+            Log::info('[ProcessChatwootConversationCreated] Label ld_novo atribuída.', [
                 'conversation_id' => $conversationId,
             ]);
         } catch (\RuntimeException $e) {

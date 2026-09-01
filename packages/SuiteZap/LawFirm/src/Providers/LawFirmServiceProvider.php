@@ -305,6 +305,8 @@ class LawFirmServiceProvider extends ServiceProvider
         Event::listen('lead.update.after', LeadWonListener::class);
         Event::listen('lead.create.after', SyncLeadStageToChatwootListener::class);
         Event::listen('lead.update.after', SyncLeadStageToChatwootListener::class);
+        Event::listen('leads.tag.create.after', SyncLeadStageToChatwootListener::class);
+        Event::listen('leads.tag.delete.after', SyncLeadStageToChatwootListener::class);
 
         // ---------------------------------------------------------------------
         // CONTATOS: Persistência de Dados (Substituindo Observers)
