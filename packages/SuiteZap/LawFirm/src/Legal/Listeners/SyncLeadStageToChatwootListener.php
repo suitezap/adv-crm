@@ -5,6 +5,7 @@ namespace SuiteZap\LawFirm\Legal\Listeners;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use SuiteZap\LawFirm\Atendimento\Services\ChatwootService;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use Webkul\Lead\Models\Lead;
@@ -191,7 +192,7 @@ class SyncLeadStageToChatwootListener implements ShouldQueue
         // 1. Stage Tag
         if ($lead->stage) {
             $stageCode = strtolower(trim($lead->stage->code ?? ''));
-            $stageNameSlug = \Illuminate\Support\Str::slug($lead->stage->name ?? '');
+            $stageNameSlug = Str::slug($lead->stage->name ?? '');
             $stageLabel = self::STAGE_LABEL_MAP[$stageCode] ?? self::STAGE_LABEL_MAP[$stageNameSlug] ?? null;
 
             if ($stageLabel) {

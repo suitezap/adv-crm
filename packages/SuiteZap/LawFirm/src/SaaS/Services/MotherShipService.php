@@ -552,10 +552,10 @@ class MotherShipService
         // The DB may contain a full dashboard URL (e.g. "https://host/app/login").
         // We only want scheme + host (+ port) so API paths are constructed correctly.
         $rawBaseUrl = rtrim($node->base_url ?? '', '/');
-        $parsedUrl  = parse_url($rawBaseUrl);
-        $baseUrl    = ($parsedUrl['scheme'] ?? 'https') . '://' . ($parsedUrl['host'] ?? '');
+        $parsedUrl = parse_url($rawBaseUrl);
+        $baseUrl = ($parsedUrl['scheme'] ?? 'https').'://'.($parsedUrl['host'] ?? '');
         if (! empty($parsedUrl['port'])) {
-            $baseUrl .= ':' . $parsedUrl['port'];
+            $baseUrl .= ':'.$parsedUrl['port'];
         }
 
         return [
