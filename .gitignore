@@ -46,6 +46,8 @@ reports/*
 
 # Temporary and local files
 *.txt
+!quality/scripts/requirements-quality.txt
+!tests/e2e/requirements-test.txt
 /stubs
 /my-skills/
 git_status_output.txt
