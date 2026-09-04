@@ -22,6 +22,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install Quality Script Dependencies
+        run: pip install -r quality/scripts/requirements-quality.txt
+
       - name: Validate Test Documentation
         run: python quality/scripts/validate_test_docs.py
 

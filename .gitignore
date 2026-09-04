@@ -77,3 +77,18 @@ remove_logo.php
 /public/installer/build/
 /public/webform/build/
 
+# Syncthing Versions & Conflicts
+.stversions/
+*sync-conflict*
+
+# Local Sessions
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+
+# Local Scratch and Test Scripts
+/fix_tests.py
+/fix_user_create.py
+/test-dns.ps1
+C*
+*.bak-before-*
+

@@ -1,0 +1,23 @@
+task_id: QA-ENV-001
+owner: HERMES
+role: lawfirm-qa
+write_scope:
+  - .ai/TASKS.md
+  - .ai/CURRENT.md
+  - .ai/LOG_INDEX.md
+  - .ai/handoffs/RESULT-QA-ENV-001.md
+  - .ai/logs/HERMES.md
+  - .stignore
+  - .ai/locks/QA-ENV-001.lock.yaml
+  - /var/run/docker.sock group membership (system, host OS, outside git)
+started_at: 2026-08-31T00:00:00Z
+last_checkpoint_at: 2026-08-31T21:15:40Z
+base_commit: 11f5b4e7e0812e53d5d0e70353326112386f18e6
+workspace: /home/rootz/LawFirm
+status: RELEASED
+notes: >
+  QA-ENV-001: provision and harden isolated LawFirm QA env on VPS.
+  Pre-existing dirty worktree (functional mods + untracked) is preserved.
+  NO functional CRM/test code changes allowed in this task.
+released_at: 2026-08-31T21:15:40Z
+release_note: "Governance closure after QA-ENV-001 completion; no task reopened."
