@@ -4,6 +4,20 @@ node_modules
 vendor
 .agents
 .gemini
+
+# Production Hygiene (AGENTS.md §6 - Mandatory Exclusions)
+tests/
+quality/
+.ai/
+.github/
+docker/testing/
+docker-compose*.yml
+reports/
+coverage/
+test-results/
+playwright-report/
+.pytest_cache/
+.stversions/
 storage/logs/*.log
 !storage/app/public
 ! .env.example

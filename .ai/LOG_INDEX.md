@@ -14,7 +14,7 @@
 | `QA-DATA-001` | Hermes | BLOCKED | - |
 | `QA-HARNESS-001` | Hermes | BLOCKED | - |
 | `QA-JUR-001` | Hermes | BLOCKED | - |
-| `DOCKER-001` | OpenCode | TODO | `.ai/logs/OPENCODE.md#2026-08-26-2315-system-bootstrap` |
+| `DOCKER-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-09-04-docker-001--production-image-hygiene-and-publish` |
 | `DOC-001` | OpenCode | TODO | `.ai/logs/OPENCODE.md#2026-08-26-2315-system-bootstrap` |
 | `GAP-001` | OpenCode | TODO | `.ai/logs/OPENCODE.md#2026-08-26-2315-system-bootstrap` |
 

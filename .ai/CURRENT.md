@@ -23,9 +23,9 @@ A tarefa **`QA-ENV-001`** (provisionamento e hardening do ambiente isolado de QA
 ---
 
 ## 4. O que está bloqueado ou pendente?
-- **`QA-ENV-001`** (provisionamento QA) está **DONE** — resultado em `.ai/handoffs/RESULT-QA-ENV-001.md`. Data-plane de QA provisionado (mysql-test, mothership-db-test, redis-test, mock-server — todos healthy) com os bancos `tenant_a_test`, `tenant_b_test`, `mothership_test` presentes.
-- **`QA-DATA-001`** permanece **BLOCKED** (`QA-ENV-001`): os bancos e o ambiente Docker estão utilizáveis e os guards de teste (`APP_ENV=testing`, `TEST_ENVIRONMENT_ACK`) são efetivos, mas a camada de aplicação E2E (`app-tenant-a/b`, workers, playwright) depende da imagem `suitezap/lawfirm:candidate-local`, que é produzida por `DOCKER-001` — ainda pendente. Liberar `QA-DATA-001` quando a imagem estiver disponível ou quando o Orchestrator escopar a tarefa apenas à camada de dados.
-- As tarefas `DOCKER-001` (higiene da imagem de produção) e `DOC-001` (changelog raiz) seguem `TODO`.
+- **`QA-DATA-001`** foi **DESBLOQUEADA**: com a conclusão de `DOCKER-001` e a publicação de `suitezap/lawfirm:3.55.1` e `latest` (com higiene estrita e Laravel operacional), o runner de QA pode prosseguir com fixtures e dados multi-tenant.
+- **`DOCKER-001`** foi concluída com status **DONE** por Antigravity. Imagens `suitezap/lawfirm:3.55.1` e `suitezap/lawfirm:latest` publicadas no Docker Hub com 100% de conformidade com `AGENTS.md §6` (exclusão de `tests/`, `quality/`, `.ai/`, `.agents/`, `.github/`, `docker/testing/`, `reports/`, `coverage/`, `test-results/`, `playwright-report/`).
+- A tarefa `DOC-001` (changelog raiz) segue `TODO`.
 
 ---
 

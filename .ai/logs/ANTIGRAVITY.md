@@ -182,3 +182,51 @@ DONE
   - E Troca low→high: PASS | F Remove→null: PASS | G Labels preservadas: PASS | H Urgency excl labels: PASS
 - **Status**: DONE
 
+---
+
+## [2026-09-04] DOCKER-001 — Production Image Hygiene and Publish
+
+Agent:
+Antigravity
+
+Role:
+ORCHESTRATOR
+
+Branch:
+law-firm-custom
+
+Base Commit:
+f701b3ac
+
+Objective:
+Higienizar o contexto de build de produção de acordo com as regras mandatórias do AGENTS.md §6, construir e validar a imagem localmente com testes de ausência de artefatos não-produtivos, e publicar tags imutável (3.55.1) e latest em suitezap/lawfirm no Docker Hub.
+
+Files updated:
+- .dockerignore
+- .ai/TASKS.md
+- .ai/CURRENT.md
+- .ai/LOG_INDEX.md
+- .ai/locks/DOCKER-001.lock.yaml
+- .ai/logs/ANTIGRAVITY.md
+
+Actions:
+- Atualizou `.dockerignore` adicionando exclusão estrita de `tests/`, `quality/`, `.ai/`, `.agents/`, `.github/`, `docker/testing/`, `docker-compose*.yml`, `reports/`, `coverage/`, `test-results/`, `playwright-report/`, `.pytest_cache/` e `.stversions/`.
+- Executou build Docker de `suitezap/lawfirm:3.55.1` e `suitezap/lawfirm:latest`.
+- Executou auditoria automatizada de higiene dentro do container:
+  * PASS: tests NOT found
+  * PASS: quality NOT found
+  * PASS: .ai NOT found
+  * PASS: .agents NOT found
+  * PASS: .github NOT found
+  * PASS: docker/testing NOT found
+  * PASS: reports NOT found
+  * PASS: coverage NOT found
+  * PASS: test-results NOT found
+  * PASS: playwright-report NOT found
+  * PASS: Artisan bootstrap verificado com sucesso (`Laravel Framework 10.50.0`).
+- Publicou com sucesso as imagens `suitezap/lawfirm:3.55.1` e `suitezap/lawfirm:latest` no Docker Hub (`digest: sha256:668443aeafcb343ecf442af65f6ad19c2a23aa00aa5c1a0bd27563744261cdab`).
+- Desbloqueou tarefa `QA-DATA-001`.
+- Liberou lock em `.ai/locks/DOCKER-001.lock.yaml`.
+
+Result:
+DONE
