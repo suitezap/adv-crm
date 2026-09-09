@@ -198,8 +198,8 @@ class EvolutionService
             'where' => [
                 'OR' => [
                     ['key' => ['remoteJid' => $remoteJid]],
-                    ['key' => ['remoteJidAlt' => $remoteJid]]
-                ]
+                    ['key' => ['remoteJidAlt' => $remoteJid]],
+                ],
             ],
             'limit' => (int) $limit,
         ]);
@@ -215,7 +215,7 @@ class EvolutionService
         $messages = [];
         $seen = [];
         foreach ($raw as $msg) {
-            $msgKeyId     = $msg['key']['id'] ?? null;
+            $msgKeyId = $msg['key']['id'] ?? null;
             $msgRemoteJid = $msg['key']['remoteJid'] ?? '';
             $msgRemoteJidAlt = $msg['key']['remoteJidAlt'] ?? '';
 
@@ -235,7 +235,7 @@ class EvolutionService
         // Filter locally by timestamp if dates are provided
         if ($startDate || $endDate) {
             $startTs = $startDate ? strtotime($startDate.' 00:00:00') : 0;
-            $endTs   = $endDate   ? strtotime($endDate.' 23:59:59')   : time();
+            $endTs = $endDate ? strtotime($endDate.' 23:59:59') : time();
 
             $messages = array_values(array_filter($messages, function ($msg) use ($startTs, $endTs) {
                 $timestamp = $msg['messageTimestamp'] ?? 0;
@@ -259,7 +259,7 @@ class EvolutionService
     public function getBase64FromMediaMessage($instanceName, $messagePayload)
     {
         return $this->request('POST', "/chat/getBase64FromMediaMessage/{$instanceName}", [
-            'message' => $messagePayload
+            'message' => $messagePayload,
         ]);
     }
 }

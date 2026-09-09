@@ -2,12 +2,12 @@
 
 namespace SuiteZap\LawFirm\Whatsapp\Http\Controllers\Admin;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use SuiteZap\LawFirm\GED\Services\DocumentService;
 use SuiteZap\LawFirm\Legal\Models\Anexo;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Legal\Models\ProcessoWhatsappMessage;
@@ -120,7 +120,7 @@ class WhatsappImportController extends Controller
             }
 
             // 1. Generate PDF
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('lawfirm::admin.processos.exports.whatsapp-pdf-export', [
+            $pdf = Pdf::loadView('lawfirm::admin.processos.exports.whatsapp-pdf-export', [
                 'processo' => $processo,
                 'messages' => $messages,
             ]);
@@ -129,12 +129,12 @@ class WhatsappImportController extends Controller
             // 2. Prepare ZIP
             $zipFileName = 'Exportacao_Whatsapp_Processo_'.$processoId.'_'.now()->format('YmdHis').'.zip';
             $tempDir = storage_path('app/temp_exports');
-            if (!file_exists($tempDir)) {
+            if (! file_exists($tempDir)) {
                 mkdir($tempDir, 0755, true);
             }
-            $zipPath = $tempDir . '/' . $zipFileName;
+            $zipPath = $tempDir.'/'.$zipFileName;
 
-            $zip = new \ZipArchive();
+            $zip = new \ZipArchive;
             if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
                 return back()->with('error', 'Não foi possível criar o arquivo ZIP temporário.');
             }
@@ -151,7 +151,7 @@ class WhatsappImportController extends Controller
                     if ($anexo->path && $fileService->exists($anexo->path)) {
                         $fileData = $fileService->get($anexo->path);
                         if ($fileData) {
-                            $zip->addFromString('midias/' . $anexo->nome_original, $fileData);
+                            $zip->addFromString('midias/'.$anexo->nome_original, $fileData);
                         }
                     }
                 }
@@ -163,8 +163,9 @@ class WhatsappImportController extends Controller
             return response()->download($zipPath)->deleteFileAfterSend(true);
 
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error("Erro na exportação ZIP do WhatsApp: " . $e->getMessage(), ['exception' => $e]);
-            return back()->with('error', 'Ocorreu um erro ao gerar a exportação: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Erro na exportação ZIP do WhatsApp: '.$e->getMessage(), ['exception' => $e]);
+
+            return back()->with('error', 'Ocorreu um erro ao gerar a exportação: '.$e->getMessage());
         }
     }
 
@@ -245,6 +246,7 @@ class WhatsappImportController extends Controller
             // Already downloaded — return existing proxy URL
             if ($msg->anexo_id) {
                 $downloadUrl = route('admin.processos.download_attachment', $msg->anexo_id);
+
                 return response()->json([
                     'success'      => true,
                     'download_url' => $downloadUrl,
@@ -252,41 +254,41 @@ class WhatsappImportController extends Controller
                 ]);
             }
 
-            if (!$msg->payload) {
+            if (! $msg->payload) {
                 throw new \Exception('Nenhum payload de mensagem disponível.');
             }
 
             $config = MotherShipService::getEvolutionConfig();
-            if (!$config || empty($config['instance'])) {
+            if (! $config || empty($config['instance'])) {
                 throw new \Exception('Instância do WhatsApp não configurada neste ambiente.');
             }
 
             // 1. Fetch Base64 from Evolution API
             $response = $evolutionService->getBase64FromMediaMessage($config['instance'], $msg->payload);
 
-            if (!$response['success'] || empty($response['data']['base64'])) {
+            if (! $response['success'] || empty($response['data']['base64'])) {
                 throw new \Exception($response['error'] ?? 'Arquivo de mídia expirado ou não disponível no WhatsApp.');
             }
 
-            $base64  = $response['data']['base64'];
+            $base64 = $response['data']['base64'];
             $mimeType = $response['data']['mimetype'] ?? 'application/octet-stream';
 
             // 2. Determine extension from mime
             $mimeMap = [
-                'image/jpeg'   => 'jpg',
-                'image/png'    => 'png',
-                'image/gif'    => 'gif',
-                'image/webp'   => 'webp',
-                'audio/ogg; codecs=opus' => 'ogg',
-                'audio/ogg'   => 'ogg',
-                'audio/mp4'   => 'mp4',
-                'audio/mpeg'  => 'mp3',
-                'video/mp4'   => 'mp4',
-                'application/pdf'  => 'pdf',
-                'application/msword' => 'doc',
+                'image/jpeg'                                                              => 'jpg',
+                'image/png'                                                               => 'png',
+                'image/gif'                                                               => 'gif',
+                'image/webp'                                                              => 'webp',
+                'audio/ogg; codecs=opus'                                                  => 'ogg',
+                'audio/ogg'                                                               => 'ogg',
+                'audio/mp4'                                                               => 'mp4',
+                'audio/mpeg'                                                              => 'mp3',
+                'video/mp4'                                                               => 'mp4',
+                'application/pdf'                                                         => 'pdf',
+                'application/msword'                                                      => 'doc',
                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
             ];
-            $mimeBase  = trim(explode(';', $mimeType)[0]);
+            $mimeBase = trim(explode(';', $mimeType)[0]);
             $extension = $mimeMap[$mimeType] ?? $mimeMap[$mimeBase] ?? (explode('/', $mimeBase)[1] ?? 'bin');
 
             // 3. Decode base64 (handle optional data-URI prefix)
@@ -294,28 +296,32 @@ class WhatsappImportController extends Controller
                 $base64 = explode(',', $base64)[1];
             }
             $fileData = base64_decode($base64);
-            if (!$fileData) {
+            if (! $fileData) {
                 throw new \Exception('Falha ao decodificar a mídia recebida.');
             }
 
             // 4. Build isolated path: {tenant_id}/processos/{id}/whatsapp_media/{uuid}.{ext}
-            $processoId    = $msg->processo_id;
-            $tenantId      = MotherShipService::getTenantId();
-            $filename      = (string) Str::uuid() . '.' . $extension;
-            $originalName  = 'WhatsApp_' . now()->format('Ymd_His') . '.' . $extension;
-            $storagePath   = "{$tenantId}/processos/{$processoId}/whatsapp_media/{$filename}";
+            $processoId = $msg->processo_id;
+            $tenantId = MotherShipService::getTenantId();
+            $filename = (string) Str::uuid().'.'.$extension;
+            $originalName = 'WhatsApp_'.now()->format('Ymd_His').'.'.$extension;
+            $storagePath = "{$tenantId}/processos/{$processoId}/whatsapp_media/{$filename}";
 
             // 5. Store via SaasFileService (respects filesystems.default: s3, minio, local)
             $stored = $fileService->storeRaw($storagePath, $fileData);
-            if (!$stored) {
+            if (! $stored) {
                 throw new \Exception('Falha ao salvar o arquivo no armazenamento configurado.');
             }
 
             // 6. Determine media category for frontend
             $mediaType = 'document';
-            if (str_starts_with($mimeBase, 'image/'))  $mediaType = 'image';
-            elseif (str_starts_with($mimeBase, 'audio/')) $mediaType = 'audio';
-            elseif (str_starts_with($mimeBase, 'video/')) $mediaType = 'video';
+            if (str_starts_with($mimeBase, 'image/')) {
+                $mediaType = 'image';
+            } elseif (str_starts_with($mimeBase, 'audio/')) {
+                $mediaType = 'audio';
+            } elseif (str_starts_with($mimeBase, 'video/')) {
+                $mediaType = 'video';
+            }
 
             // 7. Create GED Anexo record so file appears in process documents
             //    and uses the secure internal proxy (admin.processos.download_attachment)
@@ -370,10 +376,10 @@ class WhatsappImportController extends Controller
 
                 // Reset message media status
                 $msg->update([
-                    'media_url' => null,
-                    'media_type' => null,
+                    'media_url'    => null,
+                    'media_type'   => null,
                     'media_source' => null,
-                    'anexo_id' => null,
+                    'anexo_id'     => null,
                 ]);
             }
 
@@ -388,7 +394,8 @@ class WhatsappImportController extends Controller
                 'error'   => 'Mensagem não encontrada.',
             ], 404);
         } catch (\Throwable $e) {
-            Log::error("Erro ao excluir mídia: " . $e->getMessage(), ['exception' => $e]);
+            Log::error('Erro ao excluir mídia: '.$e->getMessage(), ['exception' => $e]);
+
             return response()->json([
                 'success' => false,
                 'error'   => 'Erro ao excluir mídia.',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Financial;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use SuiteZap\LawFirm\Financial\Models\Financial;
 use SuiteZap\LawFirm\Legal\Models\Processo;
@@ -37,7 +38,7 @@ class FinancialTenantTest extends MultiDatabaseTestCase
         config(['lawfirm.tenant_id' => 'tenant-a']);
 
         $user = User::withoutEvents(fn () => User::create([
-            'name' => 'Fin A', 'email' => 'fin_a@tenant.test',
+            'name'     => 'Fin A', 'email' => 'fin_a@tenant.test',
             'password' => bcrypt('password'), 'role_id' => 1, 'status' => 1,
         ]));
         $person = Person::create(['name' => 'Person Fin A', 'emails' => [['value' => 'fina@test.com', 'label' => 'work']]]);
@@ -68,7 +69,7 @@ class FinancialTenantTest extends MultiDatabaseTestCase
         config(['lawfirm.tenant_id' => 'tenant-a']);
 
         $user = User::withoutEvents(fn () => User::create([
-            'name' => 'Fin A2', 'email' => 'fin_a2@tenant.test',
+            'name'     => 'Fin A2', 'email' => 'fin_a2@tenant.test',
             'password' => bcrypt('password'), 'role_id' => 1, 'status' => 1,
         ]));
         $person = Person::create(['name' => 'Person Fin A2', 'emails' => [['value' => 'fina2@test.com', 'label' => 'work']]]);
@@ -89,7 +90,7 @@ class FinancialTenantTest extends MultiDatabaseTestCase
         $this->assertNull(Financial::where('id', $financial->id)->first());
         $this->assertEquals(0, Financial::where('id', $financial->id)->count());
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
         Financial::findOrFail($financial->id);
     }
 }
