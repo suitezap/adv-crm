@@ -6,12 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use SuiteZap\LawFirm\Financial\Models\Financial;
 use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\SaaS\Concerns\BelongsToTenant;
 
 class TenantInvoice extends Model
 {
+    use BelongsToTenant;
+
     protected $table = 'tenant_invoices';
 
     protected $fillable = [
+        'tenant_id',
         'processo_id',
         'financial_id',
         'tenant_asaas_customer_id',

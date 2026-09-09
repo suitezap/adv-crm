@@ -26,9 +26,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 @endif
 
-{{-- ── CARD 1: Arquivos do Processo ──────────────────────────────────── --}}
-<div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200"
-    id="lf-docs-container">
+<div id="container-docs-cards" class="grid grid-cols-1 gap-6 w-full items-start">
+    {{-- ── CARD 1: Arquivos do Processo ──────────────────────────────────── --}}
+    <div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200"
+        id="lf-docs-container">
 
     <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
         <div class="flex items-center gap-3">
@@ -265,6 +266,7 @@
         </table>
     </div>
 </div>
+</div>{{-- end grid Arquivos + Checklist --}}
 
 @push('scripts')
     <script>

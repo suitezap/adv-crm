@@ -180,31 +180,6 @@
             </div>
         </div>
 
-        {{-- ── SECTION 3: INDICADORES DE DESEMPENHO ── --}}
-        <div class="fd-pnl">
-            <div class="fd-pnl-hd">
-                <span class="fd-pnl-hd-icon">🎯</span>
-                <h2 class="fd-pnl-hd-title">Indicadores de Desempenho</h2>
-            </div>
-            <div class="fd-pnl-bd">
-                <div class="fd-pf-g">
-                    @php $cr = $collectionRate; @endphp
-                    <div class="fd-pf">
-                        <p class="fd-pf-lb">Taxa de Recebimento</p>
-                        <p class="fd-pf-vl" style="color:{{ $cr >= 80 ? '#16a34a' : ($cr >= 50 ? '#d97706' : '#dc2626') }}">{{ number_format($cr, 1, ',', '.') }}%</p>
-                        <div class="fd-bar" style="margin-top:8px"><div class="fd-bar-f" style="width:{{ min(100,$cr) }}%;background:{{ $cr >= 80 ? '#16a34a' : ($cr >= 50 ? '#d97706' : '#dc2626') }}"></div></div>
-                        <p class="fd-pf-ht">Receitas pagas / total receitas</p>
-                    </div>
-                    @php $d = $dso; @endphp
-                    <div class="fd-pf">
-                        <p class="fd-pf-lb">Prazo Médio de Recebimento (DSO)</p>
-                        <p class="fd-pf-vl" style="color:{{ $d <= 30 ? '#16a34a' : ($d <= 60 ? '#d97706' : '#dc2626') }}">{{ number_format($d, 0, ',', '.') }} dias</p>
-                        <p class="fd-pf-ht">{{ $d <= 30 ? '✅ Ótimo' : ($d <= 60 ? '⚠️ Atenção' : '🔴 Crítico') }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         {{-- ── SECTION 4: AGING ── --}}
         <div class="fd-pnl">
             <div class="fd-pnl-hd">
@@ -233,6 +208,31 @@
                         <span class="fd-ag-tg" style="background:#fecdd3;color:#7f1d1d">&gt; 90 dias</span>
                         <span class="fd-ag-vl" style="color:#b91c1c">R$ {{ number_format($aging['over_90'] ?? 0, 2, ',', '.') }}</span>
                         <span class="fd-ag-sb" style="color:#b91c1c">Crítico</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ── SECTION 3: INDICADORES DE DESEMPENHO ── --}}
+        <div class="fd-pnl">
+            <div class="fd-pnl-hd">
+                <span class="fd-pnl-hd-icon">🎯</span>
+                <h2 class="fd-pnl-hd-title">Indicadores de Desempenho</h2>
+            </div>
+            <div class="fd-pnl-bd">
+                <div class="fd-pf-g">
+                    @php $cr = $collectionRate; @endphp
+                    <div class="fd-pf">
+                        <p class="fd-pf-lb">Taxa de Recebimento</p>
+                        <p class="fd-pf-vl" style="color:{{ $cr >= 80 ? '#16a34a' : ($cr >= 50 ? '#d97706' : '#dc2626') }}">{{ number_format($cr, 1, ',', '.') }}%</p>
+                        <div class="fd-bar" style="margin-top:8px"><div class="fd-bar-f" style="width:{{ min(100,$cr) }}%;background:{{ $cr >= 80 ? '#16a34a' : ($cr >= 50 ? '#d97706' : '#dc2626') }}"></div></div>
+                        <p class="fd-pf-ht">Receitas pagas / total receitas</p>
+                    </div>
+                    @php $d = $dso; @endphp
+                    <div class="fd-pf">
+                        <p class="fd-pf-lb">Prazo Médio de Recebimento (DSO)</p>
+                        <p class="fd-pf-vl" style="color:{{ $d <= 30 ? '#16a34a' : ($d <= 60 ? '#d97706' : '#dc2626') }}">{{ number_format($d, 0, ',', '.') }} dias</p>
+                        <p class="fd-pf-ht">{{ $d <= 30 ? '✅ Ótimo' : ($d <= 60 ? '⚠️ Atenção' : '🔴 Crítico') }}</p>
                     </div>
                 </div>
             </div>

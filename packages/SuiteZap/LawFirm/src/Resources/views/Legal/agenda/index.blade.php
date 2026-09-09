@@ -52,8 +52,8 @@
         </div>
 
         <!-- Iframe container isolado do Vue.js -->
-        <div id="lf-agenda-wrapper" style="background:#fff; border-radius:8px; border:1px solid #e5e7eb; overflow:hidden; min-height:600px; {{ request()->has('clean') ? 'height:calc(100vh - 120px)' : '' }}">
-            <iframe id="lf-agenda-iframe" style="width:100%; height: {{ request()->has('clean') ? '100%' : '780px' }}; border:none;" srcdoc=""></iframe>
+        <div id="lf-agenda-wrapper" style="background:#fff; border-radius:8px; border:1px solid #e5e7eb; overflow:hidden; {{ request()->has('clean') ? 'height:calc(100vh - 120px)' : '' }}">
+            <iframe id="lf-agenda-iframe" style="width:100%; height: {{ request()->has('clean') ? '100%' : '800px' }}; border:none; display:block;" srcdoc=""></iframe>
         </div>
     </div>
 
@@ -602,6 +602,11 @@
                 if (d.type === 'lf-agenda-eventclick') {
                     lfShowViewModal(d.props);
                 }
+
+                // Auto-resize iframe para mostrar calendário completo
+                if (d.type === 'lf-agenda-height' && !{{ request()->has('clean') ? 'true' : 'false' }}) {
+                    iframe.style.height = (d.height + 32) + 'px';
+                }
             });
 
             // ------------------------------------------------------------------
@@ -612,19 +617,13 @@
             var iframeHtml = '<!DOCTYPE html>' +
                 '<html lang="pt-br"><head>' +
                 '<meta charset="UTF-8">' +
-                '<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"><\/script>' +
+                '<script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/all/global.js"><\/script>' +
+                '<script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/themes/monarch/global.js"><\/script>' +
+                '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/skeleton.css">' +
+                '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/themes/monarch/theme.css">' +
+                '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.0/themes/monarch/palettes/purple.css">' +
                 '<style>' +
-                ':root { --brand-color: ' + brandColor + '; }' +
-                'body{margin:0;padding:16px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}' +
-                '.fc-toolbar-title{font-size:1.25rem!important;font-weight:600!important;}' +
-                '.fc-button{font-size:.8rem!important;padding:.35rem .75rem!important; transition: all 0.2s ease;}' +
-                '.fc-button-primary{background-color:var(--brand-color)!important; border-color:var(--brand-color)!important; opacity:0.85;}' +
-                '.fc-button-primary:hover{opacity:1; filter:brightness(1.1);}' +
-                '.fc-button-primary:not(:disabled).fc-button-active, .fc-button-primary:not(:disabled):active{background-color:var(--brand-color)!important; border-color:var(--brand-color)!important; opacity:1; filter:brightness(0.85); box-shadow:inset 0 3px 5px rgba(0,0,0,0.125)!important;}' +
-                '.fc-daygrid-day-number{font-size:.85rem;padding:4px 8px;}' +
-                '.fc-event{cursor:pointer;border-radius:4px!important;padding:2px 5px!important;font-size:.78rem!important;}' +
-                '.fc-list-empty{padding:2rem;font-size:.9rem;color:#6b7280;}' +
-                '.fc-daygrid-day:hover{background:#f9fafb;cursor:pointer;}' +
+                'body{margin:0;padding:12px 16px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}' +
                 '<\/style>' +
                 '<\/head><body>' +
                 '<div id="lf-cal"><\/div>' +
@@ -659,8 +658,16 @@
                 '      initialView:"dayGridMonth",' +
                 '      locale:"pt-br",' +
                 '      height:"auto",' +
-                '      headerToolbar:{left:"prev,next today",center:"title",right:"dayGridMonth,timeGridWeek,timeGridDay,listWeek"},' +
-                '      buttonText:{today:"Hoje",month:"Mês",week:"Semana",day:"Dia",list:"Lista"},' +
+                '      aspectRatio:2.2,' +
+                '      headerToolbar:{left:"prev,next today",center:"title",right:"dayGridMonth,timeGridWeek,timeGridDay,listWeek,multiMonthYear"},' +
+                '      buttons:{' +
+                '        dayGridMonth:{text:"Mês"},' +
+                '        timeGridWeek:{text:"Semana"},' +
+                '        timeGridDay:{text:"Dia"},' +
+                '        listWeek:{text:"Lista"},' +
+                '        multiMonthYear:{text:"Ano"},' +
+                '        today:{text:"Hoje"}' +
+                '      },' +
                 '      noEventsText:"Nenhum evento para exibir.",' +
                 '      editable:true,' +
                 '      droppable:true,' +
@@ -713,7 +720,12 @@
                 '      }' +
                 '    });' +
                 '    calRef.render();' +
-                '    window.addEventListener("resize",function(){calRef.updateSize();});' +
+                '    function lfSendHeight(){' +
+                '      window.parent.postMessage({type:"lf-agenda-height",height:document.body.scrollHeight},"*");' +
+                '    }' +
+                '    var ro=new ResizeObserver(function(){lfSendHeight();});' +
+                '    ro.observe(document.getElementById("lf-cal"));' +
+                '    setTimeout(lfSendHeight,800);' +
                 '  });' +
                 '})();' +
                 '<\/script><\/body><\/html>';

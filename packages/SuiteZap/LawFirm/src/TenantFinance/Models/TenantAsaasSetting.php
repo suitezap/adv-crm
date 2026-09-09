@@ -3,12 +3,16 @@
 namespace SuiteZap\LawFirm\TenantFinance\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use SuiteZap\LawFirm\SaaS\Concerns\BelongsToTenant;
 
 class TenantAsaasSetting extends Model
 {
+    use BelongsToTenant;
+
     protected $table = 'tenant_asaas_settings';
 
     protected $fillable = [
+        'tenant_id',
         'api_key',
         'wallet_id',
         'environment',

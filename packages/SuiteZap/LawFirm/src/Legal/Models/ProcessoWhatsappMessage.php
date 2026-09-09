@@ -4,6 +4,7 @@ namespace SuiteZap\LawFirm\Legal\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use SuiteZap\LawFirm\Legal\Models\Anexo;
 
 class ProcessoWhatsappMessage extends Model
 {
@@ -29,6 +30,10 @@ class ProcessoWhatsappMessage extends Model
         'message_timestamp',
         'is_from_me',
         'payload',
+        'media_url',
+        'media_type',
+        'anexo_id',
+        'media_source',
     ];
 
     /**
@@ -56,5 +61,32 @@ class ProcessoWhatsappMessage extends Model
     public function import(): BelongsTo
     {
         return $this->belongsTo(WhatsappImport::class, 'import_id');
+    }
+
+    /**
+     * Get the GED Anexo associated with the downloaded media (if any).
+     */
+    public function anexo(): BelongsTo
+    {
+        return $this->belongsTo(Anexo::class, 'anexo_id');
+    }
+
+    /**
+     * Boot the model.
+     */
+    protected static function booted()
+    {
+        static::deleting(function ($msg) {
+            if ($msg->anexo_id) {
+                try {
+                    $anexo = \SuiteZap\LawFirm\Legal\Models\Anexo::find($msg->anexo_id);
+                    if ($anexo) {
+                        $anexo->delete(); // Dispara o evento deleting do Anexo para apagar do S3
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error("Erro ao deletar Anexo via evento deleting de ProcessoWhatsappMessage: " . $e->getMessage());
+                }
+            }
+        });
     }
 }

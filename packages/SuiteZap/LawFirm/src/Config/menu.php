@@ -55,24 +55,24 @@ return [
         'permission' => 'lawfirm.processos.view',
     ],
 
+    // ─── Agenda ──────────────────────────────────────────────
+    [
+        'key'        => 'lawfirm.agenda',
+        'name'       => 'Agenda',
+        'route'      => 'admin.lawfirm.agenda.index',
+        'sort'       => 4,
+        'icon-class' => 'icon-calendar',
+        'permission' => 'lawfirm.agenda.view',
+    ],
+
     // ─── Tarefas ─────────────────────────────────────────────
     [
         'key'        => 'lawfirm.tarefas',
         'name'       => 'Tarefas',
         'route'      => 'admin.activities.index',
-        'sort'       => 3.5,
+        'sort'       => 5,
         'icon-class' => 'icon-activity',
         'permission' => 'lawfirm.tarefas.view',
-    ],
-
-    // ─── Modelos de Documentos ──────────────────────────────
-    [
-        'key'        => 'lawfirm.modelos',
-        'name'       => 'Modelos de Docs',
-        'route'      => 'admin.modelos.index',
-        'sort'       => 4.5,
-        'icon-class' => '',
-        'permission' => 'lawfirm.modelos.view',
     ],
 
     // ─── Prazos ──────────────────────────────────────────────
@@ -80,19 +80,19 @@ return [
         'key'        => 'lawfirm.prazos',
         'name'       => 'Prazos',
         'route'      => 'admin.prazos.index',
-        'sort'       => 4,
+        'sort'       => 6,
         'icon-class' => '',
         'permission' => 'lawfirm.prazos.view',
     ],
 
-    // ─── Agenda ──────────────────────────────────────────────
+    // ─── Modelos de Documentos ──────────────────────────────
     [
-        'key'        => 'lawfirm.agenda',
-        'name'       => 'Agenda',
-        'route'      => 'admin.lawfirm.agenda.index',
-        'sort'       => 5,
-        'icon-class' => 'icon-calendar',
-        'permission' => 'lawfirm.agenda.view',
+        'key'        => 'lawfirm.modelos',
+        'name'       => 'Modelos de Docs',
+        'route'      => 'admin.modelos.index',
+        'sort'       => 7,
+        'icon-class' => '',
+        'permission' => 'lawfirm.modelos.view',
     ],
 
     // ═══════════════════════════════════════════════════════════

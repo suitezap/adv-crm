@@ -58,12 +58,16 @@ class FinancialController extends Controller
      */
     public function index(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.financeiro.view'), 401, 'This action is unauthorized');
+
         // Filtros (Datas e Responsável)
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        // Passa usuários para o filtro de responsável
-        $users = User::all();
+        // Passa usuários para o filtro de responsável (escopado por permissão; nunca vaza cross-tenant)
+        $users = ($authorizedIds = bouncer()->getAuthorizedUserIds())
+            ? User::whereIn('id', $authorizedIds)->get()
+            : User::all();
 
         // Obtém todas as métricas do Service
         $metrics = $this->dashboardService->getAllMetrics($startDate, $endDate);

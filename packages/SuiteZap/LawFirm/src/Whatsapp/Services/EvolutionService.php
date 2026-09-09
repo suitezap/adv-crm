@@ -185,17 +185,22 @@ class EvolutionService
 
     /**
      * Busca histórico de mensagens de um contato e filtra as relativas a um intervalo de datas (localmente).
+     *
+     * A Evolution API não suporta filtrar por key.fromMe no where clause.
+     * Estratégia: uma única query usando OR para remoteJid ou remoteJidAlt
+     * (já que as mensagens recebidas muitas vezes armazenam o @lid no remoteJid e
+     * o número real no remoteJidAlt).
+     * + post-filter rígido em PHP para evitar vazamento.
      */
     public function fetchMessagesByDateRange($instanceName, $remoteJid, $startDate = null, $endDate = null, $limit = 500)
     {
         $response = $this->request('POST', "/chat/findMessages/{$instanceName}", [
             'where' => [
-                'key' => [
-                    'remoteJid' => $remoteJid,
-                ],
+                'OR' => [
+                    ['key' => ['remoteJid' => $remoteJid]],
+                    ['key' => ['remoteJidAlt' => $remoteJid]]
+                ]
             ],
-            // Request more messages depending on the necessity, since limits might truncate past dates.
-            // A higher limit ensures we go back in time, but the API has standard pagination limits usually.
             'limit' => (int) $limit,
         ]);
 
@@ -203,29 +208,58 @@ class EvolutionService
             return $response;
         }
 
-        $messages = $response['data']['messages']['records'] ?? $response['data']['messages'] ?? [];
+        $raw = $response['data']['messages']['records'] ?? $response['data']['messages'] ?? [];
+
+        // Strict post-filter: only keep messages whose key.remoteJid or key.remoteJidAlt exactly matches the target.
+        // This prevents bleed from group chats or broadcast lists where the same JID appears.
+        $messages = [];
+        $seen = [];
+        foreach ($raw as $msg) {
+            $msgKeyId     = $msg['key']['id'] ?? null;
+            $msgRemoteJid = $msg['key']['remoteJid'] ?? '';
+            $msgRemoteJidAlt = $msg['key']['remoteJidAlt'] ?? '';
+
+            $matchesJid = ($msgRemoteJid === $remoteJid || $msgRemoteJidAlt === $remoteJid);
+
+            if ($msgKeyId && ! isset($seen[$msgKeyId]) && $matchesJid) {
+                $seen[$msgKeyId] = true;
+                $messages[] = $msg;
+            }
+        }
+
+        if (empty($messages)) {
+            // If key.remoteJid filter returned nothing useful, we got an empty conversation — that's fine.
+            return ['success' => false, 'data' => ['messages' => []]];
+        }
 
         // Filter locally by timestamp if dates are provided
         if ($startDate || $endDate) {
             $startTs = $startDate ? strtotime($startDate.' 00:00:00') : 0;
-            $endTs = $endDate ? strtotime($endDate.' 23:59:59') : time();
+            $endTs   = $endDate   ? strtotime($endDate.' 23:59:59')   : time();
 
-            $filteredMessages = array_filter($messages, function ($msg) use ($startTs, $endTs) {
-                // Evolution API returns messageTimestamp as either a Unix timestamp directly or object.
-                // Assuming it's a Unix timestamp as standard Baileys response.
+            $messages = array_values(array_filter($messages, function ($msg) use ($startTs, $endTs) {
                 $timestamp = $msg['messageTimestamp'] ?? 0;
 
                 if (is_array($timestamp) && isset($timestamp['low'])) {
-                    $timestamp = $timestamp['low']; // handle Long timestamps (int64 structure)
+                    $timestamp = $timestamp['low'];
                 }
 
                 return $timestamp >= $startTs && $timestamp <= $endTs;
-            });
-
-            // Re-index array
-            $response['data']['messages'] = array_values($filteredMessages);
+            }));
         }
 
+        $response['data']['messages'] = $messages;
+
         return $response;
+    }
+
+    /**
+     * Download media from a message payload and return as Base64.
+     */
+    public function getBase64FromMediaMessage($instanceName, $messagePayload)
+    {
+        return $this->request('POST', "/chat/getBase64FromMediaMessage/{$instanceName}", [
+            'message' => $messagePayload
+        ]);
     }
 }

@@ -294,7 +294,7 @@ return [
     [
         'key'   => 'lawfirm.financeiro.cobrancas.view',
         'name'  => 'Ver Cobranças',
-        'route' => ['admin.lawfirm.tenant_finance.index', 'admin.lawfirm.tenant_finance.show'],
+        'route' => ['admin.lawfirm.tenant_finance.index', 'admin.lawfirm.tenant_finance.show', 'admin.lawfirm.tenant_finance.api.customer'],
         'sort'  => 2,
     ],
     [

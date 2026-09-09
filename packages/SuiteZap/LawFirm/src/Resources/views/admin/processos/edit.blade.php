@@ -93,7 +93,7 @@
             <div id="section-info" class="lf-section flex flex-col gap-6">
 
                 {{-- ── ROW 1: INÍCIO + DATAS ──────────────── --}}
-                <div class="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
+                <div id="row-info-basicas" class="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
 
                     {{-- Card: Informações Básicas --}}
                     <div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -310,10 +310,13 @@
                     </div>
                 </div>
 
-                {{-- ── ROW 2: DETALHES DO PROCESSO (full width) ── --}}
-                <div class="lf-card rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
-                    <div class="flex items-center justify-between pb-3 mb-5 border-b border-gray-100 dark:border-gray-800">
-                        <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight">Detalhes do Processo</p>
+                {{-- ── ROW 2: DETALHES DO PROCESSO + PARTES E ADVOGADOS ── --}}
+                <div id="row-detalhes-partes" class="grid grid-cols-2 gap-4 max-lg:grid-cols-1 items-start">
+                    
+                    {{-- Card: Detalhes do Processo --}}
+                    <div class="lf-card flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="flex items-center justify-between pb-3 mb-5 border-b border-gray-100 dark:border-gray-800">
+                            <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight">Detalhes do Processo</p>
                         {{-- Botão de preenchimento automático via dados do Escavador --}}
                         <button type="button"
                             onclick="LFSyncFromEscavador()"
@@ -421,10 +424,41 @@
                             <x-admin::form.control-group.error control-name="vara" />
                         </x-admin::form.control-group>
                     </div>
+                    </div>
+
+                    {{-- Card: Partes e Advogados --}}
+                    <div id="card-partes" class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+                            <div>
+                                <p class="text-lg font-bold text-gray-800 dark:text-white">⚖️ Partes e Advogados</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    Dados extraídos da Capa Oficial do processo. Clique em "Dados Oficiais (IA)" para importar.
+                                </p>
+                            </div>
+                            <button type="button"
+                                onclick="lfSwitchSection('escavador')"
+                                class="secondary-button text-xs flex items-center gap-1 bg-primary-50 text-primary-700 border-primary-200 hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-400 dark:border-primary-800">
+                                📥 Importar de Dados Oficiais
+                            </button>
+                        </div>
+                        <x-admin::form.control-group class="mt-4">
+                            <x-admin::form.control-group.control
+                                type="textarea"
+                                name="envolvidos_escavador"
+                                id="field_envolvidos_escavador"
+                                class="font-mono text-sm min-h-[200px]"
+                                rows="8"
+                                :value="old('envolvidos_escavador', $processo->envolvidos_escavador)"
+                                label="Partes e Advogados"
+                                placeholder="Os dados serão preenchidos automaticamente ao clicar em 'Importar de Dados Oficiais'..." />
+                            <x-admin::form.control-group.error control-name="envolvidos_escavador" />
+                        </x-admin::form.control-group>
+                    </div>
+
                 </div>
 
                 {{-- ── ROW 3: ESTRATÉGICO + PARTE CONTRÁRIA ── --}}
-                <div class="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
+                <div id="row-estrategico" class="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
 
                     {{-- Card: Dados Estratégicos --}}
                     <div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -502,40 +536,6 @@
                 </div>
 
             </div>{{-- end #section-info --}}
-
-            {{-- ── SECTION: Partes e Advogados ──────────────────────── --}}
-            <div id="section-partes" class="lf-section hidden flex flex-col gap-4">
-
-                {{-- Card: Partes e Advogados --}}
-                <div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
-                    <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
-                        <div>
-                            <p class="text-lg font-bold text-gray-800 dark:text-white">⚖️ Partes e Advogados</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                Dados extraídos da Capa Oficial do processo. Clique em "Dados Oficiais (IA)" para importar.
-                            </p>
-                        </div>
-                        <button type="button"
-                            onclick="lfSwitchSection('escavador')"
-                            class="secondary-button text-xs flex items-center gap-1 bg-primary-50 text-primary-700 border-primary-200 hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-400 dark:border-primary-800">
-                            📥 Importar de Dados Oficiais
-                        </button>
-                    </div>
-                    <x-admin::form.control-group class="mt-4">
-                        <x-admin::form.control-group.control
-                            type="textarea"
-                            name="envolvidos_escavador"
-                            id="field_envolvidos_escavador"
-                            class="font-mono text-sm min-h-[200px]"
-                            rows="8"
-                            :value="old('envolvidos_escavador', $processo->envolvidos_escavador)"
-                            label="Partes e Advogados"
-                            placeholder="Os dados serão preenchidos automaticamente ao clicar em 'Importar de Dados Oficiais'..." />
-                        <x-admin::form.control-group.error control-name="envolvidos_escavador" />
-                    </x-admin::form.control-group>
-                </div>
-
-            </div>{{-- end #section-partes --}}
 
             </div>{{-- end flex wrapper --}}
 
@@ -625,14 +625,56 @@
             window.lfSwitchSection = function(name) {
                 document.querySelectorAll('.lf-section').forEach(el => el.classList.add('hidden'));
                 document.querySelectorAll('.lf-filter-btn').forEach(el => el.classList.remove('active'));
-                const target = document.getElementById('section-' + name);
-                if (target) target.classList.remove('hidden');
+
+                const rowBasicas = document.getElementById('row-info-basicas');
+                const rowDetalhes = document.getElementById('row-detalhes-partes');
+                const rowEstrategico = document.getElementById('row-estrategico');
+                if (rowBasicas) rowBasicas.classList.remove('hidden');
+                if (rowDetalhes) rowDetalhes.classList.remove('hidden');
+                if (rowEstrategico) rowEstrategico.classList.remove('hidden');
+
+                // Na guia individual 'docs', cards ficam um por linha (1 coluna)
+                const docsContainer = document.getElementById('container-docs-cards');
+                if (docsContainer) {
+                    docsContainer.className = 'grid grid-cols-1 gap-6 w-full items-start';
+                }
+
+                if (name === 'partes') {
+                    const target = document.getElementById('section-info');
+                    if (target) target.classList.remove('hidden');
+                    if (rowBasicas) rowBasicas.classList.add('hidden');
+                    if (rowEstrategico) rowEstrategico.classList.add('hidden');
+                } else {
+                    const target = document.getElementById('section-' + name);
+                    if (target) target.classList.remove('hidden');
+                }
+
                 const btn = document.querySelector('[data-section="' + name + '"]');
                 if (btn) btn.classList.add('active');
                 localStorage.setItem('lf_processo_section_{{ $processo->id }}', name);
             };
             window.lfShowAll = function() {
-                document.querySelectorAll('.lf-section').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.lf-section').forEach(el => {
+                    if (el.id === 'section-modelos') {
+                        el.classList.add('hidden');
+                    } else {
+                        el.classList.remove('hidden');
+                    }
+                });
+
+                const rowBasicas = document.getElementById('row-info-basicas');
+                const rowDetalhes = document.getElementById('row-detalhes-partes');
+                const rowEstrategico = document.getElementById('row-estrategico');
+                if (rowBasicas) rowBasicas.classList.remove('hidden');
+                if (rowDetalhes) rowDetalhes.classList.remove('hidden');
+                if (rowEstrategico) rowEstrategico.classList.remove('hidden');
+
+                // Na guia 'todos', cards ficam lado a lado (2 colunas)
+                const docsContainer = document.getElementById('container-docs-cards');
+                if (docsContainer) {
+                    docsContainer.className = 'grid grid-cols-2 gap-4 max-lg:grid-cols-1 items-start w-full';
+                }
+
                 document.querySelectorAll('.lf-filter-btn').forEach(el => el.classList.remove('active'));
                 const btn = document.querySelector('[data-section="todos"]');
                 if (btn) btn.classList.add('active');

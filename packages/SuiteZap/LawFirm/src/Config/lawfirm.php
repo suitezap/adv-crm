@@ -22,6 +22,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Identidade do Tenant
+    |--------------------------------------------------------------------------
+    |
+    | ID canônico do tenant. Lido do .env via config() para garantir
+    | funcionamento correto no contexto do servidor web (php-fpm).
+    | Nunca confiar em env() diretamente fora do contexto CLI.
+    |
+    */
+    'tenant_id' => env('TENANT_ID', null),
+
+    /*
+    |--------------------------------------------------------------------------
     | Evolution API (WhatsApp) — Fallback Local
     |--------------------------------------------------------------------------
     |

@@ -336,20 +336,6 @@
 
         {{-- ── Hero Principal ── --}}
         <div class="escavai-hero">
-            <div class="escavai-hero-logo">⚖️</div>
-
-            <div>
-                <div class="escavai-hero-title">EscavAI</div>
-                <div class="escavai-hero-subtitle mt-2">
-                    Chat de inteligência artificial do Escavador para consultas jurídicas, pesquisa de processos e análise de jurisprudência.
-                </div>
-            </div>
-
-            {{-- Status dinâmico --}}
-            <div id="statusBadge" class="escavai-status">
-                <span class="escavai-status-dot" id="statusDot"></span>
-                <span id="statusText">Iniciando chat...</span>
-            </div>
 
             {{-- Ações --}}
             <div class="escavai-actions">

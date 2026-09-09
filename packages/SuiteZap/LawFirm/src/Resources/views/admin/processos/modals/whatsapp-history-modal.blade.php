@@ -18,6 +18,10 @@
             <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1.25rem; border-bottom:1px solid #e5e7eb; background:#f9fafb; flex-shrink:0;">
                 <span id="lf-wa-hist-title" style="font-size:1rem; font-weight:600; color:#111827;">💬 Histórico do WhatsApp — Processo #{{ $processo->id }}</span>
                 <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <a id="lf-wa-export-btn" href="{{ route('admin.lawfirm.whatsapp.import.export_zip', $processo->id) }}" target="_blank"
+                            style="padding:0.375rem 0.875rem; font-size:0.8rem; font-weight:600; border-radius:0.375rem; border:1px solid #7c3aed; background:#f5f3ff; color:#7c3aed; cursor:pointer; text-decoration:none;">
+                        📦 Baixar PDF + Mídias (.zip)
+                    </a>
                     <button onclick="window.lfPrintWaHistory()"
                             style="padding:0.375rem 0.875rem; font-size:0.8rem; font-weight:600; border-radius:0.375rem; border:1px solid #d1d5db; background:#fff; color:#374151; cursor:pointer;">
                         📄 Imprimir / PDF
@@ -123,18 +127,57 @@
         }
     };
 
-    async function loadImportTabs() {
+    var _deleteMediaRoute = "{{ route('admin.lawfirm.whatsapp.messages.delete_media', 'REPLACE_ID') }}";
+
+    window.lfDeleteWaMedia = async function(btn, messageId) {
+        if (!confirm('Deseja excluir este arquivo do servidor (S3)?\n\nO arquivo será apagado, mas a mensagem continuará e você poderá baixá-lo novamente se ainda estiver disponível no WhatsApp.')) return;
+        var btnText = btn.innerHTML;
+        btn.innerHTML = '⏳';
+        btn.disabled = true;
+
+        var url = _deleteMediaRoute.replace('REPLACE_ID', messageId);
         try {
-            var resp = await fetch(_importsRoute, {
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            var resp = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': _csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             });
             var data = await resp.json();
-            if (data.success && data.imports && data.imports.length > 0) {
-                var tabs = getTabs();
-                var allBtn = document.getElementById('lf-wa-tab-all');
-                tabs.innerHTML = '';
-                tabs.appendChild(allBtn);
+            if (data.success) {
+                // Reload active tab to show the download button again
+                window.lfLoadWaImport(_activeImportId);
+            } else {
+                alert(data.error || 'Erro ao excluir mídia.');
+                btn.innerHTML = btnText;
+                btn.disabled = false;
+            }
+        } catch(e) {
+            alert('Erro de rede: ' + e.message);
+            btn.innerHTML = btnText;
+            btn.disabled = false;
+        }
+    };
 
+    async function loadImportTabs() {
+        try {
+            // Evitar cache do navegador nas requisições GET
+            var fetchUrl = _importsRoute + (_importsRoute.indexOf('?') >= 0 ? '&' : '?') + 't=' + new Date().getTime();
+            var resp = await fetch(fetchUrl, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Cache-Control': 'no-cache' }
+            });
+            var data = await resp.json();
+
+            var tabs = getTabs();
+            var allBtn = document.getElementById('lf-wa-tab-all');
+
+            // Always reset the tab bar — ensures deleted tabs disappear even when list is empty
+            tabs.innerHTML = '';
+            tabs.appendChild(allBtn);
+
+            if (data.success && data.imports && data.imports.length > 0) {
                 data.imports.forEach(function(imp) {
                     var statusIcon = imp.status === 'completed' ? '✅' : (imp.status === 'processing' ? '⏳' : '❌');
 
@@ -173,13 +216,19 @@
         bd.innerHTML = '<div style="text-align:center;padding:3rem;color:#3b82f6;">⏳ Buscando mensagens...</div>';
 
         var url = _msgRoute;
+        var exportUrl = "{{ route('admin.lawfirm.whatsapp.import.export_zip', $processo->id) }}";
         if (importId) {
             url += (url.indexOf('?') >= 0 ? '&' : '?') + 'import_id=' + importId;
+            exportUrl += '?import_id=' + importId;
         }
+        
+        var exportBtn = document.getElementById('lf-wa-export-btn');
+        if (exportBtn) exportBtn.href = exportUrl;
+        url += (url.indexOf('?') >= 0 ? '&' : '?') + 't=' + new Date().getTime();
 
         try {
             var resp = await fetch(url, {
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Cache-Control': 'no-cache' }
             });
             var data = await resp.json();
             var bd2 = getBody();
@@ -206,6 +255,50 @@
     window.lfCloseWaHistory = function() {
         var portal = getPortal();
         if (portal) { portal.style.display = 'none'; }
+    };
+
+    window.lfDownloadWaMedia = async function(btn, messageId) {
+        var originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span>⏳ Baixando...</span>';
+        btn.disabled = true;
+        
+        var url = "{{ route('admin.lawfirm.whatsapp.messages.download_media', 'REPLACE_MID') }}".replace('REPLACE_MID', messageId);
+        try {
+            var resp = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': _csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            var data = await resp.json();
+            if (data.success) {
+                var container = btn.parentNode;
+                var proxyUrl = data.download_url;
+                var mediaHtml = '';
+                if (data.media_type === 'image') {
+                    mediaHtml = '<a href="' + proxyUrl + '" target="_blank"><img src="' + proxyUrl + '" style="max-width: 100%; border-radius: 8px; cursor: pointer;" loading="lazy"></a>';
+                } else if (data.media_type === 'audio') {
+                    mediaHtml = '<audio controls style="max-width: 100%;"><source src="' + proxyUrl + '">Áudio</audio>';
+                } else if (data.media_type === 'video') {
+                    mediaHtml = '<video controls style="max-width: 100%; border-radius: 8px;"><source src="' + proxyUrl + '"></video>';
+                } else {
+                    mediaHtml = '<a href="' + proxyUrl + '" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(0,0,0,0.05); border-radius: 6px; text-decoration: none; color: inherit; font-weight: 600;">📄 Abrir Documento</a>';
+                }
+                // Badge GED
+                mediaHtml += '<div style="margin-top: 4px; font-size: 10px; color: #6b7280; display: flex; align-items: center; gap: 3px;"><span style="color: #10b981;">✓</span> Salvo no GED <a href="' + proxyUrl + '" target="_blank" style="color: #6b7280; text-decoration: underline; margin-left: 4px;">⬇ Baixar</a></div>';
+                container.innerHTML = mediaHtml;
+            } else {
+                alert(data.error || 'Erro ao baixar mídia.');
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        } catch(e) {
+            alert('Erro de rede: ' + e.message);
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
     };
 
     window.lfPrintWaHistory = function() {

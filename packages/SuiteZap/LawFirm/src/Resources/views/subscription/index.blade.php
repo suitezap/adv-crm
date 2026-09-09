@@ -327,16 +327,11 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-                    {{-- Plano PRO --}}
+                    {{-- Promoções --}}
                     <div class="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 lf-assistant-card">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-bold dark:text-white">Plano PRO Anual</h3>
-                            <span class="rounded bg-violet-100 px-2 py-1 text-xs font-bold text-violet-800">R$ 500,00</span>
+                            <h3 class="text-lg font-bold dark:text-white">Promoções</h3>
                         </div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Tenha acesso a todos os módulos, integrações premium e suporte estendido.</p>
-                        <button onclick="window.asaasCheckoutPlan('pro_anual', 500.00, 'Plano PRO Anual')" class="mt-auto rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition">
-                            Atualizar Assinatura
-                        </button>
                     </div>
 
                     {{-- Créditos de IA --}}
@@ -348,17 +343,17 @@
                         <p class="text-sm text-gray-500 dark:text-gray-400">Recarregue instantaneamente a cota de uso dos nossos assistentes especializados.</p>
                         
                         <div class="mt-auto flex flex-col gap-2">
-                            <button onclick="window.openPaymentModal(5.00)" class="flex justify-between items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400">
-                                <span>R$ 5,00 em Créditos</span>
-                                <span class="font-bold">R$ 5,00</span>
+                            <button onclick="window.openPaymentModal(25.00)" class="flex justify-between items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400">
+                                <span>SuiteCoins Créditos de IA</span>
+                                <span class="font-bold">R$ 25,00</span>
                             </button>
-                            <button onclick="window.openPaymentModal(10.00)" class="flex justify-between items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400">
-                                <span>R$ 10,00 em Créditos</span>
-                                <span class="font-bold">R$ 10,00</span>
+                            <button onclick="window.openPaymentModal(35.00)" class="flex justify-between items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400">
+                                <span>SuiteCoins Créditos de IA</span>
+                                <span class="font-bold">R$ 35,00</span>
                             </button>
-                            <button onclick="window.openPaymentModal(15.00)" class="flex justify-between items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition">
-                                <span>R$ 15,00 em Créditos</span>
-                                <span class="font-bold">R$ 15,00</span>
+                            <button onclick="window.openPaymentModal(45.00)" class="flex justify-between items-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400">
+                                <span>SuiteCoins Créditos de IA</span>
+                                <span class="font-bold">R$ 45,00</span>
                             </button>
                         </div>
                         
@@ -366,9 +361,9 @@
                         <div class="mt-2 pt-3 border-t border-gray-100 dark:border-gray-800">
                             <label class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 block">Outro Valor (R$)</label>
                             <div class="flex gap-2 items-center">
-                                <div class="relative flex-1">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">R$</span>
-                                    <input type="number" id="customCreditInput" min="1" step="1" value="20" class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:border-brandColor focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 transition-all">
+                                <div class="flex flex-1 items-center border border-gray-300 rounded-md overflow-hidden focus-within:border-brandColor focus-within:ring-1 focus-within:ring-brandColor transition-all dark:border-gray-700">
+                                    <span class="px-3 py-2 bg-gray-50 text-gray-500 font-medium text-sm border-r border-gray-300 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400">R$</span>
+                                    <input type="number" id="customCreditInput" min="1" step="1" value="50" class="w-full px-3 py-2 text-sm font-bold border-0 focus:outline-none focus:ring-0 dark:bg-gray-800 dark:text-gray-200 bg-white">
                                 </div>
                                 <button onclick="window.openCustomPaymentModal()" class="rounded-lg bg-gray-800 px-4 py-2 text-sm font-bold text-white hover:bg-gray-900 transition dark:bg-gray-700 dark:hover:bg-gray-600">
                                     Gerar
@@ -412,13 +407,13 @@
                     </div>
                     
                     <div class="flex flex-col gap-3">
-                        <button id="btnPayPix" onclick="window.asaasCheckoutCredits('PIX')" class="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all btn-pastel-pix">
+                        <button id="btnPayPix" onclick="window.asaasCheckoutCredits('PIX')" class="flex items-center justify-center gap-2 rounded-lg bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400 w-full">
                             <i class="icon-pix text-lg"></i> Pagar com PIX
                         </button>
-                        <button id="btnPayCard" onclick="window.asaasCheckoutCredits('CREDIT_CARD')" class="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all btn-pastel-card">
+                        <button id="btnPayCard" onclick="window.asaasCheckoutCredits('CREDIT_CARD')" class="flex items-center justify-center gap-2 rounded-lg bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400 w-full">
                             <i class="icon-credit-card text-lg"></i> Cartão de Crédito
                         </button>
-                        <button id="btnPayCardInst" onclick="window.asaasCheckoutCredits('CREDIT_CARD_INSTALLMENT')" class="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all btn-pastel-card-inst">
+                        <button id="btnPayCardInst" onclick="window.asaasCheckoutCredits('CREDIT_CARD_INSTALLMENT')" class="flex items-center justify-center gap-2 rounded-lg bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 hover:bg-blue-100 transition border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800/50 dark:text-blue-400 w-full">
                             <i class="icon-credit-card text-lg"></i> Cartão de Crédito Parcelado
                         </button>
                     </div>
@@ -572,7 +567,7 @@
         window.openPaymentModal = function(value) {
             selectedValue = value;
 
-            document.getElementById('modalCreditsText').innerText = 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' em Créditos de IA';
+            document.getElementById('modalCreditsText').innerText = 'SuiteCoins Créditos de IA (R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ')';
             document.getElementById('modalPriceText').innerText = 'R$ ' + value.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
             document.getElementById('paymentModal').classList.remove('hidden');

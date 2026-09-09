@@ -42,6 +42,17 @@ class TenantAsaasService
     }
 
     /**
+     * Settings de um tenant específico (uso em webhook público, sem sessão).
+     */
+    public function getSettingsForTenant(string $tenantId): ?TenantAsaasSetting
+    {
+        return TenantAsaasSetting::withoutGlobalScopes()
+            ->where('tenant_id', $tenantId)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    /**
      * Verifica se o módulo está configurado e ativo.
      */
     public function isConfigured(): bool

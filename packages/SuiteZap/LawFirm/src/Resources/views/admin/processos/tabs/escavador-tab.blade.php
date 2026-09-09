@@ -43,7 +43,7 @@
                     <p class="text-sm text-gray-500 mb-4">Para importar ou atualizar os dados deste processo, sincronize com a base de Dados Oficiais.</p>
                     <button type="button" class="primary-button" onclick="EscavadorTab.sync()">
                         <i class="icon-refresh mr-1"></i> Sincronizar Capa
-                        <span class="ml-1 inline-flex items-center rounded-full bg-teal-50 border border-teal-200 px-1.5 py-0 text-xs font-bold text-teal-700">Ƶ 0,63</span>
+                        <span class="ml-2 inline-flex items-center rounded-full bg-white/20 border border-white/50 px-2 py-0.5 text-xs font-bold text-white shadow-sm">Ƶ 0,63</span>
                     </button>
                     <p class="text-xs text-gray-400 mt-2" id="escavador-saldo-display">Carregando saldo...</p>
                 </div>

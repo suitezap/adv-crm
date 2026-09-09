@@ -37,6 +37,11 @@ class TenantInvoiceDataGrid extends DataGrid
                 'tenant_invoices.created_at'
             );
 
+        // Security / Tenant Scope (AGENTS.md §7 — DB compartilhado exige tenant_id)
+        if ($tenantId = config('lawfirm.tenant_id', env('TENANT_ID'))) {
+            $queryBuilder->where('tenant_invoices.tenant_id', $tenantId);
+        }
+
         // Security / ACL Scope - Filter by User Permissions
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $queryBuilder->whereIn('processos.user_id', $userIds);

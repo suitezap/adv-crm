@@ -1,7 +1,7 @@
 # 📊 Matriz de Cobertura e Rastreabilidade de Testes (COVERAGE_MATRIX.md)
 
 > **Gerado automaticamente por `quality/scripts/generate_coverage_matrix.py`**  
-> **Última geração:** 2026-08-25 23:21:21  
+> **Última geração:** 2026-09-09 11:27:45  
 > **Fonte da verdade:** `quality/TEST_CATALOG.yaml`
 
 ---
@@ -10,10 +10,10 @@
 
 | Métrica | Quantidade | Percentual |
 |:---|:---:|:---:|
-| **Total de Testes Cadastrados** | **35** | 100% |
-| 🟢 Ativos e Certificados (`active`) | 7 | 20.0% |
-| 🟡 Implementados Não-Verificados (`implemented_unverified`) | 24 | 68.6% |
-| ⚪ Planejados (`planned`) | 4 | 11.4% |
+| **Total de Testes Cadastrados** | **40** | 100% |
+| 🟢 Ativos e Certificados (`active`) | 7 | 17.5% |
+| 🟡 Implementados Não-Verificados (`implemented_unverified`) | 29 | 72.5% |
+| ⚪ Planejados (`planned`) | 4 | 10.0% |
 | 🟠 Em Quarentena (`quarantined`) | 0 | 0.0% |
 | 🔴 Desativados (`disabled`) | 0 | 0.0% |
 | 📦 Aposentados / Histórico (`retired`) | 0 | 0.0% |
@@ -27,15 +27,17 @@
 |:---|:---:|
 | **AI** | 15 |
 | **Atendimento** | 2 |
+| **Financial** | 3 |
 | **Legal** | 8 |
 | **Plataforma / Governança** | 3 |
-| **SaaS** | 7 |
+| **SaaS** | 8 |
+| **TenantFinance** | 1 |
 
 ### Por Prioridade
 | Prioridade | Quantidade de Testes |
 |:---|:---:|
-| **P0** | 16 |
-| **P1** | 14 |
+| **P0** | 20 |
+| **P1** | 15 |
 | **P2** | 5 |
 
 ---
@@ -79,3 +81,8 @@
 | **CHATWOOT-E2E-001** | Acesso isolado ao menu SAC, ACL, middleware de add-on e iframe do Chatwoot (sem requisições externas) | Atendimento | e2e | E2E | P1 | ⚪ planned | `tests/e2e/workflows/test_chatwoot_sac_workflow.py` | `quality/modules/chatwoot.md` |
 | **E2E-LEAD-001** | Fluxo E2E de conversão de lead: criação, movimentação de funil e conversão em processo jurídico | Legal | e2e | E2E | P1 | 🟢 active | `tests/e2e/workflows/test_lead_conversion_workflow.py` | `quality/modules/lead.md` |
 | **E2E-AI-001** | Fluxo E2E de triagem inteligente de lead via assistente de IA com mock WireMock | AI | e2e | E2E | P2 | 🟢 active | `tests/e2e/workflows/test_lead_ai_workflow.py` | `quality/modules/ai-assistant.md` |
+| **FIN-FEATURE-001** | CRUD de lançamento financeiro com escopo tenant_id (criar, baixar, recibo) | Financial | domain | Feature | P0 | 🟡 implemented_unverified | `tests/Feature/Financial/FinancialTenantTest.php` | `quality/modules/financial.md` |
+| **FIN-FEATURE-002** | Quick-pay exige lawfirm.financeiro.edit e respeita tenant (401 sem permissão) | Financial | domain | Feature | P1 | 🟡 implemented_unverified | `tests/Feature/Financial/FinancialTenantTest.php` | `quality/modules/financial.md` |
+| **TENANT-FIN-001** | Cobrança Asaas do próprio tenant (criar, visualizar, cancelar, reenviar) | TenantFinance | domain | Feature | P0 | 🟡 implemented_unverified | `tests/Feature/TenantFinance/TenantInvoiceTest.php` | `quality/modules/tenant-finance.md` |
+| **FIN-SEC-001** | Visibilidade por configuração do usuário (401 sem permissão, leitura sem escrita, credenciais mascaradas) | Financial | domain | Security | P0 | 🟡 implemented_unverified | `tests/Feature/Financial/FinancialPermissionsTest.php` | `quality/modules/financial.md` |
+| **TENANT-SEC-006** | Tenant A não acessa financeiro/cobranças do Tenant B; webhook com token alheio retorna 401 | SaaS | platform | Security | P0 | 🟡 implemented_unverified | `tests/Security/FinancialTenantIsolationTest.php` | `quality/modules/tenant-finance.md` |

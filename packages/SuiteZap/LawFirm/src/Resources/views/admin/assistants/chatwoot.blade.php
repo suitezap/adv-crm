@@ -391,20 +391,9 @@
 
         {{-- ── Hero Principal ── --}}
         <div class="chatwoot-hero">
-            <div class="chatwoot-hero-logo">💬</div>
 
-            <div>
-                <div class="chatwoot-hero-title">SAC / Atendimento</div>
-                <div class="chatwoot-hero-subtitle mt-2">
-                    Central de atendimento ao cliente via WhatsApp, e-mail e chat. Gerencie todas as conversas em um único painel.
-                </div>
-            </div>
 
-            {{-- Status dinâmico --}}
-            <div id="cwStatusBadge" class="chatwoot-status">
-                <span class="chatwoot-status-dot" id="cwStatusDot"></span>
-                <span id="cwStatusText">Clique para abrir o atendimento</span>
-            </div>
+
 
             {{-- Ações --}}
             <div class="chatwoot-actions">

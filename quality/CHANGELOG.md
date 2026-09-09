@@ -34,6 +34,31 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 - Adicionado `__pycache__/` e `*.pyc` ao `.gitignore` global
 - `docker/testing/playwright-entrypoint.sh`: script que resolve IPs dos tenants no `/etc/hosts` antes de rodar o pytest
 
+## [Unreleased] - FIN-COBRANCAS-001 (Financial / TenantFinance — Fase 2)
+
+### Adicionado
+- `tenant_id` (string, nullable, indexed) a `law_financials`, `tenant_invoices`, `tenant_asaas_settings`, `tenant_asaas_customers` via 4 migrations idempotentes com `Schema::connection('mysql')` + `hasColumn` guard.
+- `SaaS\Scopes\TenantScope` + `SaaS\Concerns\BelongsToTenant` (auto-fill no creating + escopo global por `config lawfirm.tenant_id`).
+- Docs `quality/modules/financial.md` + `tenant-finance.md`; testes `FIN-FEATURE-001/002`, `TENANT-FIN-001`, `TENANT-SEC-006` em `implemented_unverified` (35 → 39 no catálogo).
+- Testes Pest: `tests/Feature/Financial/FinancialTenantTest.php`, `tests/Feature/TenantFinance/TenantInvoiceTest.php`, `tests/Security/FinancialTenantIsolationTest.php`.
+
+### Corrigido
+- `InvoiceController@index` passa a usar `TenantInvoiceDataGrid` (antes `FinancialDataGrid` — tabela errada).
+- `GET /cobrancas/api/customers/{person_id}` reordenada antes de `GET /cobrancas/{id}` + `whereNumber('id')` (fim do sombreamento `/api` → 404).
+- `invoices/index.blade.php`: removido `fetch()` hardcoded `/financial/quick-pay|send-whatsapp`; ações Asaas via rotas nomeadas + `bouncer()` checks em todos os métodos; `api.customer` incluída no ACL `cobrancas.view`.
+- `TenantAsaasService::getSettings()` escopado por sessão + `getSettingsForTenant()` para webhook; webhook valida `webhook_token` do tenant dono da invoice (401 em mismatch); DataGrids filtram `tenant_id`; filtro de responsável escopado por `getAuthorizedUserIds()`.
+
+> Execução foreground pendente no data-plane Docker de QA (`mysql-test` indisponível no dev Windows — `getaddrinfo failed`); transição para `active` após `QA-DATA-001`/harness com saída comprovada.
+
+### Complemento 2 — Backfill e enforcement (retomada pós-restart)
+- Migrations `2026_09_09_000005` (backfill NULLs com TENANT_ID do env + log por tabela, irreversível por segurança, precedente `2026_04_01`) e `2026_09_09_000006` (NOT NULL condicional: só aplica sem NULLs restantes, senão warning + conciliação manual; isolamento segue via app).
+- Aviso multi-tenant compartilhado: em base com >1 tenant, conferir o log antes de rodar o backfill (atribuição manual nesse caso).
+
+### Complemento — Visibilidade por configuração do usuário (FIN-SEC-001)
+- Gates adicionados onde faltavam: dashboard financeiro (`lawfirm.financeiro.view`) e settings Asaas (`cobrancas.settings`) — antes sem `bouncer()`, qualquer autenticado via/alterava.
+- Credenciais fora do HTML: inputs `password` vazios + keep-old no `store()` (em branco preserva).
+- Teste `tests/Feature/Financial/FinancialPermissionsTest.php` (401 sem permissão, leitura sem escrita, máscara de segredos, `individual` vs `global`) + spec `specs/financial/permissions/spec.md`; catálogo 39 → 40.
+
 ### Corrigido (Infraestrutura de Boot)
 - **Race condition de migrações**: `app-tenant-b` agora depende de `app-tenant-a: service_healthy` via `depends_on`, evitando `Column already exists` na base `mothership_test` durante o boot paralelo
 - **Permissão de logs do worker**: inserido `chown -R www-data:www-data storage bootstrap/cache` imediatamente antes do `exec` final no `docker/entrypoint.sh`, eliminando `Permission denied` no `laravel.log` para os processos `queue:work`

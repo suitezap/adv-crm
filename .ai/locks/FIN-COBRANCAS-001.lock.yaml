@@ -1,0 +1,22 @@
+task_id: FIN-COBRANCAS-001
+owner: OPENCODE
+write_scope:
+  - packages/SuiteZap/LawFirm/src/Financial/
+  - packages/SuiteZap/LawFirm/src/TenantFinance/
+  - packages/SuiteZap/LawFirm/src/Http/Routes/admin-tenant-finance.php
+  - packages/SuiteZap/LawFirm/src/Http/Routes/admin-financial.php
+  - packages/SuiteZap/LawFirm/src/Config/menu.php
+  - packages/SuiteZap/LawFirm/src/Config/acl.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/TenantFinance/
+  - packages/SuiteZap/LawFirm/src/Database/Migrations/*tenant*financial*invoices*
+  - quality/TEST_CATALOG.yaml
+  - quality/modules/financial.md
+  - quality/modules/tenant-finance.md
+  - quality/CHANGELOG.md
+  - openspec/changes/financial-cobrancas-isolation-fix/
+started_at: "2026-09-09T11:00:00Z"
+last_checkpoint_at: "2026-09-09T14:00:00Z"
+pause_note: "Retomado pós-restart 2026-09-09. Backfill 000005+000006 + FIN-SEC-001 concluídos. Nada commitado — aguardando aprovação de commit atômico."
+base_commit: "da151be4c1dcf5809c60107096346f0d377acd7e"
+workspace: "dev-opencode"
+status: ACTIVE

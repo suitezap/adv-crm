@@ -36,17 +36,21 @@ Route::middleware([CheckTenantFinanceModule::class])->group(function () {
     Route::post('/cobrancas/store', [InvoiceController::class, 'store'])
         ->name('admin.lawfirm.tenant_finance.store');
 
-    Route::get('/cobrancas/{id}', [InvoiceController::class, 'show'])
-        ->name('admin.lawfirm.tenant_finance.show');
-
-    Route::post('/cobrancas/{id}/cancel', [InvoiceController::class, 'cancel'])
-        ->name('admin.lawfirm.tenant_finance.cancel');
-
-    Route::post('/cobrancas/{id}/resend', [InvoiceController::class, 'resendNotification'])
-        ->name('admin.lawfirm.tenant_finance.resend');
-
     // ── API AJAX (para modais dentro do Processo) ─────────
+    // Declarada ANTES de /{id} para não ser sombreada (show('api') → 404).
 
     Route::get('/cobrancas/api/customers/{person_id}', [InvoiceController::class, 'getCustomerByPerson'])
         ->name('admin.lawfirm.tenant_finance.api.customer');
+
+    Route::get('/cobrancas/{id}', [InvoiceController::class, 'show'])
+        ->whereNumber('id')
+        ->name('admin.lawfirm.tenant_finance.show');
+
+    Route::post('/cobrancas/{id}/cancel', [InvoiceController::class, 'cancel'])
+        ->whereNumber('id')
+        ->name('admin.lawfirm.tenant_finance.cancel');
+
+    Route::post('/cobrancas/{id}/resend', [InvoiceController::class, 'resendNotification'])
+        ->whereNumber('id')
+        ->name('admin.lawfirm.tenant_finance.resend');
 });

@@ -72,4 +72,23 @@ class Anexo extends Model
 
         return strtoupper(pathinfo($name, PATHINFO_EXTENSION));
     }
+
+    /**
+     * Boot the model.
+     */
+    protected static function booted()
+    {
+        static::deleting(function ($anexo) {
+            if ($anexo->path) {
+                try {
+                    $fileService = app(\SuiteZap\LawFirm\SaaS\Services\SaasFileService::class);
+                    if ($fileService->exists($anexo->path)) {
+                        $fileService->delete($anexo->path);
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error("Erro ao deletar arquivo físico no evento deleting do Anexo: " . $e->getMessage());
+                }
+            }
+        });
+    }
 }

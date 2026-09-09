@@ -28,8 +28,8 @@
     </div>
 
     <!-- Seletor de Modelo Pronto -->
-    <div class="flex flex-col md:flex-row gap-4 items-end justify-between bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800/60 shadow-sm">
-        <div class="flex-1 w-full relative">
+    <div class="flex flex-col gap-4 items-center bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl border border-gray-100 dark:border-gray-800/60 shadow-sm">
+        <div class="w-full relative">
             <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
                 📂 Utilizar um modelo pronto
             </label>
@@ -81,7 +81,7 @@
         </div>
         <button type="button" 
             onclick="window.useSelectedTemplate({{ $processo->id }})"
-            class="primary-button h-[38px] w-full md:w-auto flex items-center justify-center gap-1">
+            class="primary-button h-[38px] w-auto px-8 py-2 inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg shadow-sm">
             <i class="icon-doc"></i>
             Usar Modelo
         </button>
@@ -92,9 +92,9 @@
             <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
                 Modelos sugeridos para este processo
             </p>
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div class="grid grid-cols-3 gap-4">
                 @foreach($templates as $template)
-                    <div class="flex flex-col justify-between rounded-lg border {{ $template->is_global ? 'border-blue-200 dark:border-blue-800/60' : 'border-gray-100 dark:border-gray-800' }} bg-gray-50 p-4 dark:bg-gray-800/50">
+                    <div class="flex flex-col justify-between rounded-lg border {{ $template->is_global ? 'border-blue-200 dark:border-blue-800/60' : 'border-gray-100 dark:border-gray-800' }} bg-gray-50 p-4 dark:bg-gray-800/50 shadow-sm hover:shadow transition-shadow">
                         <div>
                             <div class="flex items-center gap-2 mb-2 flex-wrap">
                                 @if($template->is_global)
@@ -113,16 +113,16 @@
                                     </span>
                                 @endif
                             </div>
-                            <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $template->titulo }}</h4>
+                            <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $template->titulo }}</h4>
                             @if($template->descricao)
                                 <p class="mt-1 text-xs text-gray-500 line-clamp-2" title="{{ $template->descricao }}">{{ $template->descricao }}</p>
                             @endif
                         </div>
 
-                        <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-center">
                             <button type="button"
                                 onclick="window.renderDocumentTemplate({{ $processo->id }}, '{{ $template->unique_id }}')"
-                                class="primary-button w-full">
+                                class="primary-button w-auto px-4 py-1.5 text-xs font-medium inline-flex items-center gap-1.5 rounded-lg shadow-sm">
                                 <i class="icon-doc"></i>
                                 Usar Modelo
                             </button>

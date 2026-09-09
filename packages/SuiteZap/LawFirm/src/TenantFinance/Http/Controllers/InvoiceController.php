@@ -5,7 +5,7 @@ namespace SuiteZap\LawFirm\TenantFinance\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use SuiteZap\LawFirm\Financial\DataGrids\FinancialDataGrid;
+use SuiteZap\LawFirm\TenantFinance\DataGrids\TenantInvoiceDataGrid;
 use SuiteZap\LawFirm\TenantFinance\Models\TenantAsaasCustomer;
 use SuiteZap\LawFirm\TenantFinance\Models\TenantInvoice;
 use SuiteZap\LawFirm\TenantFinance\Services\TenantAsaasService;
@@ -30,8 +30,10 @@ class InvoiceController extends Controller
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.financeiro.cobrancas.view'), 401, 'This action is unauthorized');
+
         if (request()->ajax()) {
-            return app(FinancialDataGrid::class)->process();
+            return app(TenantInvoiceDataGrid::class)->process();
         }
 
         return view('lawfirm::TenantFinance.invoices.index');
@@ -42,6 +44,9 @@ class InvoiceController extends Controller
      */
     public function show(int $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.financeiro.cobrancas.view'), 401, 'This action is unauthorized');
+
+        // TenantScope global já restringe ao tenant da sessão (AGENTS.md §7).
         $invoice = TenantInvoice::with(['customer', 'processo'])->findOrFail($id);
 
         return view('lawfirm::TenantFinance.invoices.show', compact('invoice'));
@@ -52,6 +57,8 @@ class InvoiceController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.financeiro.cobrancas.create'), 401, 'This action is unauthorized');
+
         if (! $this->asaasService->isConfigured()) {
             return response()->json([
                 'error' => 'Configure seu Asaas em Configurações antes de criar cobranças.',
@@ -115,6 +122,8 @@ class InvoiceController extends Controller
      */
     public function cancel(int $id): JsonResponse
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.financeiro.cobrancas.delete'), 401, 'This action is unauthorized');
+
         $invoice = TenantInvoice::findOrFail($id);
 
         if (! $invoice->isPending() && ! $invoice->isOverdue()) {
@@ -145,6 +154,8 @@ class InvoiceController extends Controller
      */
     public function resendNotification(int $id): JsonResponse
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.financeiro.cobrancas.edit'), 401, 'This action is unauthorized');
+
         $invoice = TenantInvoice::findOrFail($id);
 
         if (! $invoice->asaas_payment_id) {
@@ -171,6 +182,8 @@ class InvoiceController extends Controller
      */
     public function getCustomerByPerson(int $personId): JsonResponse
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.financeiro.cobrancas.view'), 401, 'This action is unauthorized');
+
         $customer = TenantAsaasCustomer::where('person_id', $personId)->first();
 
         if (! $customer) {

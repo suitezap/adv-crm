@@ -11,6 +11,9 @@
                 <button type="button" class="secondary-button" onclick="abrirAgenda()">
                     <span class="icon-calendar text-lg inline-block align-middle mr-1"></span> Ver Agenda
                 </button>
+                <button type="submit" form="processo-form" class="primary-button">
+                    <span class="icon-save text-lg inline-block align-middle mr-1"></span> Salvar
+                </button>
                 <button type="button" class="primary-button btn btn-primary" onclick="adicionarPrazo()">
                     <span class="icon-plus text-lg inline-block align-middle mr-1"></span> Novo Item
                 </button>

@@ -4,12 +4,16 @@ namespace SuiteZap\LawFirm\Financial\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\SaaS\Concerns\BelongsToTenant;
 
 class Financial extends Model
 {
+    use BelongsToTenant;
+
     protected $table = 'law_financials';
 
     protected $fillable = [
+        'tenant_id',
         'processo_id',
         'tipo',
         'nome',

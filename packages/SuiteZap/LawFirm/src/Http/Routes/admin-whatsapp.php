@@ -40,7 +40,10 @@ Route::middleware([CheckWhatsappModule::class])->prefix('whatsapp')->group(funct
     Route::controller(WhatsappImportController::class)->group(function () {
         Route::post('importar/{processo_id}', 'dispatchImport')->name('admin.lawfirm.whatsapp.import');
         Route::get('mensagens/{processo_id}', 'fetchMessages')->name('admin.lawfirm.whatsapp.messages');
+        Route::post('mensagens/{message_id}/download-media', 'downloadMedia')->name('admin.lawfirm.whatsapp.messages.download_media');
+        Route::delete('mensagens/{message_id}/media', 'deleteMedia')->name('admin.lawfirm.whatsapp.messages.delete_media');
         Route::get('imports/{processo_id}', 'listImports')->name('admin.lawfirm.whatsapp.imports');
+        Route::get('imports/{processo_id}/export', 'exportZip')->name('admin.lawfirm.whatsapp.import.export_zip');
         Route::delete('imports/{processo_id}/{import_id}', 'deleteImport')->name('admin.lawfirm.whatsapp.import.delete');
     });
 

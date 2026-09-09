@@ -16,6 +16,8 @@ class TenantAsaasSettingsController extends Controller
 {
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.financeiro.cobrancas.settings'), 401, 'This action is unauthorized');
+
         $settings = TenantAsaasSetting::first();
 
         return view('lawfirm::TenantFinance.settings.index', compact('settings'));
@@ -23,8 +25,10 @@ class TenantAsaasSettingsController extends Controller
 
     public function store(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.financeiro.cobrancas.settings'), 401, 'This action is unauthorized');
+
         $validated = $request->validate([
-            'api_key'       => 'required|string|max:255',
+            'api_key'       => 'nullable|string|max:255',
             'wallet_id'     => 'nullable|string|max:100',
             'environment'   => 'required|in:sandbox,production',
             'webhook_token' => 'nullable|string|max:255',
@@ -36,8 +40,18 @@ class TenantAsaasSettingsController extends Controller
         $settings = TenantAsaasSetting::first();
 
         if ($settings) {
+            // Credenciais nunca trafegam de volta à view: em branco mantém a atual.
+            if (empty($validated['api_key'])) {
+                unset($validated['api_key']);
+            }
+            if (empty($validated['webhook_token'])) {
+                unset($validated['webhook_token']);
+            }
             $settings->update($validated);
         } else {
+            if (empty($validated['api_key'])) {
+                return back()->withErrors(['api_key' => 'Informe a API Key do Asaas.'])->withInput();
+            }
             $settings = TenantAsaasSetting::create($validated);
         }
 

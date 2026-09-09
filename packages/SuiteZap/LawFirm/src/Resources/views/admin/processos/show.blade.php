@@ -85,7 +85,7 @@
             <div id="section-info" class="lf-section flex flex-col gap-6">
 
                 {{-- ROW 1: INFORMAÇÕES BÁSICAS + DATAS --}}
-                <div class="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
+                <div id="row-info-basicas" class="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
 
                     {{-- Card: Informações Básicas --}}
                     <div class="lf-card flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -263,52 +263,70 @@
                     </div>
                 </div>
 
-                {{-- ROW 2: DETALHES DO PROCESSO --}}
-                <div class="lf-card rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
-                    <p class="mb-5 text-base font-semibold text-gray-800 dark:text-white tracking-tight pb-3 border-b border-gray-100 dark:border-gray-800">Detalhes do Processo</p>
+                {{-- ROW 2: DETALHES DO PROCESSO + PARTES E ADVOGADOS --}}
+                <div id="row-detalhes-partes" class="grid grid-cols-2 gap-4 max-lg:grid-cols-1 items-start">
 
-                    <div class="grid grid-cols-2 gap-4 mb-4 max-sm:grid-cols-1">
-                        <div class="space-y-1">
-                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">@lang('lawfirm::app.processos.form.cnj')</p>
-                            <p class="text-base font-mono text-gray-900 dark:text-white">{{ $processo->numero_cnj ?? '-' }}</p>
+                    {{-- Card: Detalhes do Processo --}}
+                    <div class="lf-card flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight pb-3 border-b border-gray-100 dark:border-gray-800">Detalhes do Processo</p>
+
+                        <div class="grid grid-cols-2 gap-4 mb-2 max-sm:grid-cols-1">
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">@lang('lawfirm::app.processos.form.cnj')</p>
+                                <p class="text-base font-mono text-gray-900 dark:text-white">{{ $processo->numero_cnj ?? '-' }}</p>
+                            </div>
+
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Protocolo de Distribuição</p>
+                                <p class="text-base text-gray-900 dark:text-white">{{ $processo->protocolo_distribuicao ?? '-' }}</p>
+                            </div>
                         </div>
 
-                        <div class="space-y-1">
-                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Protocolo de Distribuição</p>
-                            <p class="text-base text-gray-900 dark:text-white">{{ $processo->protocolo_distribuicao ?? '-' }}</p>
+                        <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">@lang('lawfirm::app.processos.form.area')</p>
+                                <p class="text-base text-gray-900 dark:text-white">{{ $processo->area_direito ?? '-' }}</p>
+                            </div>
+
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">@lang('lawfirm::app.processos.form.fase')</p>
+                                <p class="text-base text-gray-900 dark:text-white">{{ $processo->fase_processual ?? '-' }}</p>
+                            </div>
+
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">@lang('lawfirm::app.processos.form.tribunal')</p>
+                                <p class="text-base text-gray-900 dark:text-white">{{ $processo->tribunal ?? '-' }}</p>
+                            </div>
+
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">@lang('lawfirm::app.processos.form.comarca')</p>
+                                <p class="text-base text-gray-900 dark:text-white">{{ $processo->comarca ?? '-' }}</p>
+                            </div>
+
+                            <div class="space-y-1 col-span-2 max-sm:col-span-1">
+                                <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">@lang('lawfirm::app.processos.form.vara')</p>
+                                <p class="text-base text-gray-900 dark:text-white">{{ $processo->vara ?? '-' }}</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-4 max-md:grid-cols-2 max-sm:grid-cols-1">
-                        <div class="space-y-1">
-                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">@lang('lawfirm::app.processos.form.area')</p>
-                            <p class="text-base text-gray-900 dark:text-white">{{ $processo->area_direito ?? '-' }}</p>
+                    {{-- Card: Partes e Advogados --}}
+                    <div id="card-partes" class="lf-card flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-gray-800">
+                            <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight">⚖️ Partes e Advogados</p>
                         </div>
-
-                        <div class="space-y-1">
-                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">@lang('lawfirm::app.processos.form.fase')</p>
-                            <p class="text-base text-gray-900 dark:text-white">{{ $processo->fase_processual ?? '-' }}</p>
-                        </div>
-
-                        <div class="space-y-1">
-                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">@lang('lawfirm::app.processos.form.tribunal')</p>
-                            <p class="text-base text-gray-900 dark:text-white">{{ $processo->tribunal ?? '-' }}</p>
-                        </div>
-
-                        <div class="space-y-1">
-                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">@lang('lawfirm::app.processos.form.comarca')</p>
-                            <p class="text-base text-gray-900 dark:text-white">{{ $processo->comarca ?? '-' }}</p>
-                        </div>
-
-                        <div class="space-y-1">
-                            <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">@lang('lawfirm::app.processos.form.vara')</p>
-                            <p class="text-base text-gray-900 dark:text-white">{{ $processo->vara ?? '-' }}</p>
-                        </div>
+                        @if($processo->envolvidos_escavador)
+                            <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800 rounded-lg p-4 font-sans">{{ $processo->envolvidos_escavador }}</pre>
+                        @else
+                            <div class="py-8 text-center text-sm text-gray-400">
+                                Nenhuma informação de partes importada. Use "Dados Oficiais (IA)" na página de edição.
+                            </div>
+                        @endif
                     </div>
                 </div>
 
                 {{-- ROW 3: ESTRATÉGICO + PARTE CONTRÁRIA --}}
-                <div class="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
+                <div id="row-estrategico" class="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
 
                     {{-- Card: Dados Estratégicos --}}
                     <div class="lf-card flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -355,22 +373,6 @@
                 </div>
 
             </div>{{-- end #section-info --}}
-
-            {{-- ── SECTION: Partes e Advogados ─────────────────────────── --}}
-            <div id="section-partes" class="lf-section hidden flex flex-col gap-4">
-                <div class="lf-card flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
-                    <div class="flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-gray-800">
-                        <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight">⚖️ Partes e Advogados</p>
-                    </div>
-                    @if($processo->envolvidos_escavador)
-                        <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800 rounded-lg p-4">{{ $processo->envolvidos_escavador }}</pre>
-                    @else
-                        <div class="py-8 text-center text-sm text-gray-400">
-                            Nenhuma informação de partes importada. Use "Dados Oficiais (IA)" na página de edição.
-                        </div>
-                    @endif
-                </div>
-            </div>{{-- end #section-partes --}}
         </div>
 
     @include('lawfirm::admin.processos.modals.whatsapp-history-modal', ['processo' => $processo])
@@ -468,14 +470,55 @@
             window.lfSwitchSection = function(name) {
                 document.querySelectorAll('.lf-section').forEach(el => el.classList.add('hidden'));
                 document.querySelectorAll('.lf-filter-btn').forEach(el => el.classList.remove('active'));
-                const target = document.getElementById('section-' + name);
-                if (target) target.classList.remove('hidden');
+
+                const rowBasicas = document.getElementById('row-info-basicas');
+                const rowDetalhes = document.getElementById('row-detalhes-partes');
+                const rowEstrategico = document.getElementById('row-estrategico');
+                if (rowBasicas) rowBasicas.classList.remove('hidden');
+                if (rowDetalhes) rowDetalhes.classList.remove('hidden');
+                if (rowEstrategico) rowEstrategico.classList.remove('hidden');
+
+                // Na guia individual 'docs', cards ficam um por linha (1 coluna)
+                const docsContainer = document.getElementById('container-docs-cards');
+                if (docsContainer) {
+                    docsContainer.className = 'grid grid-cols-1 gap-6 w-full items-start';
+                }
+
+                if (name === 'partes') {
+                    const target = document.getElementById('section-info');
+                    if (target) target.classList.remove('hidden');
+                    if (rowBasicas) rowBasicas.classList.add('hidden');
+                    if (rowEstrategico) rowEstrategico.classList.add('hidden');
+                } else {
+                    const target = document.getElementById('section-' + name);
+                    if (target) target.classList.remove('hidden');
+                }
+
                 const btn = document.querySelector('[data-section="' + name + '"]');
                 if (btn) btn.classList.add('active');
                 localStorage.setItem('lf_processo_section_{{ $processo->id }}', name);
             };
             window.lfShowAll = function() {
-                document.querySelectorAll('.lf-section').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.lf-section').forEach(el => {
+                    if (el.id === 'section-modelos') {
+                        el.classList.add('hidden');
+                    } else {
+                        el.classList.remove('hidden');
+                    }
+                });
+                const rowBasicas = document.getElementById('row-info-basicas');
+                const rowDetalhes = document.getElementById('row-detalhes-partes');
+                const rowEstrategico = document.getElementById('row-estrategico');
+                if (rowBasicas) rowBasicas.classList.remove('hidden');
+                if (rowDetalhes) rowDetalhes.classList.remove('hidden');
+                if (rowEstrategico) rowEstrategico.classList.remove('hidden');
+
+                // Na guia 'todos', cards ficam lado a lado (2 colunas)
+                const docsContainer = document.getElementById('container-docs-cards');
+                if (docsContainer) {
+                    docsContainer.className = 'grid grid-cols-2 gap-4 max-lg:grid-cols-1 items-start w-full';
+                }
+
                 document.querySelectorAll('.lf-filter-btn').forEach(el => el.classList.remove('active'));
                 const btn = document.querySelector('[data-section="todos"]');
                 if (btn) btn.classList.add('active');

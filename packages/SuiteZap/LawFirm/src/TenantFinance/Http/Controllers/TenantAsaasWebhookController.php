@@ -36,8 +36,11 @@ class TenantAsaasWebhookController extends Controller
 
         $asaasPaymentId = $payment['id'];
 
-        // Localizar invoice local pelo asaas_payment_id
-        $invoice = TenantInvoice::where('asaas_payment_id', $asaasPaymentId)->first();
+        // Localizar invoice local pelo asaas_payment_id (endpoint público: sem sessão,
+        // resolve o tenant pela própria invoice e valida o webhook_token desse tenant).
+        $invoice = TenantInvoice::withoutGlobalScopes()
+            ->where('asaas_payment_id', $asaasPaymentId)
+            ->first();
 
         if (! $invoice) {
             Log::info('[TenantAsaas Webhook] Invoice não encontrada para payment_id: '.$asaasPaymentId);
@@ -45,8 +48,11 @@ class TenantAsaasWebhookController extends Controller
             return response()->json(['status' => 'ignored', 'reason' => 'invoice not found'], 200);
         }
 
-        // Validar webhook_token se configurado
-        $settings = TenantAsaasSetting::where('is_active', true)->first();
+        // Validar webhook_token do tenant dono da invoice
+        $settings = TenantAsaasSetting::withoutGlobalScopes()
+            ->where('tenant_id', $invoice->tenant_id)
+            ->where('is_active', true)
+            ->first();
         if ($settings && ! empty($settings->webhook_token)) {
             $headerToken = $request->header('asaas-access-token');
             if ($headerToken !== $settings->webhook_token) {
@@ -69,9 +75,11 @@ class TenantAsaasWebhookController extends Controller
                     'payment_date' => $payment['paymentDate'] ?? $payment['confirmedDate'] ?? now(),
                 ]);
 
-                // Sincronizar com law_financials se vinculado
+                // Sincronizar com law_financials se vinculado (mesmo tenant da invoice)
                 if ($invoice->financial_id) {
-                    Financial::where('id', $invoice->financial_id)
+                    Financial::withoutGlobalScopes()
+                        ->where('id', $invoice->financial_id)
+                        ->where('tenant_id', $invoice->tenant_id)
                         ->update([
                             'status'       => 'pago',
                             'payment_date' => $payment['paymentDate'] ?? now(),

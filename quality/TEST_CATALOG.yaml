@@ -938,3 +938,140 @@ tests:
     last_verified_version: "v3.55.0"
     last_verified_date: "2026-08-26"
     notes: "1 teste passou (exit 0). Valida que o assistente de IA consome o endpoint mock e não realiza chamadas externas reais. AI_REAL_TESTS=false obrigatório."
+
+  # =========================================================================
+  # DOMÍNIO: FINANCIAL / TENANTFINANCE (Fase 2 — FIN-COBRANCAS-001)
+  # =========================================================================
+  - id: FIN-FEATURE-001
+    name: "CRUD de lançamento financeiro com escopo tenant_id (criar, baixar, recibo)"
+    domain: Financial
+    layer: domain
+    module: financial
+    type: Feature
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Financial/FinancialTenantTest.php
+    documentation: quality/modules/financial.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Financial/Models/Financial.php
+        symbol: BelongsToTenant
+        purpose: "Escopo tenant_id obrigatório em law_financials"
+      - path: packages/SuiteZap/LawFirm/src/Financial/DataGrids/FinancialDataGrid.php
+        symbol: FinancialDataGrid::prepareQueryBuilder
+        purpose: "Filtro tenant_id + bouncer no grid"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: "Registrado em FIN-COBRANCAS-001. Aguardando execução foreground para transitar a active."
+
+  - id: FIN-FEATURE-002
+    name: "Quick-pay exige lawfirm.financeiro.edit e respeita tenant (401 sem permissão)"
+    domain: Financial
+    layer: domain
+    module: financial
+    type: Feature
+    priority: P1
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Financial/FinancialTenantTest.php
+    documentation: quality/modules/financial.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Financial/Http/Controllers/FinancialController.php
+        symbol: FinancialController::quickPay
+        purpose: "Baixa rápida com bouncer + escopo tenant"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: "Registrado em FIN-COBRANCAS-001. Aguardando execução foreground para transitar a active."
+
+  - id: TENANT-FIN-001
+    name: "Cobrança Asaas do próprio tenant (criar, visualizar, cancelar, reenviar)"
+    domain: TenantFinance
+    layer: domain
+    module: tenant-finance
+    type: Feature
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/TenantFinance/TenantInvoiceTest.php
+    documentation: quality/modules/tenant-finance.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/TenantFinance/Http/Controllers/InvoiceController.php
+        symbol: InvoiceController::index
+        purpose: "Listagem via TenantInvoiceDataGrid com bouncer"
+      - path: packages/SuiteZap/LawFirm/src/TenantFinance/DataGrids/TenantInvoiceDataGrid.php
+        symbol: TenantInvoiceDataGrid::prepareQueryBuilder
+        purpose: "Query tenant_invoices com tenant_id"
+    dependencies: ["mysql"]
+    external_services:
+      - name: asaas
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: "Registrado em FIN-COBRANCAS-001. Rota /api antes de /{id} + whereNumber. Aguardando execução foreground."
+
+  - id: FIN-SEC-001
+    name: "Visibilidade por configuração do usuário (401 sem permissão, leitura sem escrita, credenciais mascaradas)"
+    domain: Financial
+    layer: domain
+    module: financial
+    type: Security
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Financial/FinancialPermissionsTest.php
+    documentation: quality/modules/financial.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Financial/Http/Controllers/FinancialController.php
+        symbol: FinancialController::index
+        purpose: "Gate lawfirm.financeiro.view no dashboard"
+      - path: packages/SuiteZap/LawFirm/src/TenantFinance/Http/Controllers/TenantAsaasSettingsController.php
+        symbol: TenantAsaasSettingsController::index
+        purpose: "Gate cobrancas.settings + credenciais fora do HTML"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: "Registrado em FIN-COBRANCAS-001 (complemento permissão-por-usuário). Aguardando execução foreground."
+
+  - id: TENANT-SEC-006
+    name: "Tenant A não acessa financeiro/cobranças do Tenant B; webhook com token alheio retorna 401"
+    domain: SaaS
+    layer: platform
+    module: tenant-finance
+    type: Security
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Security/FinancialTenantIsolationTest.php
+    documentation: quality/modules/tenant-finance.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/SaaS/Scopes/TenantScope.php
+        symbol: TenantScope::apply
+        purpose: "Escopo global tenant_id"
+      - path: packages/SuiteZap/LawFirm/src/TenantFinance/Http/Controllers/TenantAsaasWebhookController.php
+        symbol: TenantAsaasWebhookController::handle
+        purpose: "Resolução de tenant por invoice + validação de webhook_token"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: "Registrado em FIN-COBRANCAS-001. Aguardando execução foreground para transitar a active."

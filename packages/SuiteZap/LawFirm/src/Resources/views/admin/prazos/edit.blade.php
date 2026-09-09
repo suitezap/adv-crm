@@ -63,8 +63,8 @@
                                 rules="required"
                                 :label="trans('lawfirm::app.prazos.form.type')"
                             >
-                                <option value="comum" {{ $prazo->tipo == 'comum' ? 'selected' : '' }}>@lang('lawfirm::app.prazos.common')</option>
-                                <option value="fatal" {{ $prazo->tipo == 'fatal' ? 'selected' : '' }}>@lang('lawfirm::app.prazos.fatal')</option>
+                                <option value="prazo" {{ $prazo->tipo == 'prazo' ? 'selected' : '' }}>⚖️ Prazo</option>
+                                <option value="tarefa" {{ $prazo->tipo == 'tarefa' ? 'selected' : '' }}>✅ Tarefa</option>
                             </x-admin::form.control-group.control>
                             <x-admin::form.control-group.error control-name="tipo" />
                         </x-admin::form.control-group>

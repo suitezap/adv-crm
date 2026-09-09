@@ -49,11 +49,11 @@
                     <label class="block text-sm font-semibold text-gray-800 dark:text-white mb-1.5">
                         🔑 API Key do Asaas <span class="text-red-500">*</span>
                     </label>
-                    <input type="text"
+                    <input type="password"
                            name="api_key"
-                           value="{{ old('api_key', $settings->api_key ?? '') }}"
-                           required
-                           placeholder="$aact_prod_... ou $aact_hmlg_..."
+                           value=""
+                           autocomplete="new-password"
+                           placeholder="{{ ! empty($settings->api_key) ? '•••••••• salva — em branco mantém a atual' : '$aact_prod_... ou $aact_hmlg_...' }}"
                            class="w-full rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 font-mono">
                     <p class="text-xs text-gray-500 mt-1.5">Token de acesso à API V3 do Asaas do seu escritório.</p>
                     @error('api_key')
@@ -93,10 +93,11 @@
                     <label class="block text-sm font-semibold text-gray-800 dark:text-white mb-1.5">
                         🔒 Webhook Token (Opcional)
                     </label>
-                    <input type="text"
+                    <input type="password"
                            name="webhook_token"
-                           value="{{ old('webhook_token', $settings->webhook_token ?? '') }}"
-                           placeholder="Token para validar webhooks recebidos"
+                           value=""
+                           autocomplete="new-password"
+                           placeholder="{{ ! empty($settings->webhook_token) ? '•••••••• salvo — em branco mantém o atual' : 'Token para validar webhooks recebidos' }}"
                            class="w-full rounded border border-gray-300 px-3 py-2.5 text-sm text-gray-600 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 font-mono">
                     <p class="text-xs text-gray-500 mt-1.5">
                         Configure este token no painel do Asaas → Webhooks → Access Token.<br>
