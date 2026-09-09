@@ -80,9 +80,14 @@ class AgendaService
         }
 
         // -------------------------------------------------------
-        // 2. Busca Prazos do LawFirm (vinculados a Processos)
+        // 2. Busca Prazos do LawFirm (vinculados a Processos do alcance do usuário)
+        // PRIV-AUDIT-001: TenantScope filtra o tenant; user_id filtra o perfil.
         // -------------------------------------------------------
-        $prazos = Prazo::whereHas('processo')
+        $prazos = Prazo::whereHas('processo', function ($query) {
+            if ($userIds = bouncer()->getAuthorizedUserIds()) {
+                $query->whereIn('processos.user_id', $userIds);
+            }
+        })
             ->with('processo:id,titulo')
             ->get();
 
@@ -152,7 +157,11 @@ class AgendaService
         }
 
         if ($type === 'prazo') {
-            $prazo = Prazo::whereHas('processo')
+            $prazo = Prazo::whereHas('processo', function ($query) {
+                if ($userIds = bouncer()->getAuthorizedUserIds()) {
+                    $query->whereIn('processos.user_id', $userIds);
+                }
+            })
                 ->where('id', $id)
                 ->first();
 

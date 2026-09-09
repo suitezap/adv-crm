@@ -13,5 +13,5 @@ Consultas, monitoramentos, histórico e webhook do Escavador. Isolamento por `te
 ## Testes
 | ID | Nome | Status |
 |---|---|---|
-| `ESC-SEC-001` | Tenant-scoped + gates de perfil | `implemented_unverified` |
-| `WEBHOOK-SEC-001` | Webhook nega forjados | `implemented_unverified` |
+| `ESC-SEC-001` | Tenant-scoped + gates de perfil | `active` |
+| `WEBHOOK-SEC-001` | Webhook nega forjados | `active` |

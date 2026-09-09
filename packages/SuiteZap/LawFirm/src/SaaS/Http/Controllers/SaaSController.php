@@ -22,6 +22,8 @@ class SaaSController extends Controller
      */
     public function index(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.saas.manage'), 401, 'This action is unauthorized');
+
         $tenantId = MotherShipService::getTenantId() ?? 'default';
         $syncCacheKey = 'asaas_sync_last_run_'.$tenantId;
         $subCacheKey = "tenant_{$tenantId}_subscription";
@@ -146,6 +148,8 @@ class SaaSController extends Controller
      */
     public function testS3Connection(SaasFileService $fileService)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.saas.manage'), 401, 'This action is unauthorized');
+
         if (! config('app.debug')) {
             return response()->json([
                 'error' => 'Rota de diagnóstico disponível apenas em modo debug (APP_DEBUG=true).',

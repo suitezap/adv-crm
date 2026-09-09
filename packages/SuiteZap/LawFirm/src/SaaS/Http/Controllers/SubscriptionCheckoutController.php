@@ -31,6 +31,8 @@ class SubscriptionCheckoutController extends Controller
      */
     public function checkoutPlan(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.saas.manage'), 401, 'This action is unauthorized');
+
         $request->validate([
             'plan_id'  => 'required|string',
             'price'    => 'required|numeric|min:1',
@@ -100,6 +102,8 @@ class SubscriptionCheckoutController extends Controller
      */
     public function checkoutCredits(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.saas.manage'), 401, 'This action is unauthorized');
+
         $request->validate([
             'value'          => 'required|numeric|min:1',
             'payment_method' => 'required|in:PIX,CREDIT_CARD,CREDIT_CARD_INSTALLMENT',

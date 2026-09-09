@@ -40,8 +40,24 @@ class DocumentTemplateController extends Controller
      * Display a listing of all templates (local + global).
      * Global templates are shown as read-only so the user understands the distinction.
      */
+    /**
+     * Propriedade do processo (PRIV-AUDIT-001): TenantScope → 404 fora do tenant.
+     */
+    private function assertTenantProcesso(int|string $processoId): \SuiteZap\LawFirm\Legal\Models\Processo
+    {
+        $processo = \SuiteZap\LawFirm\Legal\Models\Processo::find($processoId);
+
+        if (! $processo) {
+            abort(404);
+        }
+
+        return $processo;
+    }
+
     public function manage()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.modelos.view'), 401, 'This action is unauthorized');
+
         // Garante que o cabeçalho e rodapé existam no banco local
         $this->getLayoutTemplates();
 
@@ -56,6 +72,8 @@ class DocumentTemplateController extends Controller
      */
     public function create()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.modelos.create'), 401, 'This action is unauthorized');
+
         return view('lawfirm::Legal.modelos.create');
     }
 
@@ -64,6 +82,8 @@ class DocumentTemplateController extends Controller
      */
     public function store(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.modelos.create'), 401, 'This action is unauthorized');
+
         $request->validate([
             'titulo'   => 'required|string|max:255',
             'tipo'     => 'required|string|max:50',
@@ -93,6 +113,8 @@ class DocumentTemplateController extends Controller
      */
     public function edit(int $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.modelos.edit'), 401, 'This action is unauthorized');
+
         $template = $this->repository->find($id);
 
         // Guard: templates com unique_id 'global-*' são do Mothership e imutáveis por tenants.
@@ -111,6 +133,8 @@ class DocumentTemplateController extends Controller
      */
     public function update(Request $request, int $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.modelos.edit'), 401, 'This action is unauthorized');
+
         $request->validate([
             'titulo'   => 'required|string|max:255',
             'tipo'     => 'required|string|max:50',
@@ -146,6 +170,8 @@ class DocumentTemplateController extends Controller
      */
     public function destroy(int $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.modelos.delete'), 401, 'This action is unauthorized');
+
         try {
             $template = $this->repository->find($id);
 
@@ -173,6 +199,8 @@ class DocumentTemplateController extends Controller
      */
     public function index(int $processoId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.modelos.view'), 401, 'This action is unauthorized');
+
         $processo = Processo::findOrFail($processoId);
         $templates = $this->repository->forProcesso($processo);
 
@@ -189,6 +217,8 @@ class DocumentTemplateController extends Controller
      */
     public function render(int $processoId, string $templateId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.modelos.view'), 401, 'This action is unauthorized');
+
         $processo = Processo::findOrFail($processoId);
         $template = $this->repository->findByUniqueId($templateId);
 
@@ -214,6 +244,8 @@ class DocumentTemplateController extends Controller
      */
     public function getLayoutTemplates()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.modelos.view'), 401, 'This action is unauthorized');
+
         $cabecalho = DocumentTemplate::where('tipo', 'cabecalho')
             ->where('is_layout', true)
             ->orderByDesc('updated_at')
@@ -246,6 +278,8 @@ class DocumentTemplateController extends Controller
      */
     public function saveLayout(Request $request, string $tipo)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.modelos.edit'), 401, 'This action is unauthorized');
+
         if (! in_array($tipo, ['cabecalho', 'rodape'], true)) {
             return response()->json(['message' => 'Tipo de layout inválido.'], 422);
         }
@@ -281,6 +315,11 @@ class DocumentTemplateController extends Controller
      */
     public function saveGenerated(Request $request, int $processoId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.create'), 401, 'This action is unauthorized');
+
+        // Processo do tenant (TenantScope) — HTML arbitrário só no próprio tenant.
+        $this->assertTenantProcesso($processoId);
+
         $request->validate([
             'titulo'        => 'required|string|max:255',
             'conteudo_html' => 'required|string',

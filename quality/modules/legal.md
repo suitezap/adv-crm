@@ -13,4 +13,9 @@ Casos e Processos: gates de perfil + `tenant_id` em `processos` (`BelongsToTenan
 ## Testes
 | ID | Nome | Status |
 |---|---|---|
-| `LEGAL-SEC-001` | 401 sem permissão em casos/processos/GED | `implemented_unverified` |
+| `LEGAL-SEC-001` | 401 sem permissão em casos/processos/GED | `active` |
+| `PORTAL-SEC-001` | Portal com token expirável, whitelist e upload restrito | `active` |
+
+## Portal público
+- Tokens novos `exp.{ts}.{hmac}` (30 dias); legados aceitos com log de depreciação.
+- `update` com whitelist validada; logs sem PII; `upload` restrito a pdf/doc/docx/jpg/png 20MB.

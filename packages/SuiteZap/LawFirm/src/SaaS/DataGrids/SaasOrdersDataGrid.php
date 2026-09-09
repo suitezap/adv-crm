@@ -42,6 +42,11 @@ class SaasOrdersDataGrid extends DataGrid
                 'saas_orders.created_at'
             );
 
+        // Visão por usuário (PRIV-AUDIT-001): operador individual vê só os próprios pedidos
+        if ($userIds = bouncer()->getAuthorizedUserIds()) {
+            $queryBuilder->whereIn('saas_orders.user_id', $userIds);
+        }
+
         $this->addFilter('id', 'saas_orders.id');
         $this->addFilter('type', 'saas_orders.type');
         $this->addFilter('status', 'saas_orders.status');

@@ -28,10 +28,49 @@ class AssistantController extends Controller
     }
 
     /**
+     * Lead visível ao usuário da sessão (PRIV-AUDIT-001).
+     * Espelha o filtro do LeadDataGrid: fora do alcance → 404.
+     */
+    private function assertLeadVisible($lead): void
+    {
+        if (($authorizedIds = bouncer()->getAuthorizedUserIds()) !== null
+            && ! in_array($lead->user_id, $authorizedIds)) {
+            abort(404);
+        }
+    }
+
+    /**
+     * Template acessível ao tenant/módulos da assinatura (PRIV-AUDIT-001).
+     * Elimina bypass de módulo por acesso direto via slug.
+     */
+    private function findAccessibleTemplate(string $slug)
+    {
+        $subscription = MotherShipService::getCurrentSubscription();
+        $allowedModules = $subscription ? ($subscription->active_modules ?? []) : [];
+
+        $template = AssistantTemplate::forTenant()
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->where(function ($query) use ($allowedModules) {
+                $query->whereNull('required_module')
+                    ->orWhereIn('required_module', $allowedModules);
+            })
+            ->first();
+
+        if (! $template) {
+            abort(404);
+        }
+
+        return $template;
+    }
+
+    /**
      * Display list of active assistant templates.
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.view'), 401, 'This action is unauthorized');
+
         // 1. Descobrir quais módulos o cliente tem
         $subscription = MotherShipService::getCurrentSubscription();
         $tenantId = MotherShipService::getTenantId();
@@ -77,9 +116,9 @@ class AssistantController extends Controller
      */
     public function show($slug)
     {
-        $template = AssistantTemplate::where('slug', $slug)
-            ->where('is_active', true)
-            ->firstOrFail();
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.view'), 401, 'This action is unauthorized');
+
+        $template = $this->findAccessibleTemplate($slug);
 
         return view('lawfirm::admin.assistants.show', compact('template'));
     }
@@ -89,6 +128,8 @@ class AssistantController extends Controller
      */
     public function generate(Request $request, $slug)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.execute'), 401, 'This action is unauthorized');
+
         // 1. Guard: saldo e custo
         $subscription = MotherShipService::getCurrentSubscription();
         $aiBalance = $subscription ? (float) ($subscription->suitecoin_balance ?? 0) : 0;
@@ -98,7 +139,7 @@ class AssistantController extends Controller
             ], 402);
         }
 
-        $template = AssistantTemplate::where('slug', $slug)->firstOrFail();
+        $template = $this->findAccessibleTemplate($slug);
         $cost = (float) ($template->price_virtual ?? 0);
 
         if ($cost > 0 && ! SuiteCoinService::hasSufficientBalance($aiBalance, $cost)) {
@@ -163,6 +204,8 @@ class AssistantController extends Controller
      */
     public function execute(Request $request, $slug)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.execute'), 401, 'This action is unauthorized');
+
         // 1. Guard: saldo
         $subscription = MotherShipService::getCurrentSubscription();
         $aiBalance = $subscription ? (float) ($subscription->suitecoin_balance ?? 0) : 0;
@@ -172,8 +215,8 @@ class AssistantController extends Controller
             ], 402);
         }
 
-        // 2. Validar e Buscar Template
-        $template = AssistantTemplate::where('slug', $slug)->firstOrFail();
+        // 2. Validar e Buscar Template (escopo tenant + módulo)
+        $template = $this->findAccessibleTemplate($slug);
         $cost = (float) ($template->price_virtual ?? 0);
 
         if ($cost > 0 && ! SuiteCoinService::hasSufficientBalance($aiBalance, $cost)) {
@@ -282,6 +325,8 @@ class AssistantController extends Controller
      */
     public function process(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.execute'), 401, 'This action is unauthorized');
+
         // 1. Validação (usa conexão 'mothership' para buscar template)
         $validated = $request->validate([
             'template_id' => 'required|exists:mothership.lawfirm_assistant_templates,id',
@@ -341,9 +386,12 @@ class AssistantController extends Controller
      */
     public function processForLead(Request $request, $leadId)
     {
-        // 1. Carregar Lead e Template
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.execute'), 401, 'This action is unauthorized');
+
+        // 1. Carregar Lead e Template (lead restrito ao alcance do usuário)
         $lead = Lead::findOrFail($leadId);
-        $template = AssistantTemplate::where('slug', 'pre-triagem-lead')->firstOrFail();
+        $this->assertLeadVisible($lead);
+        $template = $this->findAccessibleTemplate('pre-triagem-lead');
 
         // Guard: Check AI balance before allowing generation/execution
         $subscription = MotherShipService::getCurrentSubscription();
@@ -516,6 +564,10 @@ class AssistantController extends Controller
      */
     public function saveTriagem(Request $request, $leadId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.execute'), 401, 'This action is unauthorized');
+
+        $this->assertLeadVisible(Lead::findOrFail($leadId));
+
         $request->validate([
             'slug'    => 'required|string',
             'content' => 'required|string',
@@ -543,6 +595,10 @@ class AssistantController extends Controller
      */
     public function getTriagem($leadId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.view'), 401, 'This action is unauthorized');
+
+        $this->assertLeadVisible(Lead::findOrFail($leadId));
+
         $triagem = LeadTriagem::where('lead_id', $leadId)
             ->select(['viabilidade', 'qualificacao', 'proposta', 'negociacao'])
             ->first();
@@ -560,6 +616,8 @@ class AssistantController extends Controller
      */
     public function escavai()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.view'), 401, 'This action is unauthorized');
+
         return view('lawfirm::admin.assistants.escavai');
     }
 

@@ -25,6 +25,8 @@ class DeadlineController extends Controller
      */
     public function store(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.prazos.create'), 401, 'This action is unauthorized');
+
         $validated = $request->validate([
             'processo_id'     => 'required|exists:processos,id',
             'titulo'          => 'required|string|max:255',
@@ -73,6 +75,8 @@ class DeadlineController extends Controller
      */
     public function update(Request $request, $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
+
         // Normalize status to canonical lowercase before validation
         // Accepts 'Concluído', 'concluído', 'Pendente' etc. from form selects
         if ($request->has('status')) {
@@ -128,6 +132,8 @@ class DeadlineController extends Controller
      */
     public function destroy(Request $request, $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.prazos.delete'), 401, 'This action is unauthorized');
+
         try {
             $this->deadlineService->deleteDeadline($id);
 
@@ -166,6 +172,8 @@ class DeadlineController extends Controller
      */
     public function toggle(Request $request, $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
+
         try {
             $prazo = $this->deadlineService->toggleStatus($id);
 

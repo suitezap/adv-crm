@@ -30,6 +30,8 @@ class SaasDashboardController extends Controller
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.saas.manage'), 401, 'This action is unauthorized');
+
         // Get storage summary from service
         $storageSummary = $this->storageService->getSummary();
 

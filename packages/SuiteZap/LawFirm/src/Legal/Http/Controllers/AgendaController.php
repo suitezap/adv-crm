@@ -21,6 +21,8 @@ class AgendaController extends Controller
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.agenda.view'), 401, 'This action is unauthorized');
+
         return view('lawfirm::Legal.agenda.index');
     }
 
@@ -29,6 +31,8 @@ class AgendaController extends Controller
      */
     public function getEventos(): JsonResponse
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.agenda.view'), 401, 'This action is unauthorized');
+
         $eventos = $this->agendaService->getEventosUnificados();
 
         return response()->json($eventos);
@@ -39,6 +43,8 @@ class AgendaController extends Controller
      */
     public function updateDragDrop(Request $request, int $id): JsonResponse
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.agenda.edit'), 401, 'This action is unauthorized');
+
         $validated = $request->validate([
             'tipo'      => 'required|string|in:activity,prazo',
             'new_start' => 'required|string',
@@ -66,6 +72,8 @@ class AgendaController extends Controller
      */
     public function storeActivity(Request $request): JsonResponse
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.agenda.create'), 401, 'This action is unauthorized');
+
         $validated = $request->validate([
             'titulo'                 => 'required|string|max:255',
             'tipo'                   => 'required|string|in:call,meeting,lunch,email',

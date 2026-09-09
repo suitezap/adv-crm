@@ -24,6 +24,8 @@ class ConnectionController extends Controller
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.whatsapp.manage'), 401, 'This action is unauthorized');
+
         $whatsappAssistant = AssistantTemplate::where('slug', 'triagem-whatsapp')
             ->where('is_active', true)
             ->first();
@@ -92,6 +94,8 @@ class ConnectionController extends Controller
      */
     public function getQrCode(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.whatsapp.manage'), 401, 'This action is unauthorized');
+
         $type = $request->input('type', 'default');
         $instanceName = $this->getInstanceName($type);
 
@@ -121,6 +125,8 @@ class ConnectionController extends Controller
      */
     public function getStatus(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.whatsapp.manage'), 401, 'This action is unauthorized');
+
         $type = $request->input('type', 'default');
         $config = MotherShipService::getEvolutionConfig($type);
 
@@ -144,6 +150,8 @@ class ConnectionController extends Controller
 
     public function disconnect(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.whatsapp.manage'), 401, 'This action is unauthorized');
+
         $type = $request->input('type', 'default');
         $instanceName = $this->getInstanceName($type);
 
@@ -175,6 +183,8 @@ class ConnectionController extends Controller
      */
     public function testNotification(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.whatsapp.manage'), 401, 'This action is unauthorized');
+
         $request->validate([
             'phone'   => 'required|string',
             'message' => 'required|string',

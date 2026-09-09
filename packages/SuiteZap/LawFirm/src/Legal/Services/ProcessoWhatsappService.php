@@ -41,13 +41,15 @@ class ProcessoWhatsappService
     }
 
     /**
-     * Build the portal link for a given Processo.
+     * Build the portal link for a given Processo (token com expiração de 30 dias).
      */
     private function buildPortalLink(Processo $processo): string
     {
+        $exp = time() + (30 * 86400);
+
         return route('lawfirm.public.portal.index', [
             'id'    => $processo->id,
-            'token' => hash_hmac('sha256', $processo->id, config('app.key')),
+            'token' => 'exp.'.$exp.'.'.hash_hmac('sha256', $processo->id.'|'.$exp, config('app.key')),
         ]);
     }
 

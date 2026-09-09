@@ -45,3 +45,9 @@ Prover automações jurídicas e comerciais baseadas em Inteligência Artificial
 ## 7. Última Revisão
 - Data: 2026-08-21
 - Versão: v3.55.0
+
+## Segurança (PRIV-AUDIT-001)
+
+| ID | Nome | Status |
+|---|---|---|
+| `AI-SEC-001` | Histórico escopado + SAC sem segredo hardcoded | `active` |

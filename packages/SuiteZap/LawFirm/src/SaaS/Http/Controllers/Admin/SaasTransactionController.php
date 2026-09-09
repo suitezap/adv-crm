@@ -10,6 +10,8 @@ class SaasTransactionController extends Controller
 {
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.saas.manage'), 401, 'This action is unauthorized');
+
         if (request()->ajax()) {
             return app(SaasTransactionsDataGrid::class)->toJson();
         }
@@ -19,6 +21,8 @@ class SaasTransactionController extends Controller
 
     public function additions()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.saas.manage'), 401, 'This action is unauthorized');
+
         if (request()->ajax()) {
             return app(SaasAdditionsDataGrid::class)->toJson();
         }

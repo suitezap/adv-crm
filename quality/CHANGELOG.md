@@ -50,6 +50,26 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 
 > Execução foreground pendente no data-plane Docker de QA (`mysql-test` indisponível no dev Windows — `getaddrinfo failed`); transição para `active` após `QA-DATA-001`/harness com saída comprovada.
 
+## [Unreleased] - PRIV-AUDIT-001 Ondas 2-3 (SaaS, AI, modelos, Whatsapp, agenda, portal)
+
+### Adicionado
+- Gates `saas.manage` em assinatura, checkout (plano/créditos), billing, pedidos, extrato e dashboard; `SaasOrdersDataGrid` por usuário; rotas de checkout/billing no ACL.
+- `MothershipTemplate::upsert` valida `tenant_id` existente; `SaasWebhook` com `hash_equals` fail-closed.
+- IA: `findAccessibleTemplate` (tenant + módulo) em show/generate/execute/processForLead; gates `view/execute`; ownership de lead na triagem; log sem `form_data`/webhook.
+- Modelos: gates `modelos.view/create/edit/delete` + `documentos.create` no `saveGenerated` com propriedade do processo.
+- Whatsapp: gates `whatsapp.manage` em index/QR/status/disconnect/teste.
+- Agenda com escopo de prazos por usuário + gates; Kanban com ownership; Checklist com contexto + gates; Prazos notify/toggle com gates + propriedade; `DeadlineService` com `assertPrazoTenant` (inclui `syncDeadlines`).
+- Portal: tokens `exp.*` 30 dias (legado depreciado), whitelist validada, logs sem PII, upload tipado 20MB.
+- Blades GED com `@if(bouncer()->hasPermission('documentos.delete'))` nos botões de exclusão.
+- Testes `PLAT-SEC-002`, `PORTAL-SEC-001` (`implemented_unverified`); doc `platform.md`; catálogo 45 → 47.
+
+## [v3.55.1] - 2026-09-09 (Verificação foreground local — FIN + PRIV Onda 1-3)
+
+### Verificado
+- Data-plane de teste replicado localmente (`tenant_a_test`, `tenant_b_test`, `mothership_test` + migrate total, incluindo base `tenants`/`subscriptions`/`infrastructure_nodes` mínima) e suíte Pest executada com `DatabaseSafetyGuard` ativo: **26/26 passaram** (FIN 11, PRIV Onda 1: 11, Ondas 2-3: 4).
+- 12 testes transitados `implemented_unverified` → `active` (`last_verified_version v3.55.1`, `2026-09-09`): `FIN-FEATURE-001/002`, `TENANT-FIN-001`, `TENANT-SEC-006`, `FIN-SEC-001`, `ESC-SEC-001`, `LEGAL-SEC-001`, `GED-SEC-001`, `AI-SEC-001`, `WEBHOOK-SEC-001`, `PLAT-SEC-002`, `PORTAL-SEC-001`.
+- Correção de teste (não de produto): `PlatformPermissionsTest` passou a criar o Lead da triagem (404 era dado inexistente, não falta de gate).
+
 ## [Unreleased] - PRIV-AUDIT-001 Onda 1 (pré-req + Escavador + webhooks + AI + Legal/GED + SAC)
 
 ### Adicionado

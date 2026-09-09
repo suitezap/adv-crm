@@ -415,6 +415,11 @@ return [
         'route' => [
             'admin.lawfirm.whatsapp.index',
             'admin.lawfirm.whatsapp.templates',
+            'admin.lawfirm.whatsapp.templates.save',
+            'admin.lawfirm.whatsapp.qr-code',
+            'admin.lawfirm.whatsapp.status',
+            'admin.lawfirm.whatsapp.disconnect',
+            'admin.lawfirm.whatsapp.test',
         ],
         'sort'  => 1,
     ],
@@ -434,6 +439,10 @@ return [
         'route' => [
             'admin.lawfirm.saas.index',
             'admin.lawfirm.saas.billing-info.index',
+            'admin.lawfirm.saas.billing-info.store',
+            'admin.lawfirm.saas.checkout.plan',
+            'admin.lawfirm.saas.checkout.credits',
+            'admin.lawfirm.saas.orders.index',
             'lawfirm.saas.transactions',
         ],
         'sort'  => 1,

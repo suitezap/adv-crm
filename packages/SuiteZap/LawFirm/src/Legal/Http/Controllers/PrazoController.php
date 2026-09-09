@@ -11,6 +11,7 @@ use Illuminate\View\View;
 use SuiteZap\LawFirm\Legal\DataGrids\PrazoDataGrid;
 use SuiteZap\LawFirm\Legal\Events\PrazoCreated;
 use SuiteZap\LawFirm\Legal\Models\Prazo;
+use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\Whatsapp\Services\EvolutionService;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -35,9 +36,14 @@ class PrazoController extends Controller
      */
     public function notifyClient($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
+
         try {
-            // 1. Buscar o Prazo
+            // 1. Buscar o Prazo (processo restrito ao tenant via TenantScope → 404 fora)
             $prazo = Prazo::with(['processo.person'])->findOrFail($id);
+            if ($prazo->processo_id && ! $prazo->processo) {
+                abort(404);
+            }
             $processo = $prazo->processo;
 
             if (! $processo || ! $processo->person) {
@@ -107,8 +113,14 @@ class PrazoController extends Controller
      */
     public function toggleNotify($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.prazos.edit'), 401, 'This action is unauthorized');
+
         try {
+            // Nota: só alterna a flag; o sender agendado segue suspenso (§8).
             $prazo = Prazo::findOrFail($id);
+            if ($prazo->processo_id && ! Processo::find($prazo->processo_id)) {
+                abort(404);
+            }
             $prazo->update(['notificar_whatsapp' => ! $prazo->notificar_whatsapp]);
 
             $status = $prazo->notificar_whatsapp ? 'ativado' : 'desativado';
@@ -141,6 +153,8 @@ class PrazoController extends Controller
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.prazos.view'), 401, 'This action is unauthorized');
+
         if (request()->ajax()) {
             return app(PrazoDataGrid::class)->toJson();
         }

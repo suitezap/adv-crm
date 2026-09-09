@@ -19,6 +19,8 @@ class SaasOrderController extends Controller
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.saas.manage'), 401, 'This action is unauthorized');
+
         if (request()->ajax()) {
             return app(SaasOrdersDataGrid::class)->toJson();
         }

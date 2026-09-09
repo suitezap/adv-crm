@@ -80,6 +80,26 @@ class MothershipTemplateController extends Controller
             'tenant_id'        => 'nullable|string|max:100',
         ]);
 
+        // PRIV-AUDIT-001: tenant_id arbitrário só vale se o tenant existir —
+        // evita override órfão ou stomping por erro de digitação.
+        if (! empty($validated['tenant_id'])) {
+            $tenantExists = \SuiteZap\LawFirm\SaaS\Models\Tenant::on('mothership')
+                ->where('id', $validated['tenant_id'])
+                ->exists();
+
+            if (! $tenantExists) {
+                Log::warning('[Mothership] upsert com tenant_id inexistente.', [
+                    'slug'      => $validated['slug'],
+                    'tenant_id' => $validated['tenant_id'],
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'tenant_id inexistente no MotherShip.',
+                ], 422);
+            }
+        }
+
         $lookupKey = [
             'slug'      => $validated['slug'],
             'tenant_id' => $validated['tenant_id'] ?? null,

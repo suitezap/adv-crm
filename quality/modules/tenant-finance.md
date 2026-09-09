@@ -15,5 +15,5 @@ Cobranças emitidas pelo escritório aos clientes via Asaas (`tenant_invoices`, 
 ## Testes
 | ID | Nome | Status |
 |---|---|---|
-| `TENANT-FIN-001` | Criar/visualizar/cancelar/reenviar cobrança Asaas do próprio tenant | `implemented_unverified` |
-| `TENANT-SEC-006` | Cross-tenant em cobranças bloqueado (403/404) + webhook com token de outro tenant → 401 | `implemented_unverified` |
+| `TENANT-FIN-001` | Criar/visualizar/cancelar/reenviar cobrança Asaas do próprio tenant | `active` |
+| `TENANT-SEC-006` | Cross-tenant em cobranças bloqueado (403/404) + webhook com token de outro tenant → 401 | `active` |

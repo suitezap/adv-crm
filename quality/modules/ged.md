@@ -13,4 +13,4 @@ Upload, download, exclusão e PDFs (procuração/contrato) de documentos do proc
 ## Testes
 | ID | Nome | Status |
 |---|---|---|
-| `GED-SEC-001` | Gates + fim do IDOR em downloads | `implemented_unverified` |
+| `GED-SEC-001` | Gates + fim do IDOR em downloads | `active` |

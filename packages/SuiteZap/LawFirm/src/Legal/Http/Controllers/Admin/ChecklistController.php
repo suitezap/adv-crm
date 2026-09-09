@@ -28,9 +28,38 @@ class ChecklistController extends Controller
      * Retorna o estado atual do checklist para um Lead ou Processo.
      * Se não existir, retorna status 'new_lead' (ou equivalente) para o frontend.
      */
+    /**
+     * Propriedade do contexto (PRIV-AUDIT-001): processo fora do tenant
+     * ou lead fora do alcance do usuário → 404.
+     */
+    private function assertChecklistContext(string $context, int|string $id): void
+    {
+        if ($context === 'processo') {
+            if (! \SuiteZap\LawFirm\Legal\Models\Processo::find($id)) {
+                abort(404);
+            }
+
+            return;
+        }
+
+        $lead = \Webkul\Lead\Models\Lead::find($id);
+
+        if (! $lead) {
+            abort(404);
+        }
+
+        if (($authorizedIds = bouncer()->getAuthorizedUserIds()) !== null
+            && ! in_array($lead->user_id, $authorizedIds)) {
+            abort(404);
+        }
+    }
+
     public function show(Request $request, $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.view'), 401, 'This action is unauthorized');
+
         $context = $request->get('context', 'lead'); // 'lead' or 'processo'
+        $this->assertChecklistContext($context, $id);
 
         if ($context === 'processo') {
             $checklist = $this->checklistRepository->getByProcessoId($id);
@@ -78,6 +107,10 @@ class ChecklistController extends Controller
      */
     public function initialize(Request $request, $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.edit'), 401, 'This action is unauthorized');
+
+        $this->assertChecklistContext($request->get('context', 'lead'), $id);
+
         $request->validate([
             'type' => 'required|string|in:labor_claimant,family_divorce,civil_general',
         ]);
@@ -132,7 +165,10 @@ class ChecklistController extends Controller
      */
     public function saveProgress(Request $request, $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.edit'), 401, 'This action is unauthorized');
+
         $context = $request->get('context', 'lead');
+        $this->assertChecklistContext($context, $id);
 
         if ($context === 'processo') {
             $checklist = $this->checklistRepository->getByProcessoId($id);
@@ -194,6 +230,10 @@ class ChecklistController extends Controller
      */
     public function validateWithAi(Request $request, $leadId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.view'), 401, 'This action is unauthorized');
+
+        $this->assertChecklistContext('lead', $leadId);
+
         // TODO: Implementar chamada real ao MotherShipService -> n8n
 
         // Mock de resposta para desenvolvimento do Frontend
@@ -216,6 +256,10 @@ class ChecklistController extends Controller
      */
     public function executeAi(Request $request, $leadId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.execute'), 401, 'This action is unauthorized');
+
+        $this->assertChecklistContext('lead', $leadId);
+
         $request->validate([
             'template_id' => 'required|integer',
             'data'        => 'required|array',
@@ -236,13 +280,11 @@ class ChecklistController extends Controller
             ], 404);
         }
 
-        // Log for debugging (URL construction simulation)
+        // Log operacional mínimo (PRIV-AUDIT-001: sem form_data nem webhook_url no log)
         \Log::info('AI Template Execution', [
             'lead_id'       => $leadId,
             'template_id'   => $templateId,
             'template_slug' => $template->slug ?? 'N/A',
-            'form_data'     => $formData,
-            'webhook_url'   => $template->n8n_webhook_url ?? 'N/A',
         ]);
 
         // TODO: Real integration with n8n/MotherShipService
