@@ -26,6 +26,22 @@ class ProcessDocumentController extends Controller
 
     protected $fileService;
 
+    /**
+     * Propriedade do processo (PRIV-AUDIT-001): resolve o processo no escopo
+     * do tenant da sessão (TenantScope). Retorna 404 se inexistente ou de
+     * outro tenant — fecha IDOR sem exigir coluna nova nas tabelas de docs.
+     */
+    private function assertTenantProcesso(int|string $processoId): \SuiteZap\LawFirm\Legal\Models\Processo
+    {
+        $processo = Processo::find($processoId);
+
+        if (! $processo) {
+            abort(404);
+        }
+
+        return $processo;
+    }
+
     public function __construct(DocumentService $documentService, SaasFileService $fileService)
     {
         $this->documentService = $documentService;
@@ -39,6 +55,10 @@ class ProcessDocumentController extends Controller
      */
     public function store(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.create'), 401, 'This action is unauthorized');
+
+        $this->assertTenantProcesso((int) $request->input('processo_id'));
+
         $request->validate([
             'processo_id' => 'required|exists:processos,id',
             'anexos.*'    => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:20480', // 20MB Max
@@ -79,6 +99,8 @@ class ProcessDocumentController extends Controller
      */
     public function destroy($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.delete'), 401, 'This action is unauthorized');
+
         try {
             $this->documentService->deleteFile($id);
 
@@ -105,8 +127,14 @@ class ProcessDocumentController extends Controller
      */
     public function destroyChecklistItem($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.delete'), 401, 'This action is unauthorized');
+
         try {
-            ProcessDocument::findOrFail($id)->delete();
+            $doc = ProcessDocument::findOrFail($id);
+            if ($doc->processo_id) {
+                $this->assertTenantProcesso($doc->processo_id);
+            }
+            $doc->delete();
 
             if (request()->ajax()) {
                 return response()->json(['message' => 'Item do checklist excluído com sucesso.', 'status' => 'success']);
@@ -131,8 +159,13 @@ class ProcessDocumentController extends Controller
      */
     public function download($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.view'), 401, 'This action is unauthorized');
+
         try {
             $document = ProcessDocument::findOrFail($id);
+            if ($document->processo_id) {
+                $this->assertTenantProcesso($document->processo_id);
+            }
 
             if (empty($document->file_path)) {
                 return redirect()->back()->with('error', 'Arquivo não encontrado (Caminho vazio).');
@@ -162,8 +195,13 @@ class ProcessDocumentController extends Controller
 
     public function downloadAttachment($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.view'), 401, 'This action is unauthorized');
+
         try {
             $anexo = Anexo::findOrFail($id);
+            if ($anexo->processo_id) {
+                $this->assertTenantProcesso($anexo->processo_id);
+            }
 
             $path = $anexo->path;
             if (empty($path)) {
@@ -205,6 +243,10 @@ class ProcessDocumentController extends Controller
     // Importa os itens de um Template para o Processo Atual
     public function importTemplate(Request $request, $processId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.create'), 401, 'This action is unauthorized');
+
+        $this->assertTenantProcesso($processId);
+
         $request->validate(['template_id' => 'required|exists:law_checklist_templates,id']);
 
         $template = ChecklistTemplate::find($request->template_id);
@@ -302,6 +344,10 @@ class ProcessDocumentController extends Controller
      */
     public function addItem(Request $request, $processId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.create'), 401, 'This action is unauthorized');
+
+        $this->assertTenantProcesso($processId);
+
         $request->validate([
             'name' => 'required|string|max:255',
         ]);
@@ -329,7 +375,12 @@ class ProcessDocumentController extends Controller
     // Atualiza o status de um documento (Ex: Pendente -> Recebido)
     public function updateStatus(Request $request, $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.create'), 401, 'This action is unauthorized');
+
         $document = ProcessDocument::findOrFail($id);
+        if ($document->processo_id) {
+            $this->assertTenantProcesso($document->processo_id);
+        }
         $document->update([
             'status' => $request->status,
             'notes'  => $request->notes,
@@ -347,9 +398,13 @@ class ProcessDocumentController extends Controller
         return redirect()->back();
     }
 
-    // Enviar Checklist Selecionado via WhatsApp
+    // Enviar Checklist Selecionado via WhatsApp (ação manual do usuário — não é módulo suspenso)
     public function sendChecklist(Request $request, $processId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.create'), 401, 'This action is unauthorized');
+
+        $this->assertTenantProcesso($processId);
+
         $request->validate(['selected_documents' => 'required|array']);
 
         try {
@@ -440,6 +495,10 @@ class ProcessDocumentController extends Controller
      */
     public function downloadProcuration($processId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.view'), 401, 'This action is unauthorized');
+
+        $this->assertTenantProcesso($processId);
+
         Carbon::setLocale('pt_BR');
 
         // Carrega Processo + Pessoa
@@ -575,6 +634,10 @@ class ProcessDocumentController extends Controller
      */
     public function downloadContract($processId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.view'), 401, 'This action is unauthorized');
+
+        $this->assertTenantProcesso($processId);
+
         Carbon::setLocale('pt_BR');
 
         // Carrega Processo + Pessoa

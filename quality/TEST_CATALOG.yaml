@@ -1049,6 +1049,126 @@ tests:
     last_verified_date: null
     notes: "Registrado em FIN-COBRANCAS-001 (complemento permissão-por-usuário). Aguardando execução foreground."
 
+  - id: ESC-SEC-001
+    name: "Escavador tenant-scoped (DataGrids, show, toggle) + gates de perfil"
+    domain: Escavador
+    layer: domain
+    module: escavador
+    type: Security
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Escavador/EscavadorTenantTest.php
+    documentation: quality/modules/escavador.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Escavador/DataGrids/EscavadorHistoryDataGrid.php
+        symbol: EscavadorHistoryDataGrid::prepareQueryBuilder
+        purpose: "Filtro tenant_id na listagem"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: "Registrado em PRIV-AUDIT-001 Onda 1a. Aguardando execução foreground."
+
+  - id: LEGAL-SEC-001
+    name: "Casos e Processos exigem permissão de perfil (401 sem gate)"
+    domain: Legal
+    layer: domain
+    module: legal-access
+    type: Security
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Legal/LegalPermissionsTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Legal/Http/Controllers/CasoController.php
+        symbol: CasoController::store
+        purpose: "Gate casos.create em escrita"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: "Registrado em PRIV-AUDIT-001 Onda 1e. Aguardando execução foreground."
+
+  - id: GED-SEC-001
+    name: "GED exige permissão e propriedade do processo (fim do IDOR em downloads)"
+    domain: GED
+    layer: domain
+    module: ged
+    type: Security
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Legal/LegalPermissionsTest.php
+    documentation: quality/modules/ged.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/GED/Http/Controllers/ProcessDocumentController.php
+        symbol: ProcessDocumentController::download
+        purpose: "Gate view + ownership do processo"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: "Registrado em PRIV-AUDIT-001 Onda 1e. Aguardando execução foreground."
+
+  - id: AI-SEC-001
+    name: "Histórico de IA escopado por tenant/usuário + SAC sem segredo hardcoded"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Security
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/AI/AssistantSecurityTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Http/Controllers/Admin/AssistantHistoryController.php
+        symbol: AssistantHistoryController::show
+        purpose: "Gate view + ownership do histórico"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: "Registrado em PRIV-AUDIT-001 Ondas 1c/1d. Aguardando execução foreground."
+
+  - id: WEBHOOK-SEC-001
+    name: "Webhooks públicos negam eventos forjados (fail-closed)"
+    domain: SaaS
+    layer: platform
+    module: webhooks
+    type: Security
+    priority: P0
+    status: implemented_unverified
+    automated: true
+    test_file: tests/Feature/Webhooks/WebhookAuthTest.php
+    documentation: quality/modules/webhooks.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/SaaS/Http/Controllers/AsaasWebhookController.php
+        symbol: AsaasWebhookController::isAuthorized
+        purpose: "Fail-closed sem token + fim do mint ROTA 4"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: cross_tenant_validation
+    destructive: false
+    owner: unassigned
+    last_verified_version: null
+    last_verified_date: null
+    notes: "Registrado em PRIV-AUDIT-001 Onda 1b. Aguardando execução foreground."
+
   - id: TENANT-SEC-006
     name: "Tenant A não acessa financeiro/cobranças do Tenant B; webhook com token alheio retorna 401"
     domain: SaaS

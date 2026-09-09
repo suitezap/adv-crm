@@ -78,10 +78,13 @@ class AsaasWebhookController extends Controller
     {
         $config = AsaasService::getConfig();
 
-        // Se não há webhook_token configurado, aceita sem validar (menos seguro)
+        // Fail-closed (PRIV-AUDIT-001): sem token configurado, nega.
+        // Runbook: cadastrar webhook_token no nó Asaas (MotherShip) e no painel Asaas.
         $expectedToken = $config['webhook_token'] ?? null;
         if (! $expectedToken) {
-            return true;
+            Log::critical('AsaasWebhook: webhook_token ausente na config — evento negado. Cadastre o token no nó Asaas.');
+
+            return false;
         }
 
         $receivedToken = $request->header('asaas-access-token');
@@ -150,17 +153,10 @@ class AsaasWebhookController extends Controller
             return;
         }
 
-        // ── ROTA 4: Fallback definitivo (single-tenant Asaas) ───────────
-        if ($tenantId && ! empty($payment['value'])) {
-            $creditsFromValue = (float) $payment['value'];
-            $fakeRef = "{$tenantId}|credit|{$creditsFromValue}";
-            Log::info("AsaasWebhook: fallback externalReference criado a partir do valor R$ {$payment['value']} -> {$creditsFromValue} créditos.");
-            $this->handleLegacyPayment($fakeRef, $payment);
-
-            return;
-        }
-
-        Log::warning('AsaasWebhook: pagamento sem externalReference e sem forma de identificar tenant.', ['id' => $paymentId]);
+        // ── ROTA 4 REMOVIDA (PRIV-AUDIT-001): creditar pelo valor sem vínculo
+        // com pedido (externalReference/order) permitia mint de créditos via
+        // notificação forjada. Pagamento sem referência é ignorado com log.
+        Log::warning('AsaasWebhook: pagamento sem externalReference — ignorado, sem crédito.', ['id' => $paymentId]);
     }
 
     /**

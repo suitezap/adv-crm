@@ -4,11 +4,13 @@ namespace SuiteZap\LawFirm\AI\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use SuiteZap\LawFirm\Contracts\AssistantHistory as AssistantHistoryContract;
+use SuiteZap\LawFirm\SaaS\Concerns\BelongsToTenant;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
 
 class AssistantHistory extends Model implements AssistantHistoryContract
 {
+    use BelongsToTenant;
     /**
      * The table associated with the model.
      *
@@ -22,6 +24,7 @@ class AssistantHistory extends Model implements AssistantHistoryContract
      * @var array
      */
     protected $fillable = [
+        'tenant_id',
         'user_id',
         'lead_id',
         'template_id',

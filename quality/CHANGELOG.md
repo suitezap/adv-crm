@@ -50,6 +50,15 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 
 > Execução foreground pendente no data-plane Docker de QA (`mysql-test` indisponível no dev Windows — `getaddrinfo failed`); transição para `active` após `QA-DATA-001`/harness com saída comprovada.
 
+## [Unreleased] - PRIV-AUDIT-001 Onda 1 (pré-req + Escavador + webhooks + AI + Legal/GED + SAC)
+
+### Adicionado
+- `tenant_id` em `processos` (migration + backfill + NOT NULL condicional) + `BelongsToTenant` em `Processo`, `EscavadorRequest`, `EscavadorMonitoramento`, `AssistantHistory` (+ migration `lawfirm_assistant_history`).
+- Gates `bouncer()` em `Caso/Processo` (index/show/store/update/massDestroy/search/link), `GED` (todas + `assertTenantProcesso`), `Escavador History/Monitoramento`, `AssistantHistory`, `chatwoot()` (+ permissão `assistants.chatwoot`); novas chaves ACL `lawfirm.documentos.view/delete`.
+- Webhooks fail-closed: Asaas sem token = nega + fim do mint ROTA 4; Escavador com tenant-scoped lookups + disparo WhatsApp de monitoramento retido (§8); Whatsapp com vínculo instância↔tenant + ACK/upsert escopados; `BlockSuspendedImport` (410) isolando rotas de importação sem tocar suspensos.
+- Senha do SAC fora do código: `meta_data.sac_password` do nó Chatwoot (ver `ARCHITECTURE_mothership_orient.md §16.1`); ausente = login manual.
+- Testes `ESC-SEC-001`, `LEGAL-SEC-001`, `GED-SEC-001`, `AI-SEC-001`, `WEBHOOK-SEC-001` (`implemented_unverified`); docs `escavador.md`, `ged.md`, `legal.md`, `webhooks.md`; specs `platform/*`.
+
 ### Complemento 2 — Backfill e enforcement (retomada pós-restart)
 - Migrations `2026_09_09_000005` (backfill NULLs com TENANT_ID do env + log por tabela, irreversível por segurança, precedente `2026_04_01`) e `2026_09_09_000006` (NOT NULL condicional: só aplica sem NULLs restantes, senão warning + conciliação manual; isolamento segue via app).
 - Aviso multi-tenant compartilhado: em base com >1 tenant, conferir o log antes de rodar o backfill (atribuição manual nesse caso).

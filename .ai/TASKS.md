@@ -18,4 +18,6 @@
 | `GAP-001` | AI / Débito | TODO | OpenCode | - | Implementação de estorno automático de SuiteCoins em caso de falha de Job de IA. |
 | `CI-001` | CI/CD | IMPLEMENTED_NOT_VERIFIED | Antigravity | - | Workflow completo de CI/CD para LawFirm no GitHub Actions (`lawfirm-ci.yml`). |
 | `FIN-COBRANCAS-001` | Financial / TenantFinance | IMPLEMENTED_NOT_VERIFIED | OpenCode | `QA-DATA-001` (execução foreground no data-plane Docker) | Isolamento tenant_id + fix Cobranças/Lançamentos + FIN-SEC-001. Estático OK (php -l, validate 0 erros, matrix 40). Pest bloqueado: mysql-test indisponível no dev. PAUSADO para restart — retomar pelo lock. Nada commitado. |
-| `PRIV-AUDIT-001` | Platform / Segurança | TODO | Unassigned | - | Auditoria platform-wide de privilégios por perfil (padrão FIN-SEC-001 levado a todos os domínios: gates ausentes, segredos em views, individual vs global). Proposta do usuário em 2026-09-09. |
+| `PRIV-AUDIT-001` | Platform / Segurança | IN_PROGRESS | OpenCode | - | Auditoria platform-wide de privilégios por perfil (padrão FIN-SEC-001 levado a todos os domínios: gates ausentes, segredos em views, individual vs global). Proposta do usuário em 2026-09-09. |
+| `OS-001` | Documentation | DONE | Antigravity | - | OpenSpec spec created and feature de ajustes concluída. |
+| `KAN-001` | Kanban / Jurídico | TODO | Antigravity | - | Implement Kanban jurídico com integração Chatwoot. |

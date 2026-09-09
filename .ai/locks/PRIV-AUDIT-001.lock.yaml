@@ -1,0 +1,14 @@
+task_id: PRIV-AUDIT-001
+owner: OPENCODE
+write_scope:
+  - packages/SuiteZap/LawFirm/src/
+  - quality/TEST_CATALOG.yaml
+  - quality/modules/
+  - quality/CHANGELOG.md
+  - tests/
+  - openspec/changes/priv-audit-platform/
+started_at: "2026-09-09T14:30:00Z"
+last_checkpoint_at: "2026-09-09T16:00:00Z"
+base_commit: "8ecd7aab6aa4dfc83c43631b7f258374a7335d8f"
+workspace: "dev-opencode"
+status: ACTIVE

@@ -52,6 +52,14 @@ class AssistantHistoryDataGrid extends DataGrid
                 'lawfirm_assistant_history.created_at'
             );
 
+        // Security / Tenant + User Scope (PRIV-AUDIT-001 — IDOR horizontal)
+        if ($tenantId = config('lawfirm.tenant_id', env('TENANT_ID'))) {
+            $queryBuilder->where('lawfirm_assistant_history.tenant_id', $tenantId);
+        }
+        if ($userIds = bouncer()->getAuthorizedUserIds()) {
+            $queryBuilder->whereIn('lawfirm_assistant_history.user_id', $userIds);
+        }
+
         $this->addFilter('history_id', 'lawfirm_assistant_history.id');
         $this->addFilter('user_name', 'users.name');
         $this->addFilter('person_name', 'persons.name');

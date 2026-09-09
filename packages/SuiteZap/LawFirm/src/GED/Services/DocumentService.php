@@ -91,6 +91,13 @@ class DocumentService
     public function deleteFile($documentId): bool
     {
         $anexo = Anexo::findOrFail($documentId);
+
+        // Propriedade do processo (PRIV-AUDIT-001): processo de outro tenant
+        // não resolve no escopo → 404 sem vazar existência.
+        if ($anexo->processo_id && ! Processo::find($anexo->processo_id)) {
+            abort(404);
+        }
+
         $fileSize = $anexo->tamanho ?? 0;
 
         // 1. Delete from Storage (Updated to use SaasFileService)

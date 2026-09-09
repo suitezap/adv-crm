@@ -19,4 +19,5 @@ last_checkpoint_at: "2026-09-09T14:00:00Z"
 pause_note: "Retomado pós-restart 2026-09-09. Backfill 000005+000006 + FIN-SEC-001 concluídos. Nada commitado — aguardando aprovação de commit atômico."
 base_commit: "da151be4c1dcf5809c60107096346f0d377acd7e"
 workspace: "dev-opencode"
-status: ACTIVE
+status: RELEASED
+release_note: "Trabalho commitado em 8ecd7aab por terceiro (commit agregado, 82 arquivos). Escopo FIN integralmente presente. Task segue IMPLEMENTED_NOT_VERIFIED até execução QA."

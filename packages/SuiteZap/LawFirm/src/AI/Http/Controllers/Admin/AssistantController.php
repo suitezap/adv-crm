@@ -569,10 +569,15 @@ class AssistantController extends Controller
      */
     public function chatwoot()
     {
-        $chatwootUrl = 'https://whats.suitezap.com.br';
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.chatwoot'), 401, 'This action is unauthorized');
+
+        $chatwootConfig = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getChatwootConfig();
+        $chatwootUrl = rtrim($chatwootConfig['base_url'] ?? 'https://whats.suitezap.com.br', '/');
         $user = auth()->guard('user')->user();
         $sacEmail = $user ? $user->email : 'sac@suitezap.com.br';
-        $sacPassword = 'Eu&m2k2x';
+        // PRIV-AUDIT-001: senha fora do código — vem do MotherShip
+        // (meta_data.sac_password do nó Chatwoot). Ausente = login manual.
+        $sacPassword = $chatwootConfig['sac_password'] ?? null;
 
         return view('lawfirm::admin.assistants.chatwoot', compact(
             'chatwootUrl',

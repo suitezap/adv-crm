@@ -1,7 +1,7 @@
 # 📊 Matriz de Cobertura e Rastreabilidade de Testes (COVERAGE_MATRIX.md)
 
 > **Gerado automaticamente por `quality/scripts/generate_coverage_matrix.py`**  
-> **Última geração:** 2026-09-09 11:27:45  
+> **Última geração:** 2026-09-09 18:52:03  
 > **Fonte da verdade:** `quality/TEST_CATALOG.yaml`
 
 ---
@@ -10,10 +10,10 @@
 
 | Métrica | Quantidade | Percentual |
 |:---|:---:|:---:|
-| **Total de Testes Cadastrados** | **40** | 100% |
-| 🟢 Ativos e Certificados (`active`) | 7 | 17.5% |
-| 🟡 Implementados Não-Verificados (`implemented_unverified`) | 29 | 72.5% |
-| ⚪ Planejados (`planned`) | 4 | 10.0% |
+| **Total de Testes Cadastrados** | **45** | 100% |
+| 🟢 Ativos e Certificados (`active`) | 7 | 15.6% |
+| 🟡 Implementados Não-Verificados (`implemented_unverified`) | 34 | 75.6% |
+| ⚪ Planejados (`planned`) | 4 | 8.9% |
 | 🟠 Em Quarentena (`quarantined`) | 0 | 0.0% |
 | 🔴 Desativados (`disabled`) | 0 | 0.0% |
 | 📦 Aposentados / Histórico (`retired`) | 0 | 0.0% |
@@ -25,18 +25,20 @@
 ### Por Domínio
 | Domínio | Quantidade de Testes |
 |:---|:---:|
-| **AI** | 15 |
+| **AI** | 16 |
 | **Atendimento** | 2 |
+| **Escavador** | 1 |
 | **Financial** | 3 |
-| **Legal** | 8 |
+| **GED** | 1 |
+| **Legal** | 9 |
 | **Plataforma / Governança** | 3 |
-| **SaaS** | 8 |
+| **SaaS** | 9 |
 | **TenantFinance** | 1 |
 
 ### Por Prioridade
 | Prioridade | Quantidade de Testes |
 |:---|:---:|
-| **P0** | 20 |
+| **P0** | 25 |
 | **P1** | 15 |
 | **P2** | 5 |
 
@@ -85,4 +87,9 @@
 | **FIN-FEATURE-002** | Quick-pay exige lawfirm.financeiro.edit e respeita tenant (401 sem permissão) | Financial | domain | Feature | P1 | 🟡 implemented_unverified | `tests/Feature/Financial/FinancialTenantTest.php` | `quality/modules/financial.md` |
 | **TENANT-FIN-001** | Cobrança Asaas do próprio tenant (criar, visualizar, cancelar, reenviar) | TenantFinance | domain | Feature | P0 | 🟡 implemented_unverified | `tests/Feature/TenantFinance/TenantInvoiceTest.php` | `quality/modules/tenant-finance.md` |
 | **FIN-SEC-001** | Visibilidade por configuração do usuário (401 sem permissão, leitura sem escrita, credenciais mascaradas) | Financial | domain | Security | P0 | 🟡 implemented_unverified | `tests/Feature/Financial/FinancialPermissionsTest.php` | `quality/modules/financial.md` |
+| **ESC-SEC-001** | Escavador tenant-scoped (DataGrids, show, toggle) + gates de perfil | Escavador | domain | Security | P0 | 🟡 implemented_unverified | `tests/Feature/Escavador/EscavadorTenantTest.php` | `quality/modules/escavador.md` |
+| **LEGAL-SEC-001** | Casos e Processos exigem permissão de perfil (401 sem gate) | Legal | domain | Security | P0 | 🟡 implemented_unverified | `tests/Feature/Legal/LegalPermissionsTest.php` | `quality/modules/legal.md` |
+| **GED-SEC-001** | GED exige permissão e propriedade do processo (fim do IDOR em downloads) | GED | domain | Security | P0 | 🟡 implemented_unverified | `tests/Feature/Legal/LegalPermissionsTest.php` | `quality/modules/ged.md` |
+| **AI-SEC-001** | Histórico de IA escopado por tenant/usuário + SAC sem segredo hardcoded | AI | domain | Security | P0 | 🟡 implemented_unverified | `tests/Feature/AI/AssistantSecurityTest.php` | `quality/modules/ai-assistant.md` |
+| **WEBHOOK-SEC-001** | Webhooks públicos negam eventos forjados (fail-closed) | SaaS | platform | Security | P0 | 🟡 implemented_unverified | `tests/Feature/Webhooks/WebhookAuthTest.php` | `quality/modules/webhooks.md` |
 | **TENANT-SEC-006** | Tenant A não acessa financeiro/cobranças do Tenant B; webhook com token alheio retorna 401 | SaaS | platform | Security | P0 | 🟡 implemented_unverified | `tests/Security/FinancialTenantIsolationTest.php` | `quality/modules/tenant-finance.md` |

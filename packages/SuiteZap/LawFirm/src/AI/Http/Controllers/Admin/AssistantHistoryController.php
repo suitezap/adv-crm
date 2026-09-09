@@ -16,6 +16,8 @@ class AssistantHistoryController extends Controller
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.view'), 401, 'This action is unauthorized');
+
         if (request()->ajax()) {
             return app(AssistantHistoryDataGrid::class)->toJson();
         }
@@ -31,7 +33,15 @@ class AssistantHistoryController extends Controller
      */
     public function show($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.assistants.view'), 401, 'This action is unauthorized');
+
+        // TenantScope global + ownership (espelha checkStatus): fora do alcance → 403.
         $history = AssistantHistory::with(['template', 'user', 'lead'])->findOrFail($id);
+
+        if (($authorizedIds = bouncer()->getAuthorizedUserIds()) !== null
+            && ! in_array($history->user_id, $authorizedIds)) {
+            abort(403, 'This action is unauthorized');
+        }
 
         return view('lawfirm::admin.assistants.history.show', compact('history'));
     }

@@ -5,6 +5,7 @@ namespace SuiteZap\LawFirm\Escavador\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\SaaS\Concerns\BelongsToTenant;
 
 /**
  * EscavadorRequest — Registro de controle de requisições à API do Escavador.
@@ -23,6 +24,8 @@ use SuiteZap\LawFirm\Legal\Models\Processo;
  */
 class EscavadorRequest extends Model
 {
+    use BelongsToTenant;
+
     protected $table = 'escavador_requests';
 
     protected $fillable = [

@@ -454,4 +454,16 @@ return [
         'route' => 'admin.processos.store_documents',
         'sort'  => 1,
     ],
+    [
+        'key'   => 'lawfirm.documentos.view',
+        'name'  => 'Baixar / Visualizar Documentos',
+        'route' => ['admin.lawfirm.ged.download', 'admin.processos.download_attachment', 'lawfirm.documents.procuration', 'lawfirm.documents.contract'],
+        'sort'  => 2,
+    ],
+    [
+        'key'   => 'lawfirm.documentos.delete',
+        'name'  => 'Excluir Documentos',
+        'route' => ['admin.lawfirm.ged.destroy', 'admin.lawfirm.ged.delete', 'admin.processos.delete_attachment', 'lawfirm.documents.delete'],
+        'sort'  => 3,
+    ],
 ];
