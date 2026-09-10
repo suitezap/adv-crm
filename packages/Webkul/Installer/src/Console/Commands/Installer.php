@@ -300,7 +300,7 @@ class Installer extends Command
 
             'DB_PASSWORD' => password(
                 label: 'Please enter your database password',
-                required: true
+                required: false
             ),
         ];
 
