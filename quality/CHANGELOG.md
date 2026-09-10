@@ -63,6 +63,10 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 - Blades GED com `@if(bouncer()->hasPermission('documentos.delete'))` nos botões de exclusão.
 - Testes `PLAT-SEC-002`, `PORTAL-SEC-001` (`implemented_unverified`); doc `platform.md`; catálogo 45 → 47.
 
+### Complemento — segredo do webhook Whatsapp (follow-up Onda 1b)
+- `getEvolutionConfig()` expõe `webhook_secret` de `meta_data`; controller exige quando configurado (401 sem/com token errado) — sem schema novo.
+- Teste `whatsapp webhook secret is enforced when configured` passando (4/4 no `WebhookAuthTest`).
+
 ## [v3.55.1] - 2026-09-09 (Verificação foreground local — FIN + PRIV Onda 1-3)
 
 ### Verificado

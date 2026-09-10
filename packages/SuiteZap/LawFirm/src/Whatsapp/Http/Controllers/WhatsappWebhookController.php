@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\SaaS\Models\InfrastructureNode;
 use SuiteZap\LawFirm\SaaS\Models\Tenant;
 use SuiteZap\LawFirm\Whatsapp\Services\MessengerService;
 
@@ -19,6 +20,33 @@ use SuiteZap\LawFirm\Whatsapp\Services\MessengerService;
 class WhatsappWebhookController extends Controller
 {
     public function __construct(private MessengerService $messenger) {}
+
+    /**
+     * Segredo do webhook inbound do tenant (meta_data.webhook_secret do nó
+     * Evolution). Null quando não configurado (vale o vínculo instância).
+     */
+    private function tenantWebhookSecret($tenant): ?string
+    {
+        try {
+            if (empty($tenant->evolution_node_id)) {
+                return null;
+            }
+
+            $node = InfrastructureNode::on('mothership')->find($tenant->evolution_node_id);
+
+            if (! $node) {
+                return null;
+            }
+
+            $meta = is_array($node->meta_data)
+                ? $node->meta_data
+                : (json_decode($node->meta_data, true) ?? []);
+
+            return $meta['webhook_secret'] ?? null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
 
     public function handle(Request $request, int $tenantId): JsonResponse
     {
@@ -72,6 +100,21 @@ class WhatsappWebhookController extends Controller
             ]);
 
             return response()->json(['ok' => false, 'error' => 'instance_mismatch'], 400);
+        }
+
+        // ── Guard: segredo do webhook quando configurado (fail-closed) ─────
+        // meta_data.webhook_secret do nó Evolution + header X-Webhook-Token
+        // (ou ?token=) na Evolution. Ausente = vale só o vínculo instância.
+        $webhookSecret = $this->tenantWebhookSecret($tenant);
+
+        if (! empty($webhookSecret)) {
+            $provided = $request->header('X-Webhook-Token', $request->query('token'));
+
+            if (! is_string($provided) || ! hash_equals((string) $webhookSecret, $provided)) {
+                Log::warning('[WhatsappWebhook] Token inválido.', ['tenant_id' => $tenantId]);
+
+                return response()->json(['ok' => false, 'error' => 'unauthorized'], 401);
+            }
         }
 
         // ── MESSAGES_UPSERT ───────────────────────────────────────────────────

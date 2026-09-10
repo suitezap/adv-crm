@@ -47,4 +47,32 @@ class WebhookAuthTest extends MultiDatabaseTestCase
         // Tenant inexistente (ou mothership inacessível) → 400, nada criado
         $response->assertStatus(400);
     }
+
+    public function test_whatsapp_webhook_secret_is_enforced_when_configured(): void
+    {
+        $node = \SuiteZap\LawFirm\SaaS\Models\InfrastructureNode::create([
+            'name' => 'Evo Teste', 'type' => 'evolution',
+            'base_url' => 'https://evo.test', 'api_key' => 'k',
+            'meta_data' => ['webhook_secret' => 'segredo-123'],
+            'status' => 'active',
+        ]);
+        \SuiteZap\LawFirm\SaaS\Models\Tenant::create([
+            'id' => '777001', 'name' => 'Tenant Secret',
+            'evolution_node_id' => $node->id,
+            'evolution_instance_name' => 'inst-777',
+        ]);
+
+        $route = route('webhooks.whatsapp_messenger', ['tenantId' => 777001]);
+
+        // Sem token → 401
+        $this->postJson($route, ['event' => 'ping'])->assertStatus(401);
+
+        // Token errado → 401
+        $this->postJson($route, ['event' => 'ping'], ['X-Webhook-Token' => 'errado'])
+            ->assertStatus(401);
+
+        // Token certo + instância do tenant → processa (200)
+        $this->postJson($route, ['event' => 'ping', 'instance' => 'inst-777'],
+            ['X-Webhook-Token' => 'segredo-123'])->assertStatus(200);
+    }
 }

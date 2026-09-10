@@ -238,9 +238,13 @@ class MotherShipService
         }
 
         return [
-            'base_url' => rtrim($node->base_url, '/'),
-            'instance' => $instanceName,
-            'token'    => $tenantConfig->evolution_api_key ?: $node->api_key,
+            'base_url'       => rtrim($node->base_url, '/'),
+            'instance'       => $instanceName,
+            'token'          => $tenantConfig->evolution_api_key ?: $node->api_key,
+            // Segredo opcional do webhook inbound (PRIV-AUDIT-001 follow-up).
+            // Configure em meta_data.webhook_secret do nó + na Evolution
+            // (header X-Webhook-Token ou ?token=). Ausente = só vínculo instância.
+            'webhook_secret' => $meta['webhook_secret'] ?? null,
         ];
     }
 

@@ -1,7 +1,7 @@
 # 📊 Matriz de Cobertura e Rastreabilidade de Testes (COVERAGE_MATRIX.md)
 
 > **Gerado automaticamente por `quality/scripts/generate_coverage_matrix.py`**  
-> **Última geração:** 2026-09-09 20:27:58  
+> **Última geração:** 2026-09-09 21:03:00  
 > **Fonte da verdade:** `quality/TEST_CATALOG.yaml`
 
 ---

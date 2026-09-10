@@ -10,6 +10,7 @@
 - Asaas plataforma: fim do mint ROTA 4 (sem `externalReference`/pedido, sem crédito).
 - TenantAsaas: settings do tenant da invoice; Escavador: mutação só no tenant do registro; Whatsapp: tenant existe + instância do payload pertence ao tenant; ACK e upsert escopados.
 - Chatwoot: HMAC + inbox (inalterado, já correto).
+- Whatsapp: `meta_data.webhook_secret` do nó Evolution (opcional); configurado → exige `X-Webhook-Token`/`?token` (401 sem); ausente → vínculo instância↔tenant.
 
 ## Testes
 | ID | Nome | Status |
