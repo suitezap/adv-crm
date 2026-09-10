@@ -50,17 +50,21 @@ class WebhookAuthTest extends MultiDatabaseTestCase
 
     public function test_whatsapp_webhook_secret_is_enforced_when_configured(): void
     {
-        $node = \SuiteZap\LawFirm\SaaS\Models\InfrastructureNode::create([
-            'name' => 'Evo Teste', 'type' => 'evolution',
-            'base_url' => 'https://evo.test', 'api_key' => 'k',
-            'meta_data' => ['webhook_secret' => 'segredo-123'],
-            'status' => 'active',
-        ]);
-        \SuiteZap\LawFirm\SaaS\Models\Tenant::create([
-            'id' => '777001', 'name' => 'Tenant Secret',
-            'evolution_node_id' => $node->id,
-            'evolution_instance_name' => 'inst-777',
-        ]);
+        // Idempotente: conexão mothership não é limpa pelo RefreshDatabase.
+        $node = \SuiteZap\LawFirm\SaaS\Models\InfrastructureNode::firstOrCreate(
+            ['name' => 'Evo Teste WebhookAuth'],
+            ['type' => 'evolution',
+             'base_url' => 'https://evo.test', 'api_key' => 'k',
+             'meta_data' => ['webhook_secret' => 'segredo-123'],
+             'status' => 'active']
+        );
+        $node->update(['meta_data' => ['webhook_secret' => 'segredo-123']]);
+        \SuiteZap\LawFirm\SaaS\Models\Tenant::updateOrCreate(
+            ['id' => '777001'],
+            ['name' => 'Tenant Secret',
+             'evolution_node_id' => $node->id,
+             'evolution_instance_name' => 'inst-777']
+        );
 
         $route = route('webhooks.whatsapp_messenger', ['tenantId' => 777001]);
 
