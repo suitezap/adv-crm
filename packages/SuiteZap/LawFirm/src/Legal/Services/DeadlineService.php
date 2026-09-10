@@ -12,6 +12,19 @@ use SuiteZap\LawFirm\Legal\Models\Processo;
 class DeadlineService
 {
     /**
+     * Propriedade do prazo (PRIV-AUDIT-001): prazo cujo processo não resolve
+     * no tenant da sessão comporta-se como inexistente (404).
+     *
+     * @throws ModelNotFoundException
+     */
+    private function assertPrazoTenant(Prazo $prazo): void
+    {
+        if ($prazo->processo_id && ! Processo::find($prazo->processo_id)) {
+            throw new ModelNotFoundException;
+        }
+    }
+
+    /**
      * Create a new deadline for a given process.
      *
      * @throws ModelNotFoundException
@@ -90,6 +103,7 @@ class DeadlineService
     public function toggleStatus(int $id): Prazo
     {
         $prazo = Prazo::findOrFail($id);
+        $this->assertPrazoTenant($prazo);
 
         $currentStatus = strtolower($prazo->status);
         $isConcluded = ($currentStatus === 'concluido' || $currentStatus === 'concluído');
@@ -117,6 +131,8 @@ class DeadlineService
     public function completeDeadline(int $id): Prazo
     {
         $prazo = Prazo::findOrFail($id);
+        $this->assertPrazoTenant($prazo);
+        $this->assertPrazoTenant($prazo);
 
         $prazo->update([
             'status'       => 'concluido',
@@ -152,7 +168,11 @@ class DeadlineService
                 continue;
             }
 
-            // Create or Update
+            // Create or Update (id existente precisa ser do tenant — senão 404)
+            if (! empty($data['id'])) {
+                $existing = Prazo::findOrFail($data['id']);
+                $this->assertPrazoTenant($existing);
+            }
             Prazo::updateOrCreate(
                 ['id' => $data['id'] ?? null],
                 array_merge($data, ['processo_id' => $processoId])
@@ -166,6 +186,7 @@ class DeadlineService
     public function deleteDeadline(int $id): bool
     {
         $prazo = Prazo::findOrFail($id);
+        $this->assertPrazoTenant($prazo);
 
         // Remove Activity if exists
         if ($prazo->activity_id) {

@@ -60,12 +60,13 @@ class MessengerService
             ]);
         }
 
-        // ── Message (upsert — idempotent via evolution_message_id) ───────────
+        // ── Message (upsert — idempotente por tenant + evolution_message_id) ──
+        // (PRIV-AUDIT-001: chave global permitia colisão/sobrescrita cross-tenant)
         $body = $this->extractBody($rawMessage);
         $type = $this->detectType($rawMessage);
 
         $message = WhatsappMessage::updateOrCreate(
-            ['evolution_message_id' => $msgId],
+            ['tenant_id' => $tenantId, 'evolution_message_id' => $msgId],
             [
                 'tenant_id' => $tenantId,
                 'ticket_id' => $ticket->id,
@@ -84,10 +85,12 @@ class MessengerService
 
     /**
      * Update ACK (delivery status) for a message. Called from messages.update webhook.
+     * Escopado ao tenant (PRIV-AUDIT-001): ACK cross-tenant é ignorado.
      */
-    public function updateAck(string $evolutionMessageId, int $ack): void
+    public function updateAck(string $evolutionMessageId, int $ack, int $tenantId): void
     {
         WhatsappMessage::where('evolution_message_id', $evolutionMessageId)
+            ->where('tenant_id', $tenantId)
             ->update(['ack' => $ack]);
     }
 

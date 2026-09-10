@@ -949,7 +949,7 @@ tests:
     module: financial
     type: Feature
     priority: P0
-    status: implemented_unverified
+    status: active
     automated: true
     test_file: tests/Feature/Financial/FinancialTenantTest.php
     documentation: quality/modules/financial.md
@@ -965,9 +965,9 @@ tests:
     tenant_scope: multi_tenant_matrix
     destructive: false
     owner: unassigned
-    last_verified_version: null
-    last_verified_date: null
-    notes: "Registrado em FIN-COBRANCAS-001. Aguardando execução foreground para transitar a active."
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Registrado em FIN-COBRANCAS-001. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
 
   - id: FIN-FEATURE-002
     name: "Quick-pay exige lawfirm.financeiro.edit e respeita tenant (401 sem permissão)"
@@ -976,7 +976,7 @@ tests:
     module: financial
     type: Feature
     priority: P1
-    status: implemented_unverified
+    status: active
     automated: true
     test_file: tests/Feature/Financial/FinancialTenantTest.php
     documentation: quality/modules/financial.md
@@ -989,9 +989,9 @@ tests:
     tenant_scope: single_tenant
     destructive: false
     owner: unassigned
-    last_verified_version: null
-    last_verified_date: null
-    notes: "Registrado em FIN-COBRANCAS-001. Aguardando execução foreground para transitar a active."
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Registrado em FIN-COBRANCAS-001. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
 
   - id: TENANT-FIN-001
     name: "Cobrança Asaas do próprio tenant (criar, visualizar, cancelar, reenviar)"
@@ -1000,7 +1000,7 @@ tests:
     module: tenant-finance
     type: Feature
     priority: P0
-    status: implemented_unverified
+    status: active
     automated: true
     test_file: tests/Feature/TenantFinance/TenantInvoiceTest.php
     documentation: quality/modules/tenant-finance.md
@@ -1018,9 +1018,9 @@ tests:
     tenant_scope: single_tenant
     destructive: false
     owner: unassigned
-    last_verified_version: null
-    last_verified_date: null
-    notes: "Registrado em FIN-COBRANCAS-001. Rota /api antes de /{id} + whereNumber. Aguardando execução foreground."
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Registrado em FIN-COBRANCAS-001. Rota /api antes de /{id} + whereNumber. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
 
   - id: FIN-SEC-001
     name: "Visibilidade por configuração do usuário (401 sem permissão, leitura sem escrita, credenciais mascaradas)"
@@ -1029,7 +1029,7 @@ tests:
     module: financial
     type: Security
     priority: P0
-    status: implemented_unverified
+    status: active
     automated: true
     test_file: tests/Feature/Financial/FinancialPermissionsTest.php
     documentation: quality/modules/financial.md
@@ -1045,9 +1045,177 @@ tests:
     tenant_scope: single_tenant
     destructive: false
     owner: unassigned
-    last_verified_version: null
-    last_verified_date: null
-    notes: "Registrado em FIN-COBRANCAS-001 (complemento permissão-por-usuário). Aguardando execução foreground."
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Registrado em FIN-COBRANCAS-001 (complemento permissão-por-usuário). Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
+
+  - id: ESC-SEC-001
+    name: "Escavador tenant-scoped (DataGrids, show, toggle) + gates de perfil"
+    domain: Escavador
+    layer: domain
+    module: escavador
+    type: Security
+    priority: P0
+    status: active
+    automated: true
+    test_file: tests/Feature/Escavador/EscavadorTenantTest.php
+    documentation: quality/modules/escavador.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Escavador/DataGrids/EscavadorHistoryDataGrid.php
+        symbol: EscavadorHistoryDataGrid::prepareQueryBuilder
+        purpose: "Filtro tenant_id na listagem"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Registrado em PRIV-AUDIT-001 Onda 1a. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
+
+  - id: LEGAL-SEC-001
+    name: "Casos e Processos exigem permissão de perfil (401 sem gate)"
+    domain: Legal
+    layer: domain
+    module: legal-access
+    type: Security
+    priority: P0
+    status: active
+    automated: true
+    test_file: tests/Feature/Legal/LegalPermissionsTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Legal/Http/Controllers/CasoController.php
+        symbol: CasoController::store
+        purpose: "Gate casos.create em escrita"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Registrado em PRIV-AUDIT-001 Onda 1e. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
+
+  - id: GED-SEC-001
+    name: "GED exige permissão e propriedade do processo (fim do IDOR em downloads)"
+    domain: GED
+    layer: domain
+    module: ged
+    type: Security
+    priority: P0
+    status: active
+    automated: true
+    test_file: tests/Feature/Legal/LegalPermissionsTest.php
+    documentation: quality/modules/ged.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/GED/Http/Controllers/ProcessDocumentController.php
+        symbol: ProcessDocumentController::download
+        purpose: "Gate view + ownership do processo"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Registrado em PRIV-AUDIT-001 Onda 1e. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
+
+  - id: AI-SEC-001
+    name: "Histórico de IA escopado por tenant/usuário + SAC sem segredo hardcoded"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Security
+    priority: P0
+    status: active
+    automated: true
+    test_file: tests/Feature/AI/AssistantSecurityTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Http/Controllers/Admin/AssistantHistoryController.php
+        symbol: AssistantHistoryController::show
+        purpose: "Gate view + ownership do histórico"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: multi_tenant_matrix
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Registrado em PRIV-AUDIT-001 Ondas 1c/1d. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
+
+  - id: WEBHOOK-SEC-001
+    name: "Webhooks públicos negam eventos forjados (fail-closed)"
+    domain: SaaS
+    layer: platform
+    module: webhooks
+    type: Security
+    priority: P0
+    status: active
+    automated: true
+    test_file: tests/Feature/Webhooks/WebhookAuthTest.php
+    documentation: quality/modules/webhooks.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/SaaS/Http/Controllers/AsaasWebhookController.php
+        symbol: AsaasWebhookController::isAuthorized
+        purpose: "Fail-closed sem token + fim do mint ROTA 4"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: cross_tenant_validation
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Registrado em PRIV-AUDIT-001 Onda 1b. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
+
+  - id: PLAT-SEC-002
+    name: "Gates de perfil em SaaS, AI, modelos e Whatsapp (401 sem permissão)"
+    domain: SaaS
+    layer: platform
+    module: platform-gates
+    type: Security
+    priority: P0
+    status: active
+    automated: true
+    test_file: tests/Feature/Platform/PlatformPermissionsTest.php
+    documentation: quality/modules/platform.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/SaaS/Http/Controllers/SubscriptionCheckoutController.php
+        symbol: SubscriptionCheckoutController::checkoutPlan
+        purpose: "Gate saas.manage em cobrança recorrente"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Registrado em PRIV-AUDIT-001 Ondas 2-3. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
+
+  - id: PORTAL-SEC-001
+    name: "Portal público com token expirável, whitelist e upload restrito"
+    domain: Legal
+    layer: domain
+    module: legal-access
+    type: Security
+    priority: P1
+    status: active
+    automated: true
+    test_file: tests/Feature/Platform/PlatformPermissionsTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/Legal/Http/Controllers/PublicPortal/CustomerPortalController.php
+        symbol: CustomerPortalController::verifyToken
+        purpose: "Token exp.* com expiração + legado depreciado"
+    dependencies: ["mysql"]
+    external_services: []
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Registrado em PRIV-AUDIT-001 Onda 3b. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
 
   - id: TENANT-SEC-006
     name: "Tenant A não acessa financeiro/cobranças do Tenant B; webhook com token alheio retorna 401"
@@ -1056,7 +1224,7 @@ tests:
     module: tenant-finance
     type: Security
     priority: P0
-    status: implemented_unverified
+    status: active
     automated: true
     test_file: tests/Security/FinancialTenantIsolationTest.php
     documentation: quality/modules/tenant-finance.md
@@ -1072,6 +1240,6 @@ tests:
     tenant_scope: multi_tenant_matrix
     destructive: false
     owner: unassigned
-    last_verified_version: null
-    last_verified_date: null
-    notes: "Registrado em FIN-COBRANCAS-001. Aguardando execução foreground para transitar a active."
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Registrado em FIN-COBRANCAS-001. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."

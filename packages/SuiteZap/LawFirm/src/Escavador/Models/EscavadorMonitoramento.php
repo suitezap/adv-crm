@@ -5,9 +5,12 @@ namespace SuiteZap\LawFirm\Escavador\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\SaaS\Concerns\BelongsToTenant;
 
 class EscavadorMonitoramento extends Model
 {
+    use BelongsToTenant;
+
     protected $table = 'escavador_monitoramentos';
 
     protected $fillable = [

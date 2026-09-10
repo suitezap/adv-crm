@@ -1,0 +1,17 @@
+task_id: PRIV-AUDIT-001
+owner: OPENCODE
+write_scope:
+  - packages/SuiteZap/LawFirm/src/
+  - quality/TEST_CATALOG.yaml
+  - quality/modules/
+  - quality/CHANGELOG.md
+  - tests/
+  - openspec/changes/priv-audit-platform/
+started_at: "2026-09-09T14:30:00Z"
+last_checkpoint_at: "2026-09-09T18:00:00Z"
+commit: "fd11bf12 feature/priv-audit-onda-1-tenant-isolation-gates (43 arquivos, Onda 1 completa)"
+checkpoint: "Ondas 1-3 executadas localmente 26/26. 12 testes active v3.55.1. Commit Ondas 2-3 pendente de aprovacao."
+base_commit: "8ecd7aab6aa4dfc83c43631b7f258374a7335d8f"
+workspace: "dev-opencode"
+status: RELEASED
+release_note: "DONE 2026-09-09. Suite 117/117. Commits fd11bf12/8fe299d1/d8da0362/6c2c9f9e."

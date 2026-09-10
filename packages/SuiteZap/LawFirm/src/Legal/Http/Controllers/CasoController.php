@@ -40,6 +40,8 @@ class CasoController extends Controller
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.casos.view'), 401, 'This action is unauthorized');
+
         if (request()->ajax()) {
             return app(CasoDataGrid::class)->process();
         }
@@ -62,6 +64,8 @@ class CasoController extends Controller
      */
     public function store(StoreCasoRequest $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.casos.create'), 401, 'This action is unauthorized');
+
         $data = $request->validated();
 
         $caso = $this->casoService->createCaso($data);
@@ -76,6 +80,8 @@ class CasoController extends Controller
      */
     public function show(int $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.casos.view'), 401, 'This action is unauthorized');
+
         $caso = $this->casoRepository->findOrFail($id);
         $caso->load(['person', 'organization', 'responsavel', 'processos']);
 
@@ -111,6 +117,8 @@ class CasoController extends Controller
      */
     public function update(UpdateCasoRequest $request, int $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.casos.edit'), 401, 'This action is unauthorized');
+
         $data = $request->validated();
 
         $caso = $this->casoService->updateCaso($data, $id);
@@ -145,6 +153,8 @@ class CasoController extends Controller
      */
     public function massDestroy()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.casos.delete'), 401, 'This action is unauthorized');
+
         try {
             $indices = request()->input('indices', []);
 
@@ -177,6 +187,8 @@ class CasoController extends Controller
      */
     public function searchCaso()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.casos.view'), 401, 'This action is unauthorized');
+
         $term = request('query');
 
         $results = $this->casoRepository->scopeQuery(function ($query) use ($term) {
@@ -192,6 +204,8 @@ class CasoController extends Controller
      */
     public function searchProcesso()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.casos.view'), 401, 'This action is unauthorized');
+
         $term = request('query');
         $casoId = request('caso_id');
 
@@ -220,6 +234,8 @@ class CasoController extends Controller
      */
     public function linkProcesso(int $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.casos.edit'), 401, 'This action is unauthorized');
+
         $processoId = request('processo_id');
 
         $caso = $this->casoRepository->findOrFail($id);
@@ -237,6 +253,8 @@ class CasoController extends Controller
      */
     public function unlinkProcesso(int $id, int $processoId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.casos.edit'), 401, 'This action is unauthorized');
+
         $processo = Processo::where('id', $processoId)
             ->where('caso_id', $id)
             ->firstOrFail();

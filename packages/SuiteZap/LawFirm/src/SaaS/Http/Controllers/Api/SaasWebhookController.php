@@ -27,7 +27,8 @@ class SaasWebhookController extends Controller
             $secret = config('lawfirm.saas.webhook_secret');
         }
 
-        if (! $secret || $token !== $secret) {
+        // Fail-closed + timing-safe (PRIV-AUDIT-001): sem secret, nega.
+        if (! $secret || ! is_string($token) || ! hash_equals((string) $secret, $token)) {
             Log::warning('SaaS Webhook: Unauthorized access attempt.', ['ip' => $request->ip()]);
 
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);

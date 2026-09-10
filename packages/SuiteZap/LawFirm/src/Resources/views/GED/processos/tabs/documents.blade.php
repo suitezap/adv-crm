@@ -112,10 +112,12 @@
                                         class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors" title="Baixar">
                                         <span class="icon-download text-lg"></span>
                                     </a>
+                                    @if(bouncer()->hasPermission('lawfirm.documentos.delete'))
                                     <button type="button" onclick="window.lfDocsDeleteAttachment('{{ $anexo->id }}')"
                                         class="p-1.5 rounded-md text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 transition-colors" title="Excluir">
                                         <span class="icon-delete text-lg"></span>
                                     </button>
+                                    @endif
                                 </div>
                             </td>
                         @endif
@@ -247,10 +249,12 @@
                                             <i class="icon-download text-lg"></i>
                                         </a>
                                     @endif
+                                    @if(bouncer()->hasPermission('lawfirm.documentos.delete'))
                                     <button type="button" onclick="window.lfDocsDeleteChecklistItem('{{ $doc->id }}')"
                                         class="text-gray-400 hover:text-red-500 transition-colors">
                                         <i class="icon-delete text-lg"></i>
                                     </button>
+                                    @endif
                                 </div>
                             </td>
                         @endif

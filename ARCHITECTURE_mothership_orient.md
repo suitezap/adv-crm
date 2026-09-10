@@ -448,6 +448,7 @@ Usuário clica em "Usar Assistente"
 | Exceção CSRF em `VerifyCsrfToken::$except` | ✅ Implementada | `app/Http/Middleware/VerifyCsrfToken.php` |
 | Chave `API_V1_AUTOS_PROCESSO` em `getEscavadorPrices()` | ✅ Implementada | `src/SaaS/Services/MotherShipService.php` |
 | Guards HTTP 403 em `DocumentTemplateController` (edit/update/destroy) | ✅ Implementados | `src/Legal/Http/Controllers/Admin/DocumentTemplateController.php` |
+| `sac_password` em `meta_data` do nó Chatwoot (auto-login SAC por tenant, PRIV-AUDIT-001 — fora do código) | ✅ Convenção adotada | `MotherShipService::getChatwootConfig()` lê `meta['sac_password']`; ausente = login manual |
 
 ### 16.2 Divergência do Scaffold Original — Namespace
 

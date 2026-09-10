@@ -14,10 +14,10 @@ Lançamentos manuais do escritório (`law_financials`): receitas, despesas, baix
 ## Testes
 | ID | Nome | Status |
 |---|---|---|
-| `FIN-FEATURE-001` | CRUD de lançamento tenant-scoped (criar, baixar, recibo) | `implemented_unverified` |
-| `FIN-FEATURE-002` | Quick-pay com permissão `lawfirm.financeiro.edit` e 401 sem permissão | `implemented_unverified` |
-| `FIN-SEC-001` | Visibilidade por perfil: 401 sem permissão, leitura sem escrita, credenciais mascaradas, `individual` vs `global` | `implemented_unverified` |
-| `TENANT-SEC-006` | Tenant A não acessa `law_financials`/`tenant_invoices` do Tenant B (403/404) | `implemented_unverified` |
+| `FIN-FEATURE-001` | CRUD de lançamento tenant-scoped (criar, baixar, recibo) | `active` |
+| `FIN-FEATURE-002` | Quick-pay com permissão `lawfirm.financeiro.edit` e 401 sem permissão | `active` |
+| `FIN-SEC-001` | Visibilidade por perfil: 401 sem permissão, leitura sem escrita, credenciais mascaradas, `individual` vs `global` | `active` |
+| `TENANT-SEC-006` | Tenant A não acessa `law_financials`/`tenant_invoices` do Tenant B (403/404) | `active` |
 
 ## Permissões por usuário
 - Dashboard exige `lawfirm.financeiro.view` (antes sem gate — qualquer autenticado via KPIs).

@@ -10,6 +10,8 @@ class EscavadorHistoryController extends Controller
 {
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.view'), 401, 'This action is unauthorized');
+
         if (request()->ajax()) {
             return app(EscavadorHistoryDataGrid::class)->toJson();
         }
@@ -19,6 +21,9 @@ class EscavadorHistoryController extends Controller
 
     public function show($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.view'), 401, 'This action is unauthorized');
+
+        // TenantScope global restringe ao tenant da sessão (PRIV-AUDIT-001).
         $history = EscavadorRequest::with('processo')->findOrFail($id);
 
         return view('lawfirm::admin.escavador.history.show', compact('history'));

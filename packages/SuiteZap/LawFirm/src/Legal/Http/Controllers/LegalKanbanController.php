@@ -116,6 +116,12 @@ class LegalKanbanController extends Controller
 
         $caso = Caso::findOrFail($id);
 
+        // Propriedade (PRIV-AUDIT-001): fora do alcance do usuário → 404.
+        if (($authorizedIds = bouncer()->getAuthorizedUserIds()) !== null
+            && ! in_array($caso->user_id, $authorizedIds)) {
+            abort(404);
+        }
+
         try {
             $updatedCaso = $this->pipelineService->moveCaseToStage($caso, (int) $request->stage_id);
 

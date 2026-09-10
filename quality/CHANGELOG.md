@@ -50,6 +50,39 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 
 > Execução foreground pendente no data-plane Docker de QA (`mysql-test` indisponível no dev Windows — `getaddrinfo failed`); transição para `active` após `QA-DATA-001`/harness com saída comprovada.
 
+## [Unreleased] - PRIV-AUDIT-001 Ondas 2-3 (SaaS, AI, modelos, Whatsapp, agenda, portal)
+
+### Adicionado
+- Gates `saas.manage` em assinatura, checkout (plano/créditos), billing, pedidos, extrato e dashboard; `SaasOrdersDataGrid` por usuário; rotas de checkout/billing no ACL.
+- `MothershipTemplate::upsert` valida `tenant_id` existente; `SaasWebhook` com `hash_equals` fail-closed.
+- IA: `findAccessibleTemplate` (tenant + módulo) em show/generate/execute/processForLead; gates `view/execute`; ownership de lead na triagem; log sem `form_data`/webhook.
+- Modelos: gates `modelos.view/create/edit/delete` + `documentos.create` no `saveGenerated` com propriedade do processo.
+- Whatsapp: gates `whatsapp.manage` em index/QR/status/disconnect/teste.
+- Agenda com escopo de prazos por usuário + gates; Kanban com ownership; Checklist com contexto + gates; Prazos notify/toggle com gates + propriedade; `DeadlineService` com `assertPrazoTenant` (inclui `syncDeadlines`).
+- Portal: tokens `exp.*` 30 dias (legado depreciado), whitelist validada, logs sem PII, upload tipado 20MB.
+- Blades GED com `@if(bouncer()->hasPermission('documentos.delete'))` nos botões de exclusão.
+- Testes `PLAT-SEC-002`, `PORTAL-SEC-001` (`implemented_unverified`); doc `platform.md`; catálogo 45 → 47.
+
+### Complemento — segredo do webhook Whatsapp (follow-up Onda 1b)
+- `getEvolutionConfig()` expõe `webhook_secret` de `meta_data`; controller exige quando configurado (401 sem/com token errado) — sem schema novo.
+- Teste `whatsapp webhook secret is enforced when configured` passando (4/4 no `WebhookAuthTest`).
+
+## [v3.55.1] - 2026-09-09 (Verificação foreground local — FIN + PRIV Onda 1-3)
+
+### Verificado
+- Data-plane de teste replicado localmente (`tenant_a_test`, `tenant_b_test`, `mothership_test` + migrate total, incluindo base `tenants`/`subscriptions`/`infrastructure_nodes` mínima) e suíte Pest executada com `DatabaseSafetyGuard` ativo: **26/26 passaram** (FIN 11, PRIV Onda 1: 11, Ondas 2-3: 4).
+- 12 testes transitados `implemented_unverified` → `active` (`last_verified_version v3.55.1`, `2026-09-09`): `FIN-FEATURE-001/002`, `TENANT-FIN-001`, `TENANT-SEC-006`, `FIN-SEC-001`, `ESC-SEC-001`, `LEGAL-SEC-001`, `GED-SEC-001`, `AI-SEC-001`, `WEBHOOK-SEC-001`, `PLAT-SEC-002`, `PORTAL-SEC-001`.
+- Correção de teste (não de produto): `PlatformPermissionsTest` passou a criar o Lead da triagem (404 era dado inexistente, não falta de gate).
+
+## [Unreleased] - PRIV-AUDIT-001 Onda 1 (pré-req + Escavador + webhooks + AI + Legal/GED + SAC)
+
+### Adicionado
+- `tenant_id` em `processos` (migration + backfill + NOT NULL condicional) + `BelongsToTenant` em `Processo`, `EscavadorRequest`, `EscavadorMonitoramento`, `AssistantHistory` (+ migration `lawfirm_assistant_history`).
+- Gates `bouncer()` em `Caso/Processo` (index/show/store/update/massDestroy/search/link), `GED` (todas + `assertTenantProcesso`), `Escavador History/Monitoramento`, `AssistantHistory`, `chatwoot()` (+ permissão `assistants.chatwoot`); novas chaves ACL `lawfirm.documentos.view/delete`.
+- Webhooks fail-closed: Asaas sem token = nega + fim do mint ROTA 4; Escavador com tenant-scoped lookups + disparo WhatsApp de monitoramento retido (§8); Whatsapp com vínculo instância↔tenant + ACK/upsert escopados; `BlockSuspendedImport` (410) isolando rotas de importação sem tocar suspensos.
+- Senha do SAC fora do código: `meta_data.sac_password` do nó Chatwoot (ver `ARCHITECTURE_mothership_orient.md §16.1`); ausente = login manual.
+- Testes `ESC-SEC-001`, `LEGAL-SEC-001`, `GED-SEC-001`, `AI-SEC-001`, `WEBHOOK-SEC-001` (`implemented_unverified`); docs `escavador.md`, `ged.md`, `legal.md`, `webhooks.md`; specs `platform/*`.
+
 ### Complemento 2 — Backfill e enforcement (retomada pós-restart)
 - Migrations `2026_09_09_000005` (backfill NULLs com TENANT_ID do env + log por tabela, irreversível por segurança, precedente `2026_04_01`) e `2026_09_09_000006` (NOT NULL condicional: só aplica sem NULLs restantes, senão warning + conciliação manual; isolamento segue via app).
 - Aviso multi-tenant compartilhado: em base com >1 tenant, conferir o log antes de rodar o backfill (atribuição manual nesse caso).

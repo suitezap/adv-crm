@@ -436,8 +436,13 @@
             <div>
                 <div class="cw-credentials-title">Credenciais de Acesso — SAC SuiteZap</div>
                 <div class="cw-credentials-detail">
-                    Login automático configurado para: <code>{{ $sacEmail }}</code><br>
-                    A janela tentará realizar o login automaticamente ao abrir. Caso seja solicitado, use as credenciais acima.
+                    @if(!empty($sacPassword))
+                        Login automático configurado para: <code>{{ $sacEmail }}</code><br>
+                        A janela tentará realizar o login automaticamente ao abrir. Caso seja solicitado, use as credenciais acima.
+                    @else
+                        Login manual com seu usuário do SAC (<code>{{ $sacEmail }}</code>).<br>
+                        O login automático está desabilitado para este escritório.
+                    @endif
                 </div>
             </div>
         </div>
@@ -481,7 +486,9 @@
             // ── Configurações ─────────────────────────────────────────
             var CW_URL      = '{{ $chatwootUrl }}';
             var CW_EMAIL    = '{{ $sacEmail }}';
+            @if(!empty($sacPassword))
             var CW_PASSWORD = '{{ $sacPassword }}';
+            @endif
 
             var cwWindow       = null;
             var cwCheckInterval = null;
@@ -543,7 +550,10 @@
                 startWindowMonitor();
 
                 // Tentativa de auto-login via postMessage após carregamento
-                attemptAutoLogin();
+                // (só quando o MotherShip fornece sac_password; senão login manual)
+                if (typeof CW_PASSWORD !== 'undefined') {
+                    attemptAutoLogin();
+                }
             }
 
             /**

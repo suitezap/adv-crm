@@ -5,6 +5,7 @@ use SuiteZap\LawFirm\Whatsapp\Http\Controllers\Admin\WhatsappChatController;
 use SuiteZap\LawFirm\Whatsapp\Http\Controllers\Admin\WhatsappImportController;
 use SuiteZap\LawFirm\Whatsapp\Http\Controllers\Admin\WhatsappTemplatesController;
 use SuiteZap\LawFirm\Whatsapp\Http\Controllers\ConnectionController;
+use SuiteZap\LawFirm\Whatsapp\Http\Middleware\BlockSuspendedImport;
 use SuiteZap\LawFirm\Whatsapp\Http\Middleware\CheckWhatsappModule;
 use SuiteZap\LawFirm\Whatsapp\Http\Middleware\CheckWhatsappTriagemModule;
 
@@ -36,8 +37,9 @@ Route::middleware([CheckWhatsappModule::class])->prefix('whatsapp')->group(funct
         Route::post('test', 'testNotification')->name('admin.lawfirm.whatsapp.test');
     });
 
-    // Importação de Mensagens de Processos
-    Route::controller(WhatsappImportController::class)->group(function () {
+    // Importação de Mensagens de Processos — SUSPENSA (§8).
+    // Rotas mantidas (nomes usados nas blades) mas bloqueadas na entrada.
+    Route::middleware([BlockSuspendedImport::class])->controller(WhatsappImportController::class)->group(function () {
         Route::post('importar/{processo_id}', 'dispatchImport')->name('admin.lawfirm.whatsapp.import');
         Route::get('mensagens/{processo_id}', 'fetchMessages')->name('admin.lawfirm.whatsapp.messages');
         Route::post('mensagens/{message_id}/download-media', 'downloadMedia')->name('admin.lawfirm.whatsapp.messages.download_media');

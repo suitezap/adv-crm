@@ -17,6 +17,8 @@ class EscavadorMonitoramentoController extends Controller
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.view'), 401, 'This action is unauthorized');
+
         if (request()->ajax()) {
             return app(EscavadorMonitoramentoDataGrid::class)->toJson();
         }
@@ -31,6 +33,8 @@ class EscavadorMonitoramentoController extends Controller
      */
     public function create()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
         return view('lawfirm::admin.escavador.monitoramentos.create');
     }
 
@@ -42,6 +46,10 @@ class EscavadorMonitoramentoController extends Controller
      */
     public function toggleWhatsapp($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
+        // TenantScope global restringe ao tenant da sessão (PRIV-AUDIT-001).
+        // Nota: só alterna a flag; o sender de alertas segue suspenso (§8).
         $monitoramento = EscavadorMonitoramento::findOrFail($id);
 
         $monitoramento->notify_whatsapp = ! $monitoramento->notify_whatsapp;

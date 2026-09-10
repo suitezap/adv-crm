@@ -137,6 +137,8 @@ class ProcessoController extends Controller
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.view'), 401, 'This action is unauthorized');
+
         if (request()->ajax()) {
             return app(ProcessoDataGrid::class)->process();
         }
@@ -152,6 +154,8 @@ class ProcessoController extends Controller
      */
     public function leadProcessos($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.view'), 401, 'This action is unauthorized');
+
         return app(LeadProcessosDataGrid::class)->process();
     }
 
@@ -163,6 +167,8 @@ class ProcessoController extends Controller
      */
     public function personProcessos($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.view'), 401, 'This action is unauthorized');
+
         return app(PersonProcessosDataGrid::class)->process();
     }
 
@@ -174,6 +180,8 @@ class ProcessoController extends Controller
      */
     public function organizationProcessos($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.view'), 401, 'This action is unauthorized');
+
         return app(OrganizationProcessosDataGrid::class)->process();
     }
 
@@ -206,6 +214,8 @@ class ProcessoController extends Controller
      */
     public function store(StoreProcessoRequest $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.create'), 401, 'This action is unauthorized');
+
         $data = $request->validated();
 
         $data['person_id'] = ! empty($data['person_id']) ? $data['person_id'] : null;
@@ -259,6 +269,8 @@ class ProcessoController extends Controller
      */
     public function show($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.view'), 401, 'This action is unauthorized');
+
         $processo = $this->processoRepository->findOrFail($id);
 
         // Isolamento multi-tenant: verifica se o usuário autenticado pode ver este processo.
@@ -332,6 +344,8 @@ class ProcessoController extends Controller
      */
     public function update(UpdateProcessoRequest $request, $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.edit'), 401, 'This action is unauthorized');
+
         $data = $request->validated();
 
         $data['person_id'] = ! empty($data['person_id']) ? $data['person_id'] : null;
@@ -409,6 +423,8 @@ class ProcessoController extends Controller
      */
     public function massDestroy()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.delete'), 401, 'This action is unauthorized');
+
         try {
             $indices = request()->input('indices', []);
 
@@ -450,6 +466,8 @@ class ProcessoController extends Controller
      */
     public function searchPerson()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.view'), 401, 'This action is unauthorized');
+
         $term = request('query');
 
         $results = $this->personRepository->scopeQuery(function ($query) use ($term) {
@@ -466,6 +484,8 @@ class ProcessoController extends Controller
      */
     public function searchOrganization()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.view'), 401, 'This action is unauthorized');
+
         $term = request('query');
 
         $results = $this->organizationRepository->scopeQuery(function ($query) use ($term) {
@@ -482,6 +502,8 @@ class ProcessoController extends Controller
      */
     public function searchLead()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.view'), 401, 'This action is unauthorized');
+
         $term = request('query');
 
         $results = $this->leadRepository->scopeQuery(function ($query) use ($term) {
@@ -497,6 +519,8 @@ class ProcessoController extends Controller
      */
     public function requestRegistration($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.edit'), 401, 'This action is unauthorized');
+
         try {
             $result = $this->processoWhatsappService->sendRegistrationRequest((int) $id);
 
@@ -521,6 +545,8 @@ class ProcessoController extends Controller
      */
     public function requestDocuments($id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.edit'), 401, 'This action is unauthorized');
+
         try {
             $result = $this->processoWhatsappService->sendDocumentsRequest((int) $id);
 

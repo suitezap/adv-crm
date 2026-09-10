@@ -15,6 +15,8 @@ class TenantBillingController extends Controller
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.saas.manage'), 401, 'This action is unauthorized');
+
         $tenantId = MotherShipService::getTenantId();
 
         $billingInfo = TenantBillingInfo::on('mothership')
@@ -30,6 +32,8 @@ class TenantBillingController extends Controller
      */
     public function store(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.saas.manage'), 401, 'This action is unauthorized');
+
         $request->validate([
             'name'           => 'required|string|max:255',
             'company_name'   => 'nullable|string|max:150',

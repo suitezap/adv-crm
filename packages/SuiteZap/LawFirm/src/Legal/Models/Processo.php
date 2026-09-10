@@ -11,6 +11,7 @@ use SuiteZap\LawFirm\Escavador\Models\EscavadorMonitoramento;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorProcesso;
 use SuiteZap\LawFirm\Financial\Models\Financial;
 use SuiteZap\LawFirm\GED\Models\ProcessDocument;
+use SuiteZap\LawFirm\SaaS\Concerns\BelongsToTenant;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -18,6 +19,8 @@ use Webkul\User\Models\User;
 
 class Processo extends Model
 {
+    use BelongsToTenant;
+
     /**
      * The table associated with the model.
      *
@@ -31,6 +34,7 @@ class Processo extends Model
      * @var array
      */
     protected $fillable = [
+        'tenant_id',
         'numero_cnj',
         'protocolo_distribuicao',
         'titulo',

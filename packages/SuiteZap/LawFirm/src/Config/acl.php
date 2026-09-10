@@ -415,6 +415,11 @@ return [
         'route' => [
             'admin.lawfirm.whatsapp.index',
             'admin.lawfirm.whatsapp.templates',
+            'admin.lawfirm.whatsapp.templates.save',
+            'admin.lawfirm.whatsapp.qr-code',
+            'admin.lawfirm.whatsapp.status',
+            'admin.lawfirm.whatsapp.disconnect',
+            'admin.lawfirm.whatsapp.test',
         ],
         'sort'  => 1,
     ],
@@ -434,6 +439,10 @@ return [
         'route' => [
             'admin.lawfirm.saas.index',
             'admin.lawfirm.saas.billing-info.index',
+            'admin.lawfirm.saas.billing-info.store',
+            'admin.lawfirm.saas.checkout.plan',
+            'admin.lawfirm.saas.checkout.credits',
+            'admin.lawfirm.saas.orders.index',
             'lawfirm.saas.transactions',
         ],
         'sort'  => 1,
@@ -453,5 +462,17 @@ return [
         'name'  => 'Enviar Documentos',
         'route' => 'admin.processos.store_documents',
         'sort'  => 1,
+    ],
+    [
+        'key'   => 'lawfirm.documentos.view',
+        'name'  => 'Baixar / Visualizar Documentos',
+        'route' => ['admin.lawfirm.ged.download', 'admin.processos.download_attachment', 'lawfirm.documents.procuration', 'lawfirm.documents.contract'],
+        'sort'  => 2,
+    ],
+    [
+        'key'   => 'lawfirm.documentos.delete',
+        'name'  => 'Excluir Documentos',
+        'route' => ['admin.lawfirm.ged.destroy', 'admin.lawfirm.ged.delete', 'admin.processos.delete_attachment', 'lawfirm.documents.delete'],
+        'sort'  => 3,
     ],
 ];

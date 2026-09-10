@@ -238,9 +238,13 @@ class MotherShipService
         }
 
         return [
-            'base_url' => rtrim($node->base_url, '/'),
-            'instance' => $instanceName,
-            'token'    => $tenantConfig->evolution_api_key ?: $node->api_key,
+            'base_url'       => rtrim($node->base_url, '/'),
+            'instance'       => $instanceName,
+            'token'          => $tenantConfig->evolution_api_key ?: $node->api_key,
+            // Segredo opcional do webhook inbound (PRIV-AUDIT-001 follow-up).
+            // Configure em meta_data.webhook_secret do nó + na Evolution
+            // (header X-Webhook-Token ou ?token=). Ausente = só vínculo instância.
+            'webhook_secret' => $meta['webhook_secret'] ?? null,
         ];
     }
 
@@ -565,6 +569,7 @@ class MotherShipService
             'inbox_id'           => $tenantConfig->chatwoot_channel_inbox_id ?? null,                // Inbox Atendimento Humano
             'assistant_inbox_id' => $tenantConfig->chatwoot_assistant_inbox_id ?? null,              // Inbox Assistente IA (Jul/2026)
             'access_token'       => $tenantConfig->chatwoot_webhook_token ?? null,                   // User Access Token — /labels, /contacts
+            'sac_password'       => $meta['sac_password'] ?? null,                                     // SAC auto-login (PRIV-AUDIT-001; nunca hardcoded)
         ];
     }
 }

@@ -58,6 +58,11 @@ class EscavadorHistoryDataGrid extends DataGrid
                 'escavador_requests.created_at'
             );
 
+        // Security / Tenant Scope (PRIV-AUDIT-001 — DB compartilhado exige tenant_id)
+        if ($tenantId = config('lawfirm.tenant_id', env('TENANT_ID'))) {
+            $queryBuilder->where('escavador_requests.tenant_id', $tenantId);
+        }
+
         $this->addFilter('id', 'escavador_requests.id');
         $this->addFilter('status', 'escavador_requests.status');
         $this->addFilter('endpoint_type', 'escavador_requests.endpoint_type');
