@@ -1391,6 +1391,17 @@ ChatwootWebhookController         valida payload.inbox_id == config['inbox_id'] 
 *   **Status:** **Concluído** (Etapas 1–4: Governança, Validador, Build Candidata e E2E Playwright concluídos em 2026-08-26). Sincronizado com `LawFirmServiceProvider::VERSION = '3.55.1'`.
 *   **Boot Docker E2E (Fixes 2026-08-26):**
     *   Migrações sequencializadas: `app-tenant-b` depende de `app-tenant-a: service_healthy` via `depends_on` para evitar race conditions na base `mothership_test`.
-    *   Permissões de armazenamento: `chown -R www-data:www-data storage bootstrap/cache` executado imediatamente antes do `exec` final no `entrypoint.sh`, garantindo acesso de escrita para workers.
+    *   Permissão de armazenamento: `chown -R www-data:www-data storage bootstrap/cache` executado imediatamente antes do `exec` final no `entrypoint.sh`, garantindo acesso de escrita para workers.
     *   Healthcheck expandido: `start_period: 180s`, `retries: 30` para suportar 150+ migrações no boot a frio.
+
+### 4.91 Isolamento tenant_id e Gates de Perfil Platform-Wide (v3.55.1, verificado 2026-09-09)
+
+*   **Contexto:** Banco `mysql` compartilhado exigia isolamento lógico por coluna (AGENTS.md §7), mas nenhum model de domínio filtrava `tenant_id`; ~120 métodos sem gate de perfil; webhooks públicos forjáveis; senha do SAC hardcoded.
+*   **Decisões Arquiteturais:**
+    1. **`tenant_id` obrigatório (FIN-COBRANCAS-001):** colunas + backfill + NOT NULL condicional em `law_financials`, `tenant_invoices`, `tenant_asaas_settings`, `tenant_asaas_customers`; `SaaS\Scopes\TenantScope` + `SaaS\Concerns\BelongsToTenant` (auto-fill no creating, no-op sem tenant configurado).
+    2. **Pré-req PRIV-AUDIT-001:** mesmo padrão em `processos` e `lawfirm_assistant_history`; `EscavadorRequest`/`Monitoramento`.
+    3. **Gates `bouncer()` (401) em escritas e leituras sensíveis** de Financial, TenantFinance, Legal, GED, SaaS, AI, Escavador, Whatsapp; propriedade via processo/lead do tenant (404 fora do alcance); `individual vs global` respeitado.
+    4. **Webhooks fail-closed:** Asaas sem token nega + fim do mint por valor; TenantAsaas/Escavador com resolução por tenant; Whatsapp com vínculo instância↔tenant + `webhook_secret` opcional em `meta_data`; importação suspensa isolada com 410 (`BlockSuspendedImport`, sem tocar suspensos).
+    5. **Segredos fora do código/views:** senha SAC via `meta_data.sac_password` do nó Chatwoot (ver `ARCHITECTURE_mothership_orient.md §16.1`); credenciais Asaas fora do HTML com keep-old.
+*   **Status:** **Verificado** — suíte Pest 117/117 em data-plane local (`tenant_a_test`, `tenant_b_test`, `mothership_test`) em 2026-09-09; 19 testes `active` em `v3.55.1` (7 + 12 promovidos). Branch `feature/priv-audit-onda-1-tenant-isolation-gates`. Sem bump de VERSION (aguarda release).
 
