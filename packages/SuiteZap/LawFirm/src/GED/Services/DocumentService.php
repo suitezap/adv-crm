@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use SuiteZap\LawFirm\Legal\Models\Anexo;
 use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 use SuiteZap\LawFirm\SaaS\Services\SaasStorageService;
 
@@ -54,7 +55,7 @@ class DocumentService
         $extension = strtolower($file->getClientOriginalExtension());
         $finalName = "{$processId}-{$randomHash}_{$cleanName}.{$extension}";
 
-        $tenantId = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getTenantId();
+        $tenantId = MotherShipService::getTenantId();
 
         // 3. Store File — Zero-Copy Hierarchy (v3.45)
         // Se o processo pertence a um caso, centralizar na pasta do Caso para compartilhamento.

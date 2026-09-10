@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Financial;
 
+use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use SuiteZap\LawFirm\SaaS\Models\Subscription;
@@ -68,7 +69,7 @@ class FinancialPermissionsTest extends MultiDatabaseTestCase
 
         $customer = TenantAsaasCustomer::create([
             'person_id' => 1, 'asaas_customer_id' => 'cus_PERM_A',
-            'name' => 'Cliente Perm', 'cpf_cnpj' => '12345678909',
+            'name'      => 'Cliente Perm', 'cpf_cnpj' => '12345678909',
         ]);
 
         return TenantInvoice::create([
@@ -89,7 +90,7 @@ class FinancialPermissionsTest extends MultiDatabaseTestCase
         $user = $this->makeUser($this->makeRole(['dashboard.view']));
 
         // CSRF fora (foco em auth/ACL/tenancy); demais middlewares ativos
-        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->withoutMiddleware(VerifyCsrfToken::class);
         $this->actingAs($user, 'user');
 
         // FIN-SEC-001: dashboard financeiro oculto sem lawfirm.financeiro.view
@@ -115,7 +116,7 @@ class FinancialPermissionsTest extends MultiDatabaseTestCase
         $invoice = $this->seedTenantData();
         $user = $this->makeUser($this->makeRole(['lawfirm.financeiro.cobrancas.view']));
 
-        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->withoutMiddleware(VerifyCsrfToken::class);
         $this->actingAs($user, 'user');
 
         // Leitura liberada...
@@ -133,10 +134,10 @@ class FinancialPermissionsTest extends MultiDatabaseTestCase
     {
         $this->seedSubscription();
         TenantAsaasSetting::create([
-            'api_key' => '$aact_hmlg_SECRETKEY',
-            'environment' => 'sandbox',
+            'api_key'       => '$aact_hmlg_SECRETKEY',
+            'environment'   => 'sandbox',
             'webhook_token' => 'SECRETTOKEN',
-            'is_active' => true,
+            'is_active'     => true,
         ]);
 
         $user = $this->makeUser($this->makeRole(['lawfirm.financeiro.cobrancas.settings']));
@@ -156,22 +157,22 @@ class FinancialPermissionsTest extends MultiDatabaseTestCase
     {
         $this->seedSubscription();
         TenantAsaasSetting::create([
-            'api_key' => '$aact_hmlg_KEEPME',
-            'environment' => 'sandbox',
+            'api_key'       => '$aact_hmlg_KEEPME',
+            'environment'   => 'sandbox',
             'webhook_token' => 'KEEPTOKEN',
-            'is_active' => true,
+            'is_active'     => true,
         ]);
 
         $user = $this->makeUser($this->makeRole(['lawfirm.financeiro.cobrancas.settings']));
         $this->actingAs($user, 'user');
 
         // Salva sem tocar nas credenciais → chaves preservadas (CSRF fora; auth/tenancy ativos)
-        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class)
+        $this->withoutMiddleware(VerifyCsrfToken::class)
             ->post(route('admin.lawfirm.tenant_finance.settings.store'), [
-            'api_key' => '',
-            'webhook_token' => '',
-            'environment' => 'sandbox',
-        ])->assertRedirect(route('admin.lawfirm.tenant_finance.settings'));
+                'api_key'       => '',
+                'webhook_token' => '',
+                'environment'   => 'sandbox',
+            ])->assertRedirect(route('admin.lawfirm.tenant_finance.settings'));
 
         $settings = TenantAsaasSetting::first();
         $this->assertEquals('$aact_hmlg_KEEPME', $settings->api_key);

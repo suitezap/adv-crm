@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Legal;
 
+use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\MultiDatabaseTestCase;
 use Webkul\User\Models\Role;
@@ -39,7 +40,7 @@ class LegalPermissionsTest extends MultiDatabaseTestCase
     public function test_casos_require_profile_permissions(): void
     {
         $user = $this->makeUser(['dashboard.view']);
-        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->withoutMiddleware(VerifyCsrfToken::class);
         $this->actingAs($user, 'user');
 
         // LEGAL-SEC-001: leitura e escrita de casos sem permissão → 401
@@ -55,7 +56,7 @@ class LegalPermissionsTest extends MultiDatabaseTestCase
     public function test_processos_require_profile_permissions(): void
     {
         $user = $this->makeUser(['dashboard.view']);
-        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->withoutMiddleware(VerifyCsrfToken::class);
         $this->actingAs($user, 'user');
 
         $this->get(route('admin.processos.index'))->assertStatus(401);
@@ -69,7 +70,7 @@ class LegalPermissionsTest extends MultiDatabaseTestCase
     public function test_ged_downloads_and_deletes_require_permissions(): void
     {
         $user = $this->makeUser(['dashboard.view']);
-        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->withoutMiddleware(VerifyCsrfToken::class);
         $this->actingAs($user, 'user');
 
         // GED-SEC-001: downloads e exclusões sem permissão → 401 (antes: IDOR direto)

@@ -629,7 +629,7 @@ class AssistantController extends Controller
     {
         abort_if(! bouncer()->hasPermission('lawfirm.assistants.chatwoot'), 401, 'This action is unauthorized');
 
-        $chatwootConfig = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getChatwootConfig();
+        $chatwootConfig = MotherShipService::getChatwootConfig();
         $chatwootUrl = rtrim($chatwootConfig['base_url'] ?? 'https://whats.suitezap.com.br', '/');
         $user = auth()->guard('user')->user();
         $sacEmail = $user ? $user->email : 'sac@suitezap.com.br';

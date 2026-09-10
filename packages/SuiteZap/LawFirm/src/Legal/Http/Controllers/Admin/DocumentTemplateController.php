@@ -43,9 +43,9 @@ class DocumentTemplateController extends Controller
     /**
      * Propriedade do processo (PRIV-AUDIT-001): TenantScope → 404 fora do tenant.
      */
-    private function assertTenantProcesso(int|string $processoId): \SuiteZap\LawFirm\Legal\Models\Processo
+    private function assertTenantProcesso(int|string $processoId): Processo
     {
-        $processo = \SuiteZap\LawFirm\Legal\Models\Processo::find($processoId);
+        $processo = Processo::find($processoId);
 
         if (! $processo) {
             abort(404);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Escavador;
 
+use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorMonitoramento;
 use SuiteZap\LawFirm\Escavador\Models\EscavadorRequest;
@@ -61,7 +62,7 @@ class EscavadorTenantTest extends MultiDatabaseTestCase
     {
         config(['lawfirm.tenant_id' => 'tenant-a']);
         $user = $this->makeUser(['dashboard.view']);
-        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->withoutMiddleware(VerifyCsrfToken::class);
         $this->actingAs($user, 'user');
 
         // ESC-SEC-001: sem lawfirm.escavador.view → 401, sem vazar listagem
@@ -79,7 +80,7 @@ class EscavadorTenantTest extends MultiDatabaseTestCase
 
         // Só leitura → toggle bloqueado
         $viewer = $this->makeUser(['lawfirm.escavador.view']);
-        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->withoutMiddleware(VerifyCsrfToken::class);
         $this->actingAs($viewer, 'user');
         $this->postJson(route('lawfirm.escavador.monitoramentos.toggle_whatsapp', $mon->id))
             ->assertStatus(401);

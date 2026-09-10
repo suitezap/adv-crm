@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
+use SuiteZap\LawFirm\SaaS\Models\Tenant;
 use Webkul\Admin\Http\Controllers\Controller;
 
 /**
@@ -83,7 +84,7 @@ class MothershipTemplateController extends Controller
         // PRIV-AUDIT-001: tenant_id arbitrário só vale se o tenant existir —
         // evita override órfão ou stomping por erro de digitação.
         if (! empty($validated['tenant_id'])) {
-            $tenantExists = \SuiteZap\LawFirm\SaaS\Models\Tenant::on('mothership')
+            $tenantExists = Tenant::on('mothership')
                 ->where('id', $validated['tenant_id'])
                 ->exists();
 

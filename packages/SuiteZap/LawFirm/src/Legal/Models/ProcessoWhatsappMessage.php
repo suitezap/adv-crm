@@ -4,7 +4,7 @@ namespace SuiteZap\LawFirm\Legal\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use SuiteZap\LawFirm\Legal\Models\Anexo;
+use Illuminate\Support\Facades\Log;
 
 class ProcessoWhatsappMessage extends Model
 {
@@ -79,12 +79,12 @@ class ProcessoWhatsappMessage extends Model
         static::deleting(function ($msg) {
             if ($msg->anexo_id) {
                 try {
-                    $anexo = \SuiteZap\LawFirm\Legal\Models\Anexo::find($msg->anexo_id);
+                    $anexo = Anexo::find($msg->anexo_id);
                     if ($anexo) {
                         $anexo->delete(); // Dispara o evento deleting do Anexo para apagar do S3
                     }
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error("Erro ao deletar Anexo via evento deleting de ProcessoWhatsappMessage: " . $e->getMessage());
+                    Log::error('Erro ao deletar Anexo via evento deleting de ProcessoWhatsappMessage: '.$e->getMessage());
                 }
             }
         });

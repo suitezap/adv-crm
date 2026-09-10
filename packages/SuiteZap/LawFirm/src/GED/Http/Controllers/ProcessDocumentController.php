@@ -31,7 +31,7 @@ class ProcessDocumentController extends Controller
      * do tenant da sessão (TenantScope). Retorna 404 se inexistente ou de
      * outro tenant — fecha IDOR sem exigir coluna nova nas tabelas de docs.
      */
-    private function assertTenantProcesso(int|string $processoId): \SuiteZap\LawFirm\Legal\Models\Processo
+    private function assertTenantProcesso(int|string $processoId): Processo
     {
         $processo = Processo::find($processoId);
 

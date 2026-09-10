@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\AI;
 
+use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\MultiDatabaseTestCase;
 use Webkul\User\Models\Role;
@@ -39,7 +40,7 @@ class AssistantSecurityTest extends MultiDatabaseTestCase
     public function test_history_requires_view_permission(): void
     {
         $user = $this->makeUser(['dashboard.view']);
-        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->withoutMiddleware(VerifyCsrfToken::class);
         $this->actingAs($user, 'user');
 
         // AI-SEC-001: sem lawfirm.assistants.view → 401 (antes: IDOR total)
@@ -62,7 +63,7 @@ class AssistantSecurityTest extends MultiDatabaseTestCase
 
         // Sem permissão do SAC → 401 antes de qualquer render
         $user = $this->makeUser(['dashboard.view']);
-        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+        $this->withoutMiddleware(VerifyCsrfToken::class);
         $this->actingAs($user, 'user');
         $this->get(route('lawfirm.assistants.chatwoot'))->assertStatus(401);
     }

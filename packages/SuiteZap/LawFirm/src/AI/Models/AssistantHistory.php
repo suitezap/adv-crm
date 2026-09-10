@@ -11,6 +11,7 @@ use Webkul\User\Models\User;
 class AssistantHistory extends Model implements AssistantHistoryContract
 {
     use BelongsToTenant;
+
     /**
      * The table associated with the model.
      *

@@ -4,6 +4,8 @@ namespace SuiteZap\LawFirm\Legal\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 
 class Anexo extends Model
 {
@@ -81,12 +83,12 @@ class Anexo extends Model
         static::deleting(function ($anexo) {
             if ($anexo->path) {
                 try {
-                    $fileService = app(\SuiteZap\LawFirm\SaaS\Services\SaasFileService::class);
+                    $fileService = app(SaasFileService::class);
                     if ($fileService->exists($anexo->path)) {
                         $fileService->delete($anexo->path);
                     }
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error("Erro ao deletar arquivo físico no evento deleting do Anexo: " . $e->getMessage());
+                    Log::error('Erro ao deletar arquivo físico no evento deleting do Anexo: '.$e->getMessage());
                 }
             }
         });

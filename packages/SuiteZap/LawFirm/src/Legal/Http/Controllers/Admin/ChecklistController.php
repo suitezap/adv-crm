@@ -8,6 +8,7 @@ use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Legal\Repositories\ChecklistRepository;
 use SuiteZap\LawFirm\Legal\Services\ChecklistTemplates;
+use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 
 class ChecklistController extends Controller
@@ -35,14 +36,14 @@ class ChecklistController extends Controller
     private function assertChecklistContext(string $context, int|string $id): void
     {
         if ($context === 'processo') {
-            if (! \SuiteZap\LawFirm\Legal\Models\Processo::find($id)) {
+            if (! Processo::find($id)) {
                 abort(404);
             }
 
             return;
         }
 
-        $lead = \Webkul\Lead\Models\Lead::find($id);
+        $lead = Lead::find($id);
 
         if (! $lead) {
             abort(404);

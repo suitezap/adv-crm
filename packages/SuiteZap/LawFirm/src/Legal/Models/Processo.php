@@ -20,6 +20,7 @@ use Webkul\User\Models\User;
 class Processo extends Model
 {
     use BelongsToTenant;
+
     /**
      * The table associated with the model.
      *

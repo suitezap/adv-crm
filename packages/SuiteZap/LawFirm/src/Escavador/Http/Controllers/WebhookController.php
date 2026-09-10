@@ -188,7 +188,7 @@ class WebhookController
         // SUSPENSO (AGENTS.md §8 — Alertas de Prazo): envio WhatsApp desabilitado.
         // O monitoramento é processado normalmente; só o disparo fica retido.
         // Bloco de envio removido em PRIV-AUDIT-001 (reativar só com aprovação explícita).
-        Log::info("EscavadorWebhook: disparo WhatsApp retido (módulo suspenso §8).", [
+        Log::info('EscavadorWebhook: disparo WhatsApp retido (módulo suspenso §8).', [
             'monitoramento_id' => $monitoramento->id,
         ]);
     }
