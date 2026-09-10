@@ -70,6 +70,7 @@ class SyncLeadStageToChatwootListener implements ShouldQueue
         'ld_novo', 'ld_acomp', 'ld_qual', 'ld_neg', 'ld_ganho', 'ld_perd',
         'LD_NOVO', 'LD_ACOMP', 'LD_QUAL', 'LD_NEG', 'LD_GANHO', 'LD_PERD',
         'Lead', 'lead', 'CLI_CONV', 'CAS_NOVO', 'cli_conv', 'cas_novo',
+        'com_inat', 'cas_anal',
     ];
 
     /**
@@ -226,6 +227,20 @@ class SyncLeadStageToChatwootListener implements ShouldQueue
 
             if ($stageLabel) {
                 $slugs[] = $stageLabel;
+            }
+            // -------- Custom tag adjustments for Kanban Jurídico integration --------
+            // When a Lead is marked as ganho (ld_ganho), add case tag CAS_NOVO if not present.
+            if ($stageLabel === 'ld_ganho') {
+                if (!in_array('cas_novo', $slugs, true)) {
+                    $slugs[] = 'cas_novo';
+                }
+            }
+            // When moving to analysis stage (assumed ld_acomp), replace tags accordingly.
+            if ($stageLabel === 'ld_acomp') {
+                // Replace lead won tag with internal waiting tag.
+                $slugs = array_map(fn($t) => $t === 'ld_ganho' ? 'com_inat' : $t, $slugs);
+                // Replace case new tag with case analysis tag.
+                $slugs = array_map(fn($t) => $t === 'cas_novo' ? 'cas_anal' : $t, $slugs);
             }
         }
 

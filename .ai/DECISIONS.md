@@ -76,3 +76,32 @@
   2. **Kanban Leads (`kanban.blade.php`):** Pré-semeia a estrutura completa de chaves dos estágios (`stageLeads`) diretamente no `data()` via `@json($pipeline->stages->mapWithKeys(...))` e utiliza `Object.assign()` nas atualizações assíncronas, garantindo reatividade total em tempo real e rollback visual em caso de erro na API.
 - **Consequências:** Sincronização 100% resiliente de etiquetas no Chatwoot (`ld_novo`, `ld_acomp`, `ld_qual`, `ld_neg`, `ld_ganho`, `ld_perd`) e estabilidade visual definitiva na movimentação de leads no funil de vendas.
 
+---
+
+## ADR-ATEND-002: Regras Canônicas de Transição de Etiquetas Lead → Caso Jurídico no Chatwoot
+- **Data:** 2026-09-09
+- **Status:** APPROVED
+- **Contexto:**
+  Quando um Lead é convertido em Caso Jurídico (via `LegalOrchestrator::convertLeadToLegalStructure()`), o contato Chatwoot precisa ter suas etiquetas de estado refletindo a nova classificação. Existem dois momentos distintos de transição:
+  1. **Entrada no Kanban Jurídico** (estágio "Novo Caso"): o contato é um lead recém-ganho que ainda não iniciou procedimentos internos.
+  2. **Movimentação para qualquer outra etapa do Kanban Jurídico**: o contato deixa formalmente de ser um "lead ganho" e passa a ser um **cliente ativo** (`cli_pf`).
+- **Decisão:**
+
+  | Evento | Tags adicionadas | Tags removidas | Observação |
+  |---|---|---|---|
+  | Lead marcado como Ganho (Kanban Leads) | `ld_ganho`, `cas_novo` | tags anteriores `ld_*` | Gerenciado por `SyncLeadStageToChatwootListener` |
+  | Caso move para "Novo Caso" (Kanban Jurídico) | `cas_novo` | — | `ld_ganho` permanece (ainda é um lead ganho) |
+  | Caso move para QUALQUER OUTRA etapa jurídica | tag da etapa (`cas_anal`, `cas_prod`, etc.) + `cli_pf` | `ld_ganho` | Gerenciado por `SyncCasoStageToChatwootListener` |
+
+  **Regras técnicas:**
+  - `cli_pf` é uma etiqueta **permanente de classificação** — uma vez adicionada, não deve ser removida em movimentos subsequentes dentro do Kanban Jurídico. **Não incluir no pool de limpeza de estágios do Caso.**
+  - `ld_ganho` deve ser incluído no pool de limpeza **apenas** quando o estágio não é "Novo Caso", para que o `array_diff` no `syncContactLabels` o elimine.
+  - O `syncContactLabels` de `ChatwootService` normaliza toda a comparação em **lowercase** para compatibilidade com a API do Chatwoot (fix aplicado em 2026-09-09).
+  - Listeners de sincronização (`SyncCasoStageToChatwootListener`, `SyncLeadStageToChatwootListener`) devem **sempre degradar graciosamente** (catch `\Throwable` + `Log::error` + return) sem lançar exceções que derrubem o queue worker.
+
+- **Arquivos canônicos:**
+  - `SyncLeadStageToChatwootListener.php` — Kanban Leads → Chatwoot
+  - `SyncCasoStageToChatwootListener.php` — Kanban Jurídico → Chatwoot
+  - `ChatwootService::syncContactLabels()` — motor de sincronização (lowercase-safe)
+
+- **Consequências:** Contatos Chatwoot refletem fielmente o ciclo Lead → Cliente Ativo → Estágio Jurídico, habilitando automações de atendimento (ex.: gatilhos N8N, filas de prioridade) sem intervenção manual.

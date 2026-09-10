@@ -51,6 +51,8 @@ class SyncCasoStageToChatwootListener implements ShouldQueue
         'ag-cliente'             => 'CAS_AGCLI',
         'producao-interna'       => 'CAS_PROD',
         'producao'               => 'CAS_PROD',
+        // Added mapping for Legal pipeline stage "Em Produção Jurídica"
+        'em-producao-juridica'   => 'CAS_PROD',
         'protocolado'            => 'CAS_PROT',
         'protocolo'              => 'CAS_PROT',
         'aguardando-judiciario'  => 'CAS_AGJUD',
@@ -142,7 +144,25 @@ class SyncCasoStageToChatwootListener implements ShouldQueue
                 return;
             }
 
-            $service->syncContactLabels($contactId, $stageLabel, self::CASO_STAGE_POOL);
+            $dynamicPool = $this->getDynamicCrmTagPool();
+
+            // ── Stage-specific label sync strategy (ADR-ATEND-002) ────────────
+            // "Novo Caso": contact is a recently-won lead, not yet a client.
+            //   → Add cas_novo; do NOT strip ld_ganho (it must remain).
+            // Any other stage: contact is advancing in the legal pipeline.
+            //   → Add the stage label; strip ld_ganho by including it in the pool.
+            //   → cli_pf promotion is intentionally deferred (defined separately).
+            $isNovoCaso = in_array($stageSlug, ['novo-caso', 'novo'], true);
+
+            if ($isNovoCaso) {
+                $labelsToSync = [$stageLabel]; // resolves to cas_novo (lowercased by syncContactLabels)
+                $pool = $dynamicPool;          // ld_ganho NOT in pool → preserved in Chatwoot
+            } else {
+                $labelsToSync = [$stageLabel];
+                $pool = array_merge($dynamicPool, ['ld_ganho']); // ld_ganho stripped on sync
+            }
+
+            $service->syncContactLabels($contactId, $labelsToSync, $pool);
         } catch (\RuntimeException $e) {
             Log::warning('[SyncCasoStageToChatwootListener] ChatwootService indisponível: '.$e->getMessage());
         } catch (\Throwable $e) {
@@ -190,5 +210,29 @@ class SyncCasoStageToChatwootListener implements ShouldQueue
         }
 
         return '+'.$digits;
+    }
+
+    /**
+     * Build a dynamic pool of all CRM tags (including case stage tags) to control
+     * what can be removed from Chatwoot. Merges database tags with the static
+     * CASO_STAGE_POOL for safety and backwards compatibility.
+     *
+     * @return array<string>
+     */
+    private function getDynamicCrmTagPool(): array
+    {
+        $pool = [];
+
+        try {
+            $tagNames = \SuiteZap\LawFirm\Legal\Models\Tag::pluck('name');
+            foreach ($tagNames as $name) {
+                $pool[] = mb_strtolower(trim($name), 'UTF-8');
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[SyncCasoStageToChatwootListener] Erro ao carregar pool de tags: '.$e->getMessage());
+        }
+
+        // Merge static case stage pool (uppercase) with dynamic tags (lowercase)
+        return array_values(array_unique(array_merge($pool, self::CASO_STAGE_POOL)));
     }
 }

@@ -479,7 +479,11 @@ class ChatwootService
         }
 
         $atLeastOne = false;
-        $newLabelsArray = (array) $newStageLabels;
+        // Chatwoot stores all labels in lowercase. Normalise the new labels and
+        // the pool so that array_diff() can match them correctly regardless of
+        // how the caller passed them in (e.g. 'CAS_PROD' vs 'cas_prod').
+        $newLabelsArray  = array_map('mb_strtolower', (array) $newStageLabels);
+        $stagePoolLower  = array_map('mb_strtolower', $stagePool);
 
         foreach ($conversations as $conversation) {
             $convId = $conversation['id'] ?? null;
@@ -490,10 +494,11 @@ class ChatwootService
                 continue;
             }
 
-            $currentLabels = $this->getLabels((int) $convId);
+            // Current labels from Chatwoot are already lowercase
+            $currentLabels = array_map('mb_strtolower', $this->getLabels((int) $convId));
 
-            // Remove stage pool labels, then add the new one(s)
-            $filtered = array_values(array_diff($currentLabels, $stagePool));
+            // Strip any label that belongs to the stage pool, then add the new one(s)
+            $filtered  = array_values(array_diff($currentLabels, $stagePoolLower));
             $newLabels = array_values(array_unique(array_merge($filtered, $newLabelsArray)));
 
             $success = $this->addLabels((int) $convId, array_values($newLabels));
