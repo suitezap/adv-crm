@@ -19,5 +19,8 @@
 | `CI-001` | CI/CD | IMPLEMENTED_NOT_VERIFIED | Antigravity | - | Workflow completo de CI/CD para LawFirm no GitHub Actions (`lawfirm-ci.yml`). |
 | `FIN-COBRANCAS-001` | Financial / TenantFinance | VERIFIED | OpenCode | - | Isolamento tenant_id + fix Cobranças/Lançamentos + FIN-SEC-001. Commit 8ecd7aab. Pest local 11/11 (data-plane tenant_*_test). Catálogo active v3.55.1 2026-09-09. |
 | `PRIV-AUDIT-001` | Platform / Segurança | DONE | OpenCode | - | Ondas 1-3 + secret Whatsapp. Suite completa 117/117 local. Commits fd11bf12, 8fe299d1, d8da0362, 6c2c9f9e. Branch feature/priv-audit-onda-1-tenant-isolation-gates. |
+| `SEC-HARD-002` | Platform / Segurança | TODO | Unassigned | - | Cobertura `@can`/`bouncer()` total das blades (P0s feitos; restante é defesa em profundidade). |
+| `OPS-WEBHOOK-001` | Operação | TODO | Unassigned | - | Cadastrar segredos de webhook em produção (Asaas, tenant-Asaas, Evolution). Runbook: `quality/runbooks/webhook-secrets.md`. |
+| `REPO-HYGIENE-001` | Repositório | TODO | Unassigned | - | Corrigir linha `C*` corrompida no `.gitignore` + zerar `owner: unassigned` nos testes P0. |
 | `OS-001` | Documentation | DONE | Antigravity | - | OpenSpec spec created and feature de ajustes concluída. |
 | `KAN-001` | Kanban / Jurídico | TODO | Antigravity | - | Implement Kanban jurídico com integração Chatwoot. |

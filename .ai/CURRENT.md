@@ -5,20 +5,20 @@
 ---
 
 ## 1. Onde estamos?
-A **Fase 0 (Governança, Baseline e Hardening Documental)** foi concluída com sucesso. O baseline canônico com auditoria de versões está registrado em `.ai/BASELINE.md`, as diretrizes de imagem Docker e locks com checkpoint em `.ai/DECISIONS.md` e `.ai/locks/README.md`, e o contrato de handoff para a tarefa `HERMES-001` está formalizado em `.ai/handoffs/HANDOFF-HERMES-001.md`.
+A **Fase 0 (Governança, Baseline e Hardening Documental)** foi concluída. Depois dela, foram entregues e mergeadas na `2.1`: **`FIN-COBRANCAS-001`** (isolamento `tenant_id` + fix Cobranças/Lançamentos, VERIFIED) e **`PRIV-AUDIT-001`** (gates de perfil + webhooks fail-closed em Ondas 1–3, DONE) — PRs #1 e #2 no fork, suíte Pest **117/117** em data-plane local. Branch `feature/ajustes-ui-e-melhorias-visualizacao-de-menus` mergeada e deletada. Baseline em `.ai/BASELINE.md`, decisões em `.ai/DECISIONS.md`, incidente do 500 em `.ai/incidents/INC-2026-09-09-tenant-scope-500.md`.
 
 ---
 
 ## 2. Objetivo Atual
-A tarefa **`QA-ENV-001`** (provisionamento e hardening do ambiente isolado de QA na VPS) foi concluída. O acesso Docker foi remediado (grupo `docker`), `.stignore` aplicado para exclusão de segredos/artefatos, e o data-plane de QA (mysql-test, mothership-db-test, redis-test, mock-server) foi provisionado e verificado saudável com os bancos de teste `tenant_a_test`, `tenant_b_test` e `mothership_test`. Resultado homologável em `.ai/handoffs/RESULT-QA-ENV-001.md`. Próximo elo: **`QA-DATA-001`**, ainda **BLOCKED** aguardando a imagem `candidate-local` (DOCKER-001).
+Follow-ups documentados em `.ai/TASKS.md`: `DOC-001`, `GAP-001`, `KAN-001` (restante), `CI-001`, cadeia QA (`QA-DATA-001` → `QA-HARNESS-001` → `QA-JUR-001`), `SEC-HARD-002` (cobertura `@can`), `OPS-WEBHOOK-001` (cadastrar segredos em produção), `REPO-HYGIENE-001 (gitignore `C*` + owners). Data-plane de QA replicável localmente via `quality/runbooks/local-qa-dataplane.md`; segredos de webhook em `quality/runbooks/webhook-secrets.md`.
 
 ---
 
 ## 3. O que está funcionando?
 - **Governança Multiagente:** SSOT em `.ai/`, protocolo de locks com heartbeat (`last_checkpoint_at`), matriz de agentes formalizada (`AGENTS_REGISTRY.md`), camada de descoberta indexada (`LOG_INDEX.md`).
 - **Shared Skills:** 8 SOPs padronizados em `.agents/skills/`.
-- **Qualidade e Testes:** 35 testes catalogados em `quality/TEST_CATALOG.yaml`, validador documental `validate_test_docs.py` passing com 0 erros.
-- **Isolamento e Segurança:** 0 arquivos de conflito Syncthing detectados no workspace.
+- **Qualidade e Testes:** 47 testes catalogados em `quality/TEST_CATALOG.yaml` (19 `active` v3.55.1), validador documental `validate_test_docs.py` passing com 0 erros.
+- **Isolamento e Segurança:** `tenant_id` obrigatório nos domínios (ADR `ARCHITECTURE.md §4.91`); webhooks fail-closed; 0 arquivos de conflito Syncthing detectados no workspace.
 
 ---
 
@@ -30,12 +30,13 @@ A tarefa **`QA-ENV-001`** (provisionamento e hardening do ambiente isolado de QA
 ---
 
 ## 5. Quem está trabalhando?
-- **Antigravity (Orchestrator):** Finalizou `GOV-001`, `GOV-002` e o hardening documental.
-- **Hermes (QA Architect):** Concluiu a auditoria `HERMES-001` (DONE) e provisionou `QA-ENV-001` (DONE) — acesso Docker remediado, `.stignore` aplicado, data-plane de QA provisionado. Resultado em `.ai/handoffs/RESULT-QA-ENV-001.md`.
+- **Antigravity (Orchestrator):** Finalizou `GOV-001`, `GOV-002`, hardening documental e tracks Chatwoot/Kanban (`OS-001` DONE).
+- **Hermes (QA Architect):** Concluiu `HERMES-001` e `QA-ENV-001` (resultado em `.ai/handoffs/RESULT-QA-ENV-001.md`).
+- **OpenCode (Implementer):** Entregou `FIN-COBRANCAS-001` (VERIFIED) e `PRIV-AUDIT-001` (DONE) — branches mergeadas e deletadas.
 
 ---
 
 ## 6. Próximo Passo Seguro
-O Orchestrator homologar o resultado de `QA-ENV-001` (`.ai/handoffs/RESULT-QA-ENV-001.md`) e liberar **`QA-DATA-001`** quando a imagem `suitezap/lawfirm:candidate-local` estiver disponível (produzida por `DOCKER-001`) — ou escopado corretamente apenas à camada de dados.
+Atacar os follow-ups por prioridade operacional: `OPS-WEBHOOK-001` (sem tokens, conciliação nega), `DOC-001`/`GAP-001`, depois `SEC-HARD-002` e cadeia QA. MySQL do Laragon não sobe no boot — ver incidente.
 ---
-*AUDIT-2026-08-31: state refreshed by Hermes after QA-ENV-001 completion.*
+*2026-09-11: state refreshed by OpenCode after FIN/PRIV merge (PRs #1 e #2) e suíte 117/117.*

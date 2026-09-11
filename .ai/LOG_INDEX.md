@@ -17,6 +17,10 @@
 | `DOCKER-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-09-04-docker-001--production-image-hygiene-and-publish` |
 | `DOC-001` | OpenCode | TODO | `.ai/logs/OPENCODE.md#2026-08-26-2315-system-bootstrap` |
 | `GAP-001` | OpenCode | TODO | `.ai/logs/OPENCODE.md#2026-08-26-2315-system-bootstrap` |
+| `FIN-COBRANCAS-001` | OpenCode | VERIFIED | `.ai/logs/OPENCODE.md#2026-09-09-fin-cobrancas-001` |
+| `PRIV-AUDIT-001` | OpenCode | DONE | `.ai/logs/OPENCODE.md#2026-09-09-priv-audit-001` |
+| `OS-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md` |
+| `KAN-001` | Antigravity | TODO | `.ai/logs/ANTIGRAVITY.md` |
 
 - [2026-08-31 - Sincronização Completa de Tags Chatwoot](logs/ANTIGRAVITY.md#2026-08-31---sincronização-completa-de-tags-chatwoot)
 
