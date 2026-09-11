@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use SuiteZap\LawFirm\Atendimento\Services\ChatwootService;
 use SuiteZap\LawFirm\Legal\Events\CasoStageUpdated;
 use SuiteZap\LawFirm\Legal\Models\Caso;
+use SuiteZap\LawFirm\Legal\Models\Tag;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 
 /**
@@ -224,7 +225,7 @@ class SyncCasoStageToChatwootListener implements ShouldQueue
         $pool = [];
 
         try {
-            $tagNames = \SuiteZap\LawFirm\Legal\Models\Tag::pluck('name');
+            $tagNames = Tag::pluck('name');
             foreach ($tagNames as $name) {
                 $pool[] = mb_strtolower(trim($name), 'UTF-8');
             }
