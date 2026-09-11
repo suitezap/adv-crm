@@ -1,0 +1,367 @@
+# ============================================================
+# docker-compose.test.yml — Infraestrutura de Testes Isolada
+# LawFirm CRM / SuiteZap — Etapa 2
+#
+# TOPOLOGIA (Etapa 2 — 4 serviços ativos):
+#   mysql-test         → tenant_a_test, tenant_b_test
+#   mothership-db-test → mothership_test
+#   redis-test         → isolado por prefixo de fila
+#   php-tests          → runner one-shot Pest
+#
+# Etapa 4 expandirá este arquivo com:
+#   mock-server, app-tenant-a, app-tenant-b,
+#   worker-tenant-a, worker-tenant-b, playwright-test
+# ============================================================
+
+networks:
+  quality_internal:
+    external: true   # Criada uma vez: docker network create --driver bridge --internal quality_internal
+                     # Nunca recriada pelo compose down/up — evita bug de ID stale no Docker Desktop Windows
+
+volumes:
+  mysql-test-data:
+  mothership-test-data:
+
+services:
+
+  # ─── MySQL: Tenants A e B ──────────────────────────────
+  mysql-test:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_test_password
+      MYSQL_USER: test_user
+      MYSQL_PASSWORD: test_password
+    volumes:
+      - mysql-test-data:/var/lib/mysql
+      - ./docker/testing/mysql-init/tenant-databases.sql:/docker-entrypoint-initdb.d/01-tenant-databases.sql:ro
+    networks:
+      - quality_internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-proot_test_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    # Portas NÃO publicadas para o host (rede interna)
+
+  # ─── MySQL: MotherShip ─────────────────────────────────
+  mothership-db-test:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_test_password
+      MYSQL_USER: test_user
+      MYSQL_PASSWORD: test_password
+      MYSQL_DATABASE: mothership_test
+    volumes:
+      - mothership-test-data:/var/lib/mysql
+      - ./docker/testing/mysql-init/02-mothership-tables.sql:/docker-entrypoint-initdb.d/02-mothership-tables.sql:ro
+    networks:
+      - quality_internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-proot_test_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ─── Redis: Isolado por prefixo ────────────────────────
+  redis-test:
+    image: redis:7.0-alpine
+    command: redis-server --save "" --appendonly no
+    networks:
+      - quality_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  # ─── Mock Server (WireMock) ──────────────────────────────
+  mock-server:
+    image: wiremock/wiremock:latest
+    networks:
+      - quality_internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/__admin/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    # Stubs podem ser mapeados posteriormente se necessário:
+    # volumes:
+    #   - ./tests/Mocks/mappings:/home/wiremock/mappings
+
+  # ─── PHP Tests: Runner one-shot ────────────────────────
+  php-tests:
+    build:
+      context: .
+      dockerfile: docker/testing/Dockerfile.php-tests
+    volumes:
+      - .:/var/www/html
+    working_dir: /var/www/html
+    environment:
+      APP_ENV: testing
+      TEST_ENVIRONMENT_ACK: LAW_FIRM_ISOLATED_TEST
+      TENANT_ID: tenant_a
+      # Conexões de banco
+      DB_CONNECTION: mysql
+      DB_HOST: mysql-test
+      DB_PORT: "3306"
+      DB_DATABASE: tenant_a_test
+      DB_USERNAME: test_user
+      DB_PASSWORD: test_password
+      # Conexões específicas dos tenants caso usadas diretamente
+      DB_TEST_TENANT_A_HOST: mysql-test
+      DB_TEST_TENANT_A_PORT: "3306"
+      DB_TEST_TENANT_A_DATABASE: tenant_a_test
+      DB_TEST_TENANT_A_USERNAME: test_user
+      DB_TEST_TENANT_A_PASSWORD: test_password
+      DB_TEST_TENANT_B_HOST: mysql-test
+      DB_TEST_TENANT_B_PORT: "3306"
+      DB_TEST_TENANT_B_DATABASE: tenant_b_test
+      DB_TEST_TENANT_B_USERNAME: test_user
+      DB_TEST_TENANT_B_PASSWORD: test_password
+      DB_MOTHERSHIP_HOST: mothership-db-test
+      DB_MOTHERSHIP_PORT: "3306"
+      DB_MOTHERSHIP_DATABASE: mothership_test
+      DB_MOTHERSHIP_USERNAME: test_user
+      DB_MOTHERSHIP_PASSWORD: test_password
+      # Redis
+      REDIS_HOST: redis-test
+      REDIS_PORT: "6379"
+      REDIS_PREFIX: tenant_a_test_
+      # Drivers
+      CACHE_DRIVER: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      AI_REAL_TESTS: "false"
+      BCRYPT_ROUNDS: "4"
+    networks:
+      - quality_internal
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+      mothership-db-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      mock-server:
+        condition: service_healthy
+    profiles:
+      - test-runner
+
+  # ─── E2E: App Tenant A ───────────────────────────────────
+  app-tenant-a:
+    image: suitezap/lawfirm:candidate-local
+    environment:
+      APP_ENV: testing
+      APP_URL: http://app-tenant-a:80
+      TEST_ENVIRONMENT_ACK: LAW_FIRM_ISOLATED_TEST
+      TENANT_ID: tenant_a
+      DB_CONNECTION: mysql
+      DB_HOST: mysql-test
+      DB_PORT: "3306"
+      DB_DATABASE: tenant_a_test
+      DB_USERNAME: test_user
+      DB_PASSWORD: test_password
+      DB_TEST_TENANT_A_HOST: mysql-test
+      DB_TEST_TENANT_A_PORT: "3306"
+      DB_TEST_TENANT_A_DATABASE: tenant_a_test
+      DB_TEST_TENANT_A_USERNAME: test_user
+      DB_TEST_TENANT_A_PASSWORD: test_password
+      DB_MOTHERSHIP_HOST: mothership-db-test
+      DB_MOTHERSHIP_PORT: "3306"
+      DB_MOTHERSHIP_DATABASE: mothership_test
+      DB_MOTHERSHIP_USERNAME: test_user
+      DB_MOTHERSHIP_PASSWORD: test_password
+      REDIS_HOST: redis-test
+      REDIS_PORT: "6379"
+      REDIS_PREFIX: tenant_a_test_
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      AI_REAL_TESTS: "false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/admin/login"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 180s
+    networks:
+      quality_internal:
+        aliases:
+          - app-tenant-a
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+      mothership-db-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      mock-server:
+        condition: service_healthy
+    profiles:
+      - e2e
+
+  # ─── E2E: App Tenant B ───────────────────────────────────
+  app-tenant-b:
+    image: suitezap/lawfirm:candidate-local
+    environment:
+      APP_ENV: testing
+      APP_URL: http://app-tenant-b:80
+      TEST_ENVIRONMENT_ACK: LAW_FIRM_ISOLATED_TEST
+      TENANT_ID: tenant_b
+      DB_CONNECTION: mysql
+      DB_HOST: mysql-test
+      DB_PORT: "3306"
+      DB_DATABASE: tenant_b_test
+      DB_USERNAME: test_user
+      DB_PASSWORD: test_password
+      DB_TEST_TENANT_B_HOST: mysql-test
+      DB_TEST_TENANT_B_PORT: "3306"
+      DB_TEST_TENANT_B_DATABASE: tenant_b_test
+      DB_TEST_TENANT_B_USERNAME: test_user
+      DB_TEST_TENANT_B_PASSWORD: test_password
+      DB_MOTHERSHIP_HOST: mothership-db-test
+      DB_MOTHERSHIP_PORT: "3306"
+      DB_MOTHERSHIP_DATABASE: mothership_test
+      DB_MOTHERSHIP_USERNAME: test_user
+      DB_MOTHERSHIP_PASSWORD: test_password
+      REDIS_HOST: redis-test
+      REDIS_PORT: "6379"
+      REDIS_PREFIX: tenant_b_test_
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      AI_REAL_TESTS: "false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/admin/login"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 180s
+    networks:
+      quality_internal:
+        aliases:
+          - app-tenant-b
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+      mothership-db-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      mock-server:
+        condition: service_healthy
+      app-tenant-a:
+        condition: service_healthy
+    profiles:
+      - e2e
+
+  # ─── E2E: Worker Tenant A ────────────────────────────────
+  worker-tenant-a:
+    image: suitezap/lawfirm:candidate-local
+    command: php artisan queue:work redis --sleep=3 --tries=3
+    environment:
+      APP_ENV: testing
+      TEST_ENVIRONMENT_ACK: LAW_FIRM_ISOLATED_TEST
+      TENANT_ID: tenant_a
+      DB_CONNECTION: mysql
+      DB_HOST: mysql-test
+      DB_PORT: "3306"
+      DB_DATABASE: tenant_a_test
+      DB_USERNAME: test_user
+      DB_PASSWORD: test_password
+      DB_TEST_TENANT_A_HOST: mysql-test
+      DB_TEST_TENANT_A_PORT: "3306"
+      DB_TEST_TENANT_A_DATABASE: tenant_a_test
+      DB_TEST_TENANT_A_USERNAME: test_user
+      DB_TEST_TENANT_A_PASSWORD: test_password
+      DB_MOTHERSHIP_HOST: mothership-db-test
+      DB_MOTHERSHIP_PORT: "3306"
+      DB_MOTHERSHIP_DATABASE: mothership_test
+      DB_MOTHERSHIP_USERNAME: test_user
+      DB_MOTHERSHIP_PASSWORD: test_password
+      REDIS_HOST: redis-test
+      REDIS_PORT: "6379"
+      REDIS_PREFIX: tenant_a_test_
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      AI_REAL_TESTS: "false"
+    networks:
+      quality_internal:
+        aliases:
+          - worker-tenant-a
+    depends_on:
+      app-tenant-a:
+        condition: service_started
+    profiles:
+      - e2e
+
+  # ─── E2E: Worker Tenant B ────────────────────────────────
+  worker-tenant-b:
+    image: suitezap/lawfirm:candidate-local
+    command: php artisan queue:work redis --sleep=3 --tries=3
+    environment:
+      APP_ENV: testing
+      TEST_ENVIRONMENT_ACK: LAW_FIRM_ISOLATED_TEST
+      TENANT_ID: tenant_b
+      DB_CONNECTION: mysql
+      DB_HOST: mysql-test
+      DB_PORT: "3306"
+      DB_DATABASE: tenant_b_test
+      DB_USERNAME: test_user
+      DB_PASSWORD: test_password
+      DB_TEST_TENANT_B_HOST: mysql-test
+      DB_TEST_TENANT_B_PORT: "3306"
+      DB_TEST_TENANT_B_DATABASE: tenant_b_test
+      DB_TEST_TENANT_B_USERNAME: test_user
+      DB_TEST_TENANT_B_PASSWORD: test_password
+      DB_MOTHERSHIP_HOST: mothership-db-test
+      DB_MOTHERSHIP_PORT: "3306"
+      DB_MOTHERSHIP_DATABASE: mothership_test
+      DB_MOTHERSHIP_USERNAME: test_user
+      DB_MOTHERSHIP_PASSWORD: test_password
+      REDIS_HOST: redis-test
+      REDIS_PORT: "6379"
+      REDIS_PREFIX: tenant_b_test_
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      AI_REAL_TESTS: "false"
+    networks:
+      quality_internal:
+        aliases:
+          - worker-tenant-b
+    depends_on:
+      app-tenant-b:
+        condition: service_started
+    profiles:
+      - e2e
+
+  # ─── E2E: Playwright Runner (Python) ──────────────────────
+  playwright-test:
+    build:
+      context: .
+      dockerfile: docker/testing/Dockerfile.playwright
+    environment:
+      TENANT_A_URL: http://app-tenant-a:80
+      TENANT_B_URL: http://app-tenant-b:80
+    volumes:
+      - ./tests/e2e:/e2e          # Monta host sobre WORKDIR — conftest.py do host tem precedência
+      - ./reports/e2e:/reports/e2e  # Caminho real do HTML report (../../reports/e2e a partir de /e2e)
+    networks:
+      quality_internal:
+        aliases:
+          - playwright-test
+    depends_on:
+      app-tenant-a:
+        condition: service_healthy
+      app-tenant-b:
+        condition: service_healthy
+      worker-tenant-a:
+        condition: service_started
+      worker-tenant-b:
+        condition: service_started
+    profiles:
+      - e2e

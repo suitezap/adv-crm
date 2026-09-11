@@ -1,0 +1,120 @@
+<?php
+
+namespace SuiteZap\LawFirm\Legal\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Validator;
+use SuiteZap\LawFirm\Http\Resources\DeadlineResource;
+use SuiteZap\LawFirm\Legal\Models\Prazo;
+
+class DeadlineApiController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     *
+     * @return AnonymousResourceCollection
+     */
+    public function index()
+    {
+        $query = Prazo::with('processo');
+
+        if (request()->has('status')) {
+            $query->where('status', request('status'));
+        }
+
+        // Filter by Process ID if provided
+        if (request()->has('processo_id')) {
+            $query->where('processo_id', request('processo_id'));
+        }
+
+        $prazos = $query->orderBy('data_vencimento', 'asc')->paginate(20);
+
+        return DeadlineResource::collection($prazos);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @return JsonResponse
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'processo_id'     => 'required|exists:processos,id',
+            'titulo'          => 'required|string|max:255',
+            'data_vencimento' => 'required|date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $prazo = Prazo::create($request->all());
+
+        return response()->json([
+            'message' => 'Deadline created successfully',
+            'data'    => new DeadlineResource($prazo),
+        ], 201);
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return DeadlineResource|JsonResponse
+     */
+    public function show($id)
+    {
+        $prazo = Prazo::with('processo')->find($id);
+
+        if (! $prazo) {
+            return response()->json(['message' => 'Deadline not found'], 404);
+        }
+
+        return new DeadlineResource($prazo);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  int  $id
+     * @return JsonResponse
+     */
+    public function update(Request $request, $id)
+    {
+        $prazo = Prazo::find($id);
+
+        if (! $prazo) {
+            return response()->json(['message' => 'Deadline not found'], 404);
+        }
+
+        $prazo->update($request->all());
+
+        return response()->json([
+            'message' => 'Deadline updated successfully',
+            'data'    => new DeadlineResource($prazo),
+        ]);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return JsonResponse
+     */
+    public function destroy($id)
+    {
+        $prazo = Prazo::find($id);
+
+        if (! $prazo) {
+            return response()->json(['message' => 'Deadline not found'], 404);
+        }
+
+        $prazo->delete();
+
+        return response()->json(['message' => 'Deadline deleted successfully']);
+    }
+}

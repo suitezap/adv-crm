@@ -9,17 +9,19 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "barryvdh/laravel-dompdf": "^2.0.0",
+        "barryvdh/laravel-dompdf": "^2.2",
         "diglactic/laravel-breadcrumbs": "^8.0",
         "doctrine/dbal": "^3.0",
         "enshrined/svg-sanitize": "^0.21.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "khaled.alshamaa/ar-php": "^6.3",
         "konekt/concord": "^1.10",
+        "krayin/rest-api": "^2.1",
         "laravel/framework": "^10.0",
         "laravel/sanctum": "^3.2",
         "laravel/tinker": "^2.5",
         "laravel/ui": "^4.5",
+        "league/flysystem-aws-s3-v3": "3.0",
         "maatwebsite/excel": "^3.1",
         "mpdf/mpdf": "^8.2",
         "prettus/l5-repository": "^2.7.9",
@@ -27,7 +29,8 @@
         "webklex/laravel-imap": "^5.3"
     },
     "require-dev": {
-        "barryvdh/laravel-debugbar": "^3.6",
+        "barryvdh/laravel-debugbar": "^3.16",
+        "barryvdh/laravel-ide-helper": "^3.1",
         "fakerphp/faker": "^1.9.1",
         "krayin/krayin-package-generator": "dev-master",
         "laravel/pint": "^1.16",
@@ -45,6 +48,12 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true
+        },
+        "audit": {
+            "ignore": [
+                "PKSA-4g5g-4rkv-myqs"
+            ],
+            "block-insecure": true
         }
     },
     "extra": {
@@ -75,12 +84,15 @@
             "Webkul\\User\\": "packages/Webkul/User/src",
             "Webkul\\Warehouse\\": "packages/Webkul/Warehouse/src",
             "Webkul\\WebForm\\": "packages/Webkul/WebForm/src",
-            "Webkul\\Automation\\": "packages/Webkul/Automation/src"
+            "Webkul\\Automation\\": "packages/Webkul/Automation/src",
+            "SuiteZap\\LawFirm\\": "packages/SuiteZap/LawFirm/src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "App\\": "app/",
+            "Webkul\\": "packages/Webkul/"
         }
     },
     "repositories": [

@@ -1,0 +1,317 @@
+<?php
+
+return [
+    [
+        'key'  => 'lawfirm',
+        'name' => 'Jurídico',
+        'info' => 'Configurações do módulo Jurídico',
+        'sort' => 5,
+    ],
+    [
+        'key'        => 'lawfirm.settings',
+        'name'       => 'Personalização',
+        'info'       => 'Personalize a identidade visual e dados de contato',
+        'sort'       => 1,
+        'icon'       => 'icon-setting',
+        'icon-class' => 'icon-setting',
+    ],
+    [
+        'key'    => 'lawfirm.settings.general',
+        'name'   => 'Identidade & Qualificação',
+        'info'   => 'Defina o nome, logo e rodapé dos documentos',
+        'sort'   => 1,
+        'fields' => [
+            // --- BLOCO 1: Identificação (Híbrido PF/PJ) ---
+            [
+                'name'          => 'company_name',
+                'title'         => 'Nome do Escritório ou Advogado(a)',
+                'type'          => 'text',
+                'validation'    => 'required', // Obrigatório
+                'channel_based' => true,
+                'info'          => 'Nome que aparecerá no cabeçalho dos documentos.',
+            ],
+            [
+                'name'          => 'document_id',
+                'title'         => 'CPF ou CNPJ',
+                'type'          => 'text',
+                'validation'    => 'required', // Vital para contratos
+                'channel_based' => true,
+                'info'          => 'Documento fiscal para qualificação em contratos.',
+            ],
+            [
+                'name'          => 'oab_number',
+                'title'         => 'Registro OAB',
+                'type'          => 'text',
+                'channel_based' => true,
+                'info'          => 'Ex: OAB/SP 123.456',
+            ],
+            [
+                'name'          => 'logo',
+                'title'         => 'Logo (Cabeçalho)',
+                'type'          => 'image',
+                'validation'    => 'mimes:jpeg,bmp,png,jpg',
+                'channel_based' => true,
+            ],
+
+            // --- BLOCO 2: Contatos (Validados) ---
+            [
+                'name'          => 'contact_whatsapp', // MANTIDO 'contact_whatsapp' para compatibilidade
+                'title'         => 'WhatsApp / Contato Principal',
+                'type'          => 'text',
+                'validation'    => 'required', // Obrigatório
+                'channel_based' => true,
+                'info'          => 'Aparecerá no rodapé dos recibos.',
+            ],
+            [
+                'name'          => 'contact_email',
+                'title'         => 'E-mail Profissional',
+                'type'          => 'text',
+                'validation'    => 'required|email', // Validação estrita de e-mail
+                'channel_based' => true,
+            ],
+            [
+                'name'          => 'website',
+                'title'         => 'Site / Redes Sociais',
+                'type'          => 'text',
+                'channel_based' => true,
+            ],
+
+            // --- BLOCO 3: Dados de Endereço (Asaas-Compatible) ---
+            [
+                'name'         => 'address_cep',
+                'title'        => 'CEP',
+                'type'         => 'text',
+                'channel_based'=> true,
+                'info'         => 'CEP no formato 00000-000. O endereço será preenchido automaticamente.',
+            ],
+            [
+                'name'         => 'address_street',
+                'title'        => 'Logradouro (Rua/Avenida)',
+                'type'         => 'text',
+                'channel_based'=> true,
+                'info'         => 'Ex: Rua das Flores. Preenchido automaticamente pelo CEP.',
+            ],
+            [
+                'name'         => 'address_number',
+                'title'        => 'Número',
+                'type'         => 'text',
+                'channel_based'=> true,
+            ],
+            [
+                'name'         => 'address_complement',
+                'title'        => 'Complemento',
+                'type'         => 'text',
+                'channel_based'=> true,
+                'info'         => 'Ex: Sala 302, Andar 3, Casa B',
+            ],
+            [
+                'name'         => 'address_province',
+                'title'        => 'Bairro',
+                'type'         => 'text',
+                'channel_based'=> true,
+            ],
+            [
+                'name'         => 'city',
+                'title'        => 'Cidade',
+                'type'         => 'text',
+                'channel_based'=> true,
+                'info'         => 'Ex: São Paulo. Usada em documentos e na cobrança do Asaas.',
+            ],
+            [
+                'name'         => 'address_state',
+                'title'        => 'Estado (UF)',
+                'type'         => 'text',
+                'channel_based'=> true,
+                'info'         => 'Ex: SP, RJ, MG',
+            ],
+            // --- BLOCO 4: Integrações (WhatsApp) ---
+            // Credenciais movidas para o .env por segurança
+        ],
+    ],
+    [
+        'key'   => 'lawfirm.whatsapp',
+        'name'  => 'WhatsApp',
+        'info'  => 'Gerencie a conexão, QR Code e integração WhatsApp',
+        'sort'  => 2,
+        'icon'  => 'icon-setting',
+        'route' => 'admin.lawfirm.whatsapp.index',
+    ],
+    [
+        'key'   => 'lawfirm.billing',
+        'name'  => 'Dados Faturamento',
+        'info'  => 'Configuração dos dados do comprador (SaaS Asaas)',
+        'sort'  => 3,
+        'icon'  => 'icon-user',
+        'route' => 'admin.lawfirm.saas.billing-info.index',
+    ],
+    [
+        'key'   => 'lawfirm.whatsapp_templates',
+        'name'  => 'Templates WhatsApp',
+        'info'  => 'Configure os textos das mensagens automáticas',
+        'sort'  => 4,
+        'icon'  => 'icon-setting',
+        'route' => 'admin.lawfirm.whatsapp.templates',
+    ],
+    [
+        'key'    => 'lawfirm.whatsapp_templates.messages',
+        'name'   => 'Templates de Mensagens',
+        'info'   => 'Configure os textos das mensagens automáticas enviadas via WhatsApp',
+        'sort'   => 1,
+        'fields' => [
+            // --- Prazos ---
+            [
+                'name'          => 'new_prazo_client',
+                'title'         => '[Prazos] Notificação de Novo Prazo ao Cliente',
+                'type'          => 'textarea',
+                'channel_based' => true,
+                'info'          => 'Enviada manualmente ao acionar o botão de notificar. Variáveis: {cliente_nome}, {prazo_titulo}, {prazo_data}, {prazo_descricao}.',
+                'default'       => 'Olá {cliente_nome}, informamos um novo prazo no seu processo: {prazo_titulo}. Data: {prazo_data}. {prazo_descricao}',
+            ],
+            [
+                'name'          => 'registration_request',
+                'title'         => '[GED/Documentos] Cadastro e Atualização de Clientes',
+                'type'          => 'textarea',
+                'channel_based' => true,
+                'info'          => 'Enviada via botão no processo para solicitar o preenchimento de dados. Variáveis: {cliente_nome}, {processo_titulo}, {link_portal}.',
+                'default'       => 'Olá {cliente_nome}. Referente ao processo {processo_titulo}, precisamos que atualize suas informações cadastrais.
+Utilize o link {link_portal}',
+            ],
+            [
+                'name'          => 'document_request',
+                'title'         => '[GED / Documentos] Solicitação de Kits/Documentos',
+                'type'          => 'textarea',
+                'channel_based' => true,
+                'info'          => 'Enviada ao importar um checklist de documentos. Variáveis: {cliente_nome}, {processo_titulo}, {lista_documentos}, {link_portal}.',
+                'default'       => "Olá {cliente_nome}. Referente ao processo {processo_titulo}, precisamos que nos envie os seguintes documentos:\n{lista_documentos}\nPode enviar fotos legíveis por aqui mesmo.\nou pelo link : {link_portal}",
+            ],
+            // --- Financeiro ---
+            [
+                'name'          => 'financial_billing_due_today',
+                'title'         => '[Financeiro] Cobrança no Prazo / Futura',
+                'type'          => 'textarea',
+                'rows'          => 4,
+                'channel_based' => true,
+                'info'          => 'Variáveis: {cliente_nome}, {valor}, {descricao}, {data_vencimento}.',
+                'default'       => 'Olá {cliente_nome}, lembrete de vencimento ref. {descricao} no valor de {valor} para o dia {data_vencimento}.',
+            ],
+            [
+                'name'          => 'financial_billing_overdue',
+                'title'         => '[Financeiro] Cobrança em Atraso',
+                'type'          => 'textarea',
+                'rows'          => 4,
+                'channel_based' => true,
+                'info'          => 'Variáveis: {cliente_nome}, {valor}, {descricao}, {data_vencimento}.',
+                'default'       => 'Olá {cliente_nome}, verificamos uma pendência de {valor} referente a {descricao}, vencida em {data_vencimento}. Podemos atualizar o boleto?',
+            ],
+            // --- Monitoramento Escavador ---
+            [
+                'name'          => 'escavador_monitoramento_update',
+                'title'         => '[Jurídico] Nova Movimentação Monitorada',
+                'type'          => 'textarea',
+                'rows'          => 4,
+                'channel_based' => true,
+                'info'          => 'Variáveis disponíveis: {termo_monitorado}, {data_atualizacao}, {fonte}.',
+                'default'       => "Olá! Detectamos uma nova movimentação do seu processo '{termo_monitorado}' em {fonte} na data de {data_atualizacao}. Acesse o portal para verificar a íntegra.",
+            ],
+            // --- Robô Agendador: Clientes ---
+            [
+                'name'          => 'prazo_5dias_cliente',
+                'title'         => '[Agendador] 5 Dias Antes — Para o Cliente',
+                'type'          => 'textarea',
+                'rows'          => 4,
+                'channel_based' => true,
+                'info'          => 'Variáveis: {cliente_nome}, {prazo_titulo}, {prazo_data}, {processo_cnj}, {processo_titulo}.',
+                'default'       => 'Olá {cliente_nome}! 📅 Lembrando que o prazo *{prazo_titulo}* do processo *{processo_titulo}* (Nº {processo_cnj}) vence em 5 dias, em *{prazo_data}*. Dúvidas? Entre em contato.',
+            ],
+            [
+                'name'          => 'prazo_vespera_cliente',
+                'title'         => '[Agendador] 1 Dia Antes (Véspera) — Para o Cliente',
+                'type'          => 'textarea',
+                'rows'          => 4,
+                'channel_based' => true,
+                'info'          => 'Variáveis: {cliente_nome}, {prazo_titulo}, {prazo_data}, {processo_cnj}, {processo_titulo}.',
+                'default'       => 'Olá {cliente_nome}! ⚠️ O prazo *{prazo_titulo}* do processo *{processo_titulo}* (Nº {processo_cnj}) vence *amanhã, {prazo_data}*. Nosso escritório está acompanhando.',
+            ],
+            [
+                'name'          => 'prazo_hoje_cliente',
+                'title'         => '[Agendador] No Dia do Vencimento — Para o Cliente',
+                'type'          => 'textarea',
+                'rows'          => 4,
+                'channel_based' => true,
+                'info'          => 'Variáveis: {cliente_nome}, {prazo_titulo}, {prazo_data}, {processo_cnj}, {processo_titulo}.',
+                'default'       => 'Olá {cliente_nome}! 🔴 O prazo *{prazo_titulo}* do processo *{processo_titulo}* (Nº {processo_cnj}) vence *hoje, {prazo_data}*. Nosso escritório está acompanhando todos os procedimentos.',
+            ],
+            // --- Robô Agendador: Advogados ---
+            [
+                'name'          => 'prazo_5dias_advogado',
+                'title'         => '[Agendador] 5 Dias Antes — Para o Advogado',
+                'type'          => 'textarea',
+                'rows'          => 4,
+                'channel_based' => true,
+                'info'          => 'Variáveis: {advogado_nome}, {prazo_titulo}, {prazo_data}, {processo_cnj}, {processo_titulo}, {cliente_nome}.',
+                'default'       => "📅 *Lembrete — 5 dias*\n\nDr(a). {advogado_nome}, o prazo *{prazo_titulo}* do processo *{processo_cnj} — {processo_titulo}* (Cliente: {cliente_nome}) vence em 5 dias: *{prazo_data}*.",
+            ],
+            [
+                'name'          => 'prazo_vespera_advogado',
+                'title'         => '[Agendador] 1 Dia Antes (Véspera) — Para o Advogado',
+                'type'          => 'textarea',
+                'rows'          => 4,
+                'channel_based' => true,
+                'info'          => 'Variáveis: {advogado_nome}, {prazo_titulo}, {prazo_data}, {processo_cnj}, {processo_titulo}, {cliente_nome}.',
+                'default'       => "⚠️ *Prazo amanhã!*\n\nDr(a). {advogado_nome}, o prazo *{prazo_titulo}* do processo *{processo_cnj} — {processo_titulo}* (Cliente: {cliente_nome}) vence *amanhã, {prazo_data}*.",
+            ],
+            [
+                'name'          => 'prazo_hoje_advogado',
+                'title'         => '[Agendador] No Dia do Vencimento — Para o Advogado',
+                'type'          => 'textarea',
+                'rows'          => 4,
+                'channel_based' => true,
+                'info'          => 'Variáveis: {advogado_nome}, {prazo_titulo}, {prazo_data}, {processo_cnj}, {processo_titulo}, {cliente_nome}.',
+                'default'       => "🔴 *Prazo vencendo HOJE!*\n\nDr(a). {advogado_nome}, o prazo *{prazo_titulo}* do processo *{processo_cnj} — {processo_titulo}* (Cliente: {cliente_nome}) vence *hoje, {prazo_data}*.",
+            ],
+            [
+                'name'          => 'prazo_resumo_diario',
+                'title'         => '[Agendador] Resumo Diário de Compromissos (Advogado)',
+                'type'          => 'textarea',
+                'rows'          => 5,
+                'channel_based' => true,
+                'info'          => 'Variáveis: {advogado_nome}, {data_hoje}, {lista_compromissos}. A lista é gerada automaticamente.',
+                'default'       => "📋 *Resumo — {data_hoje}*\n\nBom dia, Dr(a). {advogado_nome}! Seus compromissos de hoje:\n\n{lista_compromissos}\n\nTenha um excelente dia!",
+            ],
+        ],
+    ],
+    [
+        'key'   => 'lawfirm.escavador_certs',
+        'name'  => 'Certificados Digitais',
+        'info'  => 'Gerencie os certificados digitais exigidos por tribunais judiciais',
+        'sort'  => 4,
+        'icon'  => 'icon-setting',
+        'route' => 'lawfirm.escavador.certificados.view',
+    ],
+    [
+        'key'        => 'lawfirm.saas_dashboard',
+        'name'       => 'Minha Assinatura',
+        'info'       => 'Gerencie sua assinatura, recursos e limite de tokens',
+        'sort'       => 5,
+        'icon'       => 'icon-setting',
+        'route'      => 'admin.lawfirm.saas.index',
+        'permission' => 'lawfirm.saas.manage',
+    ],
+    [
+        'key'        => 'lawfirm.saas_transactions',
+        'name'       => 'Uso de Créditos em Assistentes',
+        'info'       => 'Histórico financeiro e consumo de serviços pagos',
+        'sort'       => 6,
+        'icon'       => 'icon-setting',
+        'route'      => 'lawfirm.saas.transactions',
+        'permission' => 'lawfirm.saas.manage',
+    ],
+    [
+        'key'   => 'lawfirm.asaas',
+        'name'  => 'Cobranças Asaas',
+        'info'  => 'Gestão das chaves de API para emissão de cobranças',
+        'sort'  => 7,
+        'icon'  => 'icon-setting',
+        'route' => 'admin.lawfirm.tenant_finance.settings',
+    ],
+];

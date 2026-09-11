@@ -142,6 +142,14 @@ class Lead extends Model implements LeadContract
     }
 
     /**
+     * Get the attachments for the lead.
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(LeadAttachment::class);
+    }
+
+    /**
      * The tags that belong to the lead.
      */
     public function tags(): BelongsToMany

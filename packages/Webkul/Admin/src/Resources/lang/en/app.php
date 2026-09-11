@@ -144,7 +144,7 @@ return [
                     'location'      => 'Location',
                     'call'          => 'Call',
                     'meeting'       => 'Meeting',
-                    'lunch'         => 'Lunch',
+                    'lunch'         => 'Processo',
                     'save-btn'      => 'Save Activity',
 
                     'participants' => [
@@ -171,7 +171,7 @@ return [
                 'files'        => 'Files',
                 'from'         => 'From',
                 'location'     => 'Location',
-                'lunches'      => 'Lunches',
+                'lunches'      => 'Processos',
                 'mark-as-done' => 'Mark as Done',
                 'meetings'     => 'Meetings',
                 'notes'        => 'Notes',
@@ -211,8 +211,8 @@ return [
                     ],
 
                     'lunches' => [
-                        'title'       => 'No Lunches Found',
-                        'description' => 'No lunches found for this. You can add lunches by clicking on the Activity button on the left panel and selecting the Lunch type.',
+                        'title'       => 'Nenhum processo encontrado',
+                        'description' => 'Nenhum processo foi encontrado. Adicione processos clicando no botão Atividade e selecionando o tipo Processo.',
                     ],
 
                     'files' => [
@@ -369,12 +369,12 @@ return [
 
         'layouts' => [
             'powered-by' => [
-                'description' => 'Powered by :krayin, an open-source project by :webkul.',
+                'description' => 'Todos direitos reservados :suitezap, by :webkul.',
             ],
 
             'header' => [
                 'mega-search' => [
-                    'title'   => 'Mega Search',
+                    'title' => 'Mega Search',
 
                     'tabs' => [
                         'leads'    => 'Leads',
@@ -396,7 +396,7 @@ return [
         ],
 
         'attributes' => [
-            'edit'   => [
+            'edit' => [
                 'delete' => 'Delete',
             ],
 
@@ -439,19 +439,19 @@ return [
             'delete-failed'  => 'Quote can not be deleted.',
 
             'datagrid' => [
-                'subject'        => 'Subject',
-                'sales-person'   => 'Sales Person',
-                'expired-at'     => 'Expired At',
-                'created-at'     => 'Created At',
-                'person'         => 'Person',
-                'subtotal'       => 'Subtotal',
-                'discount'       => 'Discount',
-                'tax'            => 'Tax',
-                'adjustment'     => 'Adjustment',
-                'grand-total'    => 'Grand Total',
-                'edit'           => 'Edit',
-                'delete'         => 'Delete',
-                'print'          => 'Print',
+                'subject'      => 'Subject',
+                'sales-person' => 'Sales Person',
+                'expired-at'   => 'Expired At',
+                'created-at'   => 'Created At',
+                'person'       => 'Person',
+                'subtotal'     => 'Subtotal',
+                'discount'     => 'Discount',
+                'tax'          => 'Tax',
+                'adjustment'   => 'Adjustment',
+                'grand-total'  => 'Grand Total',
+                'edit'         => 'Edit',
+                'delete'       => 'Delete',
+                'print'        => 'Print',
             ],
 
             'pdf' => [
@@ -543,15 +543,15 @@ return [
     'contacts' => [
         'persons' => [
             'index' => [
-                'title'                    => 'Persons',
-                'create-btn'               => 'Create Person',
-                'create-success'           => 'Person created successfully.',
-                'update-success'           => 'Person updated successfully.',
-                'all-delete-success'       => 'All selected persons were deleted successfully.',
-                'partial-delete-warning'   => 'Some persons were deleted successfully. Others could not be deleted because they are linked to leads.',
-                'none-delete-warning'      => 'None of the selected persons could be deleted because they are linked to leads.',
-                'no-selection'             => 'No persons were selected for deletion.',
-                'delete-failed'            => 'Failed to delete selected persons.',
+                'title'                  => 'Persons',
+                'create-btn'             => 'Create Person',
+                'create-success'         => 'Person created successfully.',
+                'update-success'         => 'Person updated successfully.',
+                'all-delete-success'     => 'All selected persons were deleted successfully.',
+                'partial-delete-warning' => 'Some persons were deleted successfully. Others could not be deleted because they are linked to leads.',
+                'none-delete-warning'    => 'None of the selected persons could be deleted because they are linked to leads.',
+                'no-selection'           => 'No persons were selected for deletion.',
+                'delete-failed'          => 'Failed to delete selected persons.',
 
                 'datagrid' => [
                     'contact-numbers'   => 'Contact Numbers',
@@ -690,7 +690,7 @@ return [
             'delete-success' => 'Product deleted successfully.',
             'delete-failed'  => 'Product can not be deleted.',
 
-            'datagrid'   => [
+            'datagrid' => [
                 'allocated' => 'Allocated',
                 'delete'    => 'Delete',
                 'edit'      => 'Edit',
@@ -706,17 +706,17 @@ return [
         ],
 
         'create' => [
-            'save-btn'  => 'Save Products',
-            'title'     => 'Create Products',
-            'general'   => 'General',
-            'price'     => 'Price',
+            'save-btn' => 'Save Products',
+            'title'    => 'Create Products',
+            'general'  => 'General',
+            'price'    => 'Price',
         ],
 
         'edit' => [
-            'title'     => 'Edit Products',
-            'save-btn'  => 'Save Products',
-            'general'   => 'General',
-            'price'     => 'Price',
+            'title'    => 'Edit Products',
+            'save-btn' => 'Save Products',
+            'general'  => 'General',
+            'price'    => 'Price',
         ],
 
         'view' => [
@@ -759,7 +759,7 @@ return [
                 'delete-failed'                  => 'Group can not be deleted.',
                 'delete-failed-associated-users' => 'Group can not be deleted, as this is being used by users.',
 
-                'datagrid'   => [
+                'datagrid' => [
                     'delete'      => 'Delete',
                     'description' => 'Description',
                     'edit'        => 'Edit',
@@ -794,7 +794,7 @@ return [
                 'update-success'            => 'Role updated successfully.',
                 'user-define-error'         => 'Can not delete system role.',
 
-                'datagrid'   => [
+                'datagrid' => [
                     'all'             => 'All',
                     'custom'          => 'Custom',
                     'delete'          => 'Delete',
@@ -1001,7 +1001,7 @@ return [
                 'delete-success' => 'Webform deleted successfully.',
                 'delete-failed'  => 'Webform can not be deleted.',
 
-                'datagrid'       => [
+                'datagrid' => [
                     'id'     => 'ID',
                     'title'  => 'Title',
                     'edit'   => 'Edit',
@@ -1039,38 +1039,38 @@ return [
             ],
 
             'edit' => [
-                'add-attribute-btn'         => 'Add Attribute Button',
-                'attribute-label-color'     => 'Attribute Label Color',
-                'attributes'                => 'Attributes',
-                'attributes-info'           => 'Add custom attributes to the form.',
-                'background-color'          => 'Background Color',
-                'choose-value'              => 'Choose Value',
-                'code-snippet'              => 'Code Snippet',
-                'copied'                    => 'Copied',
-                'copy'                      => 'Copy',
-                'create-lead'               => 'Create Lead',
-                'customize-webform'         => 'Customize Webform',
-                'customize-webform-info'    => 'Customize your web form with element colors of your choosing.',
-                'description'               => 'Description',
-                'display-custom-message'    => 'Display custom message',
-                'embed'                     => 'Embed',
-                'enter-value'               => 'Enter Value',
-                'form-background-color'     => 'Form Background Color',
-                'form-submit-btn-color'     => 'Form Submit Button Color',
-                'form-submit-button-color'  => 'Form Submit Button Color',
-                'form-title-color'          => 'Form Title Color',
-                'general'                   => 'General',
-                'leads'                     => 'Leads',
-                'person'                    => 'Person',
-                'preview'                   => 'Preview',
-                'public-url'                => 'Public URL',
-                'redirect-to-url'           => 'Redirect To URL',
-                'save-btn'                  => 'Save Webform',
-                'select-file'               => 'Select File',
-                'select-image'              => 'Select Image',
-                'submit-button-label'       => 'Submit Button Label',
-                'submit-success-action'     => 'Submit Success Action',
-                'title'                     => 'Edit Webform',
+                'add-attribute-btn'        => 'Add Attribute Button',
+                'attribute-label-color'    => 'Attribute Label Color',
+                'attributes'               => 'Attributes',
+                'attributes-info'          => 'Add custom attributes to the form.',
+                'background-color'         => 'Background Color',
+                'choose-value'             => 'Choose Value',
+                'code-snippet'             => 'Code Snippet',
+                'copied'                   => 'Copied',
+                'copy'                     => 'Copy',
+                'create-lead'              => 'Create Lead',
+                'customize-webform'        => 'Customize Webform',
+                'customize-webform-info'   => 'Customize your web form with element colors of your choosing.',
+                'description'              => 'Description',
+                'display-custom-message'   => 'Display custom message',
+                'embed'                    => 'Embed',
+                'enter-value'              => 'Enter Value',
+                'form-background-color'    => 'Form Background Color',
+                'form-submit-btn-color'    => 'Form Submit Button Color',
+                'form-submit-button-color' => 'Form Submit Button Color',
+                'form-title-color'         => 'Form Title Color',
+                'general'                  => 'General',
+                'leads'                    => 'Leads',
+                'person'                   => 'Person',
+                'preview'                  => 'Preview',
+                'public-url'               => 'Public URL',
+                'redirect-to-url'          => 'Redirect To URL',
+                'save-btn'                 => 'Save Webform',
+                'select-file'              => 'Select File',
+                'select-image'             => 'Select Image',
+                'submit-button-label'      => 'Submit Button Label',
+                'submit-success-action'    => 'Submit Success Action',
+                'title'                    => 'Edit Webform',
             ],
         ],
 
@@ -1083,16 +1083,16 @@ return [
                 'delete-success' => 'Email Template deleted successfully.',
                 'delete-failed'  => 'Email Template can not be deleted.',
 
-                'datagrid'   => [
-                    'delete'       => 'Delete',
-                    'edit'         => 'Edit',
-                    'id'           => 'ID',
-                    'name'         => 'Name',
-                    'subject'      => 'Subject',
+                'datagrid' => [
+                    'delete'  => 'Delete',
+                    'edit'    => 'Edit',
+                    'id'      => 'ID',
+                    'name'    => 'Name',
+                    'subject' => 'Subject',
                 ],
             ],
 
-            'create'     => [
+            'create' => [
                 'title'                => 'Create Email Template',
                 'save-btn'             => 'Save Email Template',
                 'email-template'       => 'Email Template',
@@ -1127,16 +1127,16 @@ return [
                     'mass-delete-success'                => 'Events deleted successfully',
                     'delete-failed-associated-campaigns' => 'Event can not be deleted as it is associated with existing campaigns. Please detach or update those campaigns before deletion.',
 
-                    'datagrid'   => [
-                        'delete'       => 'Delete',
-                        'edit'         => 'Edit',
-                        'id'           => 'ID',
-                        'name'         => 'Name',
-                        'description'  => 'Description',
-                        'date'         => 'Date',
+                    'datagrid' => [
+                        'delete'      => 'Delete',
+                        'edit'        => 'Edit',
+                        'id'          => 'ID',
+                        'name'        => 'Name',
+                        'description' => 'Description',
+                        'date'        => 'Date',
                     ],
 
-                    'create'     => [
+                    'create' => [
                         'title'       => 'Create Event',
                         'name'        => 'Name',
                         'date'        => 'Date',
@@ -1160,7 +1160,7 @@ return [
                     'delete-failed'       => 'Campaign can not be deleted.',
                     'mass-delete-success' => 'Campaigns deleted successfully.',
 
-                    'datagrid'   => [
+                    'datagrid' => [
                         'id'       => 'ID',
                         'name'     => 'Name',
                         'subject'  => 'Subject',
@@ -1171,7 +1171,7 @@ return [
                         'delete'   => 'Delete',
                     ],
 
-                    'create'     => [
+                    'create' => [
                         'title'          => 'Create Campaign',
                         'name'           => 'Name',
                         'type'           => 'Type',
@@ -1198,12 +1198,12 @@ return [
                 'delete-failed'  => 'Tag can not be deleted.',
 
                 'datagrid' => [
-                    'delete'      => 'Delete',
-                    'edit'        => 'Edit',
-                    'id'          => 'ID',
-                    'name'        => 'Name',
-                    'users'       => 'Users',
-                    'created-at'  => 'Created At',
+                    'delete'     => 'Delete',
+                    'edit'       => 'Edit',
+                    'id'         => 'ID',
+                    'name'       => 'Name',
+                    'users'      => 'Users',
+                    'created-at' => 'Created At',
                 ],
 
                 'create' => [
@@ -1269,7 +1269,7 @@ return [
                 ],
 
                 'edit' => [
-                    'title'                    => 'Edit User',
+                    'title' => 'Edit User',
                 ],
             ],
         ],
@@ -1318,7 +1318,7 @@ return [
                 'stage-delete-success' => 'Stage Deleted Successfully',
             ],
 
-            'edit'  => [
+            'edit' => [
                 'title'                => 'Edit Pipeline',
                 'save-btn'             => 'Save Pipeline',
                 'name'                 => 'Name',
@@ -1443,15 +1443,15 @@ return [
             ],
 
             'create' => [
-                'title'         => 'Create Warehouse',
-                'save-btn'      => 'Save Warehouse',
-                'contact-info'  => 'Contact Information',
+                'title'        => 'Create Warehouse',
+                'save-btn'     => 'Save Warehouse',
+                'contact-info' => 'Contact Information',
             ],
 
             'edit' => [
-                'title'         => 'Edit Warehouse',
-                'save-btn'      => 'Save Warehouse',
-                'contact-info'  => 'Contact Information',
+                'title'        => 'Edit Warehouse',
+                'save-btn'     => 'Save Warehouse',
+                'contact-info' => 'Contact Information',
             ],
 
             'view' => [
@@ -1514,7 +1514,7 @@ return [
                         'warehouses'    => 'Warehouses',
                     ],
 
-                    'types'       => [
+                    'types' => [
                         'text'        => 'Text',
                         'textarea'    => 'Textarea',
                         'price'       => 'Price',
@@ -1534,7 +1534,7 @@ return [
                 ],
             ],
 
-            'create'  => [
+            'create' => [
                 'title'                 => 'Create Attribute',
                 'save-btn'              => 'Save Attribute',
                 'code'                  => 'Code',
@@ -1578,7 +1578,7 @@ return [
                 'actions'               => 'Actions',
             ],
 
-            'edit'  => [
+            'edit' => [
                 'actions'               => 'Actions',
                 'add-attribute-options' => 'Add Attribute Options',
                 'add-option'            => 'Add Option',
@@ -1730,7 +1730,7 @@ return [
 
     'activities' => [
         'index' => [
-            'title'      => 'Activities',
+            'title' => 'Activities',
 
             'datagrid' => [
                 'comment'       => 'Comment',
@@ -1792,24 +1792,24 @@ return [
 
     'mail' => [
         'index' => [
-            'compose'           => 'Compose',
-            'draft'             => 'Draft',
-            'inbox'             => 'Inbox',
-            'outbox'            => 'Outbox',
-            'sent'              => 'Sent',
-            'trash'             => 'Trash',
-            'compose-mail-btn'  => 'Compose Mail',
-            'btn'               => 'Mail',
-            'mail'              => [
-                'title'         => 'Compose Mail',
-                'to'            => 'To',
-                'enter-emails'  => 'Press enter to add emails',
-                'cc'            => 'CC',
-                'bcc'           => 'BCC',
-                'subject'       => 'Subject',
-                'send-btn'      => 'Send',
-                'message'       => 'Message',
-                'draft'         => 'Draft',
+            'compose'          => 'Compose',
+            'draft'            => 'Draft',
+            'inbox'            => 'Inbox',
+            'outbox'           => 'Outbox',
+            'sent'             => 'Sent',
+            'trash'            => 'Trash',
+            'compose-mail-btn' => 'Compose Mail',
+            'btn'              => 'Mail',
+            'mail'             => [
+                'title'        => 'Compose Mail',
+                'to'           => 'To',
+                'enter-emails' => 'Press enter to add emails',
+                'cc'           => 'CC',
+                'bcc'          => 'BCC',
+                'subject'      => 'Subject',
+                'send-btn'     => 'Send',
+                'message'      => 'Message',
+                'draft'        => 'Draft',
             ],
 
             'datagrid' => [
@@ -1901,11 +1901,11 @@ return [
     ],
 
     'leads' => [
-        'create-success'    => 'Lead created successfully.',
-        'update-success'    => 'Leads updated successfully.',
-        'update-failed'     => 'Leads can not be deleted.',
-        'destroy-success'   => 'Lead deleted successfully.',
-        'destroy-failed'    => 'Lead can not be deleted.',
+        'create-success'  => 'Lead created successfully.',
+        'update-success'  => 'Leads updated successfully.',
+        'update-failed'   => 'Leads can not be deleted.',
+        'destroy-success' => 'Lead deleted successfully.',
+        'destroy-failed'  => 'Lead can not be deleted.',
 
         'file' => [
             'data-not-found'         => 'Data not found.',
@@ -1926,26 +1926,36 @@ return [
             'create-btn' => 'Create Lead',
 
             'datagrid' => [
-                'id'                  => 'ID',
-                'sales-person'        => 'Sales Person',
-                'subject'             => 'Subject',
-                'source'              => 'Source',
-                'lead-value'          => 'Lead Value',
-                'lead-type'           => 'Lead Type',
-                'tag-name'            => 'Tag Name',
-                'contact-person'      => 'Contact Person',
-                'stage'               => 'Stage',
-                'rotten-lead'         => 'Rotten Lead',
-                'date-to'             => 'Date To',
-                'created-at'          => 'Created At',
-                'no'                  => 'No',
-                'yes'                 => 'Yes',
-                'delete'              => 'Delete',
-                'mass-delete'         => 'Mass Delete',
-                'mass-update'         => 'Mass Update',
+                'id'             => 'ID',
+                'sales-person'   => 'Sales Person',
+                'subject'        => 'Subject',
+                'source'         => 'Source',
+                'lead-value'     => 'Lead Value',
+                'lead-type'      => 'Lead Type',
+                'tag-name'       => 'Tag Name',
+                'contact-person' => 'Contact Person',
+                'stage'          => 'Stage',
+                'rotten-lead'    => 'Rotten Lead',
+                'date-to'        => 'Date To',
+                'created-at'     => 'Created At',
+                'no'             => 'No',
+                'yes'            => 'Yes',
+                'delete'         => 'Delete',
+                'mass-delete'    => 'Mass Delete',
+                'mass-update'    => 'Mass Update',
             ],
 
             'kanban' => [
+                'stages' => [
+                    'won-lost'       => 'Won / Lost',
+                    'won'            => 'Won',
+                    'lost'           => 'Lost',
+                    'need-more-info' => 'Needs more details',
+                    'won-value'      => 'Won Value',
+                    'closed-at'      => 'Closed At',
+                    'lost-reason'    => 'Lost Reason',
+                    'save-btn'       => 'Save',
+                ],
                 'rotten-days'            => 'Lead is rotten for :days days',
                 'empty-list'             => 'Your Leads List is Empty',
                 'empty-list-description' => 'Create a lead to organize your goals.',
@@ -2041,7 +2051,7 @@ return [
             'title'       => 'Lead: :title',
             'rotten-days' => ':days Days',
 
-            'tabs'        => [
+            'tabs' => [
                 'description' => 'Description',
                 'products'    => 'Products',
                 'quotes'      => 'Quotes',
@@ -2114,16 +2124,16 @@ return [
             'select-state'   => 'Select State',
             'title'          => 'Configuration',
 
-            'general'  => [
-                'title'   => 'General',
-                'info'    => 'General Configuration',
+            'general' => [
+                'title' => 'General',
+                'info'  => 'General Configuration',
 
                 'general' => [
                     'title'           => 'General',
                     'info'            => 'Update your general settings here.',
                     'locale-settings' => [
-                        'title'       => 'Locale Settings',
-                        'title-info'  => 'Defines the language used in the user interface, such as Arabic (ar), English (en), Spanish (es), Persian(fa) and Turkish (tr).',
+                        'title'      => 'Locale Settings',
+                        'title-info' => 'Defines the language used in the user interface, such as Arabic (ar), English (en), Spanish (es), Persian(fa) and Turkish (tr).',
                     ],
 
                     'admin-logo' => [
@@ -2144,24 +2154,24 @@ return [
                     ],
 
                     'menu' => [
-                        'activities'     => 'Activities',
-                        'configuration'  => 'Configuration',
-                        'contacts'       => 'Contacts',
-                        'dashboard'      => 'Dashboard',
-                        'draft'          => 'Draft',
-                        'inbox'          => 'Inbox',
-                        'info'           => 'We can configure the menu items name here.',
-                        'leads'          => 'Leads',
-                        'mail'           => 'Mail',
-                        'organizations'  => 'Organizations',
-                        'outbox'         => 'Outbox',
-                        'persons'        => 'Persons',
-                        'products'       => 'Products',
-                        'quotes'         => 'Quotes',
-                        'sent'           => 'Sent',
-                        'settings'       => 'Settings',
-                        'title'          => 'Menu Item Configurations',
-                        'trash'          => 'Trash',
+                        'activities'    => 'Activities',
+                        'configuration' => 'Configuration',
+                        'contacts'      => 'Contacts',
+                        'dashboard'     => 'Dashboard',
+                        'draft'         => 'Draft',
+                        'inbox'         => 'Inbox',
+                        'info'          => 'We can configure the menu items name here.',
+                        'leads'         => 'Leads',
+                        'mail'          => 'Mail',
+                        'organizations' => 'Organizations',
+                        'outbox'        => 'Outbox',
+                        'persons'       => 'Persons',
+                        'products'      => 'Products',
+                        'quotes'        => 'Quotes',
+                        'sent'          => 'Sent',
+                        'settings'      => 'Settings',
+                        'title'         => 'Menu Item Configurations',
+                        'trash'         => 'Trash',
                     ],
 
                     'menu-color' => [
@@ -2208,7 +2218,7 @@ return [
                     'doc-generation-info' => 'Enable the DOC Generation feature to automatically extract data from DOC files and convert them into text format. Enhance your productivity and efficiency by enabling this feature to streamline your workflow.',
                     'title'               => 'General Settings',
 
-                    'models'     => [
+                    'models' => [
                         'deepseek-r1'           => 'Deepseek R1 Distill-llama-8b',
                         'gemini-2-0-flash-001'  => 'Gemini 2.0 flash-001',
                         'gpt-4o'                => 'GPT-4.0',
@@ -2283,12 +2293,12 @@ return [
     ],
 
     'layouts' => [
-        'app-version'          => 'Version: :version',
-        'dashboard'            => 'Dashboard',
-        'leads'                => 'Leads',
-        'quotes'               => 'Quotes',
-        'quote'                => 'Quote',
-        'mail'                 => [
+        'app-version' => 'Version: :version',
+        'dashboard'   => 'Dashboard',
+        'leads'       => 'Leads',
+        'quotes'      => 'Quotes',
+        'quote'       => 'Quote',
+        'mail'        => [
             'title'   => 'Mail',
             'compose' => 'Compose',
             'inbox'   => 'Inbox',
@@ -2362,20 +2372,20 @@ return [
 
     'user' => [
         'account' => [
-            'name'                  => 'Name',
-            'email'                 => 'Email',
-            'password'              => 'Password',
-            'my_account'            => 'My account',
-            'update_details'        => 'Update Details',
-            'current_password'      => 'Current password',
-            'confirm_password'      => 'Confirm password',
-            'password-match'        => 'Current password does not match.',
-            'account-save'          => 'Account changes saved successfully.',
-            'permission-denied'     => 'Permission Denied',
-            'remove-image'          => 'Remove Image',
-            'upload_image_pix'      => 'Upload a Profile Image (100px x 100px)',
-            'upload_image_format'   => 'in PNG or JPG Format',
-            'image_upload_message'  => 'Only images (.jpeg, .jpg, .png, ..) are allowed.',
+            'name'                 => 'Name',
+            'email'                => 'Email',
+            'password'             => 'Password',
+            'my_account'           => 'My account',
+            'update_details'       => 'Update Details',
+            'current_password'     => 'Current password',
+            'confirm_password'     => 'Confirm password',
+            'password-match'       => 'Current password does not match.',
+            'account-save'         => 'Account changes saved successfully.',
+            'permission-denied'    => 'Permission Denied',
+            'remove-image'         => 'Remove Image',
+            'upload_image_pix'     => 'Upload a Profile Image (100px x 100px)',
+            'upload_image_format'  => 'in PNG or JPG Format',
+            'image_upload_message' => 'Only images (.jpeg, .jpg, .png, ..) are allowed.',
         ],
     ],
 
@@ -2384,18 +2394,18 @@ return [
             'dear'   => 'Dear :name',
             'cheers' => 'Cheers,</br>Team :app_name',
 
-            'user'   => [
+            'user' => [
                 'dear'           => 'Dear :username',
                 'create-subject' => 'You are added as a member.',
                 'create-body'    => 'Congratulations! You are now a member of our team.',
 
                 'forget-password' => [
-                    'subject'           => 'Customer Reset Password',
-                    'dear'              => 'Dear :username',
-                    'reset-password'    => 'Reset Password',
-                    'info'              => 'You are receiving this email because we received a password reset request for your account',
-                    'final-summary'     => 'If you did not request a password reset, no further action is required',
-                    'thanks'            => 'Thanks!',
+                    'subject'        => 'Customer Reset Password',
+                    'dear'           => 'Dear :username',
+                    'reset-password' => 'Reset Password',
+                    'info'           => 'You are receiving this email because we received a password reset request for your account',
+                    'final-summary'  => 'If you did not request a password reset, no further action is required',
+                    'thanks'         => 'Thanks!',
                 ],
             ],
         ],

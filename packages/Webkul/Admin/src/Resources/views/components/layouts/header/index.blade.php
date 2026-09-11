@@ -5,10 +5,14 @@
         <x-admin::layouts.sidebar.mobile />
         
         <a href="{{ route('admin.dashboard.index') }}">
-            @if ($logo = core()->getConfigData('general.general.admin_logo.logo_image'))
+            @php $logoUrl = ($logo = core()->getConfigData('general.general.admin_logo.logo_image'))
+            ? \SuiteZap\LawFirm\SaaS\Services\SaasFileService::safeUrl($logo)
+            : null;
+        @endphp
+        @if ($logoUrl)
                 <img
                     class="h-10"
-                    src="{{ Storage::url($logo) }}"
+                    src="{{ $logoUrl }}"
                     alt="{{ config('app.name') }}"
                 />
             @else
@@ -88,6 +92,10 @@
                     <!-- Version -->
                     <p class="text-gray-400">
                         @lang('admin::app.layouts.app-version', ['version' => core()->version()])
+                        &nbsp;|&nbsp;
+                        <span title="LawFirm SaaS">
+                            LF {{ \SuiteZap\LawFirm\Providers\LawFirmServiceProvider::VERSION }}
+                        </span>
                     </p>
                 </div>
 

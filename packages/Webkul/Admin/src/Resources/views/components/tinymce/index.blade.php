@@ -23,7 +23,7 @@
         app.component('v-tinymce', {
             template: '#v-tinymce-template',
 
-            props: ['selector', 'field'],
+            props: ['selector', 'field', 'hidePlaceholders'],
 
             data() {
                 return {
@@ -169,41 +169,45 @@
                         },
                     };
 
+                    let showPlaceholders = !this.hidePlaceholders && this.hidePlaceholders !== 'true' && this.hidePlaceholders !== 1;
+
                     tinyMCEHelper.initTinyMCE({
                         selector: this.selector,
                         plugins: 'image media wordcount save fullscreen code table lists link',
-                        toolbar: 'placeholders | bold italic strikethrough forecolor backcolor image alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table',
+                        toolbar: (showPlaceholders ? 'placeholders | ' : '') + 'bold italic strikethrough forecolor backcolor image alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table',
                         image_advtab: true,
                         directionality: 'ltr',
                         setup: (editor) => {
                             let toggleState = false;
 
-                            editor.ui.registry.addMenuButton('placeholders', {
-                                text: 'Placeholders',
-                                fetch: function (callback) {
-                                    const items = [
-                                        @foreach($placeholders as $placeholder)
-                                            {
-                                                type: 'nestedmenuitem',
-                                                text: '{{ $placeholder['text'] }}',
-                                                getSubmenuItems: () => [
-                                                    @foreach($placeholder['menu'] as $child)
-                                                        {
-                                                            type: 'menuitem',
-                                                            text: '{{ $child['text'] }}',
-                                                            onAction: function () {
-                                                                editor.insertContent('{{ $child['value'] }}');
+                            if (showPlaceholders) {
+                                editor.ui.registry.addMenuButton('placeholders', {
+                                    text: 'Placeholders',
+                                    fetch: function (callback) {
+                                        const items = [
+                                            @foreach($placeholders as $placeholder)
+                                                {
+                                                    type: 'nestedmenuitem',
+                                                    text: '{{ $placeholder['text'] }}',
+                                                    getSubmenuItems: () => [
+                                                        @foreach($placeholder['menu'] as $child)
+                                                            {
+                                                                type: 'menuitem',
+                                                                text: '{{ $child['text'] }}',
+                                                                onAction: function () {
+                                                                    editor.insertContent('{{ $child['value'] }}');
+                                                                },
                                                             },
-                                                        },
-                                                    @endforeach
-                                                ],
-                                            },
-                                        @endforeach
-                                    ];
+                                                        @endforeach
+                                                    ],
+                                                },
+                                            @endforeach
+                                        ];
 
-                                    callback(items);
-                                }
-                            });
+                                        callback(items);
+                                    }
+                                });
+                            }
 
                             ['change', 'paste', 'keyup'].forEach((event) => {
                                 editor.on(event, () => this.field.onInput(editor.getContent()));

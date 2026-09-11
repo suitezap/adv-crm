@@ -45,28 +45,55 @@
                 </div>
             </div>
 
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                {!! view_render_event('admin.contacts.organizations.edit.form_controls.before') !!}
+            <div class="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
+                <!-- Left Section: Basic Fields -->
+                <div class="flex flex-col gap-2">
+                    <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                        {!! view_render_event('admin.contacts.organizations.edit.form_controls.before') !!}
 
-                <x-admin::attributes
-                    :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                        'entity_type' => 'organizations',
-                    ])"
-                    :custom-validations="[
-                        'name' => [
-                            'max:100',
-                        ],
-                        'address' => [
-                            'max:100',
-                        ],
-                        'postcode' => [
-                            'postcode',
-                        ],
-                    ]"
-                    :entity="$organization"
-                />
-                
-                {!! view_render_event('admin.contacts.organizations.edit.form_controls.after') !!}
+                        <x-admin::attributes
+                            :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
+                                ['code', 'IN', ['name', 'emails', 'contact_numbers', 'user_id']],
+                                'entity_type' => 'organizations',
+                            ])"
+                            :custom-validations="[
+                                'name' => [
+                                    'max:100',
+                                ],
+                            ]"
+                            :entity="$organization"
+                        />
+                    </div>
+                </div>
+
+                <!-- Right Section: Advanced Fields -->
+                <div class="flex flex-col gap-2">
+                    <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                        <div class="mb-4 flex items-center justify-between">
+                            <p class="text-base font-semibold text-gray-800 dark:text-white">
+                                Dados da Empresa Avançados
+                            </p>
+                        </div>
+
+                        <x-admin::attributes
+                            :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
+                                ['code', 'NOTIN', ['name', 'emails', 'contact_numbers', 'user_id']],
+                                'entity_type' => 'organizations',
+                            ])"
+                            :custom-validations="[
+                                'address' => [
+                                    'max:100',
+                                ],
+                                'postcode' => [
+                                    'postcode',
+                                ],
+                            ]"
+                            :entity="$organization"
+                        />
+                        
+                        {!! view_render_event('admin.contacts.organizations.edit.form_controls.after') !!}
+                    </div>
+                </div>
             </div>
         </div>
     </x-admin::form>

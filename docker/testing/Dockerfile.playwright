@@ -1,0 +1,22 @@
+FROM mcr.microsoft.com/playwright/python:v1.44.0-jammy
+
+WORKDIR /e2e
+
+# Install standard dependencies and curl for healthchecks
+RUN apt-get update && apt-get install -y curl dnsutils && rm -rf /var/lib/apt/lists/*
+
+# Copy tests and install requirements
+COPY tests/e2e/requirements-test.txt .
+RUN pip install --no-cache-dir -r requirements-test.txt
+
+# Ensure playwright browsers are installed
+RUN playwright install --with-deps chromium
+
+COPY tests/e2e /e2e
+
+# Copy and set up entrypoint
+COPY docker/testing/playwright-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["pytest"]

@@ -14,11 +14,16 @@
         <testsuite name="Feature">
             <directory suffix="Test.php">./tests/Feature</directory>
         </testsuite>
+
+        <testsuite name="Security">
+            <directory suffix="Test.php">./tests/Security</directory>
+        </testsuite>
     </testsuites>
 
     <source>
         <include>
             <directory suffix=".php">./app</directory>
+            <directory suffix=".php">./packages/SuiteZap/LawFirm/src</directory>
         </include>
     </source>
 

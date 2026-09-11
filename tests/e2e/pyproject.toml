@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+addopts = "--html=../../reports/e2e/index.html --self-contained-html --tracing=retain-on-failure --video=retain-on-failure"
+testpaths = [
+    "workflows",
+]
+python_files = "test_*.py"

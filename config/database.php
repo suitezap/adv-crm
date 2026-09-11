@@ -59,7 +59,7 @@ return [
             'strict'         => false,
             'engine'         => null,
             'options'        => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                1007 => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
@@ -76,6 +76,21 @@ return [
             'prefix_indexes' => true,
             'schema'         => 'public',
             'sslmode'        => 'prefer',
+        ],
+
+        'mothership' => [
+            'driver'      => env('DB_MOTHERSHIP_CONNECTION', 'mysql'),
+            'host'        => env('DB_MOTHERSHIP_HOST', '127.0.0.1'),
+            'port'        => env('DB_MOTHERSHIP_PORT', '3306'),
+            'database'    => env('DB_MOTHERSHIP_DATABASE', 'mothership_db'),
+            'username'    => env('DB_MOTHERSHIP_USERNAME', 'forge'),
+            'password'    => env('DB_MOTHERSHIP_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset'     => 'utf8mb4',
+            'collation'   => 'utf8mb4_unicode_ci',
+            'prefix'      => '',
+            'strict'      => true,
+            'engine'      => null,
         ],
 
         'sqlsrv' => [

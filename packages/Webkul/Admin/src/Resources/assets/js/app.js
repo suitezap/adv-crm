@@ -15,9 +15,19 @@ window.app = createApp({
     data() {
         return {
             isMenuActive: false,
-
             hoveringMenu: '',
+            isSidebarPinned: localStorage.getItem('isSidebarPinned') === 'true' || false,
         };
+    },
+
+    mounted() {
+        if (this.isSidebarPinned) {
+            const appLayout = this.$refs.appLayout;
+            if (appLayout) {
+                appLayout.classList.remove('sidebar-collapsed');
+                appLayout.classList.add('sidebar-not-collapsed');
+            }
+        }
     },
 
     created() {
@@ -29,6 +39,21 @@ window.app = createApp({
     },
 
     methods: {
+        toggleSidebarPin() {
+            this.isSidebarPinned = !this.isSidebarPinned;
+            localStorage.setItem('isSidebarPinned', this.isSidebarPinned);
+            const appLayout = this.$refs.appLayout;
+            if (appLayout) {
+                if (this.isSidebarPinned) {
+                    appLayout.classList.remove('sidebar-collapsed');
+                    appLayout.classList.add('sidebar-not-collapsed');
+                } else {
+                    appLayout.classList.remove('sidebar-not-collapsed');
+                    appLayout.classList.add('sidebar-collapsed');
+                }
+            }
+        },
+
         onSubmit() {},
 
         onInvalidSubmit({ values, errors, results }) {
@@ -47,7 +72,7 @@ window.app = createApp({
         },
 
         handleMouseOver(event) {
-            if (this.isMenuActive) {
+            if (this.isMenuActive || this.isSidebarPinned) {
                 return;
             }
 
@@ -62,7 +87,7 @@ window.app = createApp({
         },
 
         handleMouseLeave(event) {
-            if (this.isMenuActive) {
+            if (this.isMenuActive || this.isSidebarPinned) {
                 return;
             }
 
@@ -86,7 +111,7 @@ window.app = createApp({
 
                 const parentElement = sidebar.parentElement;
 
-                if (parentElement.classList.contains('sidebar-not-collapsed')) {
+                if (parentElement.classList.contains('sidebar-not-collapsed') && !this.isSidebarPinned) {
                     parentElement.classList.remove('sidebar-not-collapsed');
 
                     parentElement.classList.add('sidebar-collapsed');

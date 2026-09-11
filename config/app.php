@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\ServiceProvider;
 use Konekt\Concord\ConcordServiceProvider;
 use Prettus\Repository\Providers\RepositoryServiceProvider;
+use SuiteZap\LawFirm\Providers\LawFirmServiceProvider;
 use Webkul\Activity\Providers\ActivityServiceProvider;
 use Webkul\Admin\Providers\AdminServiceProvider;
 use Webkul\Attribute\Providers\AttributeServiceProvider;
@@ -119,8 +120,7 @@ return [
     | to any of the locales which will be supported by the application.
     |
      */
-
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale' => env('APP_LOCALE', 'pt_BR'),
 
     /*
     |--------------------------------------------------------------------------
@@ -152,8 +152,7 @@ return [
     | the language folders that are provided through your application.
     |
      */
-
-    'fallback_locale' => 'en',
+    'fallback_locale' => 'pt_BR',
 
     /*
     |--------------------------------------------------------------------------
@@ -165,8 +164,7 @@ return [
     | localized telephone numbers, street address information and more.
     |
      */
-
-    'faker_locale' => 'en_US',
+    'faker_locale' => 'pt_BR',
 
     /*
     |--------------------------------------------------------------------------
@@ -212,6 +210,7 @@ return [
         Barryvdh\DomPDF\ServiceProvider::class,
         ConcordServiceProvider::class,
         RepositoryServiceProvider::class,
+        LawFirmServiceProvider::class,
 
         /*
          * Application Service Providers...

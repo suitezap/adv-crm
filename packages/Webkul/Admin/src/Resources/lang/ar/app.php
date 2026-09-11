@@ -332,7 +332,7 @@ return [
         ],
         'layouts' => [
             'powered-by' => [
-                'description' => 'Powered by :krayin, an open-source project by :webkul.',
+                'description' => 'Todos direitos reservados :suitezap, by :webkul.',
             ],
             'header' => [
                 'mega-search' => [
@@ -1685,7 +1685,7 @@ return [
         'invalid-route'       => 'مسار غير صالح للبريد.',
         'unauthorized'        => 'هذا الإجراء غير مصرح به.',
 
-        'view'                => [
+        'view' => [
             'title'                      => 'الرسائل',
             'subject'                    => ':الموضوع',
             'link-mail'                  => 'ربط البريد',
@@ -2200,10 +2200,10 @@ return [
         ],
     ],
     'errors' => [
-        'dashboard'   => 'لوحة التحكم',
-        'go-back'     => 'العودة',
-        'support'     => 'إذا استمرت المشكلة، تواصل معنا على <a href=":link" class=":class">:email</a> للحصول على المساعدة.',
-        '404'         => [
+        'dashboard' => 'لوحة التحكم',
+        'go-back'   => 'العودة',
+        'support'   => 'إذا استمرت المشكلة، تواصل معنا على <a href=":link" class=":class">:email</a> للحصول على المساعدة.',
+        '404'       => [
             'description' => 'عذرًا! الصفحة التي تبحث عنها في إجازة. يبدو أننا لم نجد ما كنت تبحث عنه.',
             'title'       => '404 الصفحة غير موجودة',
         ],

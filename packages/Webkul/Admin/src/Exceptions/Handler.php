@@ -66,7 +66,7 @@ class Handler extends AppExceptionHandler
             return response()->json(['message' => $this->jsonErrorMessages[401]], 401);
         }
 
-        return redirect()->guest(route('customer.session.index'));
+        return redirect()->guest(route('admin.session.create'));
     }
 
     /**
@@ -114,6 +114,6 @@ class Handler extends AppExceptionHandler
             ], $errorCode);
         }
 
-        return response()->view('admin::errors.index', compact('errorCode'));
+        return response()->view('admin::errors.index', compact('errorCode'), $errorCode);
     }
 }

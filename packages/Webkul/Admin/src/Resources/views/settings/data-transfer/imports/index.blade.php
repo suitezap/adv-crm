@@ -23,14 +23,17 @@
                 <div class="flex items-center gap-x-2.5">
                     {!! view_render_event('admin.settings.data_transfers.index.create_button.before') !!}
 
-                    @if (bouncer()->hasPermission('settings.automation.data_transfer.imports.create'))
-                        <a 
-                            href="{{ route('admin.settings.data_transfer.imports.create') }}" 
-                            class="primary-button"
-                        >
-                            @lang('admin::app.settings.data-transfer.imports.index.button-title')
-                        </a>
-                    @endif
+                    {{-- 
+                        Supressão permanentemente do botão Criar Importação (versões SaaS)
+                        @if (bouncer()->hasPermission('settings.automation.data_transfer.imports.create'))
+                            <a 
+                                href="{{ route('admin.settings.data_transfer.imports.create') }}" 
+                                class="primary-button"
+                            >
+                                @lang('admin::app.settings.data-transfer.imports.index.button-title')
+                            </a>
+                        @endif
+                    --}}
 
                     {!! view_render_event('admin.settings.data_transfers.index.create_button.after') !!}
                 </div>

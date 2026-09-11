@@ -466,7 +466,8 @@ class ImportController extends Controller
     {
         $importer = config('importers.'.$type);
 
-        return Storage::download($importer['sample_path']);
+        // Samples are local static files — use 'public' disk, not the S3/MinIO default
+        return Storage::disk('public')->download($importer['sample_path']);
     }
 
     /**

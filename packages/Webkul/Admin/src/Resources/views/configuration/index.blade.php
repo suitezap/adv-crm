@@ -2,89 +2,86 @@
     <!-- Title of the page. -->
     <x-slot:title>
         @lang('admin::app.configuration.index.title')
-    </x-slot>
+        </x-slot>
 
-    <!-- Breadcrumbs -->
-    <x-admin::breadcrumbs name="configuration" />
+        <!-- Breadcrumbs -->
+        <x-admin::breadcrumbs name="configuration" />
 
-    {!! view_render_event('admin.configuration.index.header.before') !!}
+        {!! view_render_event('admin.configuration.index.header.before') !!}
 
-    <!-- Heading of the page -->
-    <div class="mb-7 flex flex-wrap items-center justify-between">
-        <p class="py-3 text-xl font-bold text-gray-800 dark:text-white">
-            @lang('admin::app.configuration.index.title')
-        </p>
+        <!-- Heading of the page -->
+        <div class="mb-7 flex flex-wrap items-center justify-between">
+            <p class="py-3 text-xl font-bold text-gray-800 dark:text-white">
+                @lang('admin::app.configuration.index.title')
+            </p>
 
-        {!! view_render_event('admin.configuration.index.header.configuration_search.before') !!}
+            {!! view_render_event('admin.configuration.index.header.configuration_search.before') !!}
 
-        <!-- Configuration Search Bar Vue Component -->
-        <v-configuration-search>
-            <div class="relative flex w-[525px] max-w-[525px] items-center max-lg:w-[400px]">
-                <i class="icon-search absolute top-1.5 flex items-center text-2xl ltr:left-3 rtl:right-3"></i>
+            <!-- Configuration Search Bar Vue Component -->
+            <v-configuration-search>
+                <div class="relative flex w-[525px] max-w-[525px] items-center max-lg:w-[400px]">
+                    <i class="icon-search absolute top-1.5 flex items-center text-2xl ltr:left-3 rtl:right-3"></i>
 
-                <input 
-                    type="text" 
-                    class="block w-full rounded-lg border bg-white px-10 py-1.5 leading-6 text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
-                    placeholder="@lang('admin::app.configuration.index.search')" 
-                >
-            </div>
-        </v-configuration-search>
-
-        {!! view_render_event('admin.configuration.index.header.configuration_search.after') !!}
-    </div>
-
-    {!! view_render_event('admin.configuration.index.header.after') !!}
-
-    {!! view_render_event('admin.configuration.index.content.before') !!}
-
-    <!-- Page Content -->
-    <div class="grid gap-y-8">
-        @foreach (system_config()->getItems() as $item)
-            <div>
-                <div class="grid gap-1">
-                    <!-- Title of the Main Card -->
-                    <p class="font-semibold text-gray-600 dark:text-gray-300">
-                        {{ $item->getName() }}
-                    </p>
-
-                    <!-- Info of the Main Card -->
-                    <p class="text-gray-600 dark:text-gray-300">
-                        {{ $item->getInfo() }}
-                    </p>
+                    <input type="text"
+                        class="block w-full rounded-lg border bg-white px-10 py-1.5 leading-6 text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                        placeholder="@lang('admin::app.configuration.index.search')">
                 </div>
+            </v-configuration-search>
 
-                <div class="box-shadow max-1580:grid-cols-3 mt-2 grid grid-cols-4 flex-wrap justify-between gap-x-12 gap-y-6 rounded bg-white p-4 dark:bg-gray-900 max-xl:grid-cols-2 max-lg:gap-y-4 max-sm:grid-cols-1">
-                    <!-- Menus cards -->
-                    @foreach ($item->getChildren() as $key => $child)
-                        <a 
-                            class="flex max-w-[360px] items-center gap-2 rounded-lg p-2 transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
-                            href="{{ route('admin.configuration.index', ($item->getKey() . '/' . $key)) }}"
-                        >
-                            @if ($icon = $child->getIcon())
-                                <div class="rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
-                                    <i class="{{ $child->getIcon() }} text-3xl "></i>
+            {!! view_render_event('admin.configuration.index.header.configuration_search.after') !!}
+        </div>
+
+        {!! view_render_event('admin.configuration.index.header.after') !!}
+
+        {!! view_render_event('admin.configuration.index.content.before') !!}
+
+        <!-- Page Content -->
+        <div class="grid gap-y-8">
+            @foreach (system_config()->getItems() as $item)
+                <div>
+                    <div class="grid gap-1">
+                        <!-- Title of the Main Card -->
+                        <p class="font-semibold text-gray-600 dark:text-gray-300">
+                            {{ $item->getName() }}
+                        </p>
+
+                        <!-- Info of the Main Card -->
+                        <p class="text-gray-600 dark:text-gray-300">
+                            {{ $item->getInfo() }}
+                        </p>
+                    </div>
+
+                    <div
+                        class="box-shadow max-1580:grid-cols-3 mt-2 grid grid-cols-4 flex-wrap justify-between gap-x-12 gap-y-6 rounded bg-white p-4 dark:bg-gray-900 max-xl:grid-cols-2 max-lg:gap-y-4 max-sm:grid-cols-1">
+                        <!-- Menus cards -->
+                        @foreach ($item->getChildren() as $key => $child)
+                            <a class="flex max-w-[360px] items-center gap-2 rounded-lg p-2 transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                                href="{{ $child->route ? route($child->route) : route('admin.configuration.index', ($item->getKey() . '/' . $key)) }}">
+                                @if ($icon = $child->getIcon())
+                                    <div class="rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
+                                        <i class="{{ $child->getIcon() }} text-3xl "></i>
+                                    </div>
+                                @endif
+
+                                <div class="grid">
+                                    <p class="mb-1.5 text-base font-semibold text-gray-800 dark:text-white">
+                                        {{ $child->getName() }}
+                                    </p>
+
+                                    <p class="text-xs text-gray-600 dark:text-gray-300">
+                                        {{ $child->getInfo() }}
+                                    </p>
                                 </div>
-                            @endif
-
-                            <div class="grid">
-                                <p class="mb-1.5 text-base font-semibold text-gray-800 dark:text-white">
-                                    {{ $child->getName() }}
-                                </p>
-                                
-                                <p class="text-xs text-gray-600 dark:text-gray-300">
-                                    {{ $child->getInfo() }}
-                                </p>
-                            </div>
-                        </a>
-                    @endforeach
+                            </a>
+                        @endforeach
+                    </div>
                 </div>
-            </div>
-        @endforeach
-    </div>
+            @endforeach
+        </div>
 
-    {!! view_render_event('admin.configuration.index.content.after') !!}
+        {!! view_render_event('admin.configuration.index.content.after') !!}
 
-    @pushOnce('scripts')
+        @pushOnce('scripts')
         <script type="text/x-template" id="v-configuration-search-template">
             <div class="relative flex w-[525px] max-w-[525px] items-center max-lg:w-[400px]">
                 <i class="icon-search absolute top-1.5 flex items-center text-2xl ltr:left-3 rtl:right-3"></i>
@@ -132,7 +129,7 @@
         <script type="module">
             app.component('v-configuration-search', {
                 template: '#v-configuration-search-template',
-                
+
                 data() {
                     return {
                         isDropdownOpen: false,
@@ -172,25 +169,25 @@
                         this.isDropdownOpen = true;
 
                         this.isLoading = true;
-                        
+
                         this.$axios.get("{{ route('admin.configuration.search') }}", {
-                                params: {query: this.searchTerm}
-                            })
+                            params: { query: this.searchTerm }
+                        })
                             .then((response) => {
                                 this.searchedResults = response.data;
 
                                 this.isLoading = false;
                             })
-                            .catch((error) => {});
+                            .catch((error) => { });
                     },
 
                     handleFocusOut(e) {
-                        if (! this.$el.contains(e.target)) {
+                        if (!this.$el.contains(e.target)) {
                             this.isDropdownOpen = false;
                         }
                     },
                 },
             });
         </script>
-    @endpushOnce
+        @endpushOnce
 </x-admin::layouts>

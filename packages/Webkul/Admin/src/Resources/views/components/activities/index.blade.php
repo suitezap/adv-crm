@@ -103,13 +103,13 @@
                                                         <span>:</span>
 
                                                         <span class="break-words">
-                                                            @{{ (activity.additional.old.label ? String(activity.additional.old.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')") }}
+                                                            @{{ (activity.additional?.old?.label ? String(activity.additional.old.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')") }}
                                                         </span>
 
                                                         <span class="icon-stats-up rotate-90 text-xl"></span>
 
                                                         <span class="break-words">
-                                                            @{{ (activity.additional.new.label ? String(activity.additional.new.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')") }}
+                                                            @{{ (activity.additional?.new?.label ? String(activity.additional.new.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')") }}
                                                         </span>
                                                     </p>
                                                 </template>
@@ -492,7 +492,7 @@
                         },
 
                         lunch: {
-                            image: "{{ vite()->asset('images/empty-placeholders/lunches.svg') }}",
+                            image: "{{ vite()->asset('images/empty-placeholders/meetings.svg') }}",
                             title: "{{ trans('admin::app.components.activities.index.empty-placeholders.lunches.title') }}",
                             description: "{{ trans('admin::app.components.activities.index.empty-placeholders.lunches.description') }}",
                         },

@@ -1,5 +1,82 @@
-## **v2.1.6 (22 of Dec 2025)** - *Release*
+## **LF v3.54.1 (Julho 2026)** - *Patch Release*
 
+* [feature] Novo domínio `TenantFinance`: faturamento e integração Asaas por tenant (InvoiceController, TenantAsaasWebhookController, TenantAsaasSettingsController, modelos, service, datagrid).
+* [feature] Expansão do domínio `Whatsapp`: WhatsappChatController, WhatsappTemplatesController, WhatsappWebhookController, MessengerService, modelos Contact/Message/Ticket.
+* [feature] Expansão do domínio `Legal`: CasoController, AgendaController, LegalKanbanController, CustomerPortalController, LegalOrchestrator, LegalPipelineService, 12+ views.
+* [feature] `SuiteCoinService` para gestão de créditos de IA por tenant.
+* [fixed] `SyncLeadStageToChatwootListener` — import de namespace corrigido.
+* [maintenance] Consolidação da imagem Docker: `suitezap/adv-crm` descontinuada. Imagem canônica única: `suitezap/lawfirm`.
+* [maintenance] Formatação completa do `src/` via Laravel Pint (line_ending, single_quote, trailing_comma, etc.).
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.54.1.
+
+## **LF v3.54.0 (Julho 2026)** - *Release*
+
+* [feature] Integração de Triagem de Leads, Monitoramentos do Escavador e Template de WhatsApp.
+* [feature] Integração oficial e sincronização de estágios de Leads com o Chatwoot.
+* [fixed] Correção de segurança e nulidade em propriedades computadas de busca/lookup no admin do Webkul.
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.54.0.
+
+## **LF v3.52.4 (Junho 2026)** - *Patch Release*
+
+* [feature] Adição do campo `sercreta` (Chave Secreta IA) na ficha de processos (Informações Básicas).
+* [fixed] Autogeração de chave secreta de 5 dígitos via `ProcessoObserver@creating` caso o campo esteja vazio.
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.52.4.
+
+## **LF v3.52.3 (Junho 2026)** - *Patch Release*
+
+* [fixed] Correção do seletor de modelos de documentos na ficha de processos, implementando delegação de eventos global no JS para garantir a busca e filtragem em tempo real independente do ciclo de vida e re-renderizações do Vue.js/Livewire.
+* [fixed] Correção na exibição de modelos de layout (Cabeçalho/Rodapé) na tabela "Meus Modelos Locais" da tela de gerenciamento de Modelos de Documentos, removendo sobrescrita indevida de coleção na view blade.
+* [enhancement] Atualização do código HTML padrão do Cabeçalho para incluir a logomarca corporativa e formatação otimizada para tabelas sem borda.
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.52.3.
+
+## **LF v3.52.2 (Junho 2026)** - *Patch Release*
+
+
+* [fixed] Correção de erros críticos na exibição de logotipos e imagens quando configuradas no S3/MinIO privado, forçando URLs temporárias assinadas via SaasFileService.
+* [fixed] Correção de bug de visibilidade do recibo no envio de notificações de WhatsApp.
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.52.2.
+
+## **LF v3.52.0 (Maio 2026)** - *Release*
+
+* [fixed] Correção de erros críticos do VueJS (TypeError: Cannot read properties of null (reading 'toLowerCase')) ao buscar nos componentes Lookup, Inline Lookup e Email View.
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.52.0.
+
+## **LF v3.51.0 (Maio 2026)** - *Release*
+
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.51.0.
+
+## **LF v3.50.0 (Maio 2026)** - *Release*
+
+
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.50.0.
+* [feature] Padronização de renderização Markdown nos Assistentes de IA.
+* [fixed] Consistência financeira no cálculo de SuiteCoins (Ƶ = BRL × 10 × 1.25).
+
+## **LF v3.49.0 (Maio 2026)** - *Release*
+
+* [maintenance] Atualização do repositório Docker Hub para a versão v3.49.0.
+* [enhancement] Refatoração arquitetural para conformidade com o padrão MotherShip.
+* [fixed] Melhorias na gestão de saldo SuiteCoin e integração financeira.
+
+## **LF v3.21 (Abril 2026)** - *Refatoração Orders SaaS*
+
+* [critical-fix] Bug no cálculo de créditos: `Math.floor(price * 100)` no frontend inflava cobranças em 100x no Asaas (R$ 5 → R$ 500).
+* [critical-fix] Bug no `.then()` do fetch que executava `window.location.href` E `alert()` simultaneamente após checkout bem-sucedido.
+* [feature] Nova tabela `saas_orders` — registra a "Intenção de Compra" ANTES de chamar o Asaas, com `user_id` do solicitante.
+* [feature] Novo `SaasOrdersDataGrid` e página "Meus Pedidos" (`admin/juridico/orders`) com status colorido (PENDING/PAID/EXPIRED/CANCELED).
+* [enhancement] `externalReference` do Asaas mudou de `"{tenantId}|tipo|valor"` para `"order_{id}"`, simplificando webhook e sync.
+* [enhancement] Rastreio de usuário: `SaasTransaction` de crédito agora recebe `user_id` extraído da `SaasOrder`, DataGrids exibem nomes corretos.
+* [removed] Workaround `credit_pending` em `saas_transactions` eliminado — substituído pela `SaasOrder`.
+* [compatibility] Fallback legado mantido no webhook/sync para pagamentos em trânsito no formato antigo.
+
+## **LF v3.20 (Docker v1.7.1) (Abril 2026)** - *Release*
+
+* [feature] Suporte a Pessoa Física e Jurídica (`company_name`, `cpf`, `cnpj`) no módulo de Dados de Faturamento do SaaS.
+* [fixed] Isolamento de dados: Correção de vazamento de transações financeiras e adições de créditos SaaS (escopo correto por Tenant).
+* [enhancement] Arquitetura e documentação atualizadas para o padrão Mothership v1.4+.
+* [enhancement] Atualização do `.dockerignore` excluindo mais de 20 scripts de debug e reparo que não vão mais para o container de produção, diminuindo o footprint de ataques e melhorando a imagem de deploy.
+
+## **v2.1.6 (22 of Dec 2025)** - *Release*
 * #2377[fixed] Sale owner dropdown now displays values correctly for individual users
 
 * #2378[fixed] Pipeline stage name is now correctly reflected in activity.

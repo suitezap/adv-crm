@@ -1,0 +1,67 @@
+# 🏗️ Arquitetura do Sistema — LawFirm CRM
+
+Este arquivo consolida os princípios arquiteturais, domínios e decisões técnicas tomadas para o projeto LawFirm e seu ecossistema MotherShip.
+
+---
+
+## 1. Domínio WhatsApp (`Whatsapp/`) — Notificações Transacionais
+
+O domínio `Whatsapp/` (`packages/SuiteZap/LawFirm/src/Whatsapp/`) é responsável exclusivamente por **notificações transacionais e automações jurídicas** via **Evolution API**:
+
+- **Envio de Faturas e Cobranças:** Notificações automáticas de boletos e Pix gerados pelo Asaas.
+- **Alertas de Processos e Prazos:** Disparos automáticos de prazos vencendo (`SendScheduledPrazoNotifications`).
+- **Importação de Histórico:** Associação de conversas arquivadas a processos jurídicos (`WhatsappImport`).
+- **Sincronização de Tags/Kanban:** Atualização de status visual.
+
+### 🌐 Integração com Ecossistema SaaS
+- **MotherShip Service:** Credenciais (Base URL, Instance, API Key) são extraídas dinamicamente via `MotherShipService::getEvolutionConfig($tenantId)`. O sistema nunca lê chaves de WhatsApp do `.env` local para garantir isolamento e flexibilidade multi-tenant.
+- **Isolamento de Dados (Multi-tenancy):** Cada query ao banco de dados obrigatoriamente contém o escopo `tenant_id`.
+
+---
+
+## 2. Domínio Atendimento (`Atendimento/`) — Chatwoot Dual Inbox
+
+O atendimento em tempo real, chat multicanal e inbox com distribuição de conversas é delegado integralmente ao **Chatwoot**, implementado no domínio `Atendimento/` via `ChatwootService`.
+
+### 🔑 Mapeamento de Tokens
+
+| Operação | Token Correto | Campo DB | Método |
+|---|---|---|---|
+| Enviar mensagem ao cliente | Bot Token (`api_key`) | `infrastructure_nodes.api_key` | `botHeaders()` |
+| Enviar via Assistente IA | Bot Token (`api_key`) | `infrastructure_nodes.api_key` | `botHeaders()` |
+| Atribuir/remover labels | User Access Token | `tenants.chatwoot_webhook_token` | `managementHeaders()` |
+| Buscar/criar contato | User Access Token | `tenants.chatwoot_webhook_token` | `managementHeaders()` |
+| Validar webhook HMAC-SHA1 | User Access Token | `tenants.chatwoot_webhook_token` | `X-Chatwoot-Signature` |
+
+> ⛔ **NUNCA** use o Bot Token (`api_key`) em endpoints de gestão (`/labels`, `/contacts`). Retorna HTTP 401 silencioso.
+
+### 📥 Dual Inbox — Roteamento de Mensagens
+
+```
+Atendimento Humano → chatwoot_channel_inbox_id  (Inbox Instância 📥)
+Assistente de IA   → chatwoot_assistant_inbox_id (Inbox Assist.  🤖)
+```
+
+O `ChatwootService` resolve o inbox correto via `MotherShipService::getChatwootConfig()`:
+- `sendMessage($conversationId, $message)` → usa `$config['inbox_id']`
+- `sendAssistantMessage($conversationId, $message)` → usa `$config['assistant_inbox_id']` (fallback para `inbox_id` se `null` + `Log::warning`)
+
+### 🔗 Sync de Labels (64 Labels Padrão)
+
+O botão "🏷️ Tags" no MotherShip sincroniza 64 labels via upsert (PATCH + POST). O `ChatwootService::syncContactLabels()` no CRM usa estas mesmas labels para atualizar contatos via Kanban (Leads/Casos).
+
+---
+
+## 3. Decisões Arquiteturais Registradas (ADRs)
+
+### 3.1 Descomissionamento Total do Whaticket
+- **Decisão:** O submódulo legado de Messenger/Whaticket (`packages/SuiteZap/Whaticket/` e rotas de chat locais) foi **definitivamente descontinuado e removido**.
+- **Justificativa:** O Chatwoot assumiu com robustez todas as demandas de inbox, atendimento simultâneo por equipe, canais múltiplos e roteamento para assistentes de IA, tornando redundante e inseguro manter um chat paralelo no CRM.
+- **Estado Atual:** Zero código residual de Whaticket no repositório, `composer.json` e `docker/entrypoint.sh`.
+
+### 3.2 Estratégia de Atualização do Core Upstream (Krayin CRM)
+- **Decisão:** Upgrades diretos de core (`git merge upstream` ou `composer update webkul/*`) são **proibidos** devido às extensas customizações do LawFirm (DDD, `SaasFileService`, MotherShip Zero .env, templates globais).
+- **Procedimento:**
+  1. **Segurança e Bug Fixes:** Aplicados via *Cherry-Pick Cirúrgico* a partir dos diffs de PRs do upstream.
+  2. **Novas Features UX:** Replicadas nativamente dentro do pacote LawFirm sem modificar o vendor.
+  3. **Upgrade de Framework (Laravel 12):** Isolado como projeto dedicado com branch própria, staging e bateria completa de testes de regressão.

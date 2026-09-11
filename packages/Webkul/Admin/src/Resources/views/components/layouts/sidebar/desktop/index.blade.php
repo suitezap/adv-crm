@@ -6,6 +6,21 @@
 >
     <div class="journal-scroll h-[calc(100vh-100px)] overflow-hidden group-[.sidebar-collapsed]/container:overflow-visible">
         <nav class="sidebar-rounded grid w-full gap-2">
+            <!-- Pin Sidebar Button -->
+            <div class="px-4 group/item inactive">
+                <a
+                    class="flex gap-2 p-1.5 items-center cursor-pointer hover:rounded-lg hover:bg-gray-100 hover:dark:bg-gray-950 peer"
+                    @click="toggleSidebarPin"
+                    title="Fixar/Desfixar Menu"
+                >
+                    <span class="icon-menu text-2xl transition-colors" :class="{'text-brandColor': isSidebarPinned}"></span>
+
+                    <div class="flex-1 flex justify-between items-center text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap group-[.sidebar-collapsed]/container:hidden group">
+                        <p>Fixar Menu</p>
+                    </div>
+                </a>
+            </div>
+
             <!-- Navigation Menu -->
             @foreach (menu()->getItems('admin') as $menuItem)
                 <div class="px-4 group/item {{ $menuItem->isActive() ? 'active' : 'inactive' }}">

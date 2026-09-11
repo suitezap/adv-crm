@@ -411,7 +411,7 @@
                 setCurrentSelectionMode() {
                     this.applied.massActions.meta.mode = 'none';
 
-                    if (! this.available.records.length) {
+                    if (! Array.isArray(this.available.records) || ! this.available.records.length) {
                         return;
                     }
 
@@ -551,7 +551,23 @@
                         this.getDatagridsStorageKey()
                     );
 
-                    return JSON.parse(datagrids) ?? [];
+                    try {
+                        const parsed = JSON.parse(datagrids) ?? [];
+
+                        /**
+                         * Discard any corrupted entries where records is not an array
+                         * (can happen when a previous request failed with a 500 error).
+                         */
+                        return parsed.filter(dg =>
+                            dg &&
+                            dg.available &&
+                            Array.isArray(dg.available.records) &&
+                            dg.available.meta &&
+                            dg.available.meta.from !== undefined
+                        );
+                    } catch (e) {
+                        return [];
+                    }
                 },
 
                 /**

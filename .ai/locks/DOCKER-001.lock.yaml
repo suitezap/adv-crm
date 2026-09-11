@@ -1,0 +1,14 @@
+task_id: DOCKER-001
+owner: ANTIGRAVITY
+write_scope:
+  - .dockerignore
+  - Dockerfile
+  - .ai/TASKS.md
+  - .ai/CURRENT.md
+  - .ai/LOG_INDEX.md
+  - .ai/logs/ANTIGRAVITY.md
+started_at: "2026-09-04T17:11:30Z"
+last_checkpoint_at: "2026-09-04T17:20:00Z"
+base_commit: "f701b3ac"
+workspace: "local-ide"
+status: RELEASED

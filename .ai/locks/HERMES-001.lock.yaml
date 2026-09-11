@@ -1,0 +1,14 @@
+task_id: HERMES-001
+owner: HERMES
+write_scope:
+  - .ai/logs/HERMES.md
+  - .ai/LOG_INDEX.md
+  - .ai/TASKS.md
+  - .ai/CURRENT.md
+  - .ai/handoffs/RESULT-HERMES-001.md
+started_at: "2026-08-30T00:00:00Z"
+last_checkpoint_at: "2026-08-30T00:00:00Z"
+base_commit: "11f5b4e7e0812e53d5d0e70353326112386f18e6"
+workspace: "vps-hermes"
+status: RELEASED
+released_at: "2026-08-30T00:00:00Z"
