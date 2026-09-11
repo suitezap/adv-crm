@@ -74,6 +74,13 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 - 12 testes transitados `implemented_unverified` → `active` (`last_verified_version v3.55.1`, `2026-09-09`): `FIN-FEATURE-001/002`, `TENANT-FIN-001`, `TENANT-SEC-006`, `FIN-SEC-001`, `ESC-SEC-001`, `LEGAL-SEC-001`, `GED-SEC-001`, `AI-SEC-001`, `WEBHOOK-SEC-001`, `PLAT-SEC-002`, `PORTAL-SEC-001`.
 - Correção de teste (não de produto): `PlatformPermissionsTest` passou a criar o Lead da triagem (404 era dado inexistente, não falta de gate).
 
+## [v3.55.1] - 2026-09-09 (GAP-001 + DOC-001)
+
+### Adicionado
+- Estorno automático de SuiteCoins em falha do Job de IA (`ProcessAiAssistant::refundDebit()` + `failed()`), idempotente por history; fecha `GAP-001` (ver `KNOWN_GAPS.md`).
+- Teste `LEAD-AI-013` (`AiRefundTest`, 2 testes passando): falha estorna 1x, sucesso não estorna.
+- `CHANGELOG.md` raiz com v3.55.0/v3.55.1 — fecha `BASELINE_VERSION_MISMATCH` (DOC-001).
+
 ## [Unreleased] - PRIV-AUDIT-001 Onda 1 (pré-req + Escavador + webhooks + AI + Legal/GED + SAC)
 
 ### Adicionado

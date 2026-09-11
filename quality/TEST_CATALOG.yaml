@@ -1217,6 +1217,34 @@ tests:
     last_verified_date: "2026-09-09"
     notes: "Registrado em PRIV-AUDIT-001 Onda 3b. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
 
+  - id: LEAD-AI-013
+    name: "Estorno automático do débito em falha do Job de IA (GAP-001)"
+    domain: AI
+    layer: domain
+    module: ai-assistant
+    type: Feature
+    priority: P0
+    status: active
+    automated: true
+    test_file: tests/Feature/AI/AiRefundTest.php
+    documentation: quality/modules/ai-assistant.md
+    source_references:
+      - path: packages/SuiteZap/LawFirm/src/AI/Jobs/ProcessAiAssistant.php
+        symbol: ProcessAiAssistant::refundDebit
+        purpose: "Estorno idempotente do débito prévio em falha"
+    dependencies: ["mysql"]
+    external_services:
+      - name: n8n
+        mode: mock
+      - name: mothership
+        mode: mock
+    tenant_scope: single_tenant
+    destructive: false
+    owner: unassigned
+    last_verified_version: "v3.55.1"
+    last_verified_date: "2026-09-09"
+    notes: "Executado com sucesso no data-plane local isolado em 2026-09-09 (2 testes)."
+
   - id: TENANT-SEC-006
     name: "Tenant A não acessa financeiro/cobranças do Tenant B; webhook com token alheio retorna 401"
     domain: SaaS

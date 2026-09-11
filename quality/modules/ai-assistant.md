@@ -51,3 +51,4 @@ Prover automações jurídicas e comerciais baseadas em Inteligência Artificial
 | ID | Nome | Status |
 |---|---|---|
 | `AI-SEC-001` | Histórico escopado + SAC sem segredo hardcoded | `active` |
+| `LEAD-AI-013` | Estorno automático do débito em falha do Job (GAP-001) | `active` |

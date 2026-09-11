@@ -6,7 +6,11 @@ Este documento registra explicitamente as lacunas de cobertura, comportamentos a
 
 ## 1. Débitos Financeiros e Transacionais de IA
 
-### GAP-001: Ausência de Estorno Automático em Falha do Job de IA
+### GAP-001: Estorno Automático em Falha do Job de IA — RESOLVIDO (2026-09-09)
+* **Implementação**: `ProcessAiAssistant::refundDebit()` estorna o débito prévio em todos os caminhos de falha (saldo, N8N ausente, webhook ausente, HTTP, exceção) + `failed()` para falhas duras. Idempotente por `assistant_history`/`history.id`. Teste `LEAD-AI-013` (`AiRefundTest`, 2 testes passando).
+* **Descrição original**: No fluxo de disparo de Assistentes de IA (`AssistantController::execute`), o débito de SuiteCoins na assinatura Mothership é executado antes do dispatch assíncrono do Job `ProcessAiAssistant`. Se o Job falhar posteriormente (ex: queda do N8N ou erro HTTP da LLM), o status do histórico em `lawfirm_assistant_history` é atualizado para `failed`, mas **atualmente não ocorre o estorno automático** das moedas debitadas.
+* **Impacto**: O cliente tem moedas deduzidas mesmo em requisições que não retornaram resultado útil por falha externa do webhook.
+* **Decisão Atual**: Comportamento documentado e aceito temporariamente na versão v3.55.0. O teste `LEAD-AI-007` valida o débito prévio e a integridade da transação conforme a implementação existente, sem inventar estorno até aprovação arquitetural de feature de reembolso.
 * **Descrição**: No fluxo de disparo de Assistentes de IA (`AssistantController::execute`), o débito de SuiteCoins na assinatura Mothership é executado antes do dispatch assíncrono do Job `ProcessAiAssistant`. Se o Job falhar posteriormente (ex: queda do N8N ou erro HTTP da LLM), o status do histórico em `lawfirm_assistant_history` é atualizado para `failed`, mas **atualmente não ocorre o estorno automático** das moedas debitadas.
 * **Impacto**: O cliente tem moedas deduzidas mesmo em requisições que não retornaram resultado útil por falha externa do webhook.
 * **Decisão Atual**: Comportamento documentado e aceito temporariamente na versão v3.55.0. O teste `LEAD-AI-007` valida o débito prévio e a integridade da transação conforme a implementação existente, sem inventar estorno até aprovação arquitetural de feature de reembolso.

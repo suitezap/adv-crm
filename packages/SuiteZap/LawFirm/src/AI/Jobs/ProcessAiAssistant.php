@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\AI\Models\AssistantHistory;
 use SuiteZap\LawFirm\AI\Models\AssistantTemplate;
+use SuiteZap\LawFirm\SaaS\Models\SaasTransaction;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
 
@@ -32,6 +33,77 @@ class ProcessAiAssistant implements ShouldQueue
         $this->history = $history;
         $this->template = $template;
         $this->inputs = $inputs;
+    }
+
+    /**
+     * Valor debitado no Controller (`price_virtual` já é BRL, paridade 1:1 —
+     * mesma base do `decrement` em AssistantController::execute).
+     */
+    private function debitCostBrl(): float
+    {
+        return (float) ($this->template->price_virtual ?? 0.0);
+    }
+
+    /**
+     * Estorna o débito prévio quando a execução falha (GAP-001).
+     * Idempotente: um crédito por history (reference assistant_history).
+     */
+    private function refundDebit(string $reason): void
+    {
+        $costBrl = $this->debitCostBrl();
+
+        if ($costBrl <= 0) {
+            return;
+        }
+
+        $subscription = MotherShipService::getCurrentSubscription();
+
+        if (! $subscription) {
+            Log::critical('[ProcessAiAssistant] Estorno impossível: assinatura não encontrada.', [
+                'history_id' => $this->history->id,
+                'reason'     => $reason,
+            ]);
+
+            return;
+        }
+
+        $alreadyRefunded = SaasTransaction::where('reference_type', 'assistant_history')
+            ->where('reference_id', $this->history->id)
+            ->where('type', 'credit')
+            ->exists();
+
+        if ($alreadyRefunded) {
+            return;
+        }
+
+        $subscription->increment('suitecoin_balance', $costBrl);
+        SaasTransaction::create([
+            'tenant_id'      => MotherShipService::getTenantId(),
+            'user_id'        => $this->history->user_id,
+            'type'           => 'credit',
+            'amount'         => $costBrl,
+            'balance_after'  => $subscription->suitecoin_balance,
+            'currency'       => SuiteCoinService::CURRENCY_CODE,
+            'service_type'   => 'AI_ASSISTANT_REFUND',
+            'description'    => "Estorno assistente '{$this->template->title}': {$reason}",
+            'reference_type' => 'assistant_history',
+            'reference_id'   => $this->history->id,
+        ]);
+
+        Log::info("[ProcessAiAssistant] Estorno de R$ {$costBrl} [HistoryID: {$this->history->id}] Motivo: {$reason}");
+    }
+
+    /**
+     * Falha dura do worker (timeout, max tries): tenta estornar também.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        Log::error("[ProcessAiAssistant] Job falhou fora do handle [HistoryID: {$this->history->id}]", [
+            'error' => $exception->getMessage(),
+        ]);
+
+        $this->history->update(['status' => 'failed', 'error_message' => $exception->getMessage()]);
+        $this->refundDebit('falha do worker');
     }
 
     /**
@@ -63,6 +135,7 @@ class ProcessAiAssistant implements ShouldQueue
                 );
                 $this->history->update(['status' => 'failed', 'error_message' => $msg]);
                 Log::error("[ProcessAiAssistant] {$msg} [HistoryID: {$this->history->id}]");
+                $this->refundDebit('saldo insuficiente no worker');
 
                 return;
             }
@@ -74,6 +147,7 @@ class ProcessAiAssistant implements ShouldQueue
                 $msg = 'N8N não configurado no MotherShip para este tenant.';
                 Log::error("[ProcessAiAssistant] {$msg} [HistoryID: {$this->history->id}]");
                 $this->history->update(['status' => 'failed', 'error_message' => $msg]);
+                $this->refundDebit('N8N não configurado');
 
                 return;
             }
@@ -87,6 +161,7 @@ class ProcessAiAssistant implements ShouldQueue
                 $msg = 'Webhook URL não definida no template de IA.';
                 Log::error("[ProcessAiAssistant] {$msg} [TemplateID: {$this->template->id}] [HistoryID: {$this->history->id}]");
                 $this->history->update(['status' => 'failed', 'error_message' => $msg]);
+                $this->refundDebit('webhook URL ausente');
 
                 return;
             }
@@ -176,6 +251,7 @@ class ProcessAiAssistant implements ShouldQueue
                     'status'        => 'failed',
                     'error_message' => $errorMsg.' - '.substr($response->body(), 0, 200),
                 ]);
+                $this->refundDebit('erro HTTP do N8N');
             }
 
         } catch (\Exception $e) {
@@ -192,6 +268,7 @@ class ProcessAiAssistant implements ShouldQueue
                 'status'        => 'failed',
                 'error_message' => $e->getMessage(),
             ]);
+            $this->refundDebit('exceção inesperada');
         }
     }
 }

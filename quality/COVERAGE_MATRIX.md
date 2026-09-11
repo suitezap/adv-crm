@@ -1,7 +1,7 @@
 # 📊 Matriz de Cobertura e Rastreabilidade de Testes (COVERAGE_MATRIX.md)
 
 > **Gerado automaticamente por `quality/scripts/generate_coverage_matrix.py`**  
-> **Última geração:** 2026-09-09 21:03:00  
+> **Última geração:** 2026-09-11 17:32:17  
 > **Fonte da verdade:** `quality/TEST_CATALOG.yaml`
 
 ---
@@ -10,10 +10,10 @@
 
 | Métrica | Quantidade | Percentual |
 |:---|:---:|:---:|
-| **Total de Testes Cadastrados** | **47** | 100% |
-| 🟢 Ativos e Certificados (`active`) | 19 | 40.4% |
-| 🟡 Implementados Não-Verificados (`implemented_unverified`) | 24 | 51.1% |
-| ⚪ Planejados (`planned`) | 4 | 8.5% |
+| **Total de Testes Cadastrados** | **48** | 100% |
+| 🟢 Ativos e Certificados (`active`) | 20 | 41.7% |
+| 🟡 Implementados Não-Verificados (`implemented_unverified`) | 24 | 50.0% |
+| ⚪ Planejados (`planned`) | 4 | 8.3% |
 | 🟠 Em Quarentena (`quarantined`) | 0 | 0.0% |
 | 🔴 Desativados (`disabled`) | 0 | 0.0% |
 | 📦 Aposentados / Histórico (`retired`) | 0 | 0.0% |
@@ -25,7 +25,7 @@
 ### Por Domínio
 | Domínio | Quantidade de Testes |
 |:---|:---:|
-| **AI** | 16 |
+| **AI** | 17 |
 | **Atendimento** | 2 |
 | **Escavador** | 1 |
 | **Financial** | 3 |
@@ -38,7 +38,7 @@
 ### Por Prioridade
 | Prioridade | Quantidade de Testes |
 |:---|:---:|
-| **P0** | 26 |
+| **P0** | 27 |
 | **P1** | 16 |
 | **P2** | 5 |
 
@@ -94,4 +94,5 @@
 | **WEBHOOK-SEC-001** | Webhooks públicos negam eventos forjados (fail-closed) | SaaS | platform | Security | P0 | 🟢 active | `tests/Feature/Webhooks/WebhookAuthTest.php` | `quality/modules/webhooks.md` |
 | **PLAT-SEC-002** | Gates de perfil em SaaS, AI, modelos e Whatsapp (401 sem permissão) | SaaS | platform | Security | P0 | 🟢 active | `tests/Feature/Platform/PlatformPermissionsTest.php` | `quality/modules/platform.md` |
 | **PORTAL-SEC-001** | Portal público com token expirável, whitelist e upload restrito | Legal | domain | Security | P1 | 🟢 active | `tests/Feature/Platform/PlatformPermissionsTest.php` | `quality/modules/legal.md` |
+| **LEAD-AI-013** | Estorno automático do débito em falha do Job de IA (GAP-001) | AI | domain | Feature | P0 | 🟢 active | `tests/Feature/AI/AiRefundTest.php` | `quality/modules/ai-assistant.md` |
 | **TENANT-SEC-006** | Tenant A não acessa financeiro/cobranças do Tenant B; webhook com token alheio retorna 401 | SaaS | platform | Security | P0 | 🟢 active | `tests/Security/FinancialTenantIsolationTest.php` | `quality/modules/tenant-finance.md` |

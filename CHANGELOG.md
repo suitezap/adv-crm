@@ -1,3 +1,18 @@
+## **LF v3.55.1 (Setembro 2026)** - *Patch Release — Segurança e Verificação*
+
+* [security] Isolamento `tenant_id` obrigatório (FIN-COBRANCAS-001): colunas + backfill + NOT NULL condicional em financeiro, cobranças Asaas, processos e histórico de IA; escopo global `TenantScope`/`BelongsToTenant`.
+* [security] Gates de perfil `bouncer()` em Legal, GED, SaaS, AI, Escavador, Whatsapp (PRIV-AUDIT-001 Ondas 1–3); webhooks fail-closed (fim do mint Asaas por valor); senha do SAC fora do código; portal com tokens expiráveis e whitelist.
+* [fixed] Página `/cobrancas` listava a tabela errada (`FinancialDataGrid` → `TenantInvoiceDataGrid`); rotas `/api` sombreadas; JS com prefixo legado.
+* [fixed] Credenciais Asaas fora do HTML de settings (keep-old); dashboard financeiro e settings com gates.
+* [tests] Suíte Pest 117/117 em data-plane local; 19 testes `active` no catálogo `quality/`.
+* [maintenance] Fecha `BASELINE_VERSION_MISMATCH` (DOC-001): este CHANGELOG passa a acompanhar `LawFirmServiceProvider::VERSION`.
+
+## **LF v3.55.0 (Agosto 2026)** - *Release — Qualidade e E2E*
+
+* [feature] Infraestrutura permanente de qualidade em `quality/` (catálogo, validador documental, matriz de cobertura, ADRs).
+* [feature] Suíte E2E Playwright/Python via Docker Compose (9 serviços, mocks WireMock).
+* [maintenance] Higiene da imagem `suitezap/lawfirm:3.55.1` (sem testes/qualidade/governança) publicada no Docker Hub.
+
 ## **LF v3.54.1 (Julho 2026)** - *Patch Release*
 
 * [feature] Novo domínio `TenantFinance`: faturamento e integração Asaas por tenant (InvoiceController, TenantAsaasWebhookController, TenantAsaasSettingsController, modelos, service, datagrid).
