@@ -39,12 +39,12 @@ class AiRefundTest extends MultiDatabaseTestCase
         Cache::flush();
 
         $this->user = User::withoutEvents(fn () => User::create([
-            'name' => 'User Refund', 'email' => 'refund@tenant.test',
-            'password' => bcrypt('password'), 'role_id' => 1,
+            'name'            => 'User Refund', 'email' => 'refund@tenant.test',
+            'password'        => bcrypt('password'), 'role_id' => 1,
             'view_permission' => 'global', 'status' => 1,
         ]));
         $this->lead = Lead::create([
-            'user_id' => $this->user->id, 'title' => 'Lead Refund',
+            'user_id'          => $this->user->id, 'title' => 'Lead Refund',
             'lead_pipeline_id' => 1, 'lead_pipeline_stage_id' => 1,
         ]);
 
@@ -58,16 +58,16 @@ class AiRefundTest extends MultiDatabaseTestCase
         );
         Subscription::on('mothership')->updateOrCreate(
             ['tenant_id' => 'tenant_a'],
-            ['status' => 'active', 'suitecoin_balance' => 100.0,
-             'active_modules' => ['LEGAL', 'AI']]
+            ['status'            => 'active', 'suitecoin_balance' => 100.0,
+                'active_modules' => ['LEGAL', 'AI']]
         );
         config(['lawfirm.tenant_id' => 'tenant_a']);
 
         // Template com custo (price_virtual em SuiteCoins → débito em BRL).
         $this->template = AssistantTemplate::create([
-            'category' => 'triagem', 'title' => 'Refund Probe',
+            'category'         => 'triagem', 'title' => 'Refund Probe',
             'prompt_structure' => 'P', 'n8n_webhook_url' => 'webhook/x',
-            'is_active' => true, 'price_virtual' => 10.0,
+            'is_active'        => true, 'price_virtual' => 10.0,
         ]);
     }
 
@@ -84,11 +84,11 @@ class AiRefundTest extends MultiDatabaseTestCase
         $sub = Subscription::on('mothership')->where('tenant_id', 'tenant_a')->first();
         $sub->decrement('suitecoin_balance', $brl);
         SaasTransaction::create([
-            'tenant_id' => 'tenant_a', 'user_id' => $this->user->id,
-            'type' => 'debit', 'amount' => $brl,
-            'balance_after' => $sub->suitecoin_balance,
-            'currency' => 'SUITECOIN', 'service_type' => 'AI_ASSISTANT',
-            'description' => 'Débito prévio (teste)',
+            'tenant_id'      => 'tenant_a', 'user_id' => $this->user->id,
+            'type'           => 'debit', 'amount' => $brl,
+            'balance_after'  => $sub->suitecoin_balance,
+            'currency'       => 'SUITECOIN', 'service_type' => 'AI_ASSISTANT',
+            'description'    => 'Débito prévio (teste)',
             'reference_type' => 'assistant_template', 'reference_id' => $this->template->id,
         ]);
         Cache::forget('tenant_tenant_a_subscription');
@@ -103,9 +103,9 @@ class AiRefundTest extends MultiDatabaseTestCase
         $this->assertEquals(90.0, $this->balance());
 
         $history = AssistantHistory::create([
-            'user_id' => $this->user->id, 'lead_id' => $this->lead->id,
+            'user_id'     => $this->user->id, 'lead_id' => $this->lead->id,
             'template_id' => $this->template->id, 'status' => 'queued',
-            'input_data' => [], 'execution_mode' => 'async',
+            'input_data'  => [], 'execution_mode' => 'async',
         ]);
 
         (new ProcessAiAssistant($history, $this->template, []))->handle();
@@ -128,9 +128,9 @@ class AiRefundTest extends MultiDatabaseTestCase
         Http::fake(['http://n8n-mock.test/*' => Http::response(['output' => 'ok'], 200)]);
 
         $history = AssistantHistory::create([
-            'user_id' => $this->user->id, 'lead_id' => $this->lead->id,
+            'user_id'     => $this->user->id, 'lead_id' => $this->lead->id,
             'template_id' => $this->template->id, 'status' => 'queued',
-            'input_data' => [], 'execution_mode' => 'async',
+            'input_data'  => [], 'execution_mode' => 'async',
         ]);
 
         (new ProcessAiAssistant($history, $this->template, []))->handle();
