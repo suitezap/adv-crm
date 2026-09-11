@@ -14,8 +14,8 @@
 | `QA-HARNESS-001` | QA / Harness | BLOCKED | Hermes | `QA-DATA-001` | Framework e runners para execução contínua de testes E2E/Playwright. |
 | `QA-JUR-001` | QA / Domínio | BLOCKED | Hermes | `QA-HARNESS-001` | Implementação de testes funcionais do domínio Jurídico (Kanban, Casos, Processos). |
 | `DOCKER-001` | Infra / Build | DONE | Antigravity | - | Higienização da imagem de produção `suitezap/lawfirm` (remoção de `tests/`, `quality/`, `.ai/`, etc.) e publicação no Docker Hub. |
-| `DOC-001` | Documentação | IMPLEMENTED_NOT_VERIFIED | OpenCode | - | CHANGELOG raiz com v3.55.0/v3.55.1. Aguardando commit para DONE. |
-| `GAP-001` | AI / Débito | IMPLEMENTED_NOT_VERIFIED | OpenCode | - | Estorno idempotente em `ProcessAiAssistant` + `LEAD-AI-013` 2/2. Aguardando commit para DONE. |
+| `DOC-001` | Documentação | DONE | OpenCode | - | CHANGELOG raiz com v3.55.0/v3.55.1. Commit 3721bb10. |
+| `GAP-001` | AI / Débito | DONE | OpenCode | - | Estorno idempotente em `ProcessAiAssistant` + `LEAD-AI-013` 2/2. Commit 3721bb10. |
 | `CI-001` | CI/CD | IMPLEMENTED_NOT_VERIFIED | Antigravity | - | Workflow completo de CI/CD para LawFirm no GitHub Actions (`lawfirm-ci.yml`). |
 | `FIN-COBRANCAS-001` | Financial / TenantFinance | VERIFIED | OpenCode | - | Isolamento tenant_id + fix Cobranças/Lançamentos + FIN-SEC-001. Commit 8ecd7aab. Pest local 11/11 (data-plane tenant_*_test). Catálogo active v3.55.1 2026-09-09. |
 | `PRIV-AUDIT-001` | Platform / Segurança | DONE | OpenCode | - | Ondas 1-3 + secret Whatsapp. Suite completa 117/117 local. Commits fd11bf12, 8fe299d1, d8da0362, 6c2c9f9e. Branch feature/priv-audit-onda-1-tenant-isolation-gates. |
