@@ -9,7 +9,7 @@
 
 ### `ANTIGRAVITY`
 - **Role Primária:** `ORCHESTRATOR`
-- **Status:** `ACTIVE`
+- **Status:** `PAUSED — workspace fechado em 2026-09-12 (atualização de tags pelo operador; `KAN-001` em espera)`
 - **Ambiente de Execução:** Local / Principal (IDE Workspace)
 - **Escopo de Escrita:**
   - Governança central (`AGENTS.md`, `.ai/*`, `.agents/*`)

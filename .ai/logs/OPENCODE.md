@@ -53,6 +53,12 @@
 - **Achado:** rota `lawfirm.escavador.monitoramentos` sombreada pela `.index` (método morto, documentado).
 - **Evidência:** Pest **121/121** (301 assertions) no data-plane local em 2026-09-12.
 
+## [2026-09-12] Fechamento do workspace p/ tags (sem código) <a id=2026-09-12-workspace-fechado></a>
+
+- **Ação:** Antigravity `ACTIVE` → `PAUSED` em `AGENTS_REGISTRY.md`; `KAN-001` TODO → BLOCKED (bloqueada por `tag-maintenance`); `LOG_INDEX` e `CURRENT.md` sincronizados.
+- **Verificado:** nenhum lock ACTIVE de outro agente; 0 `sync-conflict`; só sujeira pré-existente fora do commit.
+- **Próximo:** operador faz atualizações de tags; retomada mediante reabertura explícita.
+
 ## [2026-09-12] REPO-HYGIENE-002 — openspec fora do git <a id=2026-09-12-repo-hygiene-002></a>
 
 - **Status:** IN_PROGRESS. `.gitignore`: `openspec/changes/` → `openspec/` inteiro (decisão do operador).

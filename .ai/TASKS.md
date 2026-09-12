@@ -24,4 +24,4 @@
 | `REPO-HYGIENE-001` | Repositório | DONE | OpenCode | - | `C*` removida (dir-lixo `C<U+F03A>` deletado; `openspec/changes/` explicitamente ignorado). Owners: 48x `unassigned` preservados — atribuir nomes exige decisão humana (gate já cobrado em `quality/RELEASE_CHECKLIST.md`). |
 | `OS-001` | Documentation | DONE | Antigravity | - | OpenSpec spec created and feature de ajustes concluída. |
 | `REPO-HYGIENE-002` | Repositório | DONE | OpenCode | - | `openspec/` ignorado; specs removidas do remoto. Commit 02765c92, push origin/2.1. |
-| `KAN-001` | Kanban / Jurídico | TODO | Antigravity | - | Implement Kanban jurídico com integração Chatwoot. |
+| `KAN-001` | Kanban / Jurídico | BLOCKED | Antigravity | tag-maintenance | Implement Kanban jurídico com integração Chatwoot. Em espera: workspace fechado p/ atualização de tags (operador, 2026-09-12). |

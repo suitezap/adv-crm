@@ -30,9 +30,9 @@ Follow-ups documentados em `.ai/TASKS.md`: `DOC-001`, `GAP-001`, `KAN-001` (rest
 ---
 
 ## 5. Quem está trabalhando?
-- **Antigravity (Orchestrator):** Finalizou `GOV-001`, `GOV-002`, hardening documental e tracks Chatwoot/Kanban (`OS-001` DONE).
+- **Antigravity (Orchestrator):** `PAUSED` em 2026-09-12 — workspace fechado para atualização de tags pelo operador. `KAN-001` em espera (BLOCKED). Locks próprios: nenhum ACTIVE.
 - **Hermes (QA Architect):** Concluiu `HERMES-001` e `QA-ENV-001` (resultado em `.ai/handoffs/RESULT-QA-ENV-001.md`).
-- **OpenCode (Implementer):** Entregou `FIN-COBRANCAS-001` (VERIFIED), `PRIV-AUDIT-001` (DONE) e `SEC-HARD-002` Onda 1 (VERIFIED, 119/119) — aguardando aprovação de commit.
+- **OpenCode (Implementer):** Entregou `FIN-COBRANCAS-001` (VERIFIED), `PRIV-AUDIT-001` (DONE), `SEC-HARD-002` Ondas 1-3 (VERIFIED, 121/121, no remoto) e `REPO-HYGIENE-002` (DONE).
 
 ---
 
