@@ -23,4 +23,5 @@
 | `OPS-WEBHOOK-001` | Operação | TODO | Unassigned | - | Cadastrar segredos de webhook em produção (Asaas, tenant-Asaas, Evolution). Runbook: `quality/runbooks/webhook-secrets.md`. |
 | `REPO-HYGIENE-001` | Repositório | DONE | OpenCode | - | `C*` removida (dir-lixo `C<U+F03A>` deletado; `openspec/changes/` explicitamente ignorado). Owners: 48x `unassigned` preservados — atribuir nomes exige decisão humana (gate já cobrado em `quality/RELEASE_CHECKLIST.md`). |
 | `OS-001` | Documentation | DONE | Antigravity | - | OpenSpec spec created and feature de ajustes concluída. |
+| `REPO-HYGIENE-002` | Repositório | IN_PROGRESS | OpenCode | - | Ignorar `openspec/` inteiro no git e remover specs versionadas do remoto (decisão do operador). |
 | `KAN-001` | Kanban / Jurídico | TODO | Antigravity | - | Implement Kanban jurídico com integração Chatwoot. |

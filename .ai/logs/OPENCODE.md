@@ -38,3 +38,9 @@
 - **Exclusões:** botões WhatsApp em `admin/processos/edit` (módulos suspensos §8, intocados).
 - **Evidência:** Pest local 119/119 (289 assertions, 51s), `git diff --check` limpo, 0 sync-conflict, `validate_test_docs.py` 0 erros, `@if/@endif` balanceados, `view:clear` OK.
 - **Isolamento:** UI-only, sem queries — `tenant_id` preservado. Sem migration, sem bump de versão (sem mudança estrutural).
+
+## [2026-09-12] REPO-HYGIENE-002 — openspec fora do git <a id=2026-09-12-repo-hygiene-002></a>
+
+- **Status:** IN_PROGRESS. `.gitignore`: `openspec/changes/` → `openspec/` inteiro (decisão do operador).
+- **Removidos do índice:** `openspec/specs/.gitkeep`, `openspec/specs/2026-09-09-ajustes-ui-e-melhorias.yaml` (arquivos mantidos no disco local, saem do remoto no push).
+- **Pendente:** commit + push `origin/2.1`.

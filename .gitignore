@@ -93,6 +93,6 @@ remove_logo.php
 /test-dns.ps1
 *.bak-before-*
 
-# OpenSpec transient planning artifacts (durable output lives in openspec/specs/)
-openspec/changes/
+# OpenSpec local planning artifacts (tooling local — não versionar; decisão REPO-HYGIENE-002)
+openspec/
 
