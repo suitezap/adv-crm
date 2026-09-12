@@ -5,7 +5,7 @@
 ---
 
 ## 1. Onde estamos?
-A **Fase 0 (Governança, Baseline e Hardening Documental)** foi concluída. Depois dela, foram entregues e mergeadas na `2.1`: **`FIN-COBRANCAS-001`** (isolamento `tenant_id` + fix Cobranças/Lançamentos, VERIFIED) e **`PRIV-AUDIT-001`** (gates de perfil + webhooks fail-closed em Ondas 1–3, DONE) — PRs #1 e #2 no fork, suíte Pest **117/117** em data-plane local. Branch `feature/ajustes-ui-e-melhorias-visualizacao-de-menus` mergeada e deletada. Baseline em `.ai/BASELINE.md`, decisões em `.ai/DECISIONS.md`, incidente do 500 em `.ai/incidents/INC-2026-09-09-tenant-scope-500.md`.
+A **Fase 0 (Governança, Baseline e Hardening Documental)** foi concluída. Depois dela, foram entregues e mergeadas na `2.1`: **`FIN-COBRANCAS-001`** (isolamento `tenant_id` + fix Cobranças/Lançamentos, VERIFIED), **`PRIV-AUDIT-001`** (gates de perfil + webhooks fail-closed em Ondas 1–3, DONE), **`DOC-001`/`GAP-001`/`CI-001`/`REPO-HYGIENE-001`** (DONE) — PRs #1 e #2 no fork, suíte Pest **119/119** em data-plane local. **`SEC-HARD-002` Onda 1** (gates `bouncer()` em 12 blades, VERIFIED, 2026-09-12). Baseline em `.ai/BASELINE.md`, decisões em `.ai/DECISIONS.md`, incidente do 500 em `.ai/incidents/INC-2026-09-09-tenant-scope-500.md`.
 
 ---
 
@@ -32,7 +32,7 @@ Follow-ups documentados em `.ai/TASKS.md`: `DOC-001`, `GAP-001`, `KAN-001` (rest
 ## 5. Quem está trabalhando?
 - **Antigravity (Orchestrator):** Finalizou `GOV-001`, `GOV-002`, hardening documental e tracks Chatwoot/Kanban (`OS-001` DONE).
 - **Hermes (QA Architect):** Concluiu `HERMES-001` e `QA-ENV-001` (resultado em `.ai/handoffs/RESULT-QA-ENV-001.md`).
-- **OpenCode (Implementer):** Entregou `FIN-COBRANCAS-001` (VERIFIED) e `PRIV-AUDIT-001` (DONE) — branches mergeadas e deletadas.
+- **OpenCode (Implementer):** Entregou `FIN-COBRANCAS-001` (VERIFIED), `PRIV-AUDIT-001` (DONE) e `SEC-HARD-002` Onda 1 (VERIFIED, 119/119) — aguardando aprovação de commit.
 
 ---
 

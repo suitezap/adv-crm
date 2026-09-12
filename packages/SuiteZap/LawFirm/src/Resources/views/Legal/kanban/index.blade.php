@@ -427,7 +427,7 @@
                                 @endphp
 
                                 <div class="lf-kanban-card lead-item flex cursor-grab flex-col gap-2 rounded-md border border-gray-100 bg-gray-50 p-2 dark:border-gray-400 dark:bg-gray-400"
-                                     draggable="true"
+                                     draggable="{{ bouncer()->hasPermission('lawfirm.kanban.edit') ? 'true' : 'false' }}"
                                      data-caso-id="{{ $caso->id }}">
 
                                     {{-- Person / Organization --}}

@@ -29,3 +29,12 @@
 - **Status:** DONE. Ondas 1-3 + secret Whatsapp. Suite completa 117/117 local.
 - **Branches/PRs:** feature/priv-audit-onda-1-tenant-isolation-gates (PR #1, mergeada e deletada). Commits fd11bf12, 8fe299d1, d8da0362, 6c2c9f9e.
 - **Docs:** ARCHITECTURE.md 4.91, quality/modules/*, runbooks local-qa-dataplane.md e webhook-secrets.md.
+
+## [2026-09-12] SEC-HARD-002 — Onda 1 blades <a id=2026-09-12-sec-hard-002></a>
+
+- **Status:** VERIFIED. Gates `bouncer()->hasPermission()` em 12 blades (defesa em profundidade; enforcement permanece nos controllers).
+- **Alterados:** `Legal/casos/create|edit`, `Legal/modelos/index|create|edit`, `Legal/agenda/index` (create), `Legal/kanban/index` (draggable condicional a `kanban.edit`), `admin/processos/create|edit|index`, `TenantFinance/invoices/show` (link processo), `TenantFinance/settings/index`.
+- **Verificados sem alteração:** `financial/index` (dashboard read-only), `TenantFinance/invoices/index` (datagrid só com ação view).
+- **Exclusões:** botões WhatsApp em `admin/processos/edit` (módulos suspensos §8, intocados).
+- **Evidência:** Pest local 119/119 (289 assertions, 51s), `git diff --check` limpo, 0 sync-conflict, `validate_test_docs.py` 0 erros, `@if/@endif` balanceados, `view:clear` OK.
+- **Isolamento:** UI-only, sem queries — `tenant_id` preservado. Sem migration, sem bump de versão (sem mudança estrutural).

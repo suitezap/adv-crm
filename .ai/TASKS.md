@@ -19,7 +19,7 @@
 | `CI-001` | CI/CD | DONE | OpenCode | - | `lawfirm-ci.yml` verde de ponta a ponta na `2.1` (validate + Pest + E2E). Fixes: triggers, cache dirs, envs, rede, stub Vite, mock tenants, pytest cwd, mounts. |
 | `FIN-COBRANCAS-001` | Financial / TenantFinance | VERIFIED | OpenCode | - | Isolamento tenant_id + fix Cobranças/Lançamentos + FIN-SEC-001. Commit 8ecd7aab. Pest local 11/11 (data-plane tenant_*_test). Catálogo active v3.55.1 2026-09-09. |
 | `PRIV-AUDIT-001` | Platform / Segurança | DONE | OpenCode | - | Ondas 1-3 + secret Whatsapp. Suite completa 117/117 local. Commits fd11bf12, 8fe299d1, d8da0362, 6c2c9f9e. Branch feature/priv-audit-onda-1-tenant-isolation-gates. |
-| `SEC-HARD-002` | Platform / Segurança | TODO | Unassigned | - | Cobertura `@can`/`bouncer()` total das blades (P0s feitos; restante é defesa em profundidade). |
+| `SEC-HARD-002` | Platform / Segurança | VERIFIED | OpenCode | - | Onda 1 blades: gates `bouncer()` em 12 blades (casos/modelos/agenda/kanban/processos/cobranças/settings). Pest 119/119 local 2026-09-12. |
 | `OPS-WEBHOOK-001` | Operação | TODO | Unassigned | - | Cadastrar segredos de webhook em produção (Asaas, tenant-Asaas, Evolution). Runbook: `quality/runbooks/webhook-secrets.md`. |
 | `REPO-HYGIENE-001` | Repositório | DONE | OpenCode | - | `C*` removida (dir-lixo `C<U+F03A>` deletado; `openspec/changes/` explicitamente ignorado). Owners: 48x `unassigned` preservados — atribuir nomes exige decisão humana (gate já cobrado em `quality/RELEASE_CHECKLIST.md`). |
 | `OS-001` | Documentation | DONE | Antigravity | - | OpenSpec spec created and feature de ajustes concluída. |

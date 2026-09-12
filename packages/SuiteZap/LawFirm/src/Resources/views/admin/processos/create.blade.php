@@ -18,9 +18,11 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-x-2.5">
-                        <button type="submit" class="primary-button">
-                            @lang('lawfirm::app.processos.save-btn')
-                        </button>
+                        @if (bouncer()->hasPermission('lawfirm.processos.create'))
+                            <button type="submit" class="primary-button">
+                                @lang('lawfirm::app.processos.save-btn')
+                            </button>
+                        @endif
                     </div>
                 </div>
 

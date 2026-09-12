@@ -12,7 +12,9 @@
                 </div>
                 <div class="flex items-center gap-x-2.5">
                     <a href="{{ route('admin.modelos.index') }}" class="transparent-button">← Voltar</a>
-                    <button type="submit" class="primary-button">Salvar Modelo</button>
+                    @if (bouncer()->hasPermission('lawfirm.modelos.create'))
+                        <button type="submit" class="primary-button">Salvar Modelo</button>
+                    @endif
                 </div>
             </div>
 

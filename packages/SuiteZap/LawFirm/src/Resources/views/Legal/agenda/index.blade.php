@@ -6,11 +6,13 @@
             <!-- Clean Header -->
             <div class="flex items-center justify-between px-2 pt-2">
                 <h1 class="text-xl font-bold text-gray-800 dark:text-white">📅 Agenda Jurídica</h1>
-                <button id="lf-btn-new-event"
-                    class="primary-button text-sm px-3 py-1.5"
-                    onclick="window.lfOpenCreateModal()">
-                    + Novo Compromisso
-                </button>
+                @if (bouncer()->hasPermission('lawfirm.agenda.create'))
+                    <button id="lf-btn-new-event"
+                        class="primary-button text-sm px-3 py-1.5"
+                        onclick="window.lfOpenCreateModal()">
+                        + Novo Compromisso
+                    </button>
+                @endif
             </div>
         @else
             <!-- Default Header -->
@@ -19,11 +21,13 @@
                     <h1 class="text-2xl font-bold text-gray-800 dark:text-white">📅 Agenda Jurídica</h1>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Audiências, Reuniões, Tarefas e Prazos — tudo em um só lugar.</p>
                 </div>
-                <button id="lf-btn-new-event"
-                    class="primary-button"
-                    onclick="window.lfOpenCreateModal()">
-                    + Novo Compromisso
-                </button>
+                @if (bouncer()->hasPermission('lawfirm.agenda.create'))
+                    <button id="lf-btn-new-event"
+                        class="primary-button"
+                        onclick="window.lfOpenCreateModal()">
+                        + Novo Compromisso
+                    </button>
+                @endif
             </div>
         @endif
 
@@ -197,9 +201,11 @@
                             <button onclick="lfCloseModal()" class="secondary-button">
                                 Cancelar
                             </button>
-                            <button id="lf-btn-save" onclick="lfSaveEvent()" class="primary-button">
-                                Salvar
-                            </button>
+                            @if (bouncer()->hasPermission('lawfirm.agenda.create'))
+                                <button id="lf-btn-save" onclick="lfSaveEvent()" class="primary-button">
+                                    Salvar
+                                </button>
+                            @endif
                         </div>
                     </div>
                 </div>

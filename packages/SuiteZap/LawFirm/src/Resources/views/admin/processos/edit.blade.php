@@ -26,9 +26,11 @@
                     💬 Histórico WhatsApp
                 </button>
 
-                <button type="submit" form="processo-form" class="primary-button">
-                    @lang('lawfirm::app.processos.save-btn')
-                </button>
+                @if (bouncer()->hasPermission('lawfirm.processos.edit'))
+                    <button type="submit" form="processo-form" class="primary-button">
+                        @lang('lawfirm::app.processos.save-btn')
+                    </button>
+                @endif
                 <a href="{{ route('admin.processos.show', $processo->id) }}" class="secondary-button text-xs">
                     Visualizar
                 </a>

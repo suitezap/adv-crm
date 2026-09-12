@@ -108,7 +108,7 @@
                     <p class="text-gray-500 text-sm italic">Cliente não vinculado.</p>
                 @endif
 
-                @if($invoice->processo)
+                @if($invoice->processo && bouncer()->hasPermission('lawfirm.processos.view'))
                     <div class="mt-5 border-t border-gray-200 dark:border-gray-800 pt-4 cursor-pointer">
                         <a href="{{ route('admin.processos.edit', $invoice->processo_id) }}" class="text-blue-600 dark:text-blue-400 hover:underline font-semibold flex items-center gap-2">
                             <span class="icon-folder text-xl"></span>

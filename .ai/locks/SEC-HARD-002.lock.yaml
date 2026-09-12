@@ -1,0 +1,26 @@
+task_id: SEC-HARD-002
+owner: OPENCODE
+write_scope:
+  - packages/SuiteZap/LawFirm/src/Resources/views/Legal/casos/create.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/Legal/casos/edit.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/Legal/modelos/index.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/Legal/modelos/create.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/Legal/modelos/edit.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/Legal/agenda/index.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/Legal/kanban/index.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/admin/processos/create.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/admin/processos/edit.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/admin/processos/index.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/financial/index.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/TenantFinance/invoices/index.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/TenantFinance/invoices/show.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/TenantFinance/settings/index.blade.php
+  - .ai/TASKS.md
+  - .ai/LOG_INDEX.md
+  - .ai/CURRENT.md
+  - .ai/logs/OPENCODE.md
+started_at: "2026-09-12T17:34:37Z"
+last_checkpoint_at: "2026-09-12T18:10:00Z"
+base_commit: "4001d39cc293029cd59d921f30095d77b4d86ef7"
+workspace: "dev-opencode"
+status: ACTIVE

@@ -95,9 +95,11 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-x-2.5">
-                    <a href="{{ route('admin.processos.create') }}" class="primary-button">
-                        @lang('lawfirm::app.processos.create')
-                    </a>
+                    @if (bouncer()->hasPermission('lawfirm.processos.create'))
+                        <a href="{{ route('admin.processos.create') }}" class="primary-button">
+                            @lang('lawfirm::app.processos.create')
+                        </a>
+                    @endif
                 </div>
             </div>
 

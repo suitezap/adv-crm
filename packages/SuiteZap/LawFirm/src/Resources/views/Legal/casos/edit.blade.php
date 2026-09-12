@@ -151,7 +151,9 @@
                 </div>
 
                 <div class="flex justify-end gap-3 border-t pt-4">
-                    <button type="submit" class="primary-button">💾 Salvar Caso</button>
+                    @if (bouncer()->hasPermission('lawfirm.casos.edit'))
+                        <button type="submit" class="primary-button">💾 Salvar Caso</button>
+                    @endif
                 </div>
             </div>
         </x-admin::form>
@@ -163,13 +165,17 @@
                     ⚖️ Processos Vinculados (<span id="lf-processos-count">{{ $caso->processos->count() }}</span>)
                 </h3>
                 <div class="flex items-center gap-2">
-                    <button type="button" onclick="document.getElementById('lf-link-processo-card').classList.toggle('hidden')"
-                        class="secondary-button text-sm flex items-center gap-1">
-                        <i class="icon-search text-base"></i> Vincular Processo
-                    </button>
-                    <a href="{{ route('admin.processos.create') }}?caso_id={{ $caso->id }}" class="primary-button text-sm flex items-center gap-1">
-                        + Criar Processo
-                    </a>
+                    @if (bouncer()->hasPermission('lawfirm.casos.edit'))
+                        <button type="button" onclick="document.getElementById('lf-link-processo-card').classList.toggle('hidden')"
+                            class="secondary-button text-sm flex items-center gap-1">
+                            <i class="icon-search text-base"></i> Vincular Processo
+                        </button>
+                    @endif
+                    @if (bouncer()->hasPermission('lawfirm.processos.create'))
+                        <a href="{{ route('admin.processos.create') }}?caso_id={{ $caso->id }}" class="primary-button text-sm flex items-center gap-1">
+                            + Criar Processo
+                        </a>
+                    @endif
                 </div>
             </div>
 
@@ -222,11 +228,15 @@
                                 <td class="px-3 py-2 text-gray-600 dark:text-gray-400">{{ $processo->tribunal ?: '—' }}</td>
                                 <td class="px-3 py-2 text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <a href="{{ route('admin.processos.edit', $processo->id) }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Editar →</a>
-                                        <button type="button" onclick="lfUnlinkProcesso({{ $processo->id }})"
-                                            class="text-xs text-gray-400 hover:text-red-600 transition-colors" title="Desvincular">
-                                            <i class="icon-delete text-base"></i>
-                                        </button>
+                                        @if (bouncer()->hasPermission('lawfirm.processos.edit'))
+                                            <a href="{{ route('admin.processos.edit', $processo->id) }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">Editar →</a>
+                                        @endif
+                                        @if (bouncer()->hasPermission('lawfirm.casos.edit'))
+                                            <button type="button" onclick="lfUnlinkProcesso({{ $processo->id }})"
+                                                class="text-xs text-gray-400 hover:text-red-600 transition-colors" title="Desvincular">
+                                                <i class="icon-delete text-base"></i>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

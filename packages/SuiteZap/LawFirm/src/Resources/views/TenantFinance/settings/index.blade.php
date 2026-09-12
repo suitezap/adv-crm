@@ -14,9 +14,11 @@
                 ← Voltar
             </a>
 
-            <button type="submit" form="asaas-settings-form" class="primary-button">
-                💾 Salvar Configurações
-            </button>
+            @if (bouncer()->hasPermission('lawfirm.financeiro.cobrancas.settings'))
+                <button type="submit" form="asaas-settings-form" class="primary-button">
+                    💾 Salvar Configurações
+                </button>
+            @endif
         </div>
     </div>
 

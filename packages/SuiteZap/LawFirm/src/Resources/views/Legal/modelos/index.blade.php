@@ -10,9 +10,11 @@
                 Gerencie seus modelos locais. Modelos <span class="inline-flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400">🌐 Padrão</span> são fornecidos pela plataforma e não podem ser editados aqui.
             </p>
         </div>
-        <a href="{{ route('admin.modelos.create') }}" class="primary-button">
-            Criar Modelo
-        </a>
+        @if (bouncer()->hasPermission('lawfirm.modelos.create'))
+            <a href="{{ route('admin.modelos.create') }}" class="primary-button">
+                Criar Modelo
+            </a>
+        @endif
     </div>
 
     {{-- Global Templates (read-only) --}}
@@ -48,12 +50,16 @@
                             <td class="py-3 text-gray-600 dark:text-gray-400">{{ $t->tipo ?? '-' }}</td>
                             <td class="py-3 text-gray-600 dark:text-gray-400">{{ $t->area_direito ?? '-' }}</td>
                             <td class="py-3 flex justify-end gap-2">
-                                <a href="{{ route('admin.modelos.edit', $t->id) }}" class="text-blue-600 hover:underline">Editar</a>
-                                <form action="{{ route('admin.modelos.destroy', $t->id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este modelo?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:underline">Deletar</button>
-                                </form>
+                                @if (bouncer()->hasPermission('lawfirm.modelos.edit'))
+                                    <a href="{{ route('admin.modelos.edit', $t->id) }}" class="text-blue-600 hover:underline">Editar</a>
+                                @endif
+                                @if (bouncer()->hasPermission('lawfirm.modelos.delete'))
+                                    <form action="{{ route('admin.modelos.destroy', $t->id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este modelo?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 hover:underline">Deletar</button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
                     @endforeach
@@ -62,7 +68,9 @@
         @else
             <p class="text-gray-500 text-center py-8">
                 Nenhum modelo local cadastrado.
-                <a href="{{ route('admin.modelos.create') }}" class="text-blue-600 hover:underline">Crie o primeiro!</a>
+                @if (bouncer()->hasPermission('lawfirm.modelos.create'))
+                    <a href="{{ route('admin.modelos.create') }}" class="text-blue-600 hover:underline">Crie o primeiro!</a>
+                @endif
             </p>
         @endif
     </div>

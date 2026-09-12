@@ -163,7 +163,9 @@
                 <!-- Submit -->
                 <div class="flex justify-end gap-3 border-t pt-4">
                     <a href="{{ route('admin.lawfirm.casos.index') }}" class="transparent-button">Cancelar</a>
-                    <button type="submit" class="primary-button">💾 Criar Caso</button>
+                    @if (bouncer()->hasPermission('lawfirm.casos.create'))
+                        <button type="submit" class="primary-button">💾 Criar Caso</button>
+                    @endif
                 </div>
             </div>
         </x-admin::form>
