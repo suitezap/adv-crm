@@ -71,6 +71,9 @@ jobs:
           cp .env.example .env
           php artisan key:generate --force
 
+      - name: Stub admin Vite manifest (status-code tests; E2E covers real rendering)
+        run: python3 quality/scripts/stub_admin_vite_manifest.py
+
       - name: Boot Isolated Database Environment
         run: |
           docker network create --driver bridge --internal quality_internal || true

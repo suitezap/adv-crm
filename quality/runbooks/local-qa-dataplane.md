@@ -64,7 +64,21 @@ $env:DB_TEST_MOTHERSHIP_USERNAME="<usuario>"; $env:DB_TEST_MOTHERSHIP_PASSWORD="
 php artisan test
 ```
 
-## 5. Armadilhas conhecidas
+## 5. Stub do manifest Vite (testes que disparam 401/403/404)
+
+As páginas de erro usam `vite()->asset()` com build `admin/build`, cujo
+`manifest.json` nunca é commitado (higiene). Sem ele, todo teste que espera
+401/403/404 quebra com `ViteManifestNotFoundException`. Gere o stub local
+(conteúdo irrelevante — os testes asseveram status; render real é do E2E):
+
+```powershell
+python quality/scripts/stub_admin_vite_manifest.py
+```
+
+> O CI gera o equivalente inline (step `Stub admin Vite manifest` no
+> `lawfirm-ci.yml`). Não commitar `public/**/build`.
+
+## 6. Armadilhas conhecidas
 
 - `RefreshDatabase` limpa **só** a conexão default. Tabelas `mothership`
   acumulam linhas entre testes — testes que criam `Tenant`/`Subscription`
