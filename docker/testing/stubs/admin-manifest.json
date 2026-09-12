@@ -1,0 +1,162 @@
+{
+  "images/dark-logo.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/dark-logo.svg"
+  },
+  "src/Resources/assets/images/dark-logo.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/dark-logo.svg"
+  },
+  "images/empty-placeholders/activities.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/empty-placeholders/activities.svg"
+  },
+  "src/Resources/assets/images/empty-placeholders/activities.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/empty-placeholders/activities.svg"
+  },
+  "images/empty-placeholders/calls.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/empty-placeholders/calls.svg"
+  },
+  "src/Resources/assets/images/empty-placeholders/calls.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/empty-placeholders/calls.svg"
+  },
+  "images/empty-placeholders/default.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/empty-placeholders/default.svg"
+  },
+  "src/Resources/assets/images/empty-placeholders/default.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/empty-placeholders/default.svg"
+  },
+  "images/empty-placeholders/emails.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/empty-placeholders/emails.svg"
+  },
+  "src/Resources/assets/images/empty-placeholders/emails.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/empty-placeholders/emails.svg"
+  },
+  "images/empty-placeholders/files.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/empty-placeholders/files.svg"
+  },
+  "src/Resources/assets/images/empty-placeholders/files.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/empty-placeholders/files.svg"
+  },
+  "images/empty-placeholders/meetings.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/empty-placeholders/meetings.svg"
+  },
+  "src/Resources/assets/images/empty-placeholders/meetings.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/empty-placeholders/meetings.svg"
+  },
+  "images/empty-placeholders/notes.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/empty-placeholders/notes.svg"
+  },
+  "src/Resources/assets/images/empty-placeholders/notes.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/empty-placeholders/notes.svg"
+  },
+  "images/empty-placeholders/pipedrive.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/empty-placeholders/pipedrive.svg"
+  },
+  "src/Resources/assets/images/empty-placeholders/pipedrive.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/empty-placeholders/pipedrive.svg"
+  },
+  "images/empty-placeholders/plans.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/empty-placeholders/plans.svg"
+  },
+  "src/Resources/assets/images/empty-placeholders/plans.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/empty-placeholders/plans.svg"
+  },
+  "images/empty-placeholders/products.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/empty-placeholders/products.svg"
+  },
+  "src/Resources/assets/images/empty-placeholders/products.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/empty-placeholders/products.svg"
+  },
+  "images/empty-placeholders/quotes.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/empty-placeholders/quotes.svg"
+  },
+  "src/Resources/assets/images/empty-placeholders/quotes.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/empty-placeholders/quotes.svg"
+  },
+  "images/empty-placeholders/users.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/empty-placeholders/users.svg"
+  },
+  "src/Resources/assets/images/empty-placeholders/users.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/empty-placeholders/users.svg"
+  },
+  "images/error.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/error.svg"
+  },
+  "src/Resources/assets/images/error.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/error.svg"
+  },
+  "images/favicon.ico": {
+    "file": "assets/favicon-D4fbG_07.ico",
+    "src": "images/favicon.ico"
+  },
+  "src/Resources/assets/images/favicon.ico": {
+    "file": "assets/favicon-D4fbG_07.ico",
+    "src": "src/Resources/assets/images/favicon.ico"
+  },
+  "images/logo.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "images/logo.svg"
+  },
+  "src/Resources/assets/images/logo.svg": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "src/Resources/assets/images/logo.svg"
+  },
+  "images/mobile-dark-logo.svg": {
+    "file": "assets/mobile-dark-logo-CcaolMSb.svg",
+    "src": "images/mobile-dark-logo.svg"
+  },
+  "src/Resources/assets/images/mobile-dark-logo.svg": {
+    "file": "assets/mobile-dark-logo-CcaolMSb.svg",
+    "src": "src/Resources/assets/images/mobile-dark-logo.svg"
+  },
+  "images/mobile-light-logo.svg": {
+    "file": "assets/mobile-light-logo-D9vHGEpn.svg",
+    "src": "images/mobile-light-logo.svg"
+  },
+  "src/Resources/assets/images/mobile-light-logo.svg": {
+    "file": "assets/mobile-light-logo-D9vHGEpn.svg",
+    "src": "src/Resources/assets/images/mobile-light-logo.svg"
+  },
+  "js/chart.js": {
+    "file": "assets/logo-C5fyIF8z.svg",
+    "src": "js/chart.js"
+  },
+  "src/Resources/assets/js/chart.js": {
+    "file": "assets/app.js",
+    "src": "src/Resources/assets/js/chart.js"
+  },
+  "src/Resources/assets/css/app.css": {
+    "file": "assets/app.js",
+    "src": "src/Resources/assets/css/app.css"
+  },
+  "src/Resources/assets/js/app.js": {
+    "file": "assets/app.js",
+    "src": "src/Resources/assets/js/app.js"
+  }
+}

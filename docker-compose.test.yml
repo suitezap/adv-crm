@@ -180,6 +180,11 @@ services:
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: redis
       AI_REAL_TESTS: "false"
+    volumes:
+      # Stubs de manifest Vite (higiene §6: builds nunca commitados; testes
+      # asseveram status e a página de erro/login exige manifest presente).
+      - ./docker/testing/stubs/admin-manifest.json:/var/www/html/public/admin/build/manifest.json:ro
+      - ./docker/testing/stubs/manifest.json:/var/www/html/public/build/manifest.json:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/admin/login"]
       interval: 5s
@@ -233,6 +238,9 @@ services:
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: redis
       AI_REAL_TESTS: "false"
+    volumes:
+      - ./docker/testing/stubs/admin-manifest.json:/var/www/html/public/admin/build/manifest.json:ro
+      - ./docker/testing/stubs/manifest.json:/var/www/html/public/build/manifest.json:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/admin/login"]
       interval: 5s
