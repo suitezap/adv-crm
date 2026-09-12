@@ -43,4 +43,4 @@
 
 - **Status:** IN_PROGRESS. `.gitignore`: `openspec/changes/` → `openspec/` inteiro (decisão do operador).
 - **Removidos do índice:** `openspec/specs/.gitkeep`, `openspec/specs/2026-09-09-ajustes-ui-e-melhorias.yaml` (arquivos mantidos no disco local, saem do remoto no push).
-- **Pendente:** commit + push `origin/2.1`.
+- **Concluído:** commit 02765c92 + push `origin/2.1` (range 4001d39c..02765c92 inclui SEC-HARD-002 e9464049). Specs fora do GitHub; arquivos preservados no disco local. Status DONE, lock RELEASED.

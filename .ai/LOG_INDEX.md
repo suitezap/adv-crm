@@ -22,6 +22,7 @@
 | `OS-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md` |
 | `KAN-001` | Antigravity | TODO | `.ai/logs/ANTIGRAVITY.md` |
 | `SEC-HARD-002` | OpenCode | VERIFIED | `.ai/logs/OPENCODE.md#2026-09-12-sec-hard-002` |
+| `REPO-HYGIENE-002` | OpenCode | DONE | `.ai/logs/OPENCODE.md#2026-09-12-repo-hygiene-002` |
 
 - [2026-08-31 - Sincronização Completa de Tags Chatwoot](logs/ANTIGRAVITY.md#2026-08-31---sincronização-completa-de-tags-chatwoot)
 

@@ -11,4 +11,4 @@ started_at: "2026-09-12T18:25:00Z"
 last_checkpoint_at: "2026-09-12T18:25:00Z"
 base_commit: "e9464049"
 workspace: "dev-opencode"
-status: ACTIVE
+status: RELEASED
