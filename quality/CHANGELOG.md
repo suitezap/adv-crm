@@ -114,3 +114,12 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 - `docker/entrypoint.sh`: banner de boot atualizado para `v3.55.1`
 - `quality/COVERAGE_MATRIX.md`: regenerada com 35 testes cadastrados (7 ativos, 24 implementados não verificados, 4 planejados)
 
+## [Unreleased] - SEC-HARD-002 (Ondas 1-3 — cobertura total de gates)
+
+### Adicionado
+- Onda 1 (blades, 12 views): gates `bouncer()` em submits/links de casos, modelos, agenda, kanban (draggable condicional), processos, cobranças e settings.
+- Onda 2 (blades, 16 views): anexos GED, tabs prazos/notas/financial/modelos, show/lista/listagem, prazos/edit, widget dashboard, execute dos assistentes, certificados/serviços Escavador, billing-info + null-guards JS.
+- Onda 3 (controller): 21 gates `abort_if(..., 401)` em `EscavadorController` (`view` p/ leituras, `create` p/ consultas/serviços pagos/sync, `certs`/`certs.manage` p/ certificados).
+- `ESC-SEC-001` estendido (+2 casos 401: dashboard/leituras sem view, serviços pagos sem create/certs.manage). Suíte Pest **121/121** (301 assertions) no data-plane local em 2026-09-12.
+- Achado: rota `lawfirm.escavador.monitoramentos` (lista V1) sombreada pela `.index` — método morto documentado em `modules/escavador.md`.
+

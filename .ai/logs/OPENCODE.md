@@ -46,6 +46,13 @@
 - **Achado P1 p/ follow-up (Onda 3):** `EscavadorController::index|executarServico|viewCertificados|cadastrarCertificado|removerCertificado` sem `bouncer()` — execução de serviço pago só barrada na UI. Não alterado (fora do escopo blade).
 - **Evidência:** Pest 119/119 (289 assertions), `diff --check` limpo, 0 sync-conflict, `@if/@endif` balanceados, `view:clear` OK.
 
+## [2026-09-12] SEC-HARD-002 — Onda 3 controller <a id=2026-09-12-sec-hard-002-onda-3></a>
+
+- **Status:** VERIFIED. 21 `abort_if(bouncer(), 401)` em `EscavadorController`: `view` (index/saldo/saldoCliente/monitoramentos/getProcessoDetails), `create` (consultas/resumoIa/busca/documentos/sync/requestAtualizacao/downloadAutos/servico), `certs` (viewCertificados/listar/retornar), `certs.manage` (cadastrar/remover).
+- **Testes:** `ESC-SEC-001` +2 casos 401 (gates antes de validate/serviço, sem efeitos colaterais). Docs quality atualizados (catálogo, `escavador.md`, CHANGELOG, matriz regenerada, validador 0 erros).
+- **Achado:** rota `lawfirm.escavador.monitoramentos` sombreada pela `.index` (método morto, documentado).
+- **Evidência:** Pest **121/121** (301 assertions) no data-plane local em 2026-09-12.
+
 ## [2026-09-12] REPO-HYGIENE-002 — openspec fora do git <a id=2026-09-12-repo-hygiene-002></a>
 
 - **Status:** IN_PROGRESS. `.gitignore`: `openspec/changes/` → `openspec/` inteiro (decisão do operador).

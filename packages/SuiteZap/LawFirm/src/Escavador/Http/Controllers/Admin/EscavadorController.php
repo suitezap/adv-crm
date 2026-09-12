@@ -35,6 +35,8 @@ class EscavadorController extends Controller
      */
     public function index()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.view'), 401, 'This action is unauthorized');
+
         $prices = MotherShipService::getEscavadorPrices();
 
         return view('lawfirm::admin.escavador.index', compact('prices'));
@@ -45,6 +47,8 @@ class EscavadorController extends Controller
      */
     public function viewCertificados()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.certs'), 401, 'This action is unauthorized');
+
         return view('lawfirm::admin.escavador.certificados');
     }
 
@@ -53,6 +57,8 @@ class EscavadorController extends Controller
      */
     public function saldo(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.view'), 401, 'This action is unauthorized');
+
         $result = $this->escavador->consultarSaldo('v1', false);
 
         if (! $result['success']) {
@@ -74,6 +80,8 @@ class EscavadorController extends Controller
      */
     public function consultarProcesso(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
         $request->validate([
             'numero_cnj' => 'required|string|min:20',
         ]);
@@ -92,6 +100,8 @@ class EscavadorController extends Controller
      */
     public function consultarMovimentacoes(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
         $request->validate([
             'numero_cnj' => 'required|string|min:20',
         ]);
@@ -113,6 +123,8 @@ class EscavadorController extends Controller
      */
     public function consultarEnvolvido(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
         $request->validate([
             'nome'     => 'required_without:cpf_cnpj|string|nullable',
             'cpf_cnpj' => 'required_without:nome|string|nullable',
@@ -131,6 +143,8 @@ class EscavadorController extends Controller
      */
     public function consultarOab(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
         $request->validate([
             'numero' => 'required|string',
             'estado' => 'required|string|size:2',
@@ -149,6 +163,8 @@ class EscavadorController extends Controller
      */
     public function resumoIa(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
         $request->validate([
             'numero_cnj' => 'required|string|min:20',
             'action'     => 'required|in:solicitar,consultar,status',
@@ -176,6 +192,8 @@ class EscavadorController extends Controller
      */
     public function buscarTermo(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
         $request->validate([
             'q'  => 'required|string|min:2',
             'qo' => 'required|string|in:t,p,i,d,en',
@@ -201,6 +219,8 @@ class EscavadorController extends Controller
      */
     public function monitoramentos(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.view'), 401, 'This action is unauthorized');
+
         $playground = (bool) $request->input('playground', false);
         $type = $request->input('type', 'diarios'); // diarios | tribunais
 
@@ -216,6 +236,8 @@ class EscavadorController extends Controller
      */
     public function documentosPublicos(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
         $request->validate([
             'numero_cnj' => 'required|string|min:20',
         ]);
@@ -245,6 +267,8 @@ class EscavadorController extends Controller
      */
     public function executarServico(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
         $request->validate([
             'service_type' => [
                 'required',
@@ -291,6 +315,8 @@ class EscavadorController extends Controller
      */
     public function saldoCliente()
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.view'), 401, 'This action is unauthorized');
+
         $tenantId = MotherShipService::getTenantId();
         $subscription = Subscription::where('tenant_id', $tenantId)->first();
 
@@ -314,6 +340,8 @@ class EscavadorController extends Controller
      */
     public function listarCertificados(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.certs'), 401, 'This action is unauthorized');
+
         $playground = (bool) $request->input('playground', false);
         $result = $this->escavador->listarCertificados($playground);
 
@@ -329,6 +357,8 @@ class EscavadorController extends Controller
      */
     public function cadastrarCertificado(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.certs.manage'), 401, 'This action is unauthorized');
+
         $request->validate([
             'file'  => 'required|file|mimes:pfx,p12|max:4096',
             'senha' => 'required|string|min:1',
@@ -353,6 +383,8 @@ class EscavadorController extends Controller
      */
     public function retornarCertificado(Request $request, int $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.certs'), 401, 'This action is unauthorized');
+
         $playground = (bool) $request->input('playground', false);
         $result = $this->escavador->retornarCertificado($id, $playground);
 
@@ -364,6 +396,8 @@ class EscavadorController extends Controller
      */
     public function removerCertificado(Request $request, int $id)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.certs.manage'), 401, 'This action is unauthorized');
+
         $tenantId = MotherShipService::getTenantId();
         $response = $this->escavador->requestService('DELETE_CERTIFICADO', ['id' => $id], $tenantId);
 
@@ -378,6 +412,8 @@ class EscavadorController extends Controller
      */
     public function syncProcesso(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
         $request->validate([
             'cnj'         => 'required|string',
             'processo_id' => 'nullable|integer|exists:processos,id',
@@ -419,6 +455,8 @@ class EscavadorController extends Controller
      */
     public function getProcessoDetails($processoId)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.view'), 401, 'This action is unauthorized');
+
         $tenantId = MotherShipService::getTenantId();
 
         $escavadorProcesso = EscavadorProcesso::with([
@@ -450,6 +488,8 @@ class EscavadorController extends Controller
      */
     public function requestAtualizacao(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
         $request->validate(['escavador_processo_id' => 'required|integer|exists:escavador_processos,id']);
 
         $ep = EscavadorProcesso::where('tenant_id', MotherShipService::getTenantId())
@@ -465,6 +505,8 @@ class EscavadorController extends Controller
      */
     public function downloadAutos(Request $request)
     {
+        abort_if(! bouncer()->hasPermission('lawfirm.escavador.create'), 401, 'This action is unauthorized');
+
         $request->validate([
             'numero_cnj'  => 'required|string|min:20',
             'processo_id' => 'sometimes|nullable|integer',

@@ -1050,7 +1050,7 @@ tests:
     notes: "Registrado em FIN-COBRANCAS-001 (complemento permissão-por-usuário). Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
 
   - id: ESC-SEC-001
-    name: "Escavador tenant-scoped (DataGrids, show, toggle) + gates de perfil"
+    name: "Escavador tenant-scoped (DataGrids, show, toggle) + gates de perfil (controller total)"
     domain: Escavador
     layer: domain
     module: escavador
@@ -1070,8 +1070,8 @@ tests:
     destructive: false
     owner: unassigned
     last_verified_version: "v3.55.1"
-    last_verified_date: "2026-09-09"
-    notes: "Registrado em PRIV-AUDIT-001 Onda 1a. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
+    last_verified_date: "2026-09-12"
+    notes: "Registrado em PRIV-AUDIT-001 Onda 1a; estendido em SEC-HARD-002 Onda 3 (gates view/create/certs/certs.manage nos 21 métodos de EscavadorController + 2 casos 401). Reexecutado 5/5 no data-plane local isolado em 2026-09-12."
 
   - id: LEGAL-SEC-001
     name: "Casos e Processos exigem permissão de perfil (401 sem gate)"

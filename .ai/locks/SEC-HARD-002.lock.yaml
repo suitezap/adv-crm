@@ -30,6 +30,12 @@ write_scope:
   - packages/SuiteZap/LawFirm/src/Resources/views/admin/escavador/certificados.blade.php
   - packages/SuiteZap/LawFirm/src/Resources/views/admin/escavador/index.blade.php
   - packages/SuiteZap/LawFirm/src/Resources/views/subscription/billing-info.blade.php
+  - packages/SuiteZap/LawFirm/src/Escavador/Http/Controllers/Admin/EscavadorController.php
+  - tests/Feature/Escavador/EscavadorTenantTest.php
+  - quality/TEST_CATALOG.yaml
+  - quality/modules/escavador.md
+  - quality/CHANGELOG.md
+  - quality/COVERAGE_MATRIX.md
   - .ai/TASKS.md
   - .ai/LOG_INDEX.md
   - .ai/CURRENT.md

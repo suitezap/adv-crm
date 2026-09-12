@@ -1,7 +1,7 @@
 # 📊 Matriz de Cobertura e Rastreabilidade de Testes (COVERAGE_MATRIX.md)
 
 > **Gerado automaticamente por `quality/scripts/generate_coverage_matrix.py`**  
-> **Última geração:** 2026-09-11 17:32:17  
+> **Última geração:** 2026-09-12 15:56:30
 > **Fonte da verdade:** `quality/TEST_CATALOG.yaml`
 
 ---
@@ -87,7 +87,7 @@
 | **FIN-FEATURE-002** | Quick-pay exige lawfirm.financeiro.edit e respeita tenant (401 sem permissão) | Financial | domain | Feature | P1 | 🟢 active | `tests/Feature/Financial/FinancialTenantTest.php` | `quality/modules/financial.md` |
 | **TENANT-FIN-001** | Cobrança Asaas do próprio tenant (criar, visualizar, cancelar, reenviar) | TenantFinance | domain | Feature | P0 | 🟢 active | `tests/Feature/TenantFinance/TenantInvoiceTest.php` | `quality/modules/tenant-finance.md` |
 | **FIN-SEC-001** | Visibilidade por configuração do usuário (401 sem permissão, leitura sem escrita, credenciais mascaradas) | Financial | domain | Security | P0 | 🟢 active | `tests/Feature/Financial/FinancialPermissionsTest.php` | `quality/modules/financial.md` |
-| **ESC-SEC-001** | Escavador tenant-scoped (DataGrids, show, toggle) + gates de perfil | Escavador | domain | Security | P0 | 🟢 active | `tests/Feature/Escavador/EscavadorTenantTest.php` | `quality/modules/escavador.md` |
+| **ESC-SEC-001** | Escavador tenant-scoped (DataGrids, show, toggle) + gates de perfil (controller total) | Escavador | domain | Security | P0 | 🟢 active | `tests/Feature/Escavador/EscavadorTenantTest.php` | `quality/modules/escavador.md` |
 | **LEGAL-SEC-001** | Casos e Processos exigem permissão de perfil (401 sem gate) | Legal | domain | Security | P0 | 🟢 active | `tests/Feature/Legal/LegalPermissionsTest.php` | `quality/modules/legal.md` |
 | **GED-SEC-001** | GED exige permissão e propriedade do processo (fim do IDOR em downloads) | GED | domain | Security | P0 | 🟢 active | `tests/Feature/Legal/LegalPermissionsTest.php` | `quality/modules/ged.md` |
 | **AI-SEC-001** | Histórico de IA escopado por tenant/usuário + SAC sem segredo hardcoded | AI | domain | Security | P0 | 🟢 active | `tests/Feature/AI/AssistantSecurityTest.php` | `quality/modules/ai-assistant.md` |

@@ -85,4 +85,45 @@ class EscavadorTenantTest extends MultiDatabaseTestCase
         $this->postJson(route('lawfirm.escavador.monitoramentos.toggle_whatsapp', $mon->id))
             ->assertStatus(401);
     }
+
+    /**
+     * SEC-HARD-002 Onda 3 — EscavadorController: dashboard e leituras exigem view.
+     */
+    public function test_dashboard_and_reads_require_view_permission(): void
+    {
+        config(['lawfirm.tenant_id' => 'tenant-a']);
+        $user = $this->makeUser(['dashboard.view']);
+        $this->withoutMiddleware(VerifyCsrfToken::class);
+        $this->actingAs($user, 'user');
+
+        // Sem lawfirm.escavador.view → 401 antes de qualquer chamada de serviço
+        // (lawfirm.escavador.monitoramentos fora: rota V1 sombreada pela .index — método morto)
+        $this->get(route('lawfirm.escavador.index'))->assertStatus(401);
+        $this->get(route('lawfirm.escavador.saldo'))->assertStatus(401);
+        $this->get(route('lawfirm.escavador.saldo_cliente'))->assertStatus(401);
+        $this->get(route('lawfirm.escavador.processo_details', 9999))->assertStatus(401);
+        $this->get(route('lawfirm.escavador.certificados.view'))->assertStatus(401);
+    }
+
+    /**
+     * SEC-HARD-002 Onda 3 — serviços pagos e mutações exigem create/certs.manage.
+     *
+     * Gates executam antes de validate/serviço: 401 sem efeitos colaterais.
+     */
+    public function test_paid_services_require_elevated_permission(): void
+    {
+        config(['lawfirm.tenant_id' => 'tenant-a']);
+        $viewer = $this->makeUser(['lawfirm.escavador.view']);
+        $this->withoutMiddleware(VerifyCsrfToken::class);
+        $this->actingAs($viewer, 'user');
+
+        // Leitura não autoriza execução paga nem upload de certificado
+        $this->postJson(route('lawfirm.escavador.servico'), [])->assertStatus(401);
+        $this->postJson(route('lawfirm.escavador.download_autos'), [])->assertStatus(401);
+        $this->postJson(route('lawfirm.escavador.sync_processo'), [])->assertStatus(401);
+        $this->postJson(route('lawfirm.escavador.busca'), [])->assertStatus(401);
+        $this->postJson(route('lawfirm.escavador.certificados.store'), [])->assertStatus(401);
+        $this->deleteJson(route('lawfirm.escavador.certificados.destroy', 9999))->assertStatus(401);
+        $this->get(route('lawfirm.escavador.certificados.index'))->assertStatus(401);
+    }
 }
