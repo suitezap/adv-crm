@@ -67,6 +67,9 @@ jobs:
         run: |
           cp .env.testing.example .env.testing
           php artisan key:generate --env=testing --force
+          # Installer middleware redirects every web request when .env is absent
+          cp .env.example .env
+          php artisan key:generate --force
 
       - name: Boot Isolated Database Environment
         run: |
