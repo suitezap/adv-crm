@@ -134,6 +134,7 @@ jobs:
 
       - name: Boot E2E Swarm Stack
         run: |
+          docker network create --driver bridge --internal quality_internal || true
           docker compose -f docker-compose.test.yml --profile e2e up -d
 
       - name: Wait for Target Services Health
