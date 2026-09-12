@@ -81,7 +81,7 @@
                                         </a>
 
                                         <!-- Excluir (AJAX) -->
-                                        @if(!$readOnly)
+                                        @if(!$readOnly && bouncer()->hasPermission('lawfirm.documentos.delete'))
                                             <button type="button" class="text-red-500 hover:text-red-700 cursor-pointer"
                                                 title="Excluir"
                                                 onclick="deleteAnexo('{{ route('admin.lawfirm.ged.destroy', $anexo->id) }}')">
@@ -102,8 +102,8 @@
                 </table>
             </div>
 
-            <!-- UPLOAD SECTION (Apenas se NÃO for modo leitura) -->
-            @if(!$readOnly)
+            <!-- UPLOAD SECTION (Apenas se NÃO for modo leitura + permissão) -->
+            @if(!$readOnly && bouncer()->hasPermission('lawfirm.documentos.create'))
                 <form action="{{ route('admin.lawfirm.ged.store') }}" method="POST" enctype="multipart/form-data"
                     id="form-upload-ged">
                     @csrf

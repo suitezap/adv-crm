@@ -11,9 +11,11 @@
                 {{ __('lawfirm::app.dashboard.title') }}
             </p>
         </div>
-        <a href="{{ route('admin.processos.create') }}" class="text-blue-600 text-sm font-medium hover:underline">
-            + {{ __('lawfirm::app.dashboard.new-case') }}
-        </a>
+        @if (bouncer()->hasPermission('lawfirm.processos.create'))
+            <a href="{{ route('admin.processos.create') }}" class="text-blue-600 text-sm font-medium hover:underline">
+                + {{ __('lawfirm::app.dashboard.new-case') }}
+            </a>
+        @endif
     </div>
 
     <!-- Corpo do Card -->
@@ -72,10 +74,16 @@
                                     </span>
                                 </div>
                                 <div class="flex flex-col">
-                                    <a href="{{ route('admin.processos.edit', $hearing->id) }}"
-                                        class="font-medium text-gray-700 hover:text-blue-600 truncate max-w-[180px] dark:text-gray-300">
-                                        {{ $hearing->titulo }}
-                                    </a>
+                                    @if (bouncer()->hasPermission('lawfirm.processos.edit'))
+                                        <a href="{{ route('admin.processos.edit', $hearing->id) }}"
+                                            class="font-medium text-gray-700 hover:text-blue-600 truncate max-w-[180px] dark:text-gray-300">
+                                            {{ $hearing->titulo }}
+                                        </a>
+                                    @else
+                                        <span class="font-medium text-gray-700 truncate max-w-[180px] dark:text-gray-300">
+                                            {{ $hearing->titulo }}
+                                        </span>
+                                    @endif
                                     <span class="text-xs text-gray-500 truncate max-w-[180px]">
                                         {{ $hearing->vara ?? 'Fórum não informado' }}
                                     </span>

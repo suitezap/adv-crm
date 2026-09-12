@@ -5,7 +5,7 @@
 ---
 
 ## 1. Onde estamos?
-A **Fase 0 (Governança, Baseline e Hardening Documental)** foi concluída. Depois dela, foram entregues e mergeadas na `2.1`: **`FIN-COBRANCAS-001`** (isolamento `tenant_id` + fix Cobranças/Lançamentos, VERIFIED), **`PRIV-AUDIT-001`** (gates de perfil + webhooks fail-closed em Ondas 1–3, DONE), **`DOC-001`/`GAP-001`/`CI-001`/`REPO-HYGIENE-001`** (DONE) — PRs #1 e #2 no fork, suíte Pest **119/119** em data-plane local. **`SEC-HARD-002` Onda 1** (gates `bouncer()` em 12 blades, VERIFIED, 2026-09-12). Baseline em `.ai/BASELINE.md`, decisões em `.ai/DECISIONS.md`, incidente do 500 em `.ai/incidents/INC-2026-09-09-tenant-scope-500.md`.
+A **Fase 0 (Governança, Baseline e Hardening Documental)** foi concluída. Depois dela, foram entregues e mergeadas na `2.1`: **`FIN-COBRANCAS-001`** (isolamento `tenant_id` + fix Cobranças/Lançamentos, VERIFIED), **`PRIV-AUDIT-001`** (gates de perfil + webhooks fail-closed em Ondas 1–3, DONE), **`DOC-001`/`GAP-001`/`CI-001`/`REPO-HYGIENE-001`** (DONE) — PRs #1 e #2 no fork, suíte Pest **119/119** em data-plane local. **`SEC-HARD-002` Ondas 1+2** (gates `bouncer()` em 28 blades + null-guards JS, VERIFIED, 2026-09-12; achado: `EscavadorController` sem gates — Onda 3). Baseline em `.ai/BASELINE.md`, decisões em `.ai/DECISIONS.md`, incidente do 500 em `.ai/incidents/INC-2026-09-09-tenant-scope-500.md`.
 
 ---
 

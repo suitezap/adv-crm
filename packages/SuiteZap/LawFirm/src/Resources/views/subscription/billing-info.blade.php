@@ -219,9 +219,11 @@
                                 Cancelar
                             </button>
                         @endif
-                        <button type="submit" id="btnSaveBilling" class="rounded-md bg-brandColor px-4 py-2 text-sm font-semibold text-white hover:bg-brandColor/90 transition shadow-sm flex items-center gap-2">
-                            <span class="icon-save text-lg"></span> Salvar Dados
-                        </button>
+                        @if (bouncer()->hasPermission('lawfirm.saas.manage'))
+                            <button type="submit" id="btnSaveBilling" class="rounded-md bg-brandColor px-4 py-2 text-sm font-semibold text-white hover:bg-brandColor/90 transition shadow-sm flex items-center gap-2">
+                                <span class="icon-save text-lg"></span> Salvar Dados
+                            </button>
+                        @endif
                     </div>
                     <div id="billingMessage" class="mt-3 text-sm font-medium hidden"></div>
                 </form>

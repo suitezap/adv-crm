@@ -39,6 +39,13 @@
 - **Evidência:** Pest local 119/119 (289 assertions, 51s), `git diff --check` limpo, 0 sync-conflict, `validate_test_docs.py` 0 erros, `@if/@endif` balanceados, `view:clear` OK.
 - **Isolamento:** UI-only, sem queries — `tenant_id` preservado. Sem migration, sem bump de versão (sem mudança estrutural).
 
+## [2026-09-12] SEC-HARD-002 — Onda 2 blades <a id=2026-09-12-sec-hard-002-onda-2></a>
+
+- **Status:** VERIFIED. Gates `bouncer()` em 16 blades: `GED/anexos` (upload/delete), tabs `prazos/notas/financial/modelos-tab`, `processos/show|lista|listagem`, `prazos/edit`, widget dashboard, `assistants/show|index` (execute), `escavador/certificados|index` (create + `LF_CAN_MANAGE_CERTS`), `subscription/billing-info` (saas.manage) + null-guards JS onde o botão some do DOM.
+- **Sem alteração (verificado):** `financial/index`, `invoices/index`, `monitoramentos/create|index`, `subscription/index|orders`, `admin/saas/*` (page-level gates existentes), `invoice-modal` (sem chamadores), tabs leads/contacts, PDFs, portal público, layouts, WhatsApp (suspensos §8 intocados).
+- **Achado P1 p/ follow-up (Onda 3):** `EscavadorController::index|executarServico|viewCertificados|cadastrarCertificado|removerCertificado` sem `bouncer()` — execução de serviço pago só barrada na UI. Não alterado (fora do escopo blade).
+- **Evidência:** Pest 119/119 (289 assertions), `diff --check` limpo, 0 sync-conflict, `@if/@endif` balanceados, `view:clear` OK.
+
 ## [2026-09-12] REPO-HYGIENE-002 — openspec fora do git <a id=2026-09-12-repo-hygiene-002></a>
 
 - **Status:** IN_PROGRESS. `.gitignore`: `openspec/changes/` → `openspec/` inteiro (decisão do operador).

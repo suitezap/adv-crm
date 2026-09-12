@@ -14,7 +14,7 @@
             <p class="text-lg font-bold text-gray-800 dark:text-white select-none">Notas</p>
         </div>
 
-        @if(!$readOnly)
+        @if(!$readOnly && bouncer()->hasPermission('lawfirm.processos.edit'))
             <div id="notas-action-buttons" class="flex gap-2">
                 <button type="submit" form="processo-form"
                     class="flex items-center justify-center gap-2 rounded border border-emerald-600 bg-white px-3 py-1.5 text-emerald-600 hover:bg-emerald-50 transition-colors">

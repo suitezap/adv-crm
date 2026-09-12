@@ -23,9 +23,11 @@
                             onclick="window.lfOpenWaHistory()">
                         💬 Histórico WhatsApp
                     </button>
-                    <a href="{{ route('admin.processos.edit', $processo->id) }}" class="primary-button">
-                        @lang('lawfirm::app.processos.edit')
-                    </a>
+                    @if (bouncer()->hasPermission('lawfirm.processos.edit'))
+                        <a href="{{ route('admin.processos.edit', $processo->id) }}" class="primary-button">
+                            @lang('lawfirm::app.processos.edit')
+                        </a>
+                    @endif
                     <a href="{{ route('admin.processos.index') }}" class="secondary-button">Voltar</a>
                 </div>
             </div>

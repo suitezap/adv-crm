@@ -129,7 +129,7 @@
             </div>
         </div>
 
-        @if(!$readOnly)
+        @if(!$readOnly && bouncer()->hasPermission('lawfirm.financeiro.edit'))
         <div class="flex gap-2" onclick="event.stopPropagation()">
             <button type="button" onclick="window.lfFinSave()" id="lf-fin-btn-save"
                 class="flex items-center justify-center gap-2 rounded border border-emerald-600 bg-white px-3 py-1.5 text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-50">
@@ -152,7 +152,9 @@
             style="{{ $financeiros->count() > 0 ? 'display:none' : '' }}">
             <span class="icon-wallet text-4xl mb-2 block opacity-50"></span>
             <p>Nenhum lançamento financeiro registrado.</p>
-            <button type="button" class="text-blue-600 hover:underline mt-2" onclick="window.lfFinAddRow()">Adicionar o primeiro</button>
+            @if(!$readOnly && bouncer()->hasPermission('lawfirm.financeiro.edit'))
+                <button type="button" class="text-blue-600 hover:underline mt-2" onclick="window.lfFinAddRow()">Adicionar o primeiro</button>
+            @endif
         </div>
 
         {{-- Table --}}
@@ -264,7 +266,7 @@
                         </td>
 
                         {{-- Actions --}}
-                        @if(!$readOnly)
+                        @if(!$readOnly && bouncer()->hasPermission('lawfirm.financeiro.edit'))
                         <td class="px-2 py-2 text-center" data-label="Ações">
                             <input type="hidden" data-field="id" value="{{ $fin->id }}">
                             <button type="button" onclick="window.lfFinDeleteRow(this)"

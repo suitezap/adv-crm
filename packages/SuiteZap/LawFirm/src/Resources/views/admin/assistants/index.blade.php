@@ -772,11 +772,13 @@
                                 <span id="lf-gen-loading" style="display:none;">⏳ Gerando...</span>
                             </button>
                         @endif
-                        <button id="lf-assist-btn-execute" onclick="window.lfAssistants.execute()"
-                            class="lf-btn-primary" style="display:none;">
-                            <span id="lf-exec-text">✨ Executar com IA</span>
-                            <span id="lf-exec-loading" style="display:none;">🧠 Processando...</span>
-                        </button>
+                        @if (bouncer()->hasPermission('lawfirm.assistants.execute'))
+                            <button id="lf-assist-btn-execute" onclick="window.lfAssistants.execute()"
+                                class="lf-btn-primary" style="display:none;">
+                                <span id="lf-exec-text">✨ Executar com IA</span>
+                                <span id="lf-exec-loading" style="display:none;">🧠 Processando...</span>
+                            </button>
+                        @endif
                         <button onclick="window.lfAssistants.reset()" class="lf-btn-secondary">Novo</button>
                     </div>
 
@@ -822,11 +824,13 @@
 
                             var busy = (state === 'loading');
                             el('lf-assist-btn-generate').disabled = busy;
-                            el('lf-assist-btn-execute').disabled = busy;
+                            var _execBtn = el('lf-assist-btn-execute');
+                            if (_execBtn) _execBtn.disabled = busy;
                             el('lf-gen-text').style.display = busy ? 'none' : '';
                             el('lf-gen-loading').style.display = busy ? '' : 'none';
-                            el('lf-exec-text').style.display = busy ? 'none' : '';
-                            el('lf-exec-loading').style.display = busy ? '' : 'none';
+                            var _execText = el('lf-exec-text'), _execLoading = el('lf-exec-loading');
+                            if (_execText) _execText.style.display = busy ? 'none' : '';
+                            if (_execLoading) _execLoading.style.display = busy ? '' : 'none';
                         }
 
                         function renderMd(text) {
@@ -946,7 +950,8 @@
                                 }
 
                                 // Show/hide execute button
-                                el('lf-assist-btn-execute').style.display = hasWebhook ? 'inline-flex' : 'none';
+                                var _execBtn2 = el('lf-assist-btn-execute');
+                                if (_execBtn2) _execBtn2.style.display = hasWebhook ? 'inline-flex' : 'none';
 
                                 hideError();
                                 el('lf-assist-result-box').innerHTML = '';

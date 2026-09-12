@@ -53,6 +53,7 @@
 
                     <!-- Botão (Coluna 3) -->
                     <x-admin::form.control-group class="mb-0">
+                        @if (bouncer()->hasPermission('lawfirm.escavador.create'))
                         <button type="submit" id="lf-cert-btn-submit" 
                                 class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap" 
                                 style="background-color: {{ core()->getConfigData('general.settings.menu_color.brand_color') ?? '#0041FF' }}; border-color: {{ core()->getConfigData('general.settings.menu_color.brand_color') ?? '#0041FF' }};">
@@ -61,6 +62,7 @@
                             </svg>
                             <span>Instalar</span>
                         </button>
+                        @endif
                     </x-admin::form.control-group>
                 </div>
             </form>
@@ -119,6 +121,7 @@
             var ROUTE_DESTROY = "{{ route('lawfirm.escavador.certificados.destroy', ':id') }}";
             var ROUTE_SHOW = "{{ route('lawfirm.escavador.certificados.show', ':id') }}";
             var CSRF = '{{ csrf_token() }}';
+            var LF_CAN_MANAGE_CERTS = {{ bouncer()->hasPermission('lawfirm.escavador.create') ? 'true' : 'false' }};
 
             function resetForm() {
                 var form = document.getElementById('lf-cert-form');
@@ -199,10 +202,7 @@
                                             class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 transition-all hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-600/50 dark:border-blue-900/50 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40">
                                         Detalhes
                                     </button>
-                                    <button type="button" onclick="window.lfCertPage.remove(${cert.id})" title="Remover Certificado"
-                                            class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition-all hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600/50 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40">
-                                        Remover
-                                    </button>
+                                    ${LF_CAN_MANAGE_CERTS ? '<button type="button" onclick="window.lfCertPage.remove(' + cert.id + ')" title="Remover Certificado" class="inline-flex cursor-pointer items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition-all hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600/50 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40">Remover</button>' : ''}
                                 </td>
                             `;
                             tbody.appendChild(tr);

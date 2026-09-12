@@ -12,9 +12,11 @@
             </div>
 
             <div class="page-action">
-                <a href="{{ route('admin.processos.create') }}" class="btn btn-primary">
-                    {{ __('lawfirm::app.processos.create') }}
-                </a>
+                @if (bouncer()->hasPermission('lawfirm.processos.create'))
+                    <a href="{{ route('admin.processos.create') }}" class="btn btn-primary">
+                        {{ __('lawfirm::app.processos.create') }}
+                    </a>
+                @endif
             </div>
         </div>
 

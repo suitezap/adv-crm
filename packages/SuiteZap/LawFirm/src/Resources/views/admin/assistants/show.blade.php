@@ -237,10 +237,12 @@
                                     </button>
                                 @endif
 
-                                <button type="button" id="btn-execute-ia" class="primary-button">
-                                    <span id="execute-btn-text">✨ Executar com IA</span>
-                                    <span id="execute-btn-loading" class="hidden">🧠 Processando...</span>
-                                </button>
+                                @if (bouncer()->hasPermission('lawfirm.assistants.execute'))
+                                    <button type="button" id="btn-execute-ia" class="primary-button">
+                                        <span id="execute-btn-text">✨ Executar com IA</span>
+                                        <span id="execute-btn-loading" class="hidden">🧠 Processando...</span>
+                                    </button>
+                                @endif
                             </div>
                         </form>
                     </div>

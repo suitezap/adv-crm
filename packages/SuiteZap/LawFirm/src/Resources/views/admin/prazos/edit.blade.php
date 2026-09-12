@@ -110,12 +110,14 @@
                     >
                         @lang('lawfirm::app.prazos.cancel')
                     </a>
-                    <button
-                        type="submit"
-                        class="primary-button"
-                    >
-                        @lang('lawfirm::app.prazos.save')
-                    </button>
+                    @if (bouncer()->hasPermission('lawfirm.prazos.edit'))
+                        <button
+                            type="submit"
+                            class="primary-button"
+                        >
+                            @lang('lawfirm::app.prazos.save')
+                        </button>
+                    @endif
                 </div>
             </div>
         </x-admin::form>

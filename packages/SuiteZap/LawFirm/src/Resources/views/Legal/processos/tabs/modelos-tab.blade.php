@@ -16,10 +16,12 @@
             </p>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('admin.modelos.create') }}" target="_blank" class="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 transition-colors">
-                <i class="icon-plus text-xs"></i>
-                Criar Modelo
-            </a>
+            @if (bouncer()->hasPermission('lawfirm.modelos.create'))
+                <a href="{{ route('admin.modelos.create') }}" target="_blank" class="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 transition-colors">
+                    <i class="icon-plus text-xs"></i>
+                    Criar Modelo
+                </a>
+            @endif
             <a href="{{ route('admin.modelos.index') }}" target="_blank" class="inline-flex items-center gap-1.5 rounded-lg bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
                 <i class="icon-settings text-gray-500"></i>
                 Gerenciar Modelos

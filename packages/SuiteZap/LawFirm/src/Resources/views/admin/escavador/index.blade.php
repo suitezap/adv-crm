@@ -2085,7 +2085,7 @@
                         // ── Render ──────────────────────────────────────────────
                         var btn = document.getElementById('lf-svc-btn-submit');
                         document.getElementById('lf-svc-fields').style.display = 'none';
-                        btn.style.display = 'none';
+                        if (btn) btn.style.display = 'none';
                         document.getElementById('lf-svc-success').style.display = 'none';
                         document.getElementById('lf-svc-error').style.display = 'none';
 
@@ -2116,7 +2116,7 @@
                                 '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
                                     '<h4 style="font-weight:600;color:#374151;font-size:1.05rem;" class="dark:text-white">💡 Exemplo de Resposta</h4>' +
                                     '<div style="display:flex;gap:8px;">' +
-                                        '<button type="button" onclick="document.getElementById(\'lf-svc-result-area\').remove(); document.getElementById(\'lf-svc-fields\').style.display=\'flex\'; document.getElementById(\'lf-svc-btn-submit\').style.display=\'inline-flex\'; var ex = document.getElementById(\'lf-svc-btn-example-container\'); if(ex) ex.style.display=\'block\';" style="font-size:0.8rem;background:#f3f4f6;border:1px solid #d1d5db;padding:6px 12px;border-radius:6px;cursor:pointer;color:#374151;font-weight:600;transition:all .2s;" class="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">🔙 Voltar para Consulta</button>' +
+                                        '<button type="button" onclick="document.getElementById(\'lf-svc-result-area\').remove(); document.getElementById(\'lf-svc-fields\').style.display=\'flex\'; var _sb=document.getElementById(\'lf-svc-btn-submit\');if(_sb)_sb.style.display=\'inline-flex\'; var ex = document.getElementById(\'lf-svc-btn-example-container\'); if(ex) ex.style.display=\'block\';" style="font-size:0.8rem;background:#f3f4f6;border:1px solid #d1d5db;padding:6px 12px;border-radius:6px;cursor:pointer;color:#374151;font-weight:600;transition:all .2s;" class="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">🔙 Voltar para Consulta</button>' +
                                         '<button type="button" onclick="window.lfForcePrint()" style="font-size:0.8rem;background:#f3f4f6;border:1px solid #e5e7eb;padding:6px 12px;border-radius:6px;cursor:pointer;color:#374151;font-weight:600;transition:all .2s;" class="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">📄 Salvar em PDF</button>' +
                                     '</div>' +
                                 '</div>' +
@@ -2187,7 +2187,8 @@
                         }
 
                         document.getElementById('lf-svc-fields').style.display = 'flex';
-                        document.getElementById('lf-svc-btn-submit').style.display = 'inline-flex';
+                        var _sbtn = document.getElementById('lf-svc-btn-submit');
+                        if (_sbtn) _sbtn.style.display = 'inline-flex';
 
                         var prevResult = document.getElementById('lf-svc-result-area');
                         if (prevResult) prevResult.style.display = 'none';
@@ -2352,6 +2353,7 @@
                         }
 
                         var btn = document.getElementById('lf-svc-btn-submit');
+                        if (!btn) return;
                         btn.disabled = true;
                         btn.textContent = '⏳ Executando...';
                         document.getElementById('lf-svc-error').style.display = 'none';
@@ -2422,7 +2424,7 @@
                                             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
                                                 '<h4 style="font-weight:600;color:#374151;font-size:1.05rem;" class="dark:text-white">Resultado da Consulta</h4>' +
                                                 '<div style="display:flex;gap:8px;">' +
-                                                    '<button type="button" onclick="document.getElementById(\'lf-svc-result-area\').remove(); document.getElementById(\'lf-svc-fields\').style.display=\'flex\'; document.getElementById(\'lf-svc-btn-submit\').style.display=\'inline-flex\'; var ex = document.getElementById(\'lf-svc-btn-example-container\'); if(ex) ex.style.display=\'block\';" style="font-size:0.8rem;background:#f3f4f6;border:1px solid #d1d5db;padding:6px 12px;border-radius:6px;cursor:pointer;color:#374151;font-weight:600;transition:all .2s;" class="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">🔙 Voltar para Filtros</button>' +
+                                                    '<button type="button" onclick="document.getElementById(\'lf-svc-result-area\').remove(); document.getElementById(\'lf-svc-fields\').style.display=\'flex\'; var _sb=document.getElementById(\'lf-svc-btn-submit\');if(_sb)_sb.style.display=\'inline-flex\'; var ex = document.getElementById(\'lf-svc-btn-example-container\'); if(ex) ex.style.display=\'block\';" style="font-size:0.8rem;background:#f3f4f6;border:1px solid #d1d5db;padding:6px 12px;border-radius:6px;cursor:pointer;color:#374151;font-weight:600;transition:all .2s;" class="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">🔙 Voltar para Filtros</button>' +
                                                     '<button type="button" onclick="window.lfForcePrint()" style="font-size:0.8rem;background:#f3f4f6;border:1px solid #e5e7eb;padding:6px 12px;border-radius:6px;cursor:pointer;color:#374151;font-weight:600;transition:all .2s;" class="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700">📄 Salvar em PDF</button>' +
                                                 '</div>' +
                                             '</div>' + 
@@ -2562,8 +2564,10 @@
 
                     <button onclick="window.lfSvc.close()" class="lf-esc-btn-secondary" type="button"
                         style="padding:10px 16px;">Cancelar</button>
-                    <button id="lf-svc-btn-submit" onclick="window.lfSvc.execute()" class="lf-esc-btn" type="button"
-                        style="padding:10px 30px;">🚀 Executar</button>
+                    @if (bouncer()->hasPermission('lawfirm.escavador.create'))
+                        <button id="lf-svc-btn-submit" onclick="window.lfSvc.execute()" class="lf-esc-btn" type="button"
+                            style="padding:10px 30px;">🚀 Executar</button>
+                    @endif
                 </div>
             </div>{{-- /lf-esc-dialog --}}
         </div>{{-- /lf-svc-modal --}}

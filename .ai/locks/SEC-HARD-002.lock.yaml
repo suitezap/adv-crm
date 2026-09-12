@@ -15,12 +15,27 @@ write_scope:
   - packages/SuiteZap/LawFirm/src/Resources/views/TenantFinance/invoices/index.blade.php
   - packages/SuiteZap/LawFirm/src/Resources/views/TenantFinance/invoices/show.blade.php
   - packages/SuiteZap/LawFirm/src/Resources/views/TenantFinance/settings/index.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/GED/processos/tabs/anexos.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/Legal/processos/tabs/prazos.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/Legal/processos/tabs/notas.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/financial/processos/tabs/financial.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/Legal/processos/tabs/modelos-tab.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/admin/processos/show.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/admin/prazos/edit.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/admin/processos/listagem.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/admin/processos/lista.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/admin/dashboard/widgets/law-firm-overview.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/admin/assistants/show.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/admin/assistants/index.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/admin/escavador/certificados.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/admin/escavador/index.blade.php
+  - packages/SuiteZap/LawFirm/src/Resources/views/subscription/billing-info.blade.php
   - .ai/TASKS.md
   - .ai/LOG_INDEX.md
   - .ai/CURRENT.md
   - .ai/logs/OPENCODE.md
 started_at: "2026-09-12T17:34:37Z"
-last_checkpoint_at: "2026-09-12T18:10:00Z"
+last_checkpoint_at: "2026-09-12T19:00:00Z"
 base_commit: "4001d39cc293029cd59d921f30095d77b4d86ef7"
 workspace: "dev-opencode"
 status: ACTIVE

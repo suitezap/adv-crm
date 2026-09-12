@@ -11,12 +11,16 @@
                 <button type="button" class="secondary-button" onclick="abrirAgenda()">
                     <span class="icon-calendar text-lg inline-block align-middle mr-1"></span> Ver Agenda
                 </button>
-                <button type="submit" form="processo-form" class="primary-button">
-                    <span class="icon-save text-lg inline-block align-middle mr-1"></span> Salvar
-                </button>
-                <button type="button" class="primary-button btn btn-primary" onclick="adicionarPrazo()">
-                    <span class="icon-plus text-lg inline-block align-middle mr-1"></span> Novo Item
-                </button>
+                @if (bouncer()->hasPermission('lawfirm.processos.edit'))
+                    <button type="submit" form="processo-form" class="primary-button">
+                        <span class="icon-save text-lg inline-block align-middle mr-1"></span> Salvar
+                    </button>
+                @endif
+                @if (bouncer()->hasPermission('lawfirm.prazos.create'))
+                    <button type="button" class="primary-button btn btn-primary" onclick="adicionarPrazo()">
+                        <span class="icon-plus text-lg inline-block align-middle mr-1"></span> Novo Item
+                    </button>
+                @endif
             </div>
         @endif
     </div>
