@@ -59,6 +59,12 @@
 - **Verificado:** nenhum lock ACTIVE de outro agente; 0 `sync-conflict`; só sujeira pré-existente fora do commit.
 - **Próximo:** operador faz atualizações de tags; retomada mediante reabertura explícita.
 
+## [2026-09-12] Hermes reconfigurado — impacto em avaliação <a id=2026-09-12-hermes-reconfig></a>
+
+- **Fato:** VPS do Hermes reconfigurada após perda das configs antigas (`RESULT-QA-ENV-001.md` descreve o estado anterior: data-plane UP, app-layer BLOCKED por imagem).
+- **Decisão:** statuses `HERMES-001`/`QA-ENV-001`/cadeia QA **não alterados** (donos Hermes); registrado em `CURRENT.md` que aguardam revalidação pelo dono.
+- **Erros de console no login local** (`build/assets/app.js` 404): diagnosticado como build local dessincronizado, sem relação com procedimentos SEC-HARD-002 (evidência no diff); investigação arquivada a pedido do operador.
+
 ## [2026-09-12] REPO-HYGIENE-002 — openspec fora do git <a id=2026-09-12-repo-hygiene-002></a>
 
 - **Status:** IN_PROGRESS. `.gitignore`: `openspec/changes/` → `openspec/` inteiro (decisão do operador).
