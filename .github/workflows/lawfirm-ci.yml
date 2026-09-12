@@ -65,6 +65,7 @@ jobs:
 
       - name: Boot Isolated Database Environment
         run: |
+          docker network create --driver bridge --internal quality_internal || true
           docker compose -f docker-compose.test.yml up -d mysql-test mothership-db-test redis-test
 
       - name: Wait for MySQL Health
