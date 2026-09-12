@@ -145,6 +145,15 @@ jobs:
           echo "Waiting for app-tenant-b to become healthy (max 180s)..."
           timeout 180 bash -c 'until [ "$(docker inspect -f {{.State.Health.Status}} $(docker compose -f docker-compose.test.yml ps -q app-tenant-b))" == "healthy" ]; do sleep 5; done'
 
+      - name: Dump app container diagnostics
+        if: failure()
+        run: |
+          docker compose -f docker-compose.test.yml --profile e2e ps -a
+          for svc in app-tenant-a app-tenant-b mock-server; do
+            echo "===== $svc ====="
+            docker compose -f docker-compose.test.yml logs --tail=80 "$svc" || true
+          done
+
       - name: Run E2E Playwright Tests
         run: |
           docker compose -f docker-compose.test.yml --profile e2e run --rm playwright-test pytest tests/e2e/ -v
