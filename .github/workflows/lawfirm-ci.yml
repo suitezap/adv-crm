@@ -155,8 +155,9 @@ jobs:
           done
 
       - name: Run E2E Playwright Tests
+        # cwd dentro do container é /e2e (volume ./tests/e2e); path de repo não existe lá.
         run: |
-          docker compose -f docker-compose.test.yml --profile e2e run --rm playwright-test pytest tests/e2e/ -v
+          docker compose -f docker-compose.test.yml --profile e2e run --rm playwright-test pytest . -v
 
       - name: Upload Test Artifacts
         if: always()
