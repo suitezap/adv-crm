@@ -45,6 +45,9 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite3, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
           coverage: none
 
+      - name: Prepare Laravel writable paths (fresh checkout has no cache dirs)
+        run: mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache bootstrap/cache
+
       - name: Get Composer Cache Directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
