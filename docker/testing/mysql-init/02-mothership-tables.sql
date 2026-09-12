@@ -14,7 +14,16 @@ CREATE TABLE IF NOT EXISTS tenants (
     n8n_node_id BIGINT UNSIGNED NULL,
     asaas_node_id VARCHAR(255) NULL,
     chatwoot_channel_inbox_id VARCHAR(255) NULL,
-    storage_node_id VARCHAR(255) NULL
+    storage_node_id VARCHAR(255) NULL,
+    evolution_node_id BIGINT UNSIGNED NULL,
+    evolution_instance_name VARCHAR(255) NULL,
+    evolution_assistente_name VARCHAR(255) NULL,
+    evolution_api_key VARCHAR(255) NULL,
+    minio_bucket_name VARCHAR(255) NULL,
+    chatwoot_node_id BIGINT UNSIGNED NULL,
+    chatwoot_inbox_id VARCHAR(255) NULL,
+    chatwoot_assistant_inbox_id VARCHAR(255) NULL,
+    chatwoot_webhook_token VARCHAR(255) NULL
 );
 
 CREATE TABLE IF NOT EXISTS subscriptions (
