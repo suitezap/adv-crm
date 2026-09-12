@@ -125,6 +125,13 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache || true
 
+      - name: Allow test files in build context (playwright image only)
+        # AGENTS.md §6 hygiene stays intact: the production candidate above was
+        # already built WITH exclusions. Only the test-runner image needs them.
+        run: |
+          sed -i '/^tests\/$/d; /^docker\/testing\/$/d; /^reports\/$/d; /^\.pytest_cache\/$/d' .dockerignore
+          grep -c . .dockerignore
+
       - name: Boot E2E Swarm Stack
         run: |
           docker compose -f docker-compose.test.yml --profile e2e up -d
