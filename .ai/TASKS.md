@@ -21,6 +21,6 @@
 | `PRIV-AUDIT-001` | Platform / Segurança | DONE | OpenCode | - | Ondas 1-3 + secret Whatsapp. Suite completa 117/117 local. Commits fd11bf12, 8fe299d1, d8da0362, 6c2c9f9e. Branch feature/priv-audit-onda-1-tenant-isolation-gates. |
 | `SEC-HARD-002` | Platform / Segurança | TODO | Unassigned | - | Cobertura `@can`/`bouncer()` total das blades (P0s feitos; restante é defesa em profundidade). |
 | `OPS-WEBHOOK-001` | Operação | TODO | Unassigned | - | Cadastrar segredos de webhook em produção (Asaas, tenant-Asaas, Evolution). Runbook: `quality/runbooks/webhook-secrets.md`. |
-| `REPO-HYGIENE-001` | Repositório | TODO | Unassigned | - | Corrigir linha `C*` corrompida no `.gitignore` + zerar `owner: unassigned` nos testes P0. |
+| `REPO-HYGIENE-001` | Repositório | DONE | OpenCode | - | `C*` removida (dir-lixo `C<U+F03A>` deletado; `openspec/changes/` explicitamente ignorado). Owners: 48x `unassigned` preservados — atribuir nomes exige decisão humana (gate já cobrado em `quality/RELEASE_CHECKLIST.md`). |
 | `OS-001` | Documentation | DONE | Antigravity | - | OpenSpec spec created and feature de ajustes concluída. |
 | `KAN-001` | Kanban / Jurídico | TODO | Antigravity | - | Implement Kanban jurídico com integração Chatwoot. |

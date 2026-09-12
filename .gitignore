@@ -91,6 +91,8 @@ remove_logo.php
 /fix_tests.py
 /fix_user_create.py
 /test-dns.ps1
-C*
 *.bak-before-*
+
+# OpenSpec transient planning artifacts (durable output lives in openspec/specs/)
+openspec/changes/
 

@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - law-firm-custom
+      - 2.1
   pull_request:
     branches:
       - law-firm-custom
+      - 2.1
   workflow_dispatch:
 
 jobs:
