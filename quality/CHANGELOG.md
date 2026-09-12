@@ -80,6 +80,7 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 - Estorno automático de SuiteCoins em falha do Job de IA (`ProcessAiAssistant::refundDebit()` + `failed()`), idempotente por history; fecha `GAP-001` (ver `KNOWN_GAPS.md`).
 - Teste `LEAD-AI-013` (`AiRefundTest`, 2 testes passando): falha estorna 1x, sucesso não estorna.
 - `CHANGELOG.md` raiz com v3.55.0/v3.55.1 — fecha `BASELINE_VERSION_MISMATCH` (DOC-001).
+- CI-001 verde: `lawfirm-ci.yml` validado de ponta a ponta (7 fixes de infra: triggers, cache dirs, envs, rede, stub Vite, mock tenants, pytest cwd, mounts).
 
 ## [Unreleased] - PRIV-AUDIT-001 Onda 1 (pré-req + Escavador + webhooks + AI + Legal/GED + SAC)
 
