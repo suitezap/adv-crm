@@ -31,7 +31,7 @@ Follow-ups documentados em `.ai/TASKS.md`: `DOC-001`, `GAP-001`, `KAN-001` (rest
 
 ## 5. Quem está trabalhando?
 - **Antigravity (Orchestrator):** `PAUSED` em 2026-09-12 — workspace fechado para atualização de tags pelo operador. `KAN-001` em espera (BLOCKED). Locks próprios: nenhum ACTIVE.
-- **Hermes (QA Architect):** Concluiu `HERMES-001` e `QA-ENV-001` (resultado em `.ai/handoffs/RESULT-QA-ENV-001.md`).
+- **Hermes (QA Architect):** Havia concluído `HERMES-001` e `QA-ENV-001`, mas a VPS foi **reconfigurada após perda das configurações antigas** (2026-09-12) — statuses de ambiente QA aguardam revalidação pelo Hermes; sem alteração de status por outro dono até lá.
 - **OpenCode (Implementer):** Entregou `FIN-COBRANCAS-001` (VERIFIED), `PRIV-AUDIT-001` (DONE), `SEC-HARD-002` Ondas 1-3 (VERIFIED, 121/121, no remoto) e `REPO-HYGIENE-002` (DONE).
 
 ---
