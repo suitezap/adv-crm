@@ -65,6 +65,12 @@
 - **Decisão:** statuses `HERMES-001`/`QA-ENV-001`/cadeia QA **não alterados** (donos Hermes); registrado em `CURRENT.md` que aguardam revalidação pelo dono.
 - **Erros de console no login local** (`build/assets/app.js` 404): diagnosticado como build local dessincronizado, sem relação com procedimentos SEC-HARD-002 (evidência no diff); investigação arquivada a pedido do operador.
 
+## [2026-09-12] Limpeza leads+pessoas (dev advdf2g) <a id=2026-09-12-limpeza-leads></a>
+
+- **Escopo (operador):** todos os Leads + Pessoas do banco dev local.
+- **Executado:** backup `backup-leads-persons-20260912-231909.sql` (19 tabelas, ~1,3 MB, fora do repo); reverificação 0 casos/processos vinculados; `DELETE leads` (28) → `DELETE persons` (25) em transação.
+- **Colateral:** cascata zerou activities/tags/triagem/details; 578 `assistant_history` + 1 email preservados com vínculo anulado (SET NULL).
+
 ## [2026-09-12] REPO-HYGIENE-002 — openspec fora do git <a id=2026-09-12-repo-hygiene-002></a>
 
 - **Status:** IN_PROGRESS. `.gitignore`: `openspec/changes/` → `openspec/` inteiro (decisão do operador).
