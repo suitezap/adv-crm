@@ -96,3 +96,8 @@ remove_logo.php
 # OpenSpec local planning artifacts (tooling local — não versionar; decisão REPO-HYGIENE-002)
 openspec/
 
+# Database dumps and backups
+/storage/backups/
+*.sql
+
+
