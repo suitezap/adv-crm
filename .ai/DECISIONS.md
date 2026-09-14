@@ -105,3 +105,13 @@
   - `ChatwootService::syncContactLabels()` — motor de sincronização (lowercase-safe)
 
 - **Consequências:** Contatos Chatwoot refletem fielmente o ciclo Lead → Cliente Ativo → Estágio Jurídico, habilitando automações de atendimento (ex.: gatilhos N8N, filas de prioridade) sem intervenção manual.
+
+---
+
+## ADR-N8N-001: Validação Obrigatória de Saldo no Bot de Triagem (WhatsApp)
+- **Data:** 2026-09-14
+- **Status:** APPROVED
+- **Contexto:** Durante ajustes e testes nos fluxos N8N (`LawFirm TsT - WhatsApp|Bot Triagem V2` e principal), o nó de condição (`If1`) responsável por verificar o saldo foi temporariamente desativado.
+- **Decisão:** O nó `If1` que valida se o usuário possui saldo em conta **deve permanecer estritamente ativo**. Este nó atua como um *gate* financeiro.
+- **Consequências:** Garante que apenas usuários com saldo suficiente (SuiteCoins/créditos) continuem utilizando o assistente, protegendo a operação de consumos não autorizados ou por clientes inadimplentes.
+
