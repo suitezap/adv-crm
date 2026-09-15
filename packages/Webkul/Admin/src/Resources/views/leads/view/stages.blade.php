@@ -39,44 +39,47 @@
             {!! view_render_event('admin.leads.view.stages.items.dropdown.before', ['lead' => $lead]) !!}
 
             <!-- Won/Lost Stage Item -->
-            <x-admin::dropdown position="bottom-right">
-                <x-slot:toggle>
-                    {!! view_render_event('admin.leads.view.stages.items.dropdown.toggle.before', ['lead' => $lead]) !!}
+            <div class="relative">
+                {!! view_render_event('admin.leads.view.stages.items.dropdown.toggle.before', ['lead' => $lead]) !!}
 
-                    <div
-                        class="relative flex h-7 min-w-24 cursor-pointer items-center justify-center rounded-r-lg bg-white pl-7 pr-4 dark:bg-gray-900"
-                        :class="{
-                            '!bg-green-500 text-white dark:text-gray-900 after:bg-green-500': ['won', 'lost'].includes(currentStage.code) && currentStage.code == 'won',
-                            '!bg-red-500 text-white dark:text-gray-900 after:bg-red-500': ['won', 'lost'].includes(currentStage.code) && currentStage.code == 'lost',
-                        }"
-                        @click="stageToggler = ! stageToggler"
-                    >
-                        <span class="z-20 whitespace-nowrap text-sm font-medium dark:text-white">
-                             @{{ stages.filter(stage => ['won', 'lost'].includes(stage.code)).map(stage => stage.name).join('/') }}
-                        </span>
+                <div
+                    class="relative flex h-7 min-w-24 cursor-pointer items-center justify-center rounded-r-lg bg-white pl-7 pr-4 dark:bg-gray-900"
+                    :class="{
+                        '!bg-green-500 text-white dark:text-gray-900 after:bg-green-500': ['won', 'lost'].includes(currentStage.code) && currentStage.code == 'won',
+                        '!bg-red-500 text-white dark:text-gray-900 after:bg-red-500': ['won', 'lost'].includes(currentStage.code) && currentStage.code == 'lost',
+                    }"
+                    @click.stop="isDropdownOpen = !isDropdownOpen"
+                >
+                    <span class="z-20 whitespace-nowrap text-sm font-medium dark:text-white">
+                         @{{ stages.filter(stage => ['won', 'lost'].includes(stage.code)).map(stage => stage.name).join('/') }}
+                    </span>
 
-                        <span
-                            class="text-2xl dark:text-gray-900"
-                            :class="{'icon-up-arrow': stageToggler, 'icon-down-arrow': ! stageToggler}"
-                        ></span>
-                    </div>
+                    <span
+                        class="text-2xl dark:text-gray-900"
+                        :class="{'icon-up-arrow': isDropdownOpen, 'icon-down-arrow': !isDropdownOpen}"
+                    ></span>
+                </div>
 
-                    {!! view_render_event('admin.leads.view.stages.items.dropdown.toggle.after', ['lead' => $lead]) !!}
-                </x-slot>
+                {!! view_render_event('admin.leads.view.stages.items.dropdown.toggle.after', ['lead' => $lead]) !!}
 
-                <x-slot:menu>
-                    {!! view_render_event('admin.leads.view.stages.items.dropdown.menu_item.before', ['lead' => $lead]) !!}
+                {!! view_render_event('admin.leads.view.stages.items.dropdown.menu_item.before', ['lead' => $lead]) !!}
 
-                    <x-admin::dropdown.menu.item
+                <ul
+                    v-show="isDropdownOpen"
+                    class="absolute z-10 w-max rounded bg-white py-4 shadow-[0px_10px_20px_0px_#0000001F] dark:bg-gray-900 right-0 top-full mt-1"
+                    style="min-width: 168px;"
+                >
+                    <li
                         v-for="stage in stages.filter(stage => ['won', 'lost'].includes(stage.code))"
-                        @click="openModal(stage)"
+                        class="cursor-pointer px-5 py-2 text-sm text-gray-800 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950"
+                        @click.stop="isDropdownOpen = false; openModal(stage)"
                     >
                         @{{ stage.name }}
-                    </x-admin::dropdown.menu.item>
+                    </li>
+                </ul>
 
-                    {!! view_render_event('admin.leads.view.stages.items.dropdown.menu_item.after', ['lead' => $lead]) !!}
-                </x-slot>
-            </x-admin::dropdown>
+                {!! view_render_event('admin.leads.view.stages.items.dropdown.menu_item.after', ['lead' => $lead]) !!}
+            </div>
 
             {!! view_render_event('admin.leads.view.stages.items.dropdown.after', ['lead' => $lead]) !!}
 
@@ -105,7 +108,7 @@
                             {!! view_render_event('admin.leads.view.stages.form_controls.modal.content.before', ['lead' => $lead]) !!}
 
                             <!-- Won Value -->
-                            <template v-if="nextStage.code == 'won'">
+                            <template v-if="nextStage && nextStage.code == 'won'">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label>
                                         @lang('admin::app.leads.view.stages.won-value')
@@ -121,7 +124,7 @@
                             </template>
 
                             <!-- Lost Reason -->
-                            <template v-else>
+                            <template v-else-if="nextStage">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label>
                                         @lang('admin::app.leads.view.stages.lost-reason')
@@ -141,12 +144,14 @@
                                     @lang('admin::app.leads.view.stages.closed-at')
                                 </x-admin::form.control-group.label>
 
-                                <x-admin::form.control-group.control
-                                    type="datetime"
-                                    name="closed_at"
-                                    v-model="nextStage.closed_at"
-                                    :label="trans('admin::app.leads.view.stages.closed-at')"
-                                />
+                                <template v-if="nextStage">
+                                    <x-admin::form.control-group.control
+                                        type="datetime"
+                                        name="closed_at"
+                                        v-model="nextStage.closed_at"
+                                        :label="trans('admin::app.leads.view.stages.closed-at')"
+                                    />
+                                </template>
 
                                 <x-admin::form.control-group.error control-name="closed_at"/>
                             </x-admin::form.control-group>
@@ -180,6 +185,14 @@
         app.component('v-lead-stages', {
             template: '#v-lead-stages-template',
 
+            created() {
+                window.addEventListener('click', this.closeDropdownOnClickOutside);
+            },
+
+            beforeUnmount() {
+                window.removeEventListener('click', this.closeDropdownOnClickOutside);
+            },
+
             data() {
                 return {
                     isUpdating: false,
@@ -190,7 +203,7 @@
 
                     stages: @json($lead->pipeline->stages),
 
-                    stageToggler: '',
+                    isDropdownOpen: false,
                 }
             },
 
@@ -203,6 +216,12 @@
                     this.nextStage = stage;
 
                     this.$refs.stageUpdateModal.open();
+                },
+
+                closeDropdownOnClickOutside(e) {
+                    if (!this.$el.contains(e.target)) {
+                        this.isDropdownOpen = false;
+                    }
                 },
 
                 handleFormSubmit(event) {
