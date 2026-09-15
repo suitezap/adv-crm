@@ -5,7 +5,6 @@ namespace SuiteZap\LawFirm\Legal\Observers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Legal\Models\Processo;
-use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 use Webkul\Activity\Repositories\ActivityRepository;
 
