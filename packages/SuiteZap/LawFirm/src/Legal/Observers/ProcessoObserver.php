@@ -200,9 +200,8 @@ class ProcessoObserver
         $tag = "[REF:PROC_ID:{$processo->id}]";
 
         $conditions = ['type' => 'meeting'];
-        $tenantId = MotherShipService::getTenantId();
-        if ($tenantId) {
-            $conditions['tenant_id'] = $tenantId;
+        if ($processo->user_id) {
+            $conditions['user_id'] = $processo->user_id;
         }
 
         $all = $this->activityRepository->findWhere($conditions);

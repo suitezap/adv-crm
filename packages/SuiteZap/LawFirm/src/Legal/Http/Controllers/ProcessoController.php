@@ -410,8 +410,9 @@ class ProcessoController extends Controller
                 'message' => trans('lawfirm::app.processos.delete-success'),
             ], 200);
         } catch (\Exception $e) {
+            \Log::error('Erro ao excluir processo: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json([
-                'message' => trans('lawfirm::app.processos.delete-failed'),
+                'message' => trans('lawfirm::app.processos.delete-failed') . ' - ' . $e->getMessage(),
             ], 500);
         }
     }

@@ -76,3 +76,15 @@ Formato de cada entrada:
 **Regra criada para evitar repetição:** Ao renomear qualquer método público de Service, executar busca global (grep -r) por todas as ocorrências antes de confirmar a tarefa. O método correto é DocumentService::processUploads() — qualquer referência a uploadProcessAttachment em código novo é um bug. Cobrir o fluxo de upload com ao menos um teste de feature.
 
 **Referência:** ARCHITECTURE.md §4.5 (Correção de Bug Crítico v2.4) | **Versão corrigida:** v2.4
+
+---
+
+## 2026-09-12 — ProcessoObserver (Exclusão de Processos e Activities)
+
+**O que quebrou:** A tentativa de exclusão de um processo (DELETE /admin/juridico/processos/{id}) falhava silenciosamente e retornava apenas erro 500 para o frontend.
+
+**Causa raiz:** O método `forceCleanupCalendarEvent` no `ProcessoObserver` tentava filtrar as atividades associadas usando `$conditions['tenant_id'] = $tenantId;`. No entanto, a tabela `activities` não possui a coluna `tenant_id`, gerando uma `QueryException` (Unknown column 'tenant_id'). O erro não aparecia no log pois o `ProcessoController@destroy` capturava a exceção de forma genérica sem registrar log.
+
+**Regra criada para evitar repetição:** Modelos base globais ou de pacote que não utilizam `tenant_id` explícito (como `Activity`) devem ser consultados usando os identificadores locais da entidade (ex: `user_id`). Além disso, blocos `catch (\Exception $e)` em controllers MUST chamar `\Log::error($e->getMessage(), ['exception' => $e])` antes de retornar uma resposta HTTP genérica 500, garantindo a observabilidade do erro.
+
+**Referência:** Correção imediata de regressão | **Versão corrigida:** 2026-09-12
