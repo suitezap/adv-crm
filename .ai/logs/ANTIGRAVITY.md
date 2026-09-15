@@ -230,3 +230,38 @@ Actions:
 
 Result:
 DONE
+
+---
+
+## [2026-09-15 11:51:30] — Rebuild e Publicação de Imagem de Produção (latest)
+
+Agent:
+ANTIGRAVITY
+
+Task ID:
+DOCKER-LATEST-001
+
+Branch:
+2.1
+
+Objective:
+Reconstruir a imagem oficial de produção `suitezap/lawfirm:latest` incorporando as adições recentes de código e migrations, validar a higiene estrita (AGENTS.md §6) e publicar no Docker Hub sob demanda do operador.
+
+Actions:
+- Executou build Docker de `suitezap/lawfirm:latest`.
+- Executou auditoria automatizada de higiene dentro do container:
+  * PASS: tests NOT found
+  * PASS: quality NOT found
+  * PASS: .ai NOT found
+  * PASS: .agents NOT found
+  * PASS: .github NOT found
+  * PASS: docker/testing NOT found
+  * PASS: reports NOT found
+  * PASS: coverage NOT found
+  * PASS: test-results NOT found
+  * PASS: playwright-report NOT found
+  * PASS: Artisan bootstrap verificado com sucesso (`Laravel Framework 10.50.0`).
+- Publicou com sucesso a imagem `suitezap/lawfirm:latest` no Docker Hub (`digest: sha256:e22f967b1ab6e08c67f0654da9a6de75b7c9ff780dc36ef99fd787c1e96f88d6`).
+
+Result:
+DONE
