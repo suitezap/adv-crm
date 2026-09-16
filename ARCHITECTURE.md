@@ -1,4 +1,4 @@
-# ⚖️ LawFirm CRM - Documento de Arquitetura (v3.55.1 - DDD & SaaS Multi-Tenant)
+# ⚖️ LawFirm CRM - Documento de Arquitetura (v3.56.0 - DDD & SaaS Multi-Tenant)
 
 > [!NOTE]
 > **Imagem Docker Oficial:** `suitezap/lawfirm` — única imagem canônica. `suitezap/adv-crm` foi descontinuada (v3.54.1). Ver ADR §4.87.
@@ -56,7 +56,7 @@ src/
 ⛔ **PROIBIDO:** Usar ou referenciar `suitezap/adv-crm` (imagem legada, descontinuada em v3.54.1).
 ✅ **OBRIGATÓRIO:** Usar `suitezap/lawfirm` com tag de versão semântica em todos os deploys.
 *   **Docker Hub:** `https://hub.docker.com/r/suitezap/lawfirm`
-*   **Tag de produção atual:** `suitezap/lawfirm:v3.54.0`
+*   **Tag de produção atual:** `suitezap/lawfirm:v3.56.0`
 *   **Padrão Swarm/Portainer:** Sempre usar tag específica (`vX.Y.Z`), nunca `:latest` em produção.
 
 ## 4. Histórico de Refatoração (Architectural Decisions)
@@ -1404,4 +1404,14 @@ ChatwootWebhookController         valida payload.inbox_id == config['inbox_id'] 
     4. **Webhooks fail-closed:** Asaas sem token nega + fim do mint por valor; TenantAsaas/Escavador com resolução por tenant; Whatsapp com vínculo instância↔tenant + `webhook_secret` opcional em `meta_data`; importação suspensa isolada com 410 (`BlockSuspendedImport`, sem tocar suspensos).
     5. **Segredos fora do código/views:** senha SAC via `meta_data.sac_password` do nó Chatwoot (ver `ARCHITECTURE_mothership_orient.md §16.1`); credenciais Asaas fora do HTML com keep-old.
 *   **Status:** **Verificado** — suíte Pest 117/117 em data-plane local (`tenant_a_test`, `tenant_b_test`, `mothership_test`) em 2026-09-09; 19 testes `active` em `v3.55.1` (7 + 12 promovidos). Branch `feature/priv-audit-onda-1-tenant-isolation-gates`. Sem bump de VERSION (aguarda release).
+
+### 4.92 Bump v3.56.0 — Chatwoot conversation em Leads + fix exclusão de Processo (DOCKER-002)
+
+*   **Contexto:** Commits `af3821dd` (fix remoção processo + log), `9ae71f95` (coluna `chatwoot_conversation_id` em `leads` + fillable no model) e `2c5e8d15` (dropdown de estágios + traduções pt_BR) consolidados sobre a `3.55.1` para teste na VPS via imagem Docker nova.
+*   **Decisões:**
+    1. `LawFirmServiceProvider::VERSION` → `3.56.0`; `docker/entrypoint.sh` → `LF v3.56.0`; `docker-stack-template.yml` → `suitezap/lawfirm:v3.56.0`.
+    2. Migration `2026_09_14_185800_add_chatwoot_conversation_id_to_leads_table` tornada idempotente (`hasTable`/`hasColumn` guards em `up`/`down`). Conexão default mantida de propósito: as 18 migrations irmãs de `Webkul/Lead` e a consolidada de `processos` usam `Schema::` sem conexão nomeada (o `migrate --path` roda na conexão default do tenant); forçar `Schema::connection('tenant')` quebraria o provisionamento.
+    3. Fix `ProcessoObserver::forceCleanupCalendarEvent`: `activities` não tem `tenant_id` — filtro por `user_id` do dono do processo (isolamento preservado via propriedade; sem tocar módulos suspensos de `Whatsapp/`).
+*   **Isolamento multi-tenant:** nenhuma query cross-tenant nova; `REDIS_PREFIX: ${TENANT_ID}_` inalterado no template.
+*   **Imagem:** `suitezap/lawfirm:v3.56.0` (+ `latest`) para `docker pull` na VPS. Task `DOCKER-002` (OpenCode).
 

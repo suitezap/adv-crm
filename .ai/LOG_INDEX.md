@@ -23,6 +23,8 @@
 | `KAN-001` | Antigravity | BLOCKED | `.ai/logs/ANTIGRAVITY.md` |
 | `SEC-HARD-002` | OpenCode | VERIFIED | `.ai/logs/OPENCODE.md#2026-09-12-sec-hard-002` |
 | `REPO-HYGIENE-002` | OpenCode | DONE | `.ai/logs/OPENCODE.md#2026-09-12-repo-hygiene-002` |
+| `DOCKER-002` | OpenCode | DONE | `.ai/logs/OPENCODE.md#2026-09-15-docker-002` |
+| `N8N-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-09-15-n8n-001` |
 
 - [2026-08-31 - Sincronização Completa de Tags Chatwoot](logs/ANTIGRAVITY.md#2026-08-31---sincronização-completa-de-tags-chatwoot)
 

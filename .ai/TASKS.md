@@ -25,3 +25,5 @@
 | `OS-001` | Documentation | DONE | Antigravity | - | OpenSpec spec created and feature de ajustes concluída. |
 | `REPO-HYGIENE-002` | Repositório | DONE | OpenCode | - | `openspec/` ignorado; specs removidas do remoto. Commit 02765c92, push origin/2.1. |
 | `KAN-001` | Kanban / Jurídico | BLOCKED | Antigravity | tag-maintenance | Implement Kanban jurídico com integração Chatwoot. Em espera: workspace fechado p/ atualização de tags (operador, 2026-09-12). |
+| `DOCKER-002` | Infra / Build | DONE | OpenCode | - | Bump v3.56.0 (chatwoot_conversation_id em leads + fix exclusão processo + pt_BR stages) + fix migration idempotente + build/push `suitezap/lawfirm:3.56.0` (digest `sha256:9a129f3a`) e latest. Incidente sync-conflict `.git/` documentado em `.ai/incidents/INC-2026-09-15-sync-conflict-git-index.md`. |
+| `N8N-001` | Integração / n8n & Ops | DONE | Antigravity | - | Correção da query/expressão no nó `Add Coluna Chatwoot` (execução #343644/#343703) usando `$json.id` e reconexão de fluxo; ativação do nó de verificação de saldo/SuiteCoins; limpeza segura de dados de leads e pessoas no tenant `advdf2g` (online). |

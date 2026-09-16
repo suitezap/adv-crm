@@ -1,0 +1,17 @@
+task_id: DOCKER-002
+owner: OPENCODE
+write_scope:
+  - packages/Webkul/Lead/src/Database/Migrations/2026_09_14_185800_add_chatwoot_conversation_id_to_leads_table.php
+  - packages/SuiteZap/LawFirm/src/Providers/LawFirmServiceProvider.php
+  - docker/entrypoint.sh
+  - docker-stack-template.yml
+  - ARCHITECTURE.md
+  - .ai/TASKS.md
+  - .ai/LOG_INDEX.md
+  - .ai/CURRENT.md
+started_at: "2026-09-15T12:00:00Z"
+last_checkpoint_at: "2026-09-15T12:30:00Z"
+base_commit: "826a4b63dce72cb6ca06b8ad4d23b9e0dcecdb05"
+workspace: "dev-environment"
+status: RELEASED
+note: "SYNC_CONFLICT_DETECTED em .git/index.sync-conflict-20260912-175416-Z572YPM — prosseguindo com autorização explícita do operador (2026-09-15). Arquivo de conflito NÃO tocado; .git deve ser excluído do Syncthing. Imagem suitezap/lawfirm:3.56.0 publicada e verificada."

@@ -265,3 +265,32 @@ Actions:
 
 Result:
 DONE
+
+---
+
+## [2026-09-15 22:00] N8N-001 — Correção Workflow Triagem e Manutenção de Dados Online <a id="2026-09-15-n8n-001"></a>
+
+Agent:
+ANTIGRAVITY
+
+Role:
+ORCHESTRATOR / OPS
+
+Objective:
+Investigar e corrigir erro na execução #343644/#343703 no workflow n8n 'Lawfirm - WhatsApp|Bot Triagem/Lead Tool', documentar a manutenção do nó de validação de saldo/SuiteCoins e realizar limpeza segura de leads/persons no banco de dados online do tenant advdf2g.
+
+Actions:
+1. Análise do Workflow n8n ('Lawfirm - WhatsApp|Bot Triagem/Lead Tool' - ID: gypGSqJOmW85ETQd):
+   - Confirmado nó de verificação de saldo/SuiteCoins ativado, garantindo a validação de créditos antes do atendimento automatizado pela IA.
+   - Diagnóstico do erro na execução #343644: nó 'Add Coluna Chatwoot' (MySQL) falhava com ExpressionError ('No path back to referenced node: ColetaCampos').
+   - Causa raiz: A query SQL referia $('ColetaCampos').item.json.tenant_id, porém o nó estava posicionado antes de ColetaCampos no grafo (após Query tenant).
+   - Correção aplicada: Atualizada query para usar `$json.id` (vindo diretamente do nó Query tenant, que provê o identificador do tenant, ex: 'advdf2g'):
+     `ALTER TABLE \`{{ $json.id }}\`.\`leads\` ADD COLUMN IF NOT EXISTS \`chatwoot_conversation_id\` INT NULL DEFAULT NULL;`
+   - Reconexão do grafo: `Query tenant` -> `Add Coluna Chatwoot` -> `ColetaCampos`.
+   - Workflow atualizado no draft e publicado (publish_workflow) como versão ativa em produção.
+2. Banco de Dados Online (Tenant advdf2g):
+   - Realizado backup preventivo das tabelas via script.
+   - Executada limpeza segura de registros de teste das tabelas `persons` e `leads`, mantendo a integridade referencial e vínculos consistentes.
+
+Result:
+DONE

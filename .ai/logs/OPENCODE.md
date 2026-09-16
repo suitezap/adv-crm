@@ -76,3 +76,16 @@
 - **Status:** IN_PROGRESS. `.gitignore`: `openspec/changes/` → `openspec/` inteiro (decisão do operador).
 - **Removidos do índice:** `openspec/specs/.gitkeep`, `openspec/specs/2026-09-09-ajustes-ui-e-melhorias.yaml` (arquivos mantidos no disco local, saem do remoto no push).
 - **Concluído:** commit 02765c92 + push `origin/2.1` (range 4001d39c..02765c92 inclui SEC-HARD-002 e9464049). Specs fora do GitHub; arquivos preservados no disco local. Status DONE, lock RELEASED.
+
+## [2026-09-15] DOCKER-002 — Bump v3.56.0 e Idempotência de Migrations <a id="2026-09-15-docker-002"></a>
+
+- **Status:** DONE.
+- **Objetivo:** Consolidar alterações de `chatwoot_conversation_id` em `leads`, exclusão de processo e traduções pt_BR com bump semântico para v3.56.0 e garantir idempotência de migrations.
+- **Arquivos:**
+  - `packages/Webkul/Lead/src/Database/Migrations/2026_09_14_185800_add_chatwoot_conversation_id_to_leads_table.php` (guards `Schema::hasTable` e `Schema::hasColumn` em `up()` e `down()`).
+  - `packages/SuiteZap/LawFirm/src/Providers/LawFirmServiceProvider.php` (`VERSION = '3.56.0'`).
+  - `docker/entrypoint.sh` (banner v3.56.0).
+  - `docker-stack-template.yml` (`suitezap/lawfirm:v3.56.0`).
+  - `ARCHITECTURE.md` (ADR §4.92 documentado).
+- **Build/Push:** Imagem oficial de produção construída e publicada no Docker Hub: `suitezap/lawfirm:3.56.0` (digest `sha256:9a129f3a...`) e `latest`.
+- **Lock:** RELEASED em `.ai/locks/DOCKER-002.lock.yaml`.
