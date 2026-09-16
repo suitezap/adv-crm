@@ -1,0 +1,17 @@
+task_id: SKILLS-UPD-001
+owner: OPENCODE
+write_scope:
+  - .stignore
+  - .ai/incidents/INC-2026-09-15-sync-conflict-git-index.md
+  - .ai/backups/skills-sops-pre-v17/
+  - .ai/locks/SKILLS-UPD-001.lock.yaml
+  - .ai/TASKS.md
+  - .ai/LOG_INDEX.md
+  - .ai/CURRENT.md
+  - .agents/skills/
+started_at: "2026-09-16T00:00:00Z"
+last_checkpoint_at: "2026-09-16T10:30:00Z"
+base_commit: "cc87bca39024df964e36ddf14af9d4b9ed4bd1b5"
+workspace: "dev-environment"
+status: RELEASED
+note: "GO (CONDICIONAL) do Orchestrator 2026-09-16. Estratégia (A) AAS Core + 8 skills curadas. VERIFIED após smoke test na IDE confirmado pelo operador. Nada a commitar além do escopo."

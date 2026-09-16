@@ -1,0 +1,10 @@
+(?d).git
+(?d).git/**
+.env
+*.key
+*.pem
+/storage/logs/**
+/reports/**
+/coverage/**
+/test-results/**
+/playwright-report/**

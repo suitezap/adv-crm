@@ -25,6 +25,7 @@
 | `REPO-HYGIENE-002` | OpenCode | DONE | `.ai/logs/OPENCODE.md#2026-09-12-repo-hygiene-002` |
 | `DOCKER-002` | OpenCode | DONE | `.ai/logs/OPENCODE.md#2026-09-15-docker-002` |
 | `N8N-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-09-15-n8n-001` |
+| `SKILLS-UPD-001` | OpenCode | VERIFIED | `.ai/logs/OPENCODE.md#2026-09-16-skills-upd-001` |
 
 - [2026-08-31 - Sincronização Completa de Tags Chatwoot](logs/ANTIGRAVITY.md#2026-08-31---sincronização-completa-de-tags-chatwoot)
 
