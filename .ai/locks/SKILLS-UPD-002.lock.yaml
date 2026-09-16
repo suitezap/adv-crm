@@ -1,0 +1,15 @@
+task_id: SKILLS-UPD-002
+owner: OPENCODE
+write_scope:
+  - .ai/locks/SKILLS-UPD-002.lock.yaml
+  - .ai/TASKS.md
+  - .ai/LOG_INDEX.md
+  - .ai/CURRENT.md
+  - .agents/skills/
+  - .ai/backups/
+started_at: "2026-09-16T12:55:00Z"
+last_checkpoint_at: "2026-09-16T13:00:00Z"
+base_commit: "33c48e7ca35d28162b4fa1c74300b7aec51f3509"
+workspace: "dev-environment"
+status: ACTIVE
+note: "GO do operador 2026-09-16. Instalar 3 skills UI v17.3.0 (laravel-expert, frontend-dev-guidelines, redesign-existing-projects) em .agents/skills/ via staging absoluto. ui-ux-pro-max excluído (peso + sudo apt no guia)."
