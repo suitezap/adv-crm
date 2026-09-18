@@ -53,7 +53,7 @@
 @else
     <div id="lf-tools-panel" class="mt-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
 
-        {{-- Header — same pattern as assistants page --}}
+        {{-- Header --}}
         <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
             <div class="flex items-center gap-2">
                 <span class="icon-settings-flow text-base text-violet-600 dark:text-violet-400"></span>
@@ -62,56 +62,97 @@
             <p class="text-xs text-gray-500 dark:text-gray-400">Ferramentas de apoio à qualificação</p>
         </div>
 
-        {{-- Tools Grid — 2 cols, compact card style matching /admin/juridico/assistants --}}
-        <div class="grid grid-cols-2 gap-3 p-4 max-sm:grid-cols-1">
-            @foreach($tools as $tool)
-                @php
-                    $tpl = $toolTemplates[$tool['slug']] ?? null;
-                    $btnTitle = $tpl->title ?? $tool['slug'];
-                    $btnDesc = $tpl->description ?? '';
-                    $stageId = $tool['stageId'] ?? 'null';
-                @endphp
-                <div
-                    class="flex flex-col justify-between rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-violet-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-violet-600">
-                    <div>
-                        {{-- Category badge --}}
-                        <span
-                            class="mb-2 inline-flex items-center rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-900/20 dark:text-violet-300">
-                            &#9679; IA
-                        </span>
+        {{-- Split layout: Description (left) | Assistant buttons (right) --}}
+        <div class="flex flex-col gap-0 sm:flex-row">
 
-                        {{-- Icon + Title --}}
-                        <h4 class="text-sm font-bold text-gray-800 dark:text-white">
-                            {{ $tool['icon'] }} {{ $btnTitle }}
-                        </h4>
+            {{-- LEFT: Lead Description --}}
+            <div class="flex-1 border-b border-gray-100 p-4 dark:border-gray-800 sm:border-b-0 sm:border-r">
+                <p class="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                    <span>📝</span> Descrição
+                </p>
+                <div id="lf-lead-desc-box"
+                    class="max-h-36 overflow-y-auto rounded-md border border-gray-100 bg-gray-50 p-3 text-xs leading-relaxed text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-300">
+                    {!! nl2br(e($lead->description ?? 'Sem descrição.')) !!}
+                </div>
+            </div>
 
-                        {{-- Description --}}
-                        @if($btnDesc)
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $btnDesc }}</p>
-                        @endif
-                    </div>
-
-                    {{-- Action button --}}
-                    <div class="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
-                        <button type="button" data-slug="{{ $tool['slug'] }}" data-title="{{ $btnTitle }}"
+            {{-- RIGHT: Compact assistant buttons --}}
+            <div class="flex shrink-0 flex-col justify-center gap-2 p-4 sm:w-48">
+                <p class="mb-0.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                    <span>🤖</span> Assistentes IA
+                </p>
+                @foreach($tools as $tool)
+                    @php
+                        $tpl      = $toolTemplates[$tool['slug']] ?? null;
+                        $btnTitle = $tpl->title ?? $tool['slug'];
+                        $btnDesc  = $tpl->description ?? '';
+                        $stageId  = $tool['stageId'] ?? 'null';
+                        $tooltip  = $btnTitle . ($btnDesc ? ' — ' . $btnDesc : '');
+                    @endphp
+                    <div class="lf-tool-tooltip-wrap">
+                        <button type="button"
+                            data-slug="{{ $tool['slug'] }}"
+                            data-title="{{ $btnTitle }}"
                             data-stage="{{ $stageId }}"
                             onclick="window.lfToolsPanel.open(this.dataset.slug, this.dataset.title, this.dataset.stage)"
-                            class="lf-btn-primary">
-                            ✨ Usar Assistente
+                            class="lf-tool-icon-btn"
+                            aria-label="{{ $btnTitle }}">
+                            <span class="text-base leading-none">{{ $tool['icon'] }}</span>
+                            <span class="lf-tool-btn-label text-xs font-semibold">✨</span>
                         </button>
+                        <div class="lf-tool-tooltip" role="tooltip">
+                            <span class="font-semibold">{{ $tool['icon'] }} {{ $btnTitle }}</span>
+                            @if($btnDesc)
+                                <span class="mt-0.5 block text-gray-300">{{ $btnDesc }}</span>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+
+                {{-- ── Chatwoot Chat Button ── --}}
+                @if($lead->chatwoot_conversation_id)
+                <div class="lf-tool-tooltip-wrap">
+                    <button type="button"
+                        onclick="window.lfChatwootModal && window.lfChatwootModal.open()"
+                        class="lf-tool-icon-btn"
+                        aria-label="Conversa Chatwoot">
+                        <span class="text-base leading-none">&#x1F4AC;</span>
+                        <span class="lf-tool-btn-label text-xs font-semibold" style="color:#a78bfa;">Chat</span>
+                    </button>
+                    <div class="lf-tool-tooltip" role="tooltip">
+                        <span class="font-semibold">&#x1F4AC; Chatwoot</span>
+                        <span class="mt-0.5 block text-gray-300">Abrir conversa do lead</span>
                     </div>
                 </div>
-            @endforeach
+                @else
+                <div class="lf-tool-tooltip-wrap">
+                    <button type="button" disabled
+                        class="lf-tool-icon-btn opacity-40 cursor-not-allowed"
+                        aria-label="Sem conversa Chatwoot">
+                        <span class="text-base leading-none">&#x1F4ED;</span>
+                        <span class="lf-tool-btn-label text-xs font-semibold">Chat</span>
+                    </button>
+                    <div class="lf-tool-tooltip" role="tooltip">
+                        <span class="font-semibold">&#x1F4AC; Chatwoot</span>
+                        <span class="mt-0.5 block text-gray-300">Sem conversa vinculada</span>
+                    </div>
+                </div>
+                @endif
+
+            </div>
         </div>
 
         {{-- Footer Warning --}}
         <div class="border-t border-gray-200 px-4 py-2 dark:border-gray-800">
             <p class="flex items-center gap-1 text-[11px] text-orange-600 dark:text-orange-400">
-                ⚠️ Marque este Lead como GANHO no Pipeline para iniciar o Processo Judicial.
+                &#x26A0;&#xFE0F; Marque este Lead como GANHO no Pipeline para iniciar o Processo Judicial.
             </p>
         </div>
     </div>
 @endif
+
+{{-- Chatwoot Chat Modal --}}
+@include('lawfirm::leads.chatwoot-chat-modal')
 
 {{-- =============== MODAL (moved to body via JS) =============== --}}
 <div id="lf-tools-modal" style="display:none;">
@@ -283,6 +324,81 @@
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+        }
+
+        /* ── Compact tool icon buttons (right column) ── */
+        .lf-tool-tooltip-wrap {
+            position: relative;
+        }
+
+        .lf-tool-icon-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            width: 100%;
+            padding: 0.45rem 0.75rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            border: 1.5px solid #ede9fe;
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+            color: #6d28d9;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .lf-tool-icon-btn:hover {
+            border-color: #7c3aed;
+            background: linear-gradient(135deg, #7c3aed 0%, #9d4edd 100%);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+        }
+
+        /* Tooltip bubble */
+        .lf-tool-tooltip {
+            display: none;
+            position: absolute;
+            right: 0;
+            bottom: calc(100% + 8px);
+            width: 220px;
+            background: #1e1b4b;
+            color: #e0e7ff;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            padding: 0.5rem 0.7rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .lf-tool-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            right: 1rem;
+            border: 6px solid transparent;
+            border-top-color: #1e1b4b;
+        }
+
+        .lf-tool-tooltip-wrap:hover .lf-tool-tooltip {
+            display: block;
+        }
+
+        /* Dark mode adjustments for description box */
+        @media (prefers-color-scheme: dark) {
+            .lf-tool-icon-btn {
+                border-color: #4c1d95;
+                background: linear-gradient(135deg, #2e1065 0%, #3b0764 100%);
+                color: #c4b5fd;
+            }
+            .lf-tool-icon-btn:hover {
+                background: linear-gradient(135deg, #7c3aed 0%, #9d4edd 100%);
+                color: #fff;
+            }
         }
 
         /* Overlay */

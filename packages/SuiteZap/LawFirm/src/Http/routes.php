@@ -104,6 +104,7 @@ Route::middleware(['web', 'admin_locale', 'user'])
         require __DIR__.'/Routes/admin-escavador.php';
         require __DIR__.'/Routes/admin-datajud.php';
         require __DIR__.'/Routes/admin-tenant-finance.php';
+        require __DIR__.'/Routes/admin-atendimento-leads.php';
     });
 
 // ============================================================================
