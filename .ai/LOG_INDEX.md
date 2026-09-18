@@ -27,6 +27,7 @@
 | `N8N-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-09-15-n8n-001` |
 | `SKILLS-UPD-001` | OpenCode | VERIFIED | `.ai/logs/OPENCODE.md#2026-09-16-skills-upd-001` |
 | `SKILLS-UPD-002` | OpenCode | IMPLEMENTED_NOT_VERIFIED | `.ai/logs/OPENCODE.md#2026-09-16-skills-upd-002` |
+| `DOCKER-003` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-09-18-docker-003` |
 
 - [2026-08-31 - Sincronização Completa de Tags Chatwoot](logs/ANTIGRAVITY.md#2026-08-31---sincronização-completa-de-tags-chatwoot)
 

@@ -1,0 +1,16 @@
+task_id: DOCKER-003
+owner: ANTIGRAVITY
+write_scope:
+  - packages/SuiteZap/LawFirm/src/Providers/LawFirmServiceProvider.php
+  - docker-stack-template.yml
+  - docker/entrypoint.sh
+  - ARCHITECTURE.md
+  - .ai/TASKS.md
+  - .ai/CURRENT.md
+  - .ai/LOG_INDEX.md
+  - .ai/logs/ANTIGRAVITY.md
+started_at: "2026-09-18T23:05:00Z"
+last_checkpoint_at: "2026-09-18T23:05:00Z"
+base_commit: "4f50421e"
+workspace: "local-ide"
+status: RELEASED

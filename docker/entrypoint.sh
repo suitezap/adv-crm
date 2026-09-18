@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Iniciando LawFirm SaaS v6.2 (LF v3.56.0)..."
+echo "🚀 Iniciando LawFirm SaaS v6.2 (LF v3.56.1)..."
 
 # 1. Setup Inicial
 cd /var/www/html

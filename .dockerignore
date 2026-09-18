@@ -47,5 +47,5 @@ storage/escavador/*
 /inject_massive_prices.php
 /patch_escavador.php
 /generate_escavador_parts.php
-/migrate_macros*.php
-/update_*.phpimplementation_plan.md
+/update_*.php
+/implementation_plan.md

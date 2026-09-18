@@ -294,3 +294,36 @@ Actions:
 
 Result:
 DONE
+
+---
+
+## [2026-09-18 20:25] DOCKER-003 — Bump v3.56.1 & Publicação no Docker Hub <a id="2026-09-18-docker-003"></a>
+
+Agent:
+ANTIGRAVITY
+
+Role:
+ORCHESTRATOR / BUILD & RELEASE
+
+Objective:
+Elevar a versão semântica para v3.56.1 consolidando o modal de chat do Chatwoot no Lead, rotas do controller proxy e compatibilidade com triggers EAV do n8n; validar a higiene estrita da imagem de produção e publicar no Docker Hub sob as tags `3.56.1`, `v3.56.1` e `latest`.
+
+Actions:
+1. Version bump e sincronização documental:
+   - `packages/SuiteZap/LawFirm/src/Providers/LawFirmServiceProvider.php` (VERSION = '3.56.1')
+   - `docker/entrypoint.sh` (banner LF v3.56.1)
+   - `docker-stack-template.yml` (`image: suitezap/lawfirm:v3.56.1`)
+   - `ARCHITECTURE.md` (ADR 4.93 registrado)
+   - `.dockerignore` sanitizado
+2. Build da imagem Docker:
+   - `docker build -t suitezap/lawfirm:3.56.1 -t suitezap/lawfirm:v3.56.1 -t suitezap/lawfirm:latest .`
+3. Validação de higiene estrita (AGENTS.md §6):
+   - Container inspecionado: confirmed absence of `tests/`, `quality/`, `.ai/`, `.agents/`, `.github/`, `docker/testing/`, `reports/`, `coverage/`, `test-results/`, `playwright-report/`.
+   - Bootstrap do framework validado com sucesso (`Laravel Framework 10.50.0`).
+4. Publicação no Docker Hub:
+   - `suitezap/lawfirm:3.56.1` (digest: `sha256:0401da4e36bf9cc833304a088a13e733a355d3146fb473ac1dd83e7d7f75d7e0`)
+   - `suitezap/lawfirm:v3.56.1` (digest: `sha256:0401da4e36bf9cc833304a088a13e733a355d3146fb473ac1dd83e7d7f75d7e0`)
+   - `suitezap/lawfirm:latest` (digest: `sha256:0401da4e36bf9cc833304a088a13e733a355d3146fb473ac1dd83e7d7f75d7e0`)
+
+Result:
+DONE

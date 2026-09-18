@@ -1415,3 +1415,13 @@ ChatwootWebhookController         valida payload.inbox_id == config['inbox_id'] 
 *   **Isolamento multi-tenant:** nenhuma query cross-tenant nova; `REDIS_PREFIX: ${TENANT_ID}_` inalterado no template.
 *   **Imagem:** `suitezap/lawfirm:v3.56.0` (+ `latest`) para `docker pull` na VPS. Task `DOCKER-002` (OpenCode).
 
+### 4.93 Bump v3.56.1 — Chatwoot Lead Chat Modal e Sincronia de EAV/Triggers (DOCKER-003)
+
+*   **Contexto:** Adição de interface de chat do Chatwoot diretamente na visualização de Leads (`ChatwootLeadController`, rotas `admin-atendimento-leads.php`, modal Blade e botão de ação no painel de ferramentas), além de suporte/triggers para sincronia automática de EAV (`attribute_values`) em inserções externas (n8n triagem).
+*   **Decisões:**
+    1. `LawFirmServiceProvider::VERSION` → `3.56.1`; `docker/entrypoint.sh` → `LF v3.56.1`; `docker-stack-template.yml` → `suitezap/lawfirm:v3.56.1`.
+    2. Endpoint interno proxy `ChatwootLeadController` com gates de autenticação CRM para busca de mensagens e envio seguro para a API do Chatwoot através de `ChatwootService`.
+    3. Triggers automáticos no MySQL (`after_person_insert`, `after_lead_insert`) para manter consistência bidirecional com arquitetura EAV do Krayin em inserções direct-to-database.
+*   **Isolamento multi-tenant:** rotas com model-binding scoped ao tenant; sem queries cross-tenant; `REDIS_PREFIX` inalterado.
+*   **Imagem:** `suitezap/lawfirm:v3.56.1`, `suitezap/lawfirm:3.56.1` e `suitezap/lawfirm:latest` para `docker push`/`pull`. Task `DOCKER-003` (Antigravity).
+
