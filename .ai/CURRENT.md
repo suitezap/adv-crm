@@ -35,7 +35,7 @@ Follow-ups documentados em `.ai/TASKS.md`: `DOC-001`, `GAP-001`, `KAN-001` (rest
 ## 5. Quem está trabalhando?
 - **Antigravity (Orchestrator):** Concluiu `DOCKER-003` (bump v3.56.1, build e push Docker Hub com higiene estrita), suporte ao workflow n8n (`N8N-001`), triggers EAV e Chatwoot Lead Chat modal.
 - **Hermes (QA Architect):** VPS reconfigurada — aguarda revalidação de ambiente QA.
-- **OpenCode (Implementer):** Entregou `DOCKER-002` (bump v3.56.0 + fix migration idempotente) e hygiene. `SKILLS-UPD-001` `VERIFIED`. `SKILLS-UPD-002` (`IMPLEMENTED_NOT_VERIFIED`: 3 skills UI v17.3.0 instaladas, 19/19 verificados; pendente smoke test na IDE).
+- **OpenCode (Implementer):** Entregou `DOCKER-002` (bump v3.56.0 + fix migration idempotente) e hygiene. `SKILLS-UPD-001` e `SKILLS-UPD-002` concluídas e integradas com sucesso (**DONE**).
 
 ---
 

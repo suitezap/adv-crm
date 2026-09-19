@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-16T12:58:00Z",
+  "entries": [
+    "backend-dev-guidelines",
+    "brainstorming",
+    "concise-planning",
+    "e2e-testing",
+    "frontend-dev-guidelines",
+    "laravel-expert",
+    "redesign-existing-projects",
+    "skill-security-audit",
+    "systematic-debugging",
+    "test-fixing",
+    "verification-before-completion"
+  ]
+}

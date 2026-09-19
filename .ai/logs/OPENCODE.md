@@ -89,3 +89,14 @@
   - `ARCHITECTURE.md` (ADR §4.92 documentado).
 - **Build/Push:** Imagem oficial de produção construída e publicada no Docker Hub: `suitezap/lawfirm:3.56.0` (digest `sha256:9a129f3a...`) e `latest`.
 - **Lock:** RELEASED em `.ai/locks/DOCKER-002.lock.yaml`.
+
+## [2026-09-19] SKILLS-UPD-002 — Catalogação e Finalização de Skills AAS v17.3.0 <a id="2026-09-19-skills-upd-002"></a>
+
+- **Status:** DONE.
+- **Objetivo:** Validação final e catalogação das skills AAS v17.3.0 em `.agents/skills/` (incluindo `laravel-expert`, `frontend-dev-guidelines`, `redesign-existing-projects` e SOPs de governança), liberação do lock e higienização do repositório.
+- **Evidências:**
+  - Validação documental (`validate_test_docs.py`): 0 erros.
+  - Scan de segurança Syncthing (`*sync-conflict*`): 0 novos conflitos no workspace sincronizado.
+  - Smoke test e verificação dos manifestos `.antigravity-install-manifest.json` concluídos.
+- **Lock:** RELEASED em `.ai/locks/SKILLS-UPD-002.lock.yaml`.
+
