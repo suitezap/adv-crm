@@ -1,0 +1,17 @@
+task_id: DOCKER-004
+owner: OPENCODE
+write_scope:
+  - packages/SuiteZap/LawFirm/src/Providers/LawFirmServiceProvider.php
+  - docker-stack-template.yml
+  - docker/entrypoint.sh
+  - ARCHITECTURE.md
+  - .ai/TASKS.md
+  - .ai/CURRENT.md
+  - .ai/LOG_INDEX.md
+  - .ai/locks/DOCKER-004.lock.yaml
+started_at: "2026-09-23T00:00:00Z"
+last_checkpoint_at: "2026-09-23T01:00:00Z"
+base_commit: "0a0237df"
+workspace: "dev-environment"
+status: RELEASED
+note: "GO do operador 2026-09-23. Bump 3.56.2 + ADR 4.94 + build/push suitezap/lawfirm (:3.56.2, :v3.56.2, :latest). Build a partir do estado atual do disco (inclui arquivos de atendimento/chatwoot não commitados — documentado no ADR)."

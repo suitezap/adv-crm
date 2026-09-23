@@ -1425,3 +1425,12 @@ ChatwootWebhookController         valida payload.inbox_id == config['inbox_id'] 
 *   **Isolamento multi-tenant:** rotas com model-binding scoped ao tenant; sem queries cross-tenant; `REDIS_PREFIX` inalterado.
 *   **Imagem:** `suitezap/lawfirm:v3.56.1`, `suitezap/lawfirm:3.56.1` e `suitezap/lawfirm:latest` para `docker push`/`pull`. Task `DOCKER-003` (Antigravity).
 
+### 4.94 Bump v3.56.2 — Consolidação Atendimento/Chatwoot sobre 3.56.1 (DOCKER-004)
+
+*   **Contexto:** Estado atual do disco após a `3.56.1`: rotas `admin-atendimento-leads.php`, proxy `ChatwootLeadController`, modal `chatwoot-chat-modal.blade.php`, ajustes em `routes.php` e `lead-tools-panel.blade.php` (parte ainda não commitada no momento do build — a imagem reflete o disco, não um commit). Tooling de skills AAS v17.3.0 (`SKILLS-UPD-001/002`) é excluído da imagem por higiene (`.agents/` no `.dockerignore`).
+*   **Decisões:**
+    1. `LawFirmServiceProvider::VERSION` → `3.56.2`; `docker/entrypoint.sh` → `LF v3.56.2`; `docker-stack-template.yml` → `suitezap/lawfirm:v3.56.2`.
+    2. Rebuild completo com `docker build -t suitezap/lawfirm:3.56.2 -t suitezap/lawfirm:v3.56.2 -t suitezap/lawfirm:latest .` e push das três tags.
+*   **Isolamento multi-tenant:** sem queries cross-tenant novas; `REDIS_PREFIX` inalterado; sem tocar módulos suspensos de `Whatsapp/`.
+*   **Imagem:** `suitezap/lawfirm:v3.56.2`, `suitezap/lawfirm:3.56.2` e `suitezap/lawfirm:latest` para `docker push`/`pull`. Task `DOCKER-004` (OpenCode).
+

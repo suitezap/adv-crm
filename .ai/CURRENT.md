@@ -28,6 +28,7 @@ Follow-ups documentados em `.ai/TASKS.md`: `DOC-001`, `GAP-001`, `KAN-001` (rest
 - **`QA-DATA-001`** foi **DESBLOQUEADA**: com a conclusão de `DOCKER-001`/`DOCKER-002` e a publicação de `suitezap/lawfirm:3.56.0` e `latest` (com higiene estrita e Laravel operacional), o runner de QA pode prosseguir com fixtures e dados multi-tenant.
 - **`DOCKER-002`** concluída (**DONE**). Imagem `suitezap/lawfirm:3.56.0` publicada no Docker Hub.
 - **`DOCKER-003`** concluída (**DONE**). Imagem `suitezap/lawfirm:3.56.1`, `suitezap/lawfirm:v3.56.1` e `latest` (digest `sha256:0401da4e36bf9cc833304a088a13e733a355d3146fb473ac1dd83e7d7f75d7e0`) publicada no Docker Hub com higiene estrita.
+- **`DOCKER-004`** concluída (**VERIFIED**, OpenCode): bump v3.56.2 + ADR 4.94; `suitezap/lawfirm:3.56.2`, `:v3.56.2`, `:latest` (digest `sha256:02b7b37e`) publicadas com higiene estrita.
 - A tarefa `KAN-001` segue `BLOCKED` (aguardando manutenção de tags).
 
 ---
