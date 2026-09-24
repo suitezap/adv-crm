@@ -243,11 +243,14 @@ class ChatwootService
                     'status'     => $response->status(),
                     'body'       => $response->body(),
                 ]);
+
                 return false;
             }
+
             return true;
         } catch (\Throwable $e) {
             Log::error('[ChatwootService] addContactLabels exception: '.$e->getMessage());
+
             return false;
         }
     }
@@ -264,6 +267,7 @@ class ChatwootService
             return $response->successful() ? ($response->json('payload') ?? []) : [];
         } catch (\Throwable $e) {
             Log::error('[ChatwootService] getContactLabels exception: '.$e->getMessage());
+
             return [];
         }
     }
@@ -509,7 +513,7 @@ class ChatwootService
     public function syncContactLabels(int $contactId, string|array $newStageLabels, array $stagePool): bool
     {
         $atLeastOne = false;
-        
+
         // Chatwoot stores all labels in lowercase. Normalise the new labels and
         // the pool so that array_diff() can match them correctly regardless of
         // how the caller passed them in (e.g. 'CAS_PROD' vs 'cas_prod').
@@ -520,7 +524,7 @@ class ChatwootService
         $currentContactLabels = array_map('mb_strtolower', $this->getContactLabels($contactId));
         $filteredContact = array_values(array_diff($currentContactLabels, $stagePoolLower));
         $newContactLabels = array_values(array_unique(array_merge($filteredContact, $newLabelsArray)));
-        
+
         $successContact = $this->addContactLabels($contactId, $newContactLabels);
         if ($successContact) {
             $atLeastOne = true;
@@ -538,6 +542,7 @@ class ChatwootService
                 'contact_id' => $contactId,
                 'labels'     => (array) $newStageLabels,
             ]);
+
             return $atLeastOne;
         }
 
