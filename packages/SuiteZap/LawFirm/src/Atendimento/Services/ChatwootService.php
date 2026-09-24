@@ -227,6 +227,47 @@ class ChatwootService
         }
     }
 
+    public function addContactLabels(int $contactId, array $labels): bool
+    {
+        try {
+            $url = $this->accountUrl("contacts/{$contactId}/labels");
+
+            $response = Http::timeout(10)
+                ->withHeaders($this->managementHeaders())
+                ->post($url, ['labels' => $labels]);
+
+            if (! $response->successful()) {
+                Log::warning('[ChatwootService] addContactLabels falhou.', [
+                    'contact_id' => $contactId,
+                    'labels'     => $labels,
+                    'status'     => $response->status(),
+                    'body'       => $response->body(),
+                ]);
+                return false;
+            }
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('[ChatwootService] addContactLabels exception: '.$e->getMessage());
+            return false;
+        }
+    }
+
+    public function getContactLabels(int $contactId): array
+    {
+        try {
+            $url = $this->accountUrl("contacts/{$contactId}/labels");
+
+            $response = Http::timeout(10)
+                ->withHeaders($this->managementHeaders())
+                ->get($url);
+
+            return $response->successful() ? ($response->json('payload') ?? []) : [];
+        } catch (\Throwable $e) {
+            Log::error('[ChatwootService] getContactLabels exception: '.$e->getMessage());
+            return [];
+        }
+    }
+
     // =========================================================================
     // Priority (Management — User Access Token required)
     // =========================================================================
@@ -467,23 +508,38 @@ class ChatwootService
      */
     public function syncContactLabels(int $contactId, string|array $newStageLabels, array $stagePool): bool
     {
-        $conversations = $this->getContactConversations($contactId);
-
-        if (empty($conversations)) {
-            Log::info('[ChatwootService] syncContactLabels: nenhuma conversa encontrada.', [
-                'contact_id' => $contactId,
-                'labels'     => (array) $newStageLabels,
-            ]);
-
-            return false;
-        }
-
         $atLeastOne = false;
+        
         // Chatwoot stores all labels in lowercase. Normalise the new labels and
         // the pool so that array_diff() can match them correctly regardless of
         // how the caller passed them in (e.g. 'CAS_PROD' vs 'cas_prod').
         $newLabelsArray = array_map('mb_strtolower', (array) $newStageLabels);
         $stagePoolLower = array_map('mb_strtolower', $stagePool);
+
+        // 1. Sync Contact Labels
+        $currentContactLabels = array_map('mb_strtolower', $this->getContactLabels($contactId));
+        $filteredContact = array_values(array_diff($currentContactLabels, $stagePoolLower));
+        $newContactLabels = array_values(array_unique(array_merge($filteredContact, $newLabelsArray)));
+        
+        $successContact = $this->addContactLabels($contactId, $newContactLabels);
+        if ($successContact) {
+            $atLeastOne = true;
+            Log::info('[ChatwootService] syncContactLabels: etiquetas sincronizadas no contato.', [
+                'contact_id'      => $contactId,
+                'labels'          => $newContactLabels,
+            ]);
+        }
+
+        // 2. Sync Conversations Labels
+        $conversations = $this->getContactConversations($contactId);
+
+        if (empty($conversations)) {
+            Log::info('[ChatwootService] syncContactLabels: nenhuma conversa aberta encontrada para sincronizar.', [
+                'contact_id' => $contactId,
+                'labels'     => (array) $newStageLabels,
+            ]);
+            return $atLeastOne;
+        }
 
         foreach ($conversations as $conversation) {
             $convId = $conversation['id'] ?? null;
@@ -505,7 +561,7 @@ class ChatwootService
 
             if ($success) {
                 $atLeastOne = true;
-                Log::info('[ChatwootService] syncContactLabels: etiquetas sincronizadas.', [
+                Log::info('[ChatwootService] syncContactLabels: etiquetas sincronizadas na conversa.', [
                     'contact_id'      => $contactId,
                     'conversation_id' => $convId,
                     'labels'          => $newLabels,
