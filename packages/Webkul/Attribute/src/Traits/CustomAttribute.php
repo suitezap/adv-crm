@@ -77,7 +77,11 @@ trait CustomAttribute
                     continue;
                 }
 
-                $attributes[$attribute->code] = $this->getCustomAttributeValue($attribute);
+                $customValue = $this->getCustomAttributeValue($attribute);
+
+                if ($customValue !== null || ! array_key_exists($attribute->code, parent::attributesToArray())) {
+                    $attributes[$attribute->code] = $customValue;
+                }
             }
         }
 
