@@ -187,9 +187,8 @@
             }, 50);
         }
 
-        // Funções para controle do Modal da Agenda
         function abrirAgenda() {
-            window.open("{{ route('admin.lawfirm.agenda.index') }}?clean=true", 'AgendaJuridica', 'width=1200,height=800,left=100,top=100');
+            window.open("{{ route('admin.lawfirm.agenda.viewer') }}?clean=true", 'AgendaJuridica', 'width=1200,height=800,left=100,top=100');
         }
 
         // Initialize explicitly on load for existing inputs

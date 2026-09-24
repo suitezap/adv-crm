@@ -590,7 +590,7 @@ class MotherShipService
         return [
             'base_url'           => $baseUrl,
             'api_key'            => $node->api_key,                                                  // Bot token — POST /messages
-            'account_id'         => $meta['account_id'] ?? $tenantConfig->chatwoot_inbox_id ?? null, // ID numérico da CONTA Chatwoot
+            'account_id'         => $tenantConfig->chatwoot_inbox_id ?? $meta['account_id'] ?? null, // ID numérico da CONTA Chatwoot
             'inbox_id'           => $tenantConfig->chatwoot_channel_inbox_id ?? null,                // Inbox Atendimento Humano
             'assistant_inbox_id' => $tenantConfig->chatwoot_assistant_inbox_id ?? null,              // Inbox Assistente IA (Jul/2026)
             'access_token'       => $tenantConfig->chatwoot_webhook_token ?? null,                   // User Access Token — /labels, /contacts

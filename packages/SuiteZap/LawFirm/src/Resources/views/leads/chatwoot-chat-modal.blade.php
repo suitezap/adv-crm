@@ -204,7 +204,7 @@ function buildModal(){
 function buildInnerHTML(){
     var convId  = @json($convId);
     var convLabel = convId ? ('&#x1F4AC; Conversa #' + convId) : 'Sem conversa vinculada';
-    var calendarUrl = '{{ route("admin.lawfirm.agenda.index") }}'
+    var calendarUrl = '{{ route("admin.lawfirm.agenda.viewer") }}'
         + '?clean=true'
         + '&conversa_id=' + encodeURIComponent(@json((string) $convId))
         + '&nome=' + encodeURIComponent(@json((string) $leadPerson))
