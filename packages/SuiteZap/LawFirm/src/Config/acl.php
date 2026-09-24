@@ -147,7 +147,7 @@ return [
     [
         'key'   => 'lawfirm.agenda.view',
         'name'  => 'Visualizar Agenda',
-        'route' => ['admin.lawfirm.agenda.index', 'admin.lawfirm.agenda.events'],
+        'route' => ['admin.lawfirm.agenda.index', 'admin.lawfirm.agenda.viewer', 'admin.lawfirm.agenda.events'],
         'sort'  => 1,
     ],
     [

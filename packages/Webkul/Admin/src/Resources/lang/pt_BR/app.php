@@ -2107,7 +2107,7 @@ return [
             'trash'   => 'Lixeira',
             'setting' => 'Configurações',
         ],
-        'activities'           => 'Atividades',
+        'activities'           => 'Agenda',
         'contacts'             => 'Contatos',
         'persons'              => 'Pessoas',
         'person'               => 'Pessoa',

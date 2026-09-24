@@ -59,7 +59,7 @@ return [
     [
         'key'        => 'lawfirm.agenda',
         'name'       => 'Agenda',
-        'route'      => 'admin.lawfirm.agenda.index',
+        'route'      => 'admin.lawfirm.agenda.viewer',
         'sort'       => 4,
         'icon-class' => 'icon-calendar',
         'permission' => 'lawfirm.agenda.view',
