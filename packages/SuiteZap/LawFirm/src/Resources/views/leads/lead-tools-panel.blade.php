@@ -71,7 +71,7 @@
                     <span>📝</span> Descrição
                 </p>
                 <div id="lf-lead-desc-box"
-                    class="max-h-36 overflow-y-auto rounded-md border border-gray-100 bg-gray-50 p-3 text-xs leading-relaxed text-gray-700 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-300">
+                    class="max-h-36 overflow-y-auto rounded-md border border-gray-100 bg-gray-50 p-3 text-[0.8125rem] leading-relaxed text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
                     {!! nl2br(e($lead->description ?? 'Sem descrição.')) !!}
                 </div>
             </div>
@@ -331,6 +331,7 @@
             position: relative;
         }
 
+        /* Light mode: subtle violet tint, soft background, readable text */
         .lf-tool-icon-btn {
             display: flex;
             align-items: center;
@@ -341,23 +342,43 @@
             font-size: 0.8125rem;
             font-weight: 600;
             border-radius: 0.5rem;
-            border: 1.5px solid #ede9fe;
-            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-            color: #6d28d9;
+            border: 1.5px solid #ddd6fe;          /* violet-200 */
+            background: #f5f3ff;                   /* violet-50 */
+            color: #6d28d9;                        /* violet-700 — good contrast on white */
             cursor: pointer;
-            transition: all 0.15s;
+            transition: all 0.18s ease;
             white-space: nowrap;
         }
 
         .lf-tool-icon-btn:hover {
-            border-color: #7c3aed;
-            background: linear-gradient(135deg, #7c3aed 0%, #9d4edd 100%);
-            color: #fff;
+            border-color: #7c3aed;                 /* violet-600 */
+            background: #ede9fe;                   /* violet-100 */
+            color: #5b21b6;                        /* violet-800 */
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.18);
         }
 
-        /* Tooltip bubble */
+        .lf-tool-icon-btn:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: none;
+        }
+
+        /* Dark mode: use .dark class (Krayin/Tailwind class-based strategy)
+           NOT @media (prefers-color-scheme: dark) which is ignored by Krayin */
+        .dark .lf-tool-icon-btn {
+            border-color: #4c1d95;                 /* violet-900 */
+            background: #1e1b4b26;                 /* indigo-950 at 15% opacity — subtle */
+            color: #c4b5fd;                        /* violet-300 — readable on dark bg */
+        }
+
+        .dark .lf-tool-icon-btn:hover {
+            border-color: #7c3aed;                 /* violet-600 */
+            background: #4c1d9533;                 /* violet-900 at 20% */
+            color: #e9d5ff;                        /* violet-200 — bright enough */
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.30);
+        }
+
+        /* ── Tooltip bubble ── */
         .lf-tool-tooltip {
             display: none;
             position: absolute;
@@ -375,6 +396,12 @@
             pointer-events: none;
         }
 
+        .dark .lf-tool-tooltip {
+            background: #0f172a;
+            color: #c4b5fd;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+        }
+
         .lf-tool-tooltip::after {
             content: '';
             position: absolute;
@@ -384,21 +411,12 @@
             border-top-color: #1e1b4b;
         }
 
-        .lf-tool-tooltip-wrap:hover .lf-tool-tooltip {
-            display: block;
+        .dark .lf-tool-tooltip::after {
+            border-top-color: #0f172a;
         }
 
-        /* Dark mode adjustments for description box */
-        @media (prefers-color-scheme: dark) {
-            .lf-tool-icon-btn {
-                border-color: #4c1d95;
-                background: linear-gradient(135deg, #2e1065 0%, #3b0764 100%);
-                color: #c4b5fd;
-            }
-            .lf-tool-icon-btn:hover {
-                background: linear-gradient(135deg, #7c3aed 0%, #9d4edd 100%);
-                color: #fff;
-            }
+        .lf-tool-tooltip-wrap:hover .lf-tool-tooltip {
+            display: block;
         }
 
         /* Overlay */

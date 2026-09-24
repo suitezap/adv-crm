@@ -1,0 +1,12 @@
+task_id: WA-BTN-001
+owner: ANTIGRAVITY
+status: RELEASED
+acquired_at: "2026-09-23T11:51:00-03:00"
+released_at: "2026-09-23T11:52:00-03:00"
+write_scope:
+  - packages/SuiteZap/LawFirm/src/Whatsapp/Services/EvolutionService.php
+  - packages/SuiteZap/LawFirm/src/Legal/Services/ProcessoWhatsappService.php
+  - packages/SuiteZap/LawFirm/src/GED/Http/Controllers/ProcessDocumentController.php
+description: >
+  Implementar envio de mensagens com botões interativos (URL CTA) via Evolution API
+  ao solicitar documentos ou atualização cadastral pelo WhatsApp no módulo de Processos.

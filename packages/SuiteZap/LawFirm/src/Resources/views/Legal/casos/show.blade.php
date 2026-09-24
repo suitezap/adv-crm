@@ -17,17 +17,23 @@
             </div>
         </div>
 
-        <!-- Dados do Caso -->
-        <div class="lf-card flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm">
-            <h3 class="text-lg font-semibold tracking-tight border-b pb-3 dark:text-white">📋 Dados do Caso</h3>
-
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 text-sm">
-                <div>
-                    <span class="font-medium text-gray-500 dark:text-gray-400">Título: </span>
-                    <span class="font-bold dark:text-white">{{ $caso->titulo }}</span>
+        <!-- Layout Grid para Dados do Caso e Descrição -->
+        <div id="row-info-basicas" class="grid grid-cols-2 gap-4 max-lg:grid-cols-1" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            
+            <!-- Card 1: Dados do Caso -->
+            <div class="lf-card flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div class="flex justify-between items-center flex-wrap gap-2 pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight">📋 Dados do Caso</p>
                 </div>
-                <div>
-                    <span class="font-medium text-gray-500 dark:text-gray-400">Área: </span>
+
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Título</p>
+                    <p class="text-base font-bold text-gray-900 dark:text-white">{{ $caso->titulo ?? '-' }}</p>
+                </div>
+
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Área</p>
+                    <p class="text-base text-gray-900 dark:text-white">
                     @php
                         $areaColors = [
                             'Administrativo' => '#A9CCE3', 'Ambiental' => '#A3E4D7', 'Bancário' => '#D4E6B5',
@@ -43,13 +49,17 @@
                     @else
                         <span class="dark:text-white">{{ $caso->area ?: '—' }}</span>
                     @endif
+                    </p>
                 </div>
-                <div>
-                    <span class="font-medium text-gray-500 dark:text-gray-400">Status: </span>
+
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Status</p>
                     <span class="px-2 py-0.5 rounded-full text-xs font-semibold {{ $caso->status_badge_class }}">{{ $caso->status_label }}</span>
                 </div>
-                <div>
-                    <span class="font-medium text-gray-500 dark:text-gray-400">Prioridade: </span>
+
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Prioridade</p>
+                    <p class="text-base text-gray-900 dark:text-white">
                     @php
                         $prioridadeColors = [
                             'Alta' => '#E89B4D', 'Baixa' => '#7BC67B',
@@ -63,37 +73,48 @@
                     @else
                         <span class="dark:text-white">{{ $caso->prioridade ? ucfirst($caso->prioridade) : '—' }}</span>
                     @endif
-                </div>
-                <div>
-                    <span class="font-medium text-gray-500 dark:text-gray-400">Responsável: </span>
-                    <span class="dark:text-white">{{ optional($caso->responsavel)->name ?: '—' }}</span>
-                </div>
-                <div>
-                    <span class="font-medium text-gray-500 dark:text-gray-400">Cliente PF: </span>
-                    <span class="dark:text-white">{{ optional($caso->person)->name ?: '—' }}</span>
-                </div>
-                <div>
-                    <span class="font-medium text-gray-500 dark:text-gray-400">Cliente PJ: </span>
-                    <span class="dark:text-white">{{ optional($caso->organization)->name ?: '—' }}</span>
-                </div>
-                <div>
-                    <span class="font-medium text-gray-500 dark:text-gray-400">Criado em: </span>
-                    <span class="dark:text-white">{{ $caso->created_at->format('d/m/Y H:i') }}</span>
-                </div>
-                <!-- Descrição Mirroring Processos Logic -->
-                <div class="md:col-span-2 space-y-1">
-                    <span class="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Descrição</span>
-                    <p class="text-base text-gray-800 dark:text-gray-300 whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
-                        {!! nl2br(e($caso->descricao ?? 'Sem descrição.')) !!}
                     </p>
+                </div>
+
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Responsável</p>
+                    <p class="text-base text-gray-900 dark:text-white">{{ optional($caso->responsavel)->name ?: '—' }}</p>
+                </div>
+
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Cliente PF</p>
+                    <p class="text-base text-gray-900 dark:text-white">{{ optional($caso->person)->name ?: '—' }}</p>
+                </div>
+
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Cliente PJ</p>
+                    <p class="text-base text-gray-900 dark:text-white">{{ optional($caso->organization)->name ?: '—' }}</p>
+                </div>
+
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Criado em</p>
+                    <p class="text-base text-gray-900 dark:text-white">{{ $caso->created_at->format('d/m/Y H:i') }}</p>
+                </div>
+            </div> <!-- end Card 1 -->
+
+            <!-- Card 2: Descrição e Contexto de IA -->
+            <div class="lf-card flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <p class="text-base font-semibold text-gray-800 dark:text-white tracking-tight pb-3 border-b border-gray-100 dark:border-gray-800">📝 Descrição</p>
+                
+                <div class="space-y-1.5 flex-1">
+                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Descrição do Caso</p>
+                    <div class="rounded-lg border border-gray-100 bg-gray-50/50 p-4 dark:border-gray-800 dark:bg-gray-800/30">
+                        <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed rich-text-content whitespace-pre-wrap">
+                            {!! nl2br(e($caso->descricao ?? 'Sem descrição.')) !!}
+                        </div>
+                    </div>
                 </div>
 
                 @if ($triagem)
                     <!-- AI Context Sections (Collapsible) -->
-                    <div class="md:col-span-2 mt-4 space-y-3">
-                        <h4 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                            <span>🤖 Contexto de Inteligência Artificial</span>
-                            <span class="h-px flex-1 bg-gray-100 dark:bg-gray-800"></span>
+                    <div class="mt-4 border-t border-gray-100 pt-4 dark:border-gray-800 space-y-3">
+                        <h4 class="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+                            <span class="icon-settings-flow"></span> Contexto de Inteligência Artificial
                         </h4>
 
                         @php
@@ -124,8 +145,9 @@
                         @endforeach
                     </div>
                 @endif
-            </div>
-        </div>
+            </div> <!-- end Card 2 -->
+
+        </div> <!-- end Layout Grid -->
 
 @push('scripts')
 <script>

@@ -86,10 +86,10 @@ return [
      */
     [
         'key'        => 'activities',
-        'name'       => 'admin::app.layouts.activities',
-        'route'      => 'admin.activities.index',
+        'name'       => 'Agenda',
+        'route'      => 'admin.lawfirm.agenda.index',
         'sort'       => 5,
-        'icon-class' => 'icon-activity',
+        'icon-class' => 'icon-calendar text-3xl',
     ],
 
     /**

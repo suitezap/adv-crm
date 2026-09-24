@@ -83,24 +83,42 @@
                     <th class="px-4 py-3 text-left font-medium w-auto">Nome</th>
                     <th class="px-4 py-3 text-right font-medium whitespace-nowrap w-[120px]">Tamanho</th>
                     @if(!$readOnly)
-                        <th class="px-4 py-3 text-center font-medium w-[100px]">Ações</th>
+                        <th class="px-4 py-3 text-center font-medium w-[120px]">Ações</th>
                     @endif
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
                 @forelse($anexos as $anexo)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group" id="anexo-row-{{ $anexo->id }}">
+                        {{-- Coluna Nome: link + campo de edição inline oculto --}}
                         <td class="px-4 py-3">
-                            <a href="{{ $anexo->url }}" target="_blank"
-                                class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
-                                <div class="flex items-center justify-center w-8 h-8 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 flex-shrink-0">
-                                    <span class="{{ $anexo->icon ?? 'icon-file' }} text-lg"></span>
-                                </div>
-                                <div class="flex flex-col min-w-0">
-                                    <span class="font-medium truncate block">{{ $anexo->nome_original }}</span>
-                                    <span class="text-[10px] text-gray-400 uppercase">{{ $anexo->extension }}</span>
-                                </div>
-                            </a>
+                            <div id="docs-anexo-display-{{ $anexo->id }}">
+                                <a href="{{ $anexo->url }}" target="_blank"
+                                    id="docs-anexo-link-{{ $anexo->id }}"
+                                    class="flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors">
+                                    <div class="flex items-center justify-center w-8 h-8 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 flex-shrink-0">
+                                        <span class="{{ $anexo->icon ?? 'icon-file' }} text-lg"></span>
+                                    </div>
+                                    <div class="flex flex-col min-w-0">
+                                        <span class="font-medium truncate block" id="docs-anexo-name-{{ $anexo->id }}">{{ $anexo->nome_original }}</span>
+                                        <span class="text-[10px] text-gray-400 uppercase">{{ $anexo->extension }}</span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div id="docs-anexo-edit-{{ $anexo->id }}" class="hidden flex items-center gap-2">
+                                <input type="text"
+                                    id="docs-anexo-input-{{ $anexo->id }}"
+                                    class="flex-1 min-w-0 rounded border border-blue-400 text-sm px-2 py-1 focus:ring-2 focus:ring-blue-400 focus:outline-none dark:bg-gray-800 dark:text-white"
+                                    onkeydown="if(event.key==='Enter'){window.lfDocsRenameAnexo({{ $anexo->id }});}if(event.key==='Escape'){window.lfDocsCancelRenameAnexo({{ $anexo->id }});}" />
+                                <button type="button" onclick="window.lfDocsRenameAnexo({{ $anexo->id }})"
+                                    class="px-2 py-1 bg-green-200 text-green-800 border border-green-300 rounded text-xs hover:bg-green-300 transition-colors flex-shrink-0" title="Confirmar">
+                                    <span class="icon-check text-base"></span> Ok
+                                </button>
+                                <button type="button" onclick="window.lfDocsCancelRenameAnexo({{ $anexo->id }})"
+                                    class="px-2 py-1 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0" title="Cancelar">
+                                    <span class="icon-close text-base"></span>
+                                </button>
+                            </div>
                         </td>
                         <td class="px-4 py-3 text-right text-gray-500 whitespace-nowrap">
                             {{ number_format(($anexo->tamanho ?? 0) / 1024, 2, ',', '.') }} KB
@@ -108,10 +126,20 @@
                         @if(!$readOnly)
                             <td class="px-4 py-3 text-center">
                                 <div class="flex items-center justify-center gap-2">
+                                    {{-- Download --}}
                                     <a href="{{ $anexo->url }}" target="_blank"
                                         class="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-gray-700 transition-colors" title="Baixar">
                                         <span class="icon-download text-lg"></span>
                                     </a>
+                                    {{-- Renomear --}}
+                                    @if(bouncer()->hasPermission('lawfirm.documentos.create'))
+                                    <button type="button"
+                                        onclick="window.lfDocsStartRenameAnexo({{ $anexo->id }}, '{{ addslashes($anexo->nome_original) }}')"
+                                        class="p-1.5 rounded-md text-gray-500 hover:bg-yellow-50 hover:text-yellow-600 dark:hover:bg-yellow-900/20 transition-colors" title="Renomear">
+                                        <span class="icon-edit text-lg"></span>
+                                    </button>
+                                    @endif
+                                    {{-- Excluir --}}
                                     @if(bouncer()->hasPermission('lawfirm.documentos.delete'))
                                     <button type="button" onclick="window.lfDocsDeleteAttachment('{{ $anexo->id }}')"
                                         class="p-1.5 rounded-md text-gray-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 transition-colors" title="Excluir">
@@ -177,14 +205,43 @@
             </div>
         </div>
 
+        {{-- Ações em Lote --}}
+        <div id="lf-checklist-mass-actions" class="hidden mb-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-2 px-3 flex items-center gap-3 flex-wrap">
+            <span class="text-sm font-medium text-gray-600 dark:text-gray-300 shrink-0">
+                <span id="lf-checklist-selected-count">0</span> item(ns) selecionado(s)
+            </span>
+            <div class="flex items-center gap-2 flex-1 flex-wrap">
+                {{-- Alterar Status em Lote --}}
+                <select id="lf-checklist-mass-status"
+                    class="text-xs border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 py-1.5 px-2 cursor-pointer">
+                    <option value="">— Alterar status para —</option>
+                    <option value="pending">Pendente</option>
+                    <option value="received">Recebido</option>
+                    <option value="approved">Aprovado</option>
+                    <option value="rejected">Rejeitado</option>
+                </select>
+                <button type="button" onclick="window.lfDocsMassUpdateStatus()"
+                    class="px-3 py-1.5 bg-green-100 text-green-700 border border-green-200 rounded-md text-xs font-medium hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-900/50 transition-colors shadow-sm whitespace-nowrap">
+                    Salvar Status
+                </button>
+                {{-- Separador --}}
+                <span class="text-gray-300 dark:text-gray-600 hidden sm:inline">|</span>
+                {{-- Excluir Selecionados --}}
+                <button type="button" onclick="window.lfDocsMassDelete()"
+                    class="px-3 py-1.5 bg-red-100 text-red-700 border border-red-200 rounded-md text-xs font-medium hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/50 transition-colors shadow-sm whitespace-nowrap">
+                    🗑 Excluir Selecionados
+                </button>
+            </div>
+        </div>
+
         {{-- Adicionar Item Individual --}}
         <div class="flex gap-2 items-center" id="lf-checklist-add-row">
             <input type="text" id="lf-checklist-new-name"
                 placeholder="Nome do documento (ex: RG, CPF, Comprovante...)"
-                class="flex-1 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-sm px-3 py-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                class="flex-1 rounded-md border border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-700 dark:text-white text-gray-900 text-sm px-3 py-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 onkeydown="if(event.key==='Enter'){ event.preventDefault(); window.lfDocsAddItem(); }" />
             <button type="button" onclick="window.lfDocsAddItem()"
-                class="px-4 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+                class="px-4 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-md text-sm font-medium hover:bg-green-100 focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-800/50 transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-sm">
                 <i class="icon-add text-base"></i> Adicionar Item
             </button>
         </div>
@@ -195,6 +252,11 @@
         <table class="min-w-full text-sm w-full">
             <thead class="bg-gray-50 dark:bg-gray-800 text-xs uppercase text-gray-500 dark:text-gray-400 font-semibold">
                 <tr>
+                    @if(!$readOnly)
+                        <th class="px-4 py-3 text-left w-10">
+                            <input type="checkbox" id="lf-checklist-select-all" onchange="window.lfDocsToggleAll(this)" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:border-gray-600">
+                        </th>
+                    @endif
                     <th class="px-4 py-3 text-left w-[120px]">Status</th>
                     <th class="px-4 py-3 text-left">Documento</th>
                     <th class="px-4 py-3 text-left">Obs</th>
@@ -216,6 +278,11 @@
                         $st = $statusMap[$doc->status] ?? $statusMap['pending'];
                     @endphp
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" id="checklist-row-{{ $doc->id }}">
+                        @if(!$readOnly)
+                            <td class="px-4 py-3">
+                                <input type="checkbox" class="lf-checklist-cb rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:border-gray-600" value="{{ $doc->id }}" onchange="window.lfDocsToggleCb()">
+                            </td>
+                        @endif
                         <td class="px-4 py-3">
                             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $st['bg'] }} {{ $st['text'] }}">{{ $st['label'] }}</span>
                         </td>
@@ -647,6 +714,9 @@
                         tr.className = 'hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors';
                         tr.innerHTML = `
                             <td class="px-4 py-3">
+                                <input type="checkbox" class="lf-checklist-cb rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:border-gray-600" value="${doc.id}" onchange="window.lfDocsToggleCb()">
+                            </td>
+                            <td class="px-4 py-3">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Pendente</span>
                             </td>
                             <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">${doc.name}</td>
@@ -684,6 +754,208 @@
             };
 
             xhr.send(formData);
+        };
+
+        window.lfDocsToggleAll = function(source) {
+            const checkboxes = document.querySelectorAll('.lf-checklist-cb');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+            window.lfDocsUpdateMassActionUI();
+        };
+
+        window.lfDocsToggleCb = function() {
+            const allCheckbox = document.getElementById('lf-checklist-select-all');
+            const checkboxes = document.querySelectorAll('.lf-checklist-cb');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            const someChecked = Array.from(checkboxes).some(cb => cb.checked);
+            
+            if (allCheckbox) {
+                allCheckbox.checked = allChecked;
+                allCheckbox.indeterminate = someChecked && !allChecked;
+            }
+            window.lfDocsUpdateMassActionUI();
+        };
+
+        window.lfDocsUpdateMassActionUI = function() {
+            const checkboxes = document.querySelectorAll('.lf-checklist-cb:checked');
+            const massActions = document.getElementById('lf-checklist-mass-actions');
+            const countSpan = document.getElementById('lf-checklist-selected-count');
+            
+            if (!massActions) return;
+            
+            if (checkboxes.length > 0) {
+                massActions.classList.remove('hidden');
+                if (countSpan) countSpan.textContent = checkboxes.length;
+            } else {
+                massActions.classList.add('hidden');
+            }
+        };
+
+        window.lfDocsMassDelete = function() {
+            const checkboxes = document.querySelectorAll('.lf-checklist-cb:checked');
+            if (checkboxes.length === 0) return;
+
+            if (!confirm('Tem certeza que deseja excluir os ' + checkboxes.length + ' item(ns) selecionado(s)?')) return;
+
+            const ids = Array.from(checkboxes).map(cb => cb.value);
+            const url = '{{ route("lawfirm.documents.mass_delete") }}';
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            if (!token) {
+                alert('Token CSRF não encontrado. Recarregue a página.');
+                return;
+            }
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', url, true);
+            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.setRequestHeader('Accept', 'application/json');
+
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    ids.forEach(id => {
+                        const row = document.getElementById('checklist-row-' + id);
+                        if (row) row.remove();
+                    });
+                    
+                    window.lfDocsUpdateMassActionUI();
+                    
+                    const selectAll = document.getElementById('lf-checklist-select-all');
+                    if (selectAll) {
+                        selectAll.checked = false;
+                        selectAll.indeterminate = false;
+                    }
+                } else {
+                    let msg = 'Erro ao excluir itens.';
+                    try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
+                    alert(msg);
+                }
+            };
+
+            xhr.onerror = function () {
+                alert('Erro de rede.');
+            };
+
+            xhr.send(JSON.stringify({ ids: ids }));
+        };
+
+        window.lfDocsMassUpdateStatus = function() {
+            const checkboxes = document.querySelectorAll('.lf-checklist-cb:checked');
+            if (checkboxes.length === 0) { alert('Selecione pelo menos um item.'); return; }
+
+            const statusSelect = document.getElementById('lf-checklist-mass-status');
+            const newStatus = statusSelect ? statusSelect.value : '';
+            if (!newStatus) { alert('Selecione um status para aplicar.'); return; }
+
+            const statusLabels = {
+                'pending':  { label: 'Pendente',  bg: 'bg-yellow-100', text: 'text-yellow-800' },
+                'received': { label: 'Recebido',  bg: 'bg-blue-100',   text: 'text-blue-800'   },
+                'approved': { label: 'Aprovado',  bg: 'bg-green-100',  text: 'text-green-800'  },
+                'rejected': { label: 'Rejeitado', bg: 'bg-red-100',    text: 'text-red-800'    },
+            };
+
+            const ids = Array.from(checkboxes).map(cb => cb.value);
+            const url = '{{ route("lawfirm.documents.mass_update_status") }}';
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            if (!token) { alert('Token CSRF não encontrado. Recarregue a página.'); return; }
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', url, true);
+            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.setRequestHeader('Accept', 'application/json');
+
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const info = statusLabels[newStatus];
+                    ids.forEach(id => {
+                        const row = document.getElementById('checklist-row-' + id);
+                        if (row && info) {
+                            const badge = row.querySelector('td:nth-child(2) span');
+                            if (badge) {
+                                badge.textContent = info.label;
+                                badge.className = `inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${info.bg} ${info.text}`;
+                            }
+                            // Update individual select if it exists
+                            const sel = row.querySelector('select[onchange^="window.lfDocsUpdateStatus"]');
+                            if (sel) sel.value = newStatus;
+                        }
+                        // Uncheck and deselect
+                        const cb = row ? row.querySelector('.lf-checklist-cb') : null;
+                        if (cb) cb.checked = false;
+                    });
+                    // Reset select
+                    if (statusSelect) statusSelect.value = '';
+                    window.lfDocsUpdateMassActionUI();
+                    const selectAll = document.getElementById('lf-checklist-select-all');
+                    if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+                } else {
+                    let msg = 'Erro ao atualizar status.';
+                    try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
+                    alert(msg);
+                }
+            };
+
+            xhr.onerror = function () { alert('Erro de rede.'); };
+
+            xhr.send(JSON.stringify({ ids: ids, status: newStatus }));
+        };
+
+        // ── Renomear Arquivo (Arquivos do Processo) ──────────────────────────
+        window.__lfDocsRenameUrlMap = window.__lfDocsRenameUrlMap || {};
+        @foreach($anexos as $anexo)
+        window.__lfDocsRenameUrlMap[{{ $anexo->id }}] = '{{ route('admin.lawfirm.ged.rename', $anexo->id) }}';
+        @endforeach
+
+        window.lfDocsStartRenameAnexo = function(id, currentName) {
+            document.getElementById('docs-anexo-display-' + id)?.classList.add('hidden');
+            const editDiv = document.getElementById('docs-anexo-edit-' + id);
+            if (!editDiv) return;
+            editDiv.classList.remove('hidden');
+            const input = document.getElementById('docs-anexo-input-' + id);
+            if (input) { input.value = currentName; input.focus(); input.select(); }
+        };
+
+        window.lfDocsCancelRenameAnexo = function(id) {
+            document.getElementById('docs-anexo-edit-' + id)?.classList.add('hidden');
+            document.getElementById('docs-anexo-display-' + id)?.classList.remove('hidden');
+        };
+
+        window.lfDocsRenameAnexo = function(id) {
+            const input = document.getElementById('docs-anexo-input-' + id);
+            const newName = input ? input.value.trim() : '';
+            if (!newName) { alert('O nome não pode estar vazio.'); if (input) input.focus(); return; }
+
+            const url = window.__lfDocsRenameUrlMap[id];
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (!token || !url) { alert('Configuração inválida. Recarregue a página.'); return; }
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('PATCH', url, true);
+            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.setRequestHeader('Accept', 'application/json');
+
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const data = JSON.parse(xhr.responseText);
+                    const nameSpan = document.getElementById('docs-anexo-name-' + id);
+                    if (nameSpan) nameSpan.textContent = data.nome_original;
+                    // Atualizar a URL do onclick do botão com o novo nome
+                    window.__lfDocsRenameUrlMap[id] = url; // url não muda, só o nome
+                    window.lfDocsCancelRenameAnexo(id);
+                } else {
+                    let msg = 'Erro ao renomear.';
+                    try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
+                    alert(msg);
+                }
+            };
+            xhr.onerror = function() { alert('Erro de rede.'); };
+            xhr.send(JSON.stringify({ nome_original: newName }));
         };
 
     </script>

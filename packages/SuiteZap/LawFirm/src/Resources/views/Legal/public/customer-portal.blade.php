@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atualização Cadastral - {{ $officeName }}</title>
+    <title>Cadastro & Envio de Arquivos - {{ $officeName }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -24,10 +24,10 @@
             <img class="mx-auto h-16 w-auto object-contain" src="{{ $logoUrl }}" alt="{{ $officeName }}">
         @endif
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Atualização Cadastral
+            Cadastro & Envio de Arquivos
         </h2>
         <p class="mt-2 text-center text-sm text-gray-600">
-            Mantenha seus dados atualizados para o andamento do seu processo.
+            Mantenha seus dados atualizados e envie seus documentos para o andamento do seu processo.
         </p>
     </div>
 
@@ -43,14 +43,48 @@
                 </div>
             </div>
 
-            <!-- TABS -->
-            <div class="mb-8 flex overflow-hidden rounded-lg bg-white border border-gray-300 shadow-sm mx-auto" style="max-width: 400px;">
-                <button id="tab-cadastro" type="button" class="flex-1 py-3 text-sm font-semibold transition outline-none bg-indigo-600 text-white" onclick="switchTab('cadastro')">
-                    Cadastro / Atualização
+            <!-- SELEÇÃO DE AÇÃO: 3 BOTÕES -->
+            <div class="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+                <!-- Botão Atualizar -->
+                <button id="tab-atualizar" type="button"
+                    class="group flex flex-col items-center text-center p-4 rounded-xl border-2 border-indigo-600 bg-indigo-600 text-white shadow-md transition-all outline-none"
+                    onclick="switchTab('atualizar')">
+                    <span class="mb-2 flex items-center justify-center w-10 h-10 rounded-full bg-white/20">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </span>
+                    <span class="text-sm font-bold leading-tight">Atualizar</span>
+                    <span class="text-xs mt-1 opacity-90 leading-snug">Informação do cliente já cadastrado, quem abriu a causa&nbsp;/ processo</span>
                 </button>
-                <button id="tab-envio" type="button" class="flex-1 py-3 text-sm font-semibold transition outline-none text-gray-700 hover:bg-gray-50" onclick="switchTab('envio')">
-                    Enviar Arquivos
+
+                <!-- Botão Cadastrar -->
+                <button id="tab-novo" type="button"
+                    class="group flex flex-col items-center text-center p-4 rounded-xl border-2 border-gray-300 bg-white text-gray-700 shadow-sm hover:border-indigo-400 hover:shadow-md transition-all outline-none"
+                    onclick="switchTab('novo')">
+                    <span class="mb-2 flex items-center justify-center w-10 h-10 rounded-full bg-white/20">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                        </svg>
+                    </span>
+                    <span class="text-sm font-bold leading-tight">Cadastrar</span>
+                    <span class="text-xs mt-1 opacity-80 leading-snug">Cadastre aqui suas informações se for parte integrante da causa&nbsp;/ processo</span>
                 </button>
+
+                <!-- Botão Enviar Arquivos -->
+                <button id="tab-envio" type="button"
+                    class="group flex flex-col items-center text-center p-4 rounded-xl border-2 border-gray-300 bg-white text-gray-700 shadow-sm hover:border-indigo-400 hover:shadow-md transition-all outline-none"
+                    onclick="switchTab('envio')">
+                    <span class="mb-2 flex items-center justify-center w-10 h-10 rounded-full bg-white/20">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                    </span>
+                    <span class="text-sm font-bold leading-tight">Enviar Arquivos</span>
+                    <span class="text-xs mt-1 opacity-80 leading-snug">Envie seus documentos para o andamento do processo</span>
+                </button>
+
             </div>
 
             <!-- Formulário de Cadastro -->
@@ -249,6 +283,101 @@
                         Salvar Informações
                     </button>
                 </div>
+                </form>
+            </div>
+
+            <!-- Formulário Novo Participante -->
+            <div id="novo-container" class="hidden">
+                <div class="mb-4 rounded-lg bg-indigo-50 border border-indigo-200 p-4">
+                    <p class="text-sm text-indigo-800 font-medium">📋 Preencha suas informações abaixo. Seus dados serão adicionados como parte integrante deste processo.</p>
+                </div>
+                <form id="novoForm" onsubmit="event.preventDefault(); salvarNovoParticipante();">
+                    @csrf
+                    <input type="hidden" name="token" value="{{ request()->query('token') }}">
+                    <input type="hidden" name="participante_tipo" value="novo">
+
+                    <!-- Tipo de Cliente -->
+                    <div class="mb-6 pb-4 border-b border-gray-200">
+                        <span class="text-sm font-medium text-gray-700">Tipo</span>
+                        <div class="mt-2 flex items-center space-x-6">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="novo_client_type" value="PF" class="form-radio text-indigo-600 h-4 w-4" checked onchange="toggleNovoType('PF')">
+                                <span class="ml-2 text-sm text-gray-700">Pessoa Física</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="novo_client_type" value="PJ" class="form-radio text-indigo-600 h-4 w-4" onchange="toggleNovoType('PJ')">
+                                <span class="ml-2 text-sm text-gray-700">Pessoa Jurídica</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Pessoa Física -->
+                    <div id="novo-area-pf">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Dados Pessoais</h3>
+                        <div class="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6 mb-6">
+                            <div class="sm:col-span-6">
+                                <label for="novo_name" class="label-text">Nome Completo <span class="text-red-500">*</span></label>
+                                <input type="text" name="novo_name" id="novo_name" class="input-field" required>
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="novo_cpf" class="label-text">CPF <span class="text-red-500">*</span></label>
+                                <input type="text" name="novo_cpf" id="novo_cpf" class="input-field mask-cpf" placeholder="000.000.000-00" required>
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="novo_rg" class="label-text">RG</label>
+                                <input type="text" name="novo_rg" id="novo_rg" class="input-field">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="novo_email" class="label-text">E-mail <span class="text-red-500">*</span></label>
+                                <input type="email" name="novo_email" id="novo_email" class="input-field" required>
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="novo_phone" class="label-text">Celular / WhatsApp <span class="text-red-500">*</span></label>
+                                <input type="text" name="novo_phone" id="novo_phone" class="input-field mask-phone" placeholder="(00) 00000-0000" required>
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="novo_birth_date" class="label-text">Data de Nascimento</label>
+                                <input type="date" name="novo_birth_date" id="novo_birth_date" class="input-field bg-white">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="novo_nationality" class="label-text">Nacionalidade</label>
+                                <input type="text" name="novo_nationality" id="novo_nationality" class="input-field" value="Brasileiro(a)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pessoa Jurídica -->
+                    <div id="novo-area-pj" class="hidden">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Dados da Empresa</h3>
+                        <div class="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6 mb-6">
+                            <div class="sm:col-span-6">
+                                <label for="novo_name_pj" class="label-text">Razão Social <span class="text-red-500">*</span></label>
+                                <input type="text" name="novo_name_pj" id="novo_name_pj" class="input-field">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="novo_cnpj" class="label-text">CNPJ <span class="text-red-500">*</span></label>
+                                <input type="text" name="novo_cnpj" id="novo_cnpj" class="input-field mask-cnpj" placeholder="00.000.000/0000-00">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="novo_rep_name" class="label-text">Representante Legal <span class="text-red-500">*</span></label>
+                                <input type="text" name="novo_rep_name" id="novo_rep_name" class="input-field">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="novo_rep_cpf" class="label-text">CPF do Representante <span class="text-red-500">*</span></label>
+                                <input type="text" name="novo_rep_cpf" id="novo_rep_cpf" class="input-field mask-cpf" placeholder="000.000.000-00">
+                            </div>
+                            <div class="sm:col-span-3">
+                                <label for="novo_rep_phone" class="label-text">Telefone <span class="text-red-500">*</span></label>
+                                <input type="text" name="novo_rep_phone" id="novo_rep_phone" class="input-field mask-phone" placeholder="(00) 00000-0000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-5 text-right">
+                        <button type="submit" id="btnSalvarNovo" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full sm:w-auto">
+                            Cadastrar Participante
+                        </button>
+                    </div>
                 </form>
             </div>
 
@@ -453,18 +582,84 @@
         });
     }
 
+    // Classes dos botões de ação
+    const BTN_ACTIVE   = 'group flex flex-col items-center text-center p-4 rounded-xl border-2 border-indigo-600 bg-indigo-600 text-white shadow-md transition-all outline-none';
+    const BTN_INACTIVE = 'group flex flex-col items-center text-center p-4 rounded-xl border-2 border-gray-300 bg-white text-gray-700 shadow-sm hover:border-indigo-400 hover:shadow-md transition-all outline-none';
+
     function switchTab(tab) {
-        if (tab === 'cadastro') {
+        // Ocultar todos os containers
+        ['cadastro-container', 'novo-container', 'envio-container'].forEach(id => {
+            document.getElementById(id).classList.add('hidden');
+        });
+        // Desativar todos os botões
+        ['tab-atualizar', 'tab-novo', 'tab-envio'].forEach(id => {
+            document.getElementById(id).className = BTN_INACTIVE;
+        });
+
+        // Ativar o container e botão selecionado
+        if (tab === 'atualizar') {
             document.getElementById('cadastro-container').classList.remove('hidden');
-            document.getElementById('envio-container').classList.add('hidden');
-            document.getElementById('tab-cadastro').className = 'flex-1 py-3 text-sm font-semibold transition outline-none bg-indigo-600 text-white';
-            document.getElementById('tab-envio').className = 'flex-1 py-3 text-sm font-semibold transition outline-none text-gray-700 hover:bg-gray-50 bg-white';
+            document.getElementById('tab-atualizar').className = BTN_ACTIVE;
+        } else if (tab === 'novo') {
+            document.getElementById('novo-container').classList.remove('hidden');
+            document.getElementById('tab-novo').className = BTN_ACTIVE;
         } else {
-            document.getElementById('cadastro-container').classList.add('hidden');
             document.getElementById('envio-container').classList.remove('hidden');
-            document.getElementById('tab-envio').className = 'flex-1 py-3 text-sm font-semibold transition outline-none bg-indigo-600 text-white';
-            document.getElementById('tab-cadastro').className = 'flex-1 py-3 text-sm font-semibold transition outline-none text-gray-700 hover:bg-gray-50 bg-white';
+            document.getElementById('tab-envio').className = BTN_ACTIVE;
         }
+    }
+
+    function toggleNovoType(type) {
+        if (type === 'PF') {
+            document.getElementById('novo-area-pf').classList.remove('hidden');
+            document.getElementById('novo-area-pj').classList.add('hidden');
+        } else {
+            document.getElementById('novo-area-pf').classList.add('hidden');
+            document.getElementById('novo-area-pj').classList.remove('hidden');
+        }
+    }
+
+    function salvarNovoParticipante() {
+        const form   = document.getElementById('novoForm');
+        const btn    = document.getElementById('btnSalvarNovo');
+        const origHtml = btn.innerHTML;
+
+        btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Salvando...`;
+        btn.disabled = true;
+
+        const csrfToken = document.querySelector('input[name="_token"]').value;
+        const formData  = new FormData(form);
+        const payload   = Object.fromEntries(formData.entries());
+        const novoType  = payload.novo_client_type;
+        // Normaliza campos para o contrato esperado pelo backend
+        payload.client_type = novoType;
+        payload.name    = novoType === 'PF' ? payload.novo_name   : payload.novo_name_pj;
+        payload.email   = payload.novo_email  || '';
+        payload.phone   = novoType === 'PF' ? payload.novo_phone  : payload.novo_rep_phone;
+        payload.cpf     = payload.novo_cpf    || '';
+        payload.rg      = payload.novo_rg     || '';
+        payload.cnpj    = payload.novo_cnpj   || '';
+        payload.legal_representative_name = payload.novo_rep_name || '';
+        payload.legal_representative_cpf  = payload.novo_rep_cpf  || '';
+        payload.birth_date   = payload.novo_birth_date   || '';
+        payload.nationality  = payload.novo_nationality  || '';
+
+        fetch("{{ route('lawfirm.public.portal.update', $processo->id) }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message || 'Participante cadastrado com sucesso!', 'success');
+                form.reset();
+            } else {
+                showAlert(data.message || 'Erro ao cadastrar.', 'error');
+            }
+        })
+        .catch(() => showAlert('Falha na comunicação com o servidor.', 'error'))
+        .finally(() => { btn.innerHTML = origHtml; btn.disabled = false; });
     }
 
     // --- Módulo de Envio de Arquivos ---

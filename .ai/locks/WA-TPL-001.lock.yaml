@@ -1,0 +1,15 @@
+task_id: WA-TPL-001
+owner: ANTIGRAVITY
+status: RELEASED
+acquired_at: "2026-09-21T19:12:00-03:00"
+scope:
+  - packages/SuiteZap/LawFirm/src/Whatsapp/Models/MothershipWhatsappTemplate.php
+  - packages/SuiteZap/LawFirm/src/Database/Migrations/2026_09_21_000000_create_mothership_whatsapp_templates_table.php
+  - packages/SuiteZap/LawFirm/src/Database/Migrations/2026_09_21_000001_seed_mothership_whatsapp_templates_table.php
+  - packages/SuiteZap/LawFirm/src/Whatsapp/Http/Controllers/Admin/WhatsappTemplatesController.php
+  - ARCHITECTURE_mothership_orient.md
+description: >
+  Preparar estrutura para que o MotherShip tenha controle dos Templates
+  de WhatsApp. Criar tabela lawfirm_whatsapp_templates no mothership_db,
+  model MothershipWhatsappTemplate e integrar o controller de templates
+  para ler a hierarquia: sobrescrita local (core_config) → default MotherShip → fallback hardcoded.

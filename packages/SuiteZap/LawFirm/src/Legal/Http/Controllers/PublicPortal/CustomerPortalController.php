@@ -114,6 +114,7 @@ class CustomerPortalController extends Controller
         try {
             // Whitelist estrita (PRIV-AUDIT-001): só campos do formulário do portal.
             $validated = $request->validate([
+                'participante_tipo'         => 'nullable|in:novo',
                 'client_type'               => 'required|in:PF,PJ',
                 'name'                      => 'nullable|string|max:255',
                 'email'                     => 'nullable|email|max:255',
@@ -141,12 +142,40 @@ class CustomerPortalController extends Controller
             ]);
 
             // Log operacional sem PII (PRIV-AUDIT-001: nunca logar dados do formulário).
-            $clientType = $validated['client_type'];
-            Log::info('Portal Update Request:', ['id' => $id, 'client_type' => $clientType]);
+            $clientType       = $validated['client_type'];
+            $participanteTipo = $validated['participante_tipo'] ?? null;
+            Log::info('Portal Update Request:', ['id' => $id, 'client_type' => $clientType, 'participante_tipo' => $participanteTipo]);
 
             $input = function (string $key) use ($validated) {
                 return $validated[$key] ?? null;
             };
+
+            // -----------------------------------------------------------------
+            // NOVO PARTICIPANTE: cria um novo Person sem alterar o processo.
+            // -----------------------------------------------------------------
+            if ($participanteTipo === 'novo') {
+                $newPerson = new Person();
+                $newPerson->name = $input('name') ?? 'Participante';
+                $newPerson->emails = [['value' => $input('email'), 'label' => 'work']];
+                $newPerson->contact_numbers = [['value' => $input('phone'), 'label' => 'work']];
+                $newPerson->save();
+
+                if ($clientType === 'PF') {
+                    LawPersonDetail::updateOrCreate(
+                        ['person_id' => $newPerson->id],
+                        [
+                            'cpf'             => $input('cpf'),
+                            'rg'              => $input('rg'),
+                            'nacionalidade'   => $input('nationality'),
+                            'data_nascimento' => $input('birth_date'),
+                        ]
+                    );
+                }
+
+                Log::info('[Portal] Novo participante criado.', ['processo_id' => $id, 'person_id' => $newPerson->id]);
+
+                return response()->json(['success' => true, 'message' => 'Participante cadastrado com sucesso!']);
+            }
 
             if ($clientType === 'PF' && $processo->person_id) {
                 $person = Person::find($processo->person_id);

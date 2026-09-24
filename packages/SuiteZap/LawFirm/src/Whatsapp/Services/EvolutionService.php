@@ -184,6 +184,52 @@ class EvolutionService
     }
 
     /**
+     * Envia mensagem com botões interativos (CTA Url, Reply, Copy) via Evolution API.
+     * Caso o envio por botões falhe (ex: incompatibilidade de versão ou rejeição do WhatsApp),
+     * faz fallback automático e seguro enviando via sendText com o texto completo.
+     *
+     * @param string $instanceName
+     * @param string $number
+     * @param string $title
+     * @param string $description
+     * @param array  $buttons
+     * @param string $footer
+     * @param string|null $fallbackText Texto alternativo caso falhe o envio com botões
+     * @return array
+     */
+    public function sendButtons($instanceName, $number, $title, $description, array $buttons, $footer = '', ?string $fallbackText = null)
+    {
+        $payload = [
+            'number'      => $number,
+            'title'       => $title,
+            'description' => $description,
+            'footer'      => $footer,
+            'buttons'     => $buttons,
+            'delay'       => 1200,
+        ];
+
+        $response = $this->request('POST', "/message/sendButtons/{$instanceName}", $payload);
+
+        // Se falhar o endpoint de botões, tenta fallback gracioso via texto simples
+        if (! ($response['success'] ?? false)) {
+            Log::warning("EvolutionService: Falha ao enviar botões para {$number}. Tentando fallback por texto.", [
+                'error' => $response['error'] ?? null,
+            ]);
+
+            $textToSend = $fallbackText ?: trim("{$title}\n\n{$description}\n\n" . implode("\n", array_map(function ($b) {
+                if (($b['type'] ?? '') === 'url' && ! empty($b['url'])) {
+                    return ($b['displayText'] ?? 'Acessar') . ': ' . $b['url'];
+                }
+                return $b['displayText'] ?? '';
+            }, $buttons)));
+
+            return $this->sendMessage($instanceName, $number, $textToSend);
+        }
+
+        return $response;
+    }
+
+    /**
      * Busca histórico de mensagens de um contato e filtra as relativas a um intervalo de datas (localmente).
      *
      * A Evolution API não suporta filtrar por key.fromMe no where clause.

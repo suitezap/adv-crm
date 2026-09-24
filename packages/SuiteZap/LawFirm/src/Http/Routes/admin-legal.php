@@ -81,6 +81,7 @@ Route::prefix('prazos-legal')->controller(DeadlineController::class)->group(func
 // -----------------------------------------------
 Route::prefix('agenda')->controller(AgendaController::class)->group(function () {
     Route::get('', 'index')->name('admin.lawfirm.agenda.index');
+    Route::get('viewer', 'viewer')->name('admin.lawfirm.agenda.viewer');
     Route::get('eventos', 'getEventos')->name('admin.lawfirm.agenda.events');
     Route::post('eventos/atualizar/{id}', 'updateDragDrop')->name('admin.lawfirm.agenda.update');
     Route::post('atividades', 'storeActivity')->name('admin.lawfirm.agenda.store');

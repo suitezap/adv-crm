@@ -106,9 +106,6 @@ class MotherShipService
         return $currentCount < $limit;
     }
 
-    /**
-     * Retorna as configurações do Tenant (incluindo bucket e chaves de API).
-     */
     public static function getTenantConfig()
     {
         $tenantId = config('lawfirm.tenant_id', env('TENANT_ID'));
@@ -117,19 +114,33 @@ class MotherShipService
             return null;
         }
 
-        // Cache de longa duração (1 hora) pois configurações de infra mudam pouco
-        return Cache::remember("tenant_{$tenantId}_config", 3600, function () use ($tenantId) {
-            try {
-                return Tenant::on('mothership')
-                    ->where('id', $tenantId)
-                    ->first();
-            } catch (\Exception $e) {
-                Log::warning("[MotherShipService] getTenantConfig falhou para tenant {$tenantId}: ".$e->getMessage());
+        $cacheKey = "tenant_{$tenantId}_config";
 
-                return null;
+        // Tenta usar o cache existente primeiro (inclui stale data em caso de falha de DB)
+        $cached = Cache::get($cacheKey);
+        if ($cached) {
+            return $cached;
+        }
+
+        // Cache expirou ou não existe — busca do banco
+        try {
+            $tenant = Tenant::on('mothership')
+                ->where('id', $tenantId)
+                ->first();
+
+            if ($tenant) {
+                // Cache de 1 hora — configurações de infra mudam pouco
+                Cache::put($cacheKey, $tenant, 3600);
             }
-        });
+
+            return $tenant;
+        } catch (\Exception $e) {
+            Log::warning("[MotherShipService] getTenantConfig falhou para tenant {$tenantId}: " . $e->getMessage());
+
+            return null;
+        }
     }
+
 
     /**
      * Recupera um valor da tabela app_config do Mothership (com cache de 5 minutos).
@@ -535,12 +546,27 @@ class MotherShipService
             return null;
         }
 
-        $node = Cache::remember("chatwoot_node_{$tenantConfig->chatwoot_node_id}", 300, function () use ($tenantConfig) {
-            return InfrastructureNode::on('mothership')
-                ->where('id', $tenantConfig->chatwoot_node_id)
-                ->where('status', 'active')
-                ->first();
-        });
+        $nodeId  = $tenantConfig->chatwoot_node_id;
+        $cacheKey = "chatwoot_node_{$nodeId}";
+
+        $node = Cache::get($cacheKey);
+
+        if (! $node) {
+            try {
+                $node = InfrastructureNode::on('mothership')
+                    ->where('id', $nodeId)
+                    ->where('status', 'active')
+                    ->first();
+
+                if ($node) {
+                    // Cache por 30 minutos — nós de infra mudam raramente
+                    Cache::put($cacheKey, $node, 1800);
+                }
+            } catch (\Throwable $e) {
+                Log::warning("[MotherShipService] getChatwootConfig: falha ao buscar nó {$nodeId}: " . $e->getMessage());
+                // $node permanece null — será registrado e retornado null abaixo
+            }
+        }
 
         if (! $node) {
             Log::warning("[MotherShipService] getChatwootConfig: nó Chatwoot {$tenantConfig->chatwoot_node_id} não encontrado ou inativo.");

@@ -187,7 +187,7 @@
                             <x-admin::form.control-group.label>
                                 @lang('lawfirm::app.processos.form.desc')
                             </x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="textarea" name="descricao" id="descricao" tinymce="true" class="min-h-[120px]"
+                            <x-admin::form.control-group.control type="textarea" name="descricao" id="descricao" class="min-h-[120px]"
                                 rows="5" :value="old('descricao')" :label="trans('lawfirm::app.processos.form.desc')"
                                 placeholder="Informe aqui suas observações" />
                             <x-admin::form.control-group.error control-name="descricao" />

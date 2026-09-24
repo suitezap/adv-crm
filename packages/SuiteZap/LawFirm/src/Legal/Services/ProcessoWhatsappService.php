@@ -77,21 +77,50 @@ class ProcessoWhatsappService
             return ['sent' => false, 'warning' => null, 'error' => 'O cliente não possui telefone cadastrado.'];
         }
 
+        $portalLink = $this->buildPortalLink($processo);
+
         $template = core()->getConfigData('lawfirm.whatsapp_templates.messages.registration_request')
             ?: "Olá {cliente_nome}. Referente ao processo {processo_titulo}, precisamos que atualize suas informações cadastrais.\nUtilize o link: {link_portal}";
 
-        $msg = str_replace(
+        $fallbackMsg = str_replace(
             ['{cliente_nome}', '{processo_titulo}', '{link_portal}'],
-            [$processo->person->name, $processo->titulo ?? 'Processo', $this->buildPortalLink($processo)],
+            [$processo->person->name, $processo->titulo ?? 'Processo', $portalLink],
             $template
         );
+
+        // Se houver botão CTA, podemos limpar a menção crua ao link no corpo da mensagem do botão
+        $description = str_replace(
+            ['{cliente_nome}', '{processo_titulo}', '{link_portal}'],
+            [$processo->person->name, $processo->titulo ?? 'Processo', ''],
+            $template
+        );
+        $description = trim(preg_replace('/(Utilize o link:?|Acesse o link:?|pelo link:?)\s*$/im', '', $description));
 
         $config = $this->getEvolutionConfig();
         if (! $config) {
             return ['sent' => false, 'warning' => 'Mensagem não enviada. WhatsApp não está configurado para o escritório.', 'error' => null];
         }
 
-        $this->evolutionService->sendMessage($config['instance'], $phone, $msg);
+        $buttons = [
+            [
+                'type'        => 'url',
+                'displayText' => '📝 Atualizar Cadastro',
+                'url'         => $portalLink,
+            ],
+        ];
+
+        $title = $processo->titulo ? "Processo: {$processo->titulo}" : 'Atualização Cadastral';
+        $footer = config('app.name', 'Portal do Cliente');
+
+        $this->evolutionService->sendButtons(
+            $config['instance'],
+            $phone,
+            $title,
+            $description,
+            $buttons,
+            $footer,
+            $fallbackMsg
+        );
 
         return ['sent' => true, 'warning' => null, 'error' => null];
     }
@@ -116,22 +145,49 @@ class ProcessoWhatsappService
         }
 
         $docsList = $pendingDocs->map(fn ($doc) => "- {$doc->name}")->implode("\n");
+        $portalLink = $this->buildPortalLink($processo);
 
         $template = core()->getConfigData('lawfirm.whatsapp_templates.messages.documents_request')
             ?: "Olá {cliente_nome}. Referente ao processo {processo_titulo}, por favor, nos envie os seguintes documentos pendentes:\n\n{documentos_pendentes}\n\nVocê pode enviá-los por aqui mesmo ou através do nosso portal: {link_portal}";
 
-        $msg = str_replace(
+        $fallbackMsg = str_replace(
             ['{cliente_nome}', '{processo_titulo}', '{documentos_pendentes}', '{link_portal}'],
-            [$processo->person->name, $processo->titulo ?? 'Processo', $docsList, $this->buildPortalLink($processo)],
+            [$processo->person->name, $processo->titulo ?? 'Processo', $docsList, $portalLink],
             $template
         );
+
+        $description = str_replace(
+            ['{cliente_nome}', '{processo_titulo}', '{documentos_pendentes}', '{link_portal}'],
+            [$processo->person->name, $processo->titulo ?? 'Processo', $docsList, ''],
+            $template
+        );
+        $description = trim(preg_replace('/(ou através do nosso portal:?|pelo link:?|Utilize o link:?)\s*$/im', '', $description));
 
         $config = $this->getEvolutionConfig();
         if (! $config) {
             return ['sent' => false, 'warning' => 'Mensagem não enviada. WhatsApp não está configurado para o escritório.', 'error' => null];
         }
 
-        $this->evolutionService->sendMessage($config['instance'], $phone, $msg);
+        $buttons = [
+            [
+                'type'        => 'url',
+                'displayText' => '📄 Enviar Documentos',
+                'url'         => $portalLink,
+            ],
+        ];
+
+        $title = $processo->titulo ? "Processo: {$processo->titulo}" : 'Solicitação de Documentos';
+        $footer = config('app.name', 'Portal do Cliente');
+
+        $this->evolutionService->sendButtons(
+            $config['instance'],
+            $phone,
+            $title,
+            $description,
+            $buttons,
+            $footer,
+            $fallbackMsg
+        );
 
         return ['sent' => true, 'warning' => null, 'error' => null];
     }

@@ -60,10 +60,31 @@
 
                                 <!-- Nome com Link -->
                                 <td class="px-4 py-3">
-                                    <a href="{{ $anexo->url }}" target="_blank"
-                                        class="font-medium text-blue-600 hover:underline hover:text-blue-800 flex items-center gap-2">
-                                        {{ $anexo->nome_original }}
-                                    </a>
+                                    <!-- Modo Exibição -->
+                                    <div id="anexo-display-{{ $anexo->id }}">
+                                        <a href="{{ $anexo->url }}" target="_blank"
+                                            class="font-medium text-blue-600 hover:underline hover:text-blue-800 truncate block"
+                                            id="anexo-name-link-{{ $anexo->id }}">
+                                            {{ $anexo->nome_original }}
+                                        </a>
+                                    </div>
+                                    <!-- Modo Edição (inline, oculto por padrão) -->
+                                    <div id="anexo-edit-{{ $anexo->id }}" class="hidden flex items-center gap-2">
+                                        <input type="text"
+                                            id="anexo-input-{{ $anexo->id }}"
+                                            class="flex-1 min-w-0 rounded border border-blue-400 text-sm px-2 py-1 focus:ring-2 focus:ring-blue-400 focus:outline-none dark:bg-gray-800 dark:text-white"
+                                            onkeydown="if(event.key==='Enter'){window.lfGedSaveRename({{ $anexo->id }});}if(event.key==='Escape'){window.lfGedCancelRename({{ $anexo->id }});}" />
+                                        <button type="button" onclick="window.lfGedSaveRename({{ $anexo->id }})"
+                                            class="px-2 py-1 bg-green-200 text-green-800 border border-green-300 rounded text-xs hover:bg-green-300 transition-colors flex-shrink-0"
+                                            title="Confirmar">
+                                            <span class="icon-check text-base"></span> Ok
+                                        </button>
+                                        <button type="button" onclick="window.lfGedCancelRename({{ $anexo->id }})"
+                                            class="px-2 py-1 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                                            title="Cancelar">
+                                            <span class="icon-close text-base"></span>
+                                        </button>
+                                    </div>
                                 </td>
 
                                 <!-- Tamanho -->
@@ -71,7 +92,7 @@
                                     {{ round($anexo->tamanho / 1024, 2) }} KB
                                 </td>
 
-                                <!-- Ações (Download / Excluir) -->
+                                <!-- Ações (Renomear / Download / Excluir) -->
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex items-center justify-center gap-4">
                                         <!-- Download -->
@@ -80,9 +101,19 @@
                                             <span class="icon-download text-xl"></span>
                                         </a>
 
+                                        <!-- Renomear -->
+                                        @if(!$readOnly && bouncer()->hasPermission('lawfirm.documentos.create'))
+                                            <button type="button"
+                                                onclick="window.lfGedStartRename({{ $anexo->id }}, '{{ addslashes($anexo->nome_original) }}')"
+                                                title="Renomear arquivo"
+                                                class="text-gray-400 hover:text-yellow-600 transition-colors cursor-pointer">
+                                                <span class="icon-edit text-xl"></span>
+                                            </button>
+                                        @endif
+
                                         <!-- Excluir (AJAX) -->
                                         @if(!$readOnly && bouncer()->hasPermission('lawfirm.documentos.delete'))
-                                            <button type="button" class="text-red-500 hover:text-red-700 cursor-pointer"
+                                            <button type="button" class="text-red-400 hover:text-red-600 cursor-pointer"
                                                 title="Excluir"
                                                 onclick="deleteAnexo('{{ route('admin.lawfirm.ged.destroy', $anexo->id) }}')">
                                                 <span class="icon-delete text-xl"></span>
@@ -301,6 +332,65 @@
             }, false);
         });
     });
+
+    if (typeof renameAnexoUrl !== 'object') window.renameAnexoUrl = {};
+    @if(isset($processo) && $processo->exists)
+    @foreach($processo->anexos as $anexo)
+    window.renameAnexoUrl[{{ $anexo->id }}] = '{{ route('admin.lawfirm.ged.rename', $anexo->id) }}';
+    @endforeach
+    @endif
+
+    if (typeof window.lfGedStartRename !== 'function') {
+        window.lfGedStartRename = function(id, currentName) {
+            document.getElementById('anexo-display-' + id).classList.add('hidden');
+            const editDiv = document.getElementById('anexo-edit-' + id);
+            editDiv.classList.remove('hidden');
+            const input = document.getElementById('anexo-input-' + id);
+            input.value = currentName;
+            input.focus();
+            input.select();
+        };
+
+        window.lfGedCancelRename = function(id) {
+            document.getElementById('anexo-edit-' + id).classList.add('hidden');
+            document.getElementById('anexo-display-' + id).classList.remove('hidden');
+        };
+
+        window.lfGedSaveRename = function(id) {
+            const input = document.getElementById('anexo-input-' + id);
+            const newName = input.value.trim();
+            if (!newName) { alert('O nome não pode estar vazio.'); input.focus(); return; }
+
+            const url = window.renameAnexoUrl[id];
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (!token) { alert('Token CSRF não encontrado.'); return; }
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('PATCH', url, true);
+            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.setRequestHeader('Accept', 'application/json');
+
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const data = JSON.parse(xhr.responseText);
+                    const nameLink = document.getElementById('anexo-name-link-' + id);
+                    if (nameLink) nameLink.textContent = data.nome_original;
+                    // Update the rename button's stored name
+                    const btn = document.querySelector(`#anexo-display-${id} button`);
+                    if (btn) btn.setAttribute('onclick', `window.lfGedStartRename(${id}, '${data.nome_original.replace(/'/g, "\\'")}'`);
+                    window.lfGedCancelRename(id);
+                } else {
+                    let msg = 'Erro ao renomear.';
+                    try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
+                    alert(msg);
+                }
+            };
+            xhr.onerror = function() { alert('Erro de rede.'); };
+            xhr.send(JSON.stringify({ nome_original: newName }));
+        };
+    }
 
     console.log('GED scripts loaded: handleFileSelect, deleteAnexo, toggleSection available');
 </script>

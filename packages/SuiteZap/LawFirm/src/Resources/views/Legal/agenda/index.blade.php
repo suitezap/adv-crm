@@ -31,6 +31,15 @@
             </div>
         @endif
 
+        <!-- Banner de Contexto de Chat / Lead (Ativado quando veio de uma conversa) -->
+        <div id="lf-agenda-chat-banner" class="hidden mx-2 px-3 py-2 bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800 rounded-lg flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
+            <div class="flex items-center gap-2">
+                <span class="text-base">💬</span>
+                <span>Agendamento para: <strong id="lf-chat-banner-nome"></strong> <span id="lf-chat-banner-conv" class="opacity-75 font-mono"></span></span>
+            </div>
+            <span class="text-gray-500 dark:text-gray-400 text-[11px]">Clique em um dia no calendário para agendar</span>
+        </div>
+
         <!-- Legenda -->
         <div class="flex flex-wrap gap-4 items-center text-sm {{ request()->has('clean') ? 'px-2' : '' }}">
             <span class="flex items-center gap-1.5 font-medium text-gray-700">
@@ -113,9 +122,12 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex justify-end gap-2 px-4 py-2.5">
+                        <div class="flex items-center justify-end gap-2 px-4 py-2.5">
                             <button onclick="lfCloseModal()" class="secondary-button">
                                 Fechar
+                            </button>
+                            <button id="lf-btn-view-whatsapp" type="button" class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-sm transition-colors cursor-pointer">
+                                📱 Enviar WhatsApp
                             </button>
                             <a id="lf-btn-edit" href="#" target="_parent" class="primary-button hidden">
                                 Editar
@@ -127,6 +139,18 @@
                          Conteúdo do modal — modo CREATE
                          ============================================== -->
                     <div id="lf-modal-create-container" class="block">
+                        <div id="lf-modal-context-badge" class="hidden mx-4 mt-3 px-3 py-2 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-sm">💬</span>
+                                <span id="lf-modal-context-text">Vinculado à conversa do chat</span>
+                            </div>
+                            <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono font-medium" id="lf-modal-context-phone"></span>
+                        </div>
+                        <input type="hidden" id="lf-bg-conversa-id" value="">
+                        <input type="hidden" id="lf-bg-nome" value="">
+                        <input type="hidden" id="lf-bg-titulo" value="">
+                        <input type="hidden" id="lf-bg-telefone" value="">
+                        <input type="hidden" id="lf-bg-lead-id" value="">
                         <div class="border-b px-4 py-2.5 dark:border-gray-800 space-y-3">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-0.5">Título *</label>
@@ -197,15 +221,21 @@
                             <!-- Sem Checkbox de Status (Sempre Pendente ao criar) -->
                             <p id="lf-modal-error" class="hidden text-red-600 text-xs mt-1"></p>
                         </div>
-                        <div class="flex justify-end gap-2 px-4 py-2.5">
+                        <div class="flex items-center justify-between px-4 py-2.5">
                             <button onclick="lfCloseModal()" class="secondary-button">
                                 Cancelar
                             </button>
-                            @if (bouncer()->hasPermission('lawfirm.agenda.create'))
-                                <button id="lf-btn-save" onclick="lfSaveEvent()" class="primary-button">
-                                    Salvar
-                                </button>
-                            @endif
+                            <div class="flex items-center gap-2">
+                                @if (bouncer()->hasPermission('lawfirm.agenda.create'))
+                                    <button id="lf-btn-save" onclick="lfSaveEvent(false)" class="primary-button">
+                                        Salvar
+                                    </button>
+                                    <button id="lf-btn-save-whatsapp" type="button" onclick="lfSaveEvent(true)"
+                                        class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 active:bg-green-800 shadow-sm transition-colors cursor-pointer">
+                                        <span>📱 Enviar por WhatsApp</span>
+                                    </button>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -218,6 +248,36 @@
             var eventsUrl  = @json(route('admin.lawfirm.agenda.events'));
             var updateBase = @json(route('admin.lawfirm.agenda.update', 'REPLACE_ID'));
             var storeUrl   = @json(route('admin.lawfirm.agenda.store'));
+            var chatwootSendBase = "{{ route('admin.lawfirm.chatwoot.lead.send', ['lead' => 'REPLACE_LEAD_ID']) }}";
+
+            // ------------------------------------------------------------------
+            // Parâmetros de contexto passados pelo Chat Modal
+            // ------------------------------------------------------------------
+            var lfUrlParams = (function () {
+                var p = new URLSearchParams(window.location.search);
+                return {
+                    conversaId : p.get('conversa_id') || '',
+                    nome       : p.get('nome')        || '',
+                    titulo     : p.get('titulo')      || '',
+                    telefone   : p.get('telefone')    || '',
+                    leadId     : p.get('lead_id')     || ''
+                };
+            })();
+
+            var hasChatContext = !!(lfUrlParams.conversaId || lfUrlParams.nome || lfUrlParams.telefone);
+
+            // Se tem contexto do chat, exibe a barra no topo da agenda
+            if (hasChatContext) {
+                var chatBanner = document.getElementById('lf-agenda-chat-banner');
+                if (chatBanner) {
+                    var nomeEl = document.getElementById('lf-chat-banner-nome');
+                    var convEl = document.getElementById('lf-chat-banner-conv');
+                    if (nomeEl) nomeEl.textContent = lfUrlParams.nome || lfUrlParams.titulo || 'Cliente';
+                    if (convEl) convEl.textContent = lfUrlParams.conversaId ? ('(Conversa #' + lfUrlParams.conversaId + ')') : '';
+                    chatBanner.classList.remove('hidden');
+                    chatBanner.classList.add('flex');
+                }
+            }
 
             // ------------------------------------------------------------------
             // Helpers de modal
@@ -363,12 +423,13 @@
             // ------------------------------------------------------------------
             // Salvar novo compromisso
             // ------------------------------------------------------------------
-            window.lfSaveEvent = function () {
+            window.lfSaveEvent = function (sendWhatsapp) {
+                sendWhatsapp = !!sendWhatsapp;
                 var titulo = document.getElementById('lf-inp-titulo').value.trim();
                 var tipo   = document.getElementById('lf-field-tipo').value;
-                var desc = document.getElementById('lf-inp-desc').value;
-                var ini = document.getElementById('lf-inp-inicio').value;
-                var fim = document.getElementById('lf-inp-fim').value;
+                var desc   = document.getElementById('lf-inp-desc').value;
+                var ini    = document.getElementById('lf-inp-inicio').value;
+                var fim    = document.getElementById('lf-inp-fim').value;
                 var errEl  = document.getElementById('lf-modal-error');
 
                 if (!titulo) {
@@ -382,9 +443,16 @@
                     return;
                 }
 
-                var btn = document.getElementById('lf-btn-save');
-                btn.disabled = true;
-                btn.textContent = 'Salvando…';
+                var btnSave = document.getElementById('lf-btn-save');
+                var btnWa   = document.getElementById('lf-btn-save-whatsapp');
+                if (btnSave) btnSave.disabled = true;
+                if (btnWa)   btnWa.disabled = true;
+
+                if (sendWhatsapp && btnWa) {
+                    btnWa.innerHTML = '<span>Salvando…</span>';
+                } else if (btnSave) {
+                    btnSave.textContent = 'Salvando…';
+                }
 
                 var freshToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
@@ -403,6 +471,7 @@
                         data_inicio: ini,
                         data_fim:    fim || null,
                         is_done:     false,
+                        lead_id:     lfUrlParams.leadId || null,
                         participants: {
                             users: lfParticipants.users.map(function(u){ return u.id; }),
                             persons: lfParticipants.persons.map(function(p){ return p.id; })
@@ -414,6 +483,27 @@
                 .then(function(data) {
                     if (data.success) {
                         window.lfCloseModal();
+
+                        var waOpts = {
+                            titulo     : titulo,
+                            desc       : desc,
+                            inicio     : ini,
+                            nome       : lfUrlParams.nome,
+                            telefone   : lfUrlParams.telefone,
+                            conversaId : lfUrlParams.conversaId,
+                            leadId     : lfUrlParams.leadId
+                        };
+
+                        // Se o usuário clicou no botão "Enviar por WhatsApp", dispara imediatamente
+                        if (sendWhatsapp) {
+                            lfTriggerWhatsapp(waOpts);
+                        }
+
+                        // Se veio do chat, sempre disponibiliza o banner de confirmação com o botão WhatsApp no topo
+                        if (hasChatContext) {
+                            lfShowWhatsappButton(waOpts);
+                        }
+
                         // Instrui o iframe a refazer o fetch dos eventos
                         var iframe = document.getElementById('lf-agenda-iframe');
                         if (iframe && iframe.contentWindow) {
@@ -424,13 +514,20 @@
                         errEl.classList.remove('hidden');
                     }
                 })
-                .catch(function() {
+                .catch(function(err) {
+                    console.error(err);
                     errEl.textContent = 'Erro de rede. Verifique sua conexão.';
                     errEl.classList.remove('hidden');
                 })
                 .finally(function() {
-                    btn.disabled = false;
-                    btn.textContent = 'Salvar';
+                    if (btnSave) {
+                        btnSave.disabled = false;
+                        btnSave.textContent = 'Salvar';
+                    }
+                    if (btnWa) {
+                        btnWa.disabled = false;
+                        btnWa.innerHTML = '<span>📱 Enviar por WhatsApp</span>';
+                    }
                 });
             };
 
@@ -518,6 +615,27 @@
                     btnEdit.classList.add('hidden');
                 }
 
+                // Botão de WhatsApp no modal de visualização
+                var btnViewWa = document.getElementById('lf-btn-view-whatsapp');
+                if (btnViewWa) {
+                    if (hasChatContext) {
+                        btnViewWa.classList.remove('hidden');
+                        btnViewWa.onclick = function() {
+                            lfTriggerWhatsapp({
+                                titulo     : props.title,
+                                desc       : props.comment,
+                                inicio     : props.start,
+                                nome       : lfUrlParams.nome,
+                                telefone   : lfUrlParams.telefone,
+                                conversaId : lfUrlParams.conversaId,
+                                leadId     : lfUrlParams.leadId
+                            }, this);
+                        };
+                    } else {
+                        btnViewWa.classList.add('hidden');
+                    }
+                }
+
                 document.getElementById('lf-event-modal').classList.remove('hidden');
             }
 
@@ -549,9 +667,53 @@
 
                 document.getElementById('lf-inp-inicio').value = dt;
                 document.getElementById('lf-inp-fim').value = dtEnd;
-                document.getElementById('lf-inp-titulo').value = '';
-                document.getElementById('lf-inp-desc').value = '';
+
+                // Título: se veio do chat, sugere título contextual
+                var tituloDefault = '';
+                if (hasChatContext) {
+                    tituloDefault = lfUrlParams.titulo
+                        ? 'Reunião — ' + lfUrlParams.titulo
+                        : (lfUrlParams.nome ? 'Reunião com ' + lfUrlParams.nome : 'Nova Reunião');
+                }
+
+                document.getElementById('lf-inp-titulo').value = tituloDefault;
+                // OBSERVAÇÃO NÃO CONTÉM DADOS DO LEAD/CONVERSA (permanecem em background):
+                document.getElementById('lf-inp-desc').value   = '';
                 document.getElementById('lf-field-tipo').value = 'meeting';
+
+                // Campos ocultos de background
+                document.getElementById('lf-bg-conversa-id').value = lfUrlParams.conversaId || '';
+                document.getElementById('lf-bg-nome').value        = lfUrlParams.nome || '';
+                document.getElementById('lf-bg-titulo').value      = lfUrlParams.titulo || '';
+                document.getElementById('lf-bg-telefone').value    = lfUrlParams.telefone || '';
+                document.getElementById('lf-bg-lead-id').value     = lfUrlParams.leadId || '';
+
+                // Badge informativo no topo do modal
+                var badge = document.getElementById('lf-modal-context-badge');
+                if (badge) {
+                    if (hasChatContext) {
+                        var parts = [];
+                        if (lfUrlParams.nome) parts.push(lfUrlParams.nome);
+                        if (lfUrlParams.conversaId) parts.push('Conversa #' + lfUrlParams.conversaId);
+                        if (lfUrlParams.titulo && lfUrlParams.titulo !== lfUrlParams.nome) parts.push(lfUrlParams.titulo);
+                        document.getElementById('lf-modal-context-text').textContent = 'Vinculado a: ' + parts.join(' • ');
+                        var phoneEl = document.getElementById('lf-modal-context-phone');
+                        if (phoneEl) phoneEl.textContent = lfUrlParams.telefone ? ('📱 ' + lfUrlParams.telefone) : '';
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+
+                // Botão "📱 Enviar por WhatsApp" no rodapé do modal: só ativa quando veio do chat
+                var btnWa = document.getElementById('lf-btn-save-whatsapp');
+                if (btnWa) {
+                    if (hasChatContext) {
+                        btnWa.classList.remove('hidden');
+                    } else {
+                        btnWa.classList.add('hidden');
+                    }
+                }
                 
                 lfParticipants = { users: [], persons: [] };
                 window.lfRenderParticipants();
@@ -561,6 +723,146 @@
                 document.getElementById('lf-event-modal').classList.remove('hidden');
                 document.getElementById('lf-inp-titulo').focus();
             };
+
+
+            // ------------------------------------------------------------------
+            // Helpers de Mensagem e Envio WhatsApp
+            // ------------------------------------------------------------------
+            function lfBuildWhatsappMessage(opts) {
+                var dtFormatada = '';
+                if (opts.inicio) {
+                    var d = new Date(opts.inicio);
+                    dtFormatada = d.toLocaleString('pt-BR', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+                }
+
+                var linhas = [];
+                var saudacao = opts.nome ? ('Olá, ' + opts.nome + '!') : 'Olá!';
+                linhas.push(saudacao);
+                linhas.push('');
+                linhas.push('Sua reunião foi agendada para:');
+                linhas.push('📅 ' + (dtFormatada || 'data e horário a combinar'));
+                if (opts.titulo) {
+                    linhas.push('📋 ' + opts.titulo);
+                }
+                if (opts.desc && opts.desc.trim()) {
+                    linhas.push('📝 ' + opts.desc.trim());
+                }
+                linhas.push('');
+                linhas.push('Você poderá participar? Por favor, confirme sua presença. 🙏');
+
+                return linhas.join('\n');
+            }
+
+            function lfTriggerWhatsapp(opts, btnElement) {
+                if (!opts.leadId) {
+                    alert('Não foi possível identificar o Lead associado a este agendamento.');
+                    return;
+                }
+
+                var originalText = '';
+                if (btnElement) {
+                    originalText = btnElement.innerHTML;
+                    btnElement.innerHTML = 'Enviando...';
+                    btnElement.disabled = true;
+                }
+
+                var url = chatwootSendBase.replace('REPLACE_LEAD_ID', opts.leadId);
+                var messageText = lfBuildWhatsappMessage(opts);
+                
+                var xsrfMatch = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/);
+                var xsrfToken = xsrfMatch ? decodeURIComponent(xsrfMatch[1]) : '';
+
+                fetch(url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-XSRF-TOKEN': xsrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        message: messageText,
+                        private: false
+                    })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.error) {
+                        alert('Erro ao enviar: ' + data.error);
+                        if (btnElement) {
+                            btnElement.innerHTML = originalText;
+                            btnElement.disabled = false;
+                        }
+                    } else {
+                        alert('Mensagem enviada com sucesso!');
+                        var banner = document.getElementById('lf-wa-banner');
+                        if (banner) banner.remove();
+                        if (btnElement) {
+                            btnElement.innerHTML = 'Enviado ✅';
+                        }
+                    }
+                })
+                .catch(function(err) {
+                    console.error(err);
+                    alert('Erro de rede ao enviar a mensagem.');
+                    if (btnElement) {
+                        btnElement.innerHTML = originalText;
+                        btnElement.disabled = false;
+                    }
+                });
+            }
+
+            function lfShowWhatsappButton(opts) {
+                var nomeLabel = opts.nome || 'o cliente';
+
+                var banner = document.getElementById('lf-wa-banner');
+                if (!banner) {
+                    banner = document.createElement('div');
+                    banner.id = 'lf-wa-banner';
+                    document.body.appendChild(banner);
+                }
+
+                banner.style.cssText = [
+                    'position:fixed', 'top:0', 'left:0', 'right:0', 'z-index:99999',
+                    'background:#16a34a', 'color:#fff',
+                    'padding:.7rem 1.25rem', 'display:flex', 'align-items:center',
+                    'justify-content:space-between', 'gap:1rem',
+                    'box-shadow:0 4px 14px rgba(0,0,0,.25)', 'font-size:.875rem',
+                    'flex-wrap:wrap'
+                ].join(';');
+
+                banner.innerHTML = [
+                    '<div style="display:flex;align-items:center;gap:.6rem;">',
+                      '<span style="font-size:1.2rem;">✅</span>',
+                      '<span>Compromisso salvo! Envie a confirmação por WhatsApp para <strong>' + (opts.nome ? esc(opts.nome) : 'o cliente') + '</strong>:</span>',
+                    '</div>',
+                    '<div style="display:flex;gap:.5rem;align-items:center;">',
+                      '<button type="button" onclick="lfTriggerWhatsapp({ ',
+                      'titulo: \'' + esc(opts.titulo) + '\', ',
+                      'desc: \'' + esc(opts.desc).replace(/(\r\n|\n|\r)/gm, "\\n") + '\', ',
+                      'inicio: \'' + opts.inicio + '\', ',
+                      'nome: \'' + esc(opts.nome) + '\', ',
+                      'telefone: \'' + opts.telefone + '\', ',
+                      'conversaId: \'' + opts.conversaId + '\', ',
+                      'leadId: \'' + opts.leadId + '\' ',
+                      '}, this)"',
+                      ' style="display:inline-flex;align-items:center;gap:.4rem;background:#fff;color:#16a34a;',
+                      'border-radius:6px;padding:.4rem .9rem;font-weight:700;font-size:.85rem;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,.15);border:none;cursor:pointer;">',
+                      '📱 Enviar por WhatsApp</button>',
+                      '<button type="button" onclick="document.getElementById(\'lf-wa-banner\').remove()"',
+                      ' style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:4px;',
+                      'padding:.35rem .7rem;cursor:pointer;font-size:.8rem;font-weight:500;">✕ Fechar</button>',
+                    '</div>'
+                ].join('');
+            }
+
+            function esc(s) {
+                if (!s) return '';
+                return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+            }
 
             // ------------------------------------------------------------------
             // postMessage bridge: drag-drop + dateClick + eventClick + refetch

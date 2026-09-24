@@ -120,6 +120,41 @@ class ProcessDocumentController extends Controller
     }
 
     /**
+     * Rename an attachment (nome_original) via AJAX.
+     *
+     * @param  Request  $request
+     * @param  int      $id
+     * @return JsonResponse
+     */
+    public function renameAnexo(Request $request, $id)
+    {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.create'), 401, 'This action is unauthorized');
+
+        $request->validate([
+            'nome_original' => ['required', 'string', 'max:255'],
+        ]);
+
+        try {
+            $anexo = Anexo::findOrFail($id);
+
+            if ($anexo->processo_id) {
+                $this->assertTenantProcesso($anexo->processo_id);
+            }
+
+            $anexo->update(['nome_original' => trim($request->nome_original)]);
+
+            return response()->json([
+                'status'         => 'success',
+                'message'        => 'Nome atualizado com sucesso.',
+                'nome_original'  => $anexo->nome_original,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage(), 'status' => 'error'], 500);
+        }
+    }
+
+    /**
      * Remove the specified checklist item from storage.
      *
      * @param  int  $id
@@ -144,10 +179,41 @@ class ProcessDocumentController extends Controller
 
         } catch (\Exception $e) {
             if (request()->ajax()) {
-                return response()->json(['message' => 'Erro ao excluir item do checklist.', 'status' => 'error'], 500);
+                return response()->json(['message' => $e->getMessage(), 'status' => 'error'], 500);
+            }
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Mass delete checklist items via AJAX.
+     *
+     * @return JsonResponse
+     */
+    public function massDestroyChecklist()
+    {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.delete'), 401, 'This action is unauthorized');
+
+        try {
+            $ids = request()->input('ids');
+            if (empty($ids) || !is_array($ids)) {
+                return response()->json(['message' => 'Nenhum item selecionado.', 'status' => 'warning'], 400);
             }
 
-            return redirect()->back()->with('error', 'Erro ao excluir item do checklist.');
+            foreach ($ids as $id) {
+                $doc = ProcessDocument::find($id);
+                if ($doc) {
+                    if ($doc->processo_id) {
+                        $this->assertTenantProcesso($doc->processo_id);
+                    }
+                    $doc->delete();
+                }
+            }
+
+            return response()->json(['message' => 'Itens excluídos com sucesso.', 'status' => 'success']);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage(), 'status' => 'error'], 500);
         }
     }
 
@@ -296,7 +362,7 @@ class ProcessDocumentController extends Controller
                     'token' => hash_hmac('sha256', $processo->id, config('app.key')),
                 ]);
 
-                $msg = str_replace(
+                $fallbackMsg = str_replace(
                     ['{cliente_nome}', '{processo_titulo}', '{kit_nome}', '{lista_documentos}', '{link_portal}'],
                     [
                         $processo->person->name,
@@ -308,6 +374,19 @@ class ProcessDocumentController extends Controller
                     $templateMsg
                 );
 
+                $description = str_replace(
+                    ['{cliente_nome}', '{processo_titulo}', '{kit_nome}', '{lista_documentos}', '{link_portal}'],
+                    [
+                        $processo->person->name,
+                        $processo->titulo ?? 'Processo',
+                        $template->name ?? 'Documentação',
+                        $docListString,
+                        '',
+                    ],
+                    $templateMsg
+                );
+                $description = trim(preg_replace('/(ou pelo link\s*:?|pelo link\s*:?|Utilize o link:?)\s*$/im', '', $description));
+
                 // 6. Enviar via Service
                 $evolutionService = app(EvolutionService::class);
                 $config = MotherShipService::getEvolutionConfig();
@@ -315,7 +394,25 @@ class ProcessDocumentController extends Controller
                 if (! $config || empty($config['instance'])) {
                     Log::error('ProcessDocumentController: Evolution API não configurada no MotherShip. WhatsApp não enviado.');
                 } else {
-                    $evolutionService->sendMessage($config['instance'], $phone, $msg);
+                    $buttons = [
+                        [
+                            'type'        => 'url',
+                            'displayText' => '📄 Enviar Documentos',
+                            'url'         => $portalLink,
+                        ],
+                    ];
+                    $title = $processo->titulo ? "Processo: {$processo->titulo}" : 'Documentação Solicitada';
+                    $footer = config('app.name', 'Portal do Cliente');
+
+                    $evolutionService->sendButtons(
+                        $config['instance'],
+                        $phone,
+                        $title,
+                        $description,
+                        $buttons,
+                        $footer,
+                        $fallbackMsg
+                    );
                     Log::info("Solicitação de documentos enviada via WhatsApp para {$processo->person->name}");
                 }
 
@@ -398,6 +495,45 @@ class ProcessDocumentController extends Controller
         return redirect()->back();
     }
 
+    /**
+     * Mass update status for multiple checklist items via AJAX.
+     *
+     * @return JsonResponse
+     */
+    public function massUpdateStatus(Request $request)
+    {
+        abort_if(! bouncer()->hasPermission('lawfirm.documentos.create'), 401, 'This action is unauthorized');
+
+        try {
+            $ids    = $request->input('ids');
+            $status = $request->input('status');
+
+            $allowed = ['pending', 'received', 'approved', 'rejected'];
+
+            if (empty($ids) || !is_array($ids)) {
+                return response()->json(['message' => 'Nenhum item selecionado.', 'status' => 'warning'], 400);
+            }
+            if (! in_array($status, $allowed)) {
+                return response()->json(['message' => 'Status inválido.', 'status' => 'error'], 422);
+            }
+
+            foreach ($ids as $id) {
+                $doc = ProcessDocument::find($id);
+                if ($doc) {
+                    if ($doc->processo_id) {
+                        $this->assertTenantProcesso($doc->processo_id);
+                    }
+                    $doc->update(['status' => $status]);
+                }
+            }
+
+            return response()->json(['message' => 'Status atualizado com sucesso.', 'status' => 'success', 'new_status' => $status]);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage(), 'status' => 'error'], 500);
+        }
+    }
+
     // Enviar Checklist Selecionado via WhatsApp (ação manual do usuário — não é módulo suspenso)
     public function sendChecklist(Request $request, $processId)
     {
@@ -457,7 +593,7 @@ class ProcessDocumentController extends Controller
                 'token' => hash_hmac('sha256', $processo->id, config('app.key')),
             ]);
 
-            $msg = str_replace(
+            $fallbackMsg = str_replace(
                 ['{cliente_nome}', '{processo_titulo}', '{kit_nome}', '{lista_documentos}', '{link_portal}'],
                 [
                     $processo->person->name,
@@ -469,6 +605,19 @@ class ProcessDocumentController extends Controller
                 $templateMsg
             );
 
+            $description = str_replace(
+                ['{cliente_nome}', '{processo_titulo}', '{kit_nome}', '{lista_documentos}', '{link_portal}'],
+                [
+                    $processo->person->name,
+                    $processo->titulo ?? 'Processo',
+                    'Seleção Manual',
+                    $docListString,
+                    '',
+                ],
+                $templateMsg
+            );
+            $description = trim(preg_replace('/(ou pelo link\s*:?|pelo link\s*:?|Utilize o link:?)\s*$/im', '', $description));
+
             // 6. Enviar via Service
             $evolutionService = app(EvolutionService::class);
 
@@ -478,7 +627,25 @@ class ProcessDocumentController extends Controller
                 Log::error('ProcessDocumentController: Evolution API não configurada no MotherShip. Checklist WhatsApp não enviado.');
                 session()->flash('warning', 'Checklist enviado, mas WhatsApp não está configurado para este workspace.');
             } else {
-                $evolutionService->sendMessage($config['instance'], $phone, $msg);
+                $buttons = [
+                    [
+                        'type'        => 'url',
+                        'displayText' => '📄 Enviar Documentos',
+                        'url'         => $portalLink,
+                    ],
+                ];
+                $title = $processo->titulo ? "Processo: {$processo->titulo}" : 'Documentação Solicitada';
+                $footer = config('app.name', 'Portal do Cliente');
+
+                $evolutionService->sendButtons(
+                    $config['instance'],
+                    $phone,
+                    $title,
+                    $description,
+                    $buttons,
+                    $footer,
+                    $fallbackMsg
+                );
                 session()->flash('success', 'Solicitação de documentos enviada com sucesso!');
             }
 

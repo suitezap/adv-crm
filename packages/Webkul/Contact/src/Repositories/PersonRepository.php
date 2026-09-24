@@ -67,7 +67,15 @@ class PersonRepository extends Repository
             $data['user_id'] = $data['user_id'] ?: null;
         }
 
+        // Auto-assign the logged-in user when no user_id is provided,
+        // preventing persons from having user_id = NULL which causes them
+        // to be invisible to users with view_permission != 'global'.
+        if (empty($data['user_id']) && auth()->guard('user')->check()) {
+            $data['user_id'] = auth()->guard('user')->id();
+        }
+
         $person = parent::create($data);
+
 
         $this->attributeValueRepository->save(array_merge($data, [
             'entity_id' => $person->id,

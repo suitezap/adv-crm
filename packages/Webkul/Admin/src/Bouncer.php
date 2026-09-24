@@ -47,6 +47,13 @@ class Bouncer
     {
         $user = auth()->guard('user')->user();
 
+        // If no user is authenticated, return null so no user_id filter is applied.
+        // Returning a truthy value (e.g. [null]) would cause WHERE user_id IN (NULL)
+        // which never matches any row in MySQL/MariaDB.
+        if (! $user) {
+            return null;
+        }
+
         if ($user->view_permission == 'global') {
             return null;
         }

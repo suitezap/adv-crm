@@ -743,3 +743,100 @@ O conjunto completo de labels sincronizadas via botão "🏷️ Tags" no painel 
 ---
 
 *Atualizado em 08/07/2026 — Auditoria MotherShip v1.21 ↔ LawFirm v3.54.1 — Dual Inbox Chatwoot + evolution_assistente_name + Correções D-2 e D-3.*
+
+---
+
+## 21. 📲 Templates de Mensagens WhatsApp — Controle pelo MotherShip (WA-TPL-001 — Set/2026)
+
+> [!IMPORTANT]
+> A partir desta versão, os textos padrão dos templates de mensagens WhatsApp do LawFirm passam a ser gerenciados centralmente pelo MotherShip via tabela `lawfirm_whatsapp_templates` no banco `mothership_db`. A lógica no CRM é **retrocompatível** e degrada graciosamente se o MotherShip estiver inacessível.
+
+### 21.1 Nova Tabela no MotherShip DB: `lawfirm_whatsapp_templates`
+
+| Coluna | Tipo | Descrição |
+|:---|:---|:---|
+| `id` | BigInt PK | Auto-increment |
+| `name` | VARCHAR UNIQUE | Chave do template, ex: `new_prazo_client` |
+| `title` | VARCHAR | Título legível exibido no painel |
+| `group` | VARCHAR | Grupo: `prazos`, `agendador_adv`, `financeiro`, `ged`, `juridico` |
+| `info` | TEXT NULL | Texto de ajuda e variáveis disponíveis |
+| `rows` | TINYINT DEFAULT 4 | Altura do textarea na UI |
+| `default_text` | TEXT | **Texto padrão global** — editável pelo admin do MotherShip |
+| `is_active` | BOOLEAN DEFAULT 1 | Se `0`, o template não aparece no CRM de nenhum tenant |
+| `sort_order` | SMALLINT DEFAULT 0 | Ordem de exibição dentro do grupo |
+| `created_at` / `updated_at` | Timestamps | |
+
+**Migration no LawFirm (roda no ambiente do tenant com connection `mothership` configurada):**
+- `2026_09_21_000000_create_mothership_whatsapp_templates_table`
+- `2026_09_21_000001_seed_mothership_whatsapp_templates` (popula os 14 templates padrão existentes)
+
+### 21.2 Modelo Eloquent no LawFirm
+
+```php
+// packages/SuiteZap/LawFirm/src/Whatsapp/Models/MothershipWhatsappTemplate.php
+// connection = 'mothership', table = 'lawfirm_whatsapp_templates'
+// Somente-leitura no contexto do CRM tenant.
+$templates = MothershipWhatsappTemplate::activeIndexedByName(); // Collection<name, model>
+```
+
+### 21.3 Hierarquia de Resolução no LawFirm CRM
+
+O `WhatsappTemplatesController` resolve o texto de cada template nesta ordem:
+
+```
+1. core_config (sobrescrita local do tenant — salva pelo próprio escritório no CRM)
+      ↓ (se não encontrado)
+2. lawfirm_whatsapp_templates no mothership_db (padrão global centralizado)
+      ↓ (se MotherShip inacessível — degradação graciosa com Log::error)
+3. Config/system.php hardcoded (fallback de última instância — retrocompatibilidade)
+```
+
+### 21.4 Ações Requeridas no Painel MotherShip
+
+| Ação | Detalhe |
+|:---|:---|
+| **Criar CRUD de Templates** | Implementar página `?page=whatsapp_templates` no painel com listagem, edição de `default_text`, `is_active` e `sort_order` por template. |
+| **Executar migration** | As migrations `2026_09_21_000000` e `2026_09_21_000001` rodam automaticamente via `php artisan migrate` nos ambientes tenant. No servidor central do MotherShip, executar o SQL equivalente da migration `_000000` no banco `mothership_db` e fazer o seed manual com os 14 templates padrão (ou usar o script SQL fornecido abaixo). |
+| **Adicionar novos templates** | Inserir novas linhas em `lawfirm_whatsapp_templates`. O CRM exibirá automaticamente o novo template para todos os tenants (sem necessidade de deploy). |
+| **Desativar templates** | Setar `is_active = 0`. O template desaparece do CRM sem precisar de alteração de código. |
+
+### 21.5 Script SQL de Seed (Mothership DB)
+
+```sql
+-- Executar no banco mothership_db para popular os templates padrão
+INSERT INTO lawfirm_whatsapp_templates (name, title, `group`, info, `rows`, default_text, is_active, sort_order, created_at, updated_at)
+VALUES
+  ('new_prazo_client', '[Prazos] Notificação de Novo Prazo ao Cliente', 'prazos', 'Variáveis: {cliente_nome}, {prazo_titulo}, {prazo_data}, {prazo_descricao}.', 4, 'Olá {cliente_nome}, informamos um novo prazo no seu processo: {prazo_titulo}. Data: {prazo_data}. {prazo_descricao}', 1, 1, NOW(), NOW()),
+  ('prazo_5dias_cliente', '[Agendador] 5 Dias Antes — Para o Cliente', 'prazos', 'Variáveis: {cliente_nome}, {prazo_titulo}, {prazo_data}, {processo_cnj}, {processo_titulo}.', 4, 'Olá {cliente_nome}! 📅 Lembrando que o prazo *{prazo_titulo}* do processo *{processo_titulo}* (Nº {processo_cnj}) vence em 5 dias, em *{prazo_data}*. Dúvidas? Entre em contato.', 1, 2, NOW(), NOW()),
+  ('prazo_vespera_cliente', '[Agendador] 1 Dia Antes (Véspera) — Para o Cliente', 'prazos', 'Variáveis: {cliente_nome}, {prazo_titulo}, {prazo_data}, {processo_cnj}, {processo_titulo}.', 4, 'Olá {cliente_nome}! ⚠️ O prazo *{prazo_titulo}* do processo *{processo_titulo}* (Nº {processo_cnj}) vence *amanhã, {prazo_data}*. Nosso escritório está acompanhando.', 1, 3, NOW(), NOW()),
+  ('prazo_hoje_cliente', '[Agendador] No Dia do Vencimento — Para o Cliente', 'prazos', 'Variáveis: {cliente_nome}, {prazo_titulo}, {prazo_data}, {processo_cnj}, {processo_titulo}.', 4, 'Olá {cliente_nome}! 🔴 O prazo *{prazo_titulo}* do processo *{processo_titulo}* (Nº {processo_cnj}) vence *hoje, {prazo_data}*. Nosso escritório está acompanhando todos os procedimentos.', 1, 4, NOW(), NOW()),
+  ('prazo_5dias_advogado', '[Agendador] 5 Dias Antes — Para o Advogado', 'agendador_adv', 'Variáveis: {advogado_nome}, {prazo_titulo}, {prazo_data}, {processo_cnj}, {processo_titulo}, {cliente_nome}.', 4, '📅 *Lembrete — 5 dias*\n\nDr(a). {advogado_nome}, o prazo *{prazo_titulo}* do processo *{processo_cnj} — {processo_titulo}* (Cliente: {cliente_nome}) vence em 5 dias: *{prazo_data}*.', 1, 1, NOW(), NOW()),
+  ('prazo_vespera_advogado', '[Agendador] 1 Dia Antes (Véspera) — Para o Advogado', 'agendador_adv', 'Variáveis: {advogado_nome}, {prazo_titulo}, {prazo_data}, {processo_cnj}, {processo_titulo}, {cliente_nome}.', 4, '⚠️ *Prazo amanhã!*\n\nDr(a). {advogado_nome}, o prazo *{prazo_titulo}* do processo *{processo_cnj} — {processo_titulo}* (Cliente: {cliente_nome}) vence *amanhã, {prazo_data}*.', 1, 2, NOW(), NOW()),
+  ('prazo_hoje_advogado', '[Agendador] No Dia do Vencimento — Para o Advogado', 'agendador_adv', 'Variáveis: {advogado_nome}, {prazo_titulo}, {prazo_data}, {processo_cnj}, {processo_titulo}, {cliente_nome}.', 4, '🔴 *Prazo vencendo HOJE!*\n\nDr(a). {advogado_nome}, o prazo *{prazo_titulo}* do processo *{processo_cnj} — {processo_titulo}* (Cliente: {cliente_nome}) vence *hoje, {prazo_data}*.', 1, 3, NOW(), NOW()),
+  ('prazo_resumo_diario', '[Agendador] Resumo Diário de Compromissos (Advogado)', 'agendador_adv', 'Variáveis: {advogado_nome}, {data_hoje}, {lista_compromissos}. A lista é gerada automaticamente.', 5, '📋 *Resumo — {data_hoje}*\n\nBom dia, Dr(a). {advogado_nome}! Seus compromissos de hoje:\n\n{lista_compromissos}\n\nTenha um excelente dia!', 1, 4, NOW(), NOW()),
+  ('financial_billing_due_today', '[Financeiro] Cobrança no Prazo / Futura', 'financeiro', 'Variáveis: {cliente_nome}, {valor}, {descricao}, {data_vencimento}.', 4, 'Olá {cliente_nome}, lembrete de vencimento ref. {descricao} no valor de {valor} para o dia {data_vencimento}.', 1, 1, NOW(), NOW()),
+  ('financial_billing_overdue', '[Financeiro] Cobrança em Atraso', 'financeiro', 'Variáveis: {cliente_nome}, {valor}, {descricao}, {data_vencimento}.', 4, 'Olá {cliente_nome}, verificamos uma pendência de {valor} referente a {descricao}, vencida em {data_vencimento}. Podemos atualizar o boleto?', 1, 2, NOW(), NOW()),
+  ('document_request', '[GED / Documentos] Solicitação de Kits/Documentos', 'ged', 'Enviada ao importar um checklist de documentos. Variáveis: {cliente_nome}, {processo_titulo}, {lista_documentos}, {link_portal}.', 4, 'Olá {cliente_nome}. Referente ao processo {processo_titulo}, precisamos que nos envie os seguintes documentos:\n{lista_documentos}\nPode enviar fotos legíveis por aqui mesmo.\nou pelo link : {link_portal}', 1, 1, NOW(), NOW()),
+  ('registration_request', '[GED/Documentos] Cadastro e Atualização de Clientes', 'ged', 'Enviada via botão no processo para solicitar o preenchimento de dados. Variáveis: {cliente_nome}, {processo_titulo}, {link_portal}.', 4, 'Olá {cliente_nome}. Referente ao processo {processo_titulo}, precisamos que atualize suas informações cadastrais.\nUtilize o link {link_portal}', 1, 2, NOW(), NOW()),
+  ('escavador_monitoramento_update', '[Jurídico] Nova Movimentação Monitorada', 'juridico', 'Variáveis disponíveis: {termo_monitorado}, {data_atualizacao}, {fonte}.', 4, 'Olá! Detectamos uma nova movimentação do seu processo ''{termo_monitorado}'' em {fonte} na data de {data_atualizacao}. Acesse o portal para verificar a íntegra.', 1, 1, NOW(), NOW())
+ON DUPLICATE KEY UPDATE
+  `default_text` = VALUES(`default_text`),
+  `updated_at` = NOW();
+```
+
+### 21.6 Comportamento de Novos Templates Adicionados pelo MotherShip
+
+Se o painel do MotherShip inserir um novo template na tabela (ex: `nova_feature_xyz`):
+- O CRM o exibirá automaticamente na tela de Templates WhatsApp, no grupo definido pela coluna `group`.
+- **Não é necessário nenhum deploy no LawFirm.**
+- Se o `group` não coincidir com os grupos canônicos (`prazos`, `agendador_adv`, `financeiro`, `ged`, `juridico`), um grupo dinâmico é criado com o label do campo `group` da tabela.
+
+### 21.7 Compatibilidade Retroativa
+
+- Tenants com sobrescrita local (`core_config`) mantêm seu texto personalizado — a hierarquia garante prioridade local.
+- Se o banco `mothership` não estiver acessível, o CRM degrada para `system.php` e loga `Log::error` — **sem exceção exposta ao usuário**.
+- Os templates em `system.php` **não foram removidos** — continuam como fallback de última instância.
+
+---
+
+*Atualizado em 21/09/2026 — WA-TPL-001: Templates WhatsApp agora controlados pelo MotherShip via `lawfirm_whatsapp_templates`. LawFirm v3.57.0-dev.*

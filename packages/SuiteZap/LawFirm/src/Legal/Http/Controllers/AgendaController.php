@@ -17,11 +17,24 @@ class AgendaController extends Controller
     ) {}
 
     /**
-     * Renderiza a view da Agenda Jurídica (FullCalendar).
+     * Renderiza a view da Agenda Jurídica (Launcher).
      */
     public function index()
     {
         abort_if(! bouncer()->hasPermission('lawfirm.agenda.view'), 401, 'This action is unauthorized');
+
+        return view('lawfirm::Legal.agenda.launcher');
+    }
+
+    /**
+     * Renderiza a view da Agenda Jurídica (FullCalendar).
+     */
+    public function viewer()
+    {
+        abort_if(! bouncer()->hasPermission('lawfirm.agenda.view'), 401, 'This action is unauthorized');
+
+        // We force 'clean=1' in the request so it uses the anonymous layout (no menus)
+        request()->merge(['clean' => '1']);
 
         return view('lawfirm::Legal.agenda.index');
     }
@@ -81,6 +94,7 @@ class AgendaController extends Controller
             'data_inicio'            => 'required|string',
             'data_fim'               => 'nullable|string',
             'is_done'                => 'nullable|boolean',
+            'lead_id'                => 'nullable|integer',
             'participants'           => 'nullable|array',
             'participants.users'     => 'nullable|array',
             'participants.users.*'   => 'integer',
@@ -105,6 +119,10 @@ class AgendaController extends Controller
             'user_id'       => $userId,
             'participants'  => $validated['participants'] ?? [],
         ]);
+
+        if (! empty($validated['lead_id'])) {
+            $activity->leads()->syncWithoutDetaching([$validated['lead_id']]);
+        }
 
         return response()->json(['success' => true, 'activity_id' => $activity->id]);
     }

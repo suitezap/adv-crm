@@ -11,7 +11,7 @@ return [
         'outbox'          => 'Caixa de Saída',
         'sent'            => 'Enviados',
         'trash'           => 'Lixeira',
-        'activities'      => 'Atividades',
+        'activities'      => 'Agenda',
         'webhook'         => 'Webhook',
         'contacts'        => 'Contatos',
         'persons'         => 'Pessoas',

@@ -302,7 +302,6 @@
                             <x-admin::form.control-group.control
                                 type="textarea" name="descricao"
                                 id="descricao"
-                                tinymce="true"
                                 class="min-h-[120px]" rows="15"
                                 :value="old('descricao', $processo->descricao)"
                                 :label="trans('lawfirm::app.processos.form.desc')"
