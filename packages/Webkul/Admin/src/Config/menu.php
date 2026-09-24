@@ -89,7 +89,7 @@ return [
         'name'       => 'Agenda',
         'route'      => 'admin.lawfirm.agenda.index',
         'sort'       => 5,
-        'icon-class' => 'icon-calendar text-3xl',
+        'icon-class' => 'icon-calendar',
     ],
 
     /**
