@@ -28,13 +28,12 @@ class AgendaController extends Controller
 
     /**
      * Renderiza a view da Agenda Jurídica (FullCalendar).
+     * Quando acessada diretamente (submenu Jurídico), exibe com layout CRM completo.
+     * Quando ?clean=1 é passado (popup/aba via launcher), exibe sem menus.
      */
     public function viewer()
     {
         abort_if(! bouncer()->hasPermission('lawfirm.agenda.view'), 401, 'This action is unauthorized');
-
-        // We force 'clean=1' in the request so it uses the anonymous layout (no menus)
-        request()->merge(['clean' => '1']);
 
         return view('lawfirm::Legal.agenda.index');
     }
