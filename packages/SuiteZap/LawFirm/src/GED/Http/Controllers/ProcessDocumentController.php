@@ -122,8 +122,7 @@ class ProcessDocumentController extends Controller
     /**
      * Rename an attachment (nome_original) via AJAX.
      *
-     * @param  Request  $request
-     * @param  int      $id
+     * @param  int  $id
      * @return JsonResponse
      */
     public function renameAnexo(Request $request, $id)
@@ -181,6 +180,7 @@ class ProcessDocumentController extends Controller
             if (request()->ajax()) {
                 return response()->json(['message' => $e->getMessage(), 'status' => 'error'], 500);
             }
+
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
@@ -196,7 +196,7 @@ class ProcessDocumentController extends Controller
 
         try {
             $ids = request()->input('ids');
-            if (empty($ids) || !is_array($ids)) {
+            if (empty($ids) || ! is_array($ids)) {
                 return response()->json(['message' => 'Nenhum item selecionado.', 'status' => 'warning'], 400);
             }
 
@@ -505,12 +505,12 @@ class ProcessDocumentController extends Controller
         abort_if(! bouncer()->hasPermission('lawfirm.documentos.create'), 401, 'This action is unauthorized');
 
         try {
-            $ids    = $request->input('ids');
+            $ids = $request->input('ids');
             $status = $request->input('status');
 
             $allowed = ['pending', 'received', 'approved', 'rejected'];
 
-            if (empty($ids) || !is_array($ids)) {
+            if (empty($ids) || ! is_array($ids)) {
                 return response()->json(['message' => 'Nenhum item selecionado.', 'status' => 'warning'], 400);
             }
             if (! in_array($status, $allowed)) {

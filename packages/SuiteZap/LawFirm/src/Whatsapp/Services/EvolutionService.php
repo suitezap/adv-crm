@@ -188,13 +188,12 @@ class EvolutionService
      * Caso o envio por botões falhe (ex: incompatibilidade de versão ou rejeição do WhatsApp),
      * faz fallback automático e seguro enviando via sendText com o texto completo.
      *
-     * @param string $instanceName
-     * @param string $number
-     * @param string $title
-     * @param string $description
-     * @param array  $buttons
-     * @param string $footer
-     * @param string|null $fallbackText Texto alternativo caso falhe o envio com botões
+     * @param  string  $instanceName
+     * @param  string  $number
+     * @param  string  $title
+     * @param  string  $description
+     * @param  string  $footer
+     * @param  string|null  $fallbackText  Texto alternativo caso falhe o envio com botões
      * @return array
      */
     public function sendButtons($instanceName, $number, $title, $description, array $buttons, $footer = '', ?string $fallbackText = null)
@@ -216,10 +215,11 @@ class EvolutionService
                 'error' => $response['error'] ?? null,
             ]);
 
-            $textToSend = $fallbackText ?: trim("{$title}\n\n{$description}\n\n" . implode("\n", array_map(function ($b) {
+            $textToSend = $fallbackText ?: trim("{$title}\n\n{$description}\n\n".implode("\n", array_map(function ($b) {
                 if (($b['type'] ?? '') === 'url' && ! empty($b['url'])) {
-                    return ($b['displayText'] ?? 'Acessar') . ': ' . $b['url'];
+                    return ($b['displayText'] ?? 'Acessar').': '.$b['url'];
                 }
+
                 return $b['displayText'] ?? '';
             }, $buttons)));
 

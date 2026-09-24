@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Atendimento\Services\ChatwootService;
+use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Repositories\LeadRepository;
 
 /**
  * ChatwootLeadController
@@ -61,8 +63,8 @@ class ChatwootLeadController extends Controller
             // avoids the occasional 406 in some Chatwoot builds.
             $queryParams = $request->only(['limit', 'since', 'before', 'page']);
             $url = $chatwoot->accountUrl("conversations/{$conversationId}/messages");
-            if (!empty($queryParams)) {
-                $url .= '?' . http_build_query($queryParams);
+            if (! empty($queryParams)) {
+                $url .= '?'.http_build_query($queryParams);
             }
             $response = Http::timeout(15)
                 ->withHeaders(array_merge($chatwoot->managementHeaders(), [
@@ -112,7 +114,6 @@ class ChatwootLeadController extends Controller
             // We sort explicitly so the JS can always scroll to bottom = newest.
             usort($messages, fn ($a, $b) => ($a['created_at'] ?? 0) <=> ($b['created_at'] ?? 0));
 
-
             return response()->json([
                 'conversation_id' => $conversationId,
                 'messages'        => $messages,
@@ -140,15 +141,15 @@ class ChatwootLeadController extends Controller
     public function send(Request $request, Lead $lead): JsonResponse
     {
         \Log::debug('[ChatwootLeadController] send raw request', [
-            'all' => $request->all(),
-            'content_type' => $request->header('Content-Type'),
-            'has_attachments' => $request->hasFile('attachments')
+            'all'             => $request->all(),
+            'content_type'    => $request->header('Content-Type'),
+            'has_attachments' => $request->hasFile('attachments'),
         ]);
 
         $request->validate([
-            'message' => 'nullable|string|max:4096',
-            'private' => 'sometimes',
-            'attachments' => 'nullable|array',
+            'message'       => 'nullable|string|max:4096',
+            'private'       => 'sometimes',
+            'attachments'   => 'nullable|array',
             'attachments.*' => 'file|max:30720', // 30MB max
         ]);
 
@@ -167,7 +168,7 @@ class ChatwootLeadController extends Controller
         try {
             $chatwoot = $this->getChatwootService();
             $url = $chatwoot->accountUrl("conversations/{$conversationId}/messages");
-            
+
             $headers = $chatwoot->managementHeaders();
             if ($hasAttachments) {
                 // Remove application/json so Guzzle can set multipart/form-data with the correct boundary
@@ -200,7 +201,7 @@ class ChatwootLeadController extends Controller
             ]);
 
             if (! $response->successful()) {
-                return response()->json(['error' => 'Erro ao enviar mensagem: ' . $response->body()], $response->status());
+                return response()->json(['error' => 'Erro ao enviar mensagem: '.$response->body()], $response->status());
             }
 
             return response()->json($response->json());
@@ -327,14 +328,14 @@ class ChatwootLeadController extends Controller
             return response()->json(['error' => 'URL do áudio não fornecida.'], 400);
         }
 
-        $apiKey = \SuiteZap\LawFirm\SaaS\Services\MotherShipService::getAppConfig('openai_api_key');
+        $apiKey = MotherShipService::getAppConfig('openai_api_key');
         if (! $apiKey) {
             return response()->json(['error' => 'Chave da API da OpenAI não configurada no MotherShip (app_config).'], 500);
         }
 
         try {
             $chatwoot = $this->getChatwootService();
-            
+
             // 1. Baixar o áudio temporariamente
             $audioContent = Http::timeout(20)->get($audioUrl);
             if (! $audioContent->successful()) {
@@ -345,7 +346,7 @@ class ChatwootLeadController extends Controller
             if (! is_dir($tmpDir)) {
                 mkdir($tmpDir, 0755, true);
             }
-            $tmpPath = $tmpDir . '/audio_' . time() . '_' . uniqid() . '.mp3';
+            $tmpPath = $tmpDir.'/audio_'.time().'_'.uniqid().'.mp3';
             file_put_contents($tmpPath, $audioContent->body());
 
             // 2. Enviar para a API Whisper da OpenAI
@@ -353,7 +354,7 @@ class ChatwootLeadController extends Controller
                 ->timeout(60)
                 ->attach('file', file_get_contents($tmpPath), 'audio.mp3')
                 ->post('https://api.openai.com/v1/audio/transcriptions', [
-                    'model' => 'whisper-1',
+                    'model'    => 'whisper-1',
                     'language' => 'pt',
                 ]);
 
@@ -361,7 +362,8 @@ class ChatwootLeadController extends Controller
             @unlink($tmpPath);
 
             if (! $response->successful()) {
-                Log::error('[ChatwootLeadController] OpenAI error: ' . $response->body());
+                Log::error('[ChatwootLeadController] OpenAI error: '.$response->body());
+
                 return response()->json(['error' => 'Falha na transcrição via OpenAI.'], 500);
             }
 
@@ -371,15 +373,15 @@ class ChatwootLeadController extends Controller
             }
 
             // 3. Postar nota privada no Chatwoot
-            $noteText = "📝 **Transcrição (Áudio)**:\n" . $transcription;
-            
+            $noteText = "📝 **Transcrição (Áudio)**:\n".$transcription;
+
             $url = $chatwoot->accountUrl("conversations/{$conversationId}/messages");
             $postResponse = Http::timeout(15)
                 ->withHeaders($chatwoot->managementHeaders())
                 ->post($url, [
-                    'content' => $noteText,
+                    'content'      => $noteText,
                     'message_type' => 'outgoing',
-                    'private' => true,
+                    'private'      => true,
                 ]);
 
             if (! $postResponse->successful()) {
@@ -392,6 +394,7 @@ class ChatwootLeadController extends Controller
             return response()->json(['error' => $e->getMessage()], 400);
         } catch (\Throwable $e) {
             Log::error('[ChatwootLeadController] transcribe exception: '.$e->getMessage());
+
             return response()->json(['error' => 'Erro interno ao transcrever áudio.'], 500);
         }
     }
@@ -407,7 +410,7 @@ class ChatwootLeadController extends Controller
         }
 
         try {
-            $leadRepository = app(\Webkul\Lead\Repositories\LeadRepository::class);
+            $leadRepository = app(LeadRepository::class);
 
             // Mirror Krayin native controller: dispatch events so all listeners fire
             // (including SyncLeadStageToChatwootListener)
@@ -423,8 +426,8 @@ class ChatwootLeadController extends Controller
             return response()->json(['success' => true]);
         } catch (\Throwable $e) {
             Log::error('[ChatwootLeadController] updateStage exception: '.$e->getMessage());
+
             return response()->json(['error' => 'Erro ao atualizar a etapa.'], 500);
         }
     }
 }
-

@@ -135,12 +135,11 @@ class MotherShipService
 
             return $tenant;
         } catch (\Exception $e) {
-            Log::warning("[MotherShipService] getTenantConfig falhou para tenant {$tenantId}: " . $e->getMessage());
+            Log::warning("[MotherShipService] getTenantConfig falhou para tenant {$tenantId}: ".$e->getMessage());
 
             return null;
         }
     }
-
 
     /**
      * Recupera um valor da tabela app_config do Mothership (com cache de 5 minutos).
@@ -546,7 +545,7 @@ class MotherShipService
             return null;
         }
 
-        $nodeId  = $tenantConfig->chatwoot_node_id;
+        $nodeId = $tenantConfig->chatwoot_node_id;
         $cacheKey = "chatwoot_node_{$nodeId}";
 
         $node = Cache::get($cacheKey);
@@ -563,7 +562,7 @@ class MotherShipService
                     Cache::put($cacheKey, $node, 1800);
                 }
             } catch (\Throwable $e) {
-                Log::warning("[MotherShipService] getChatwootConfig: falha ao buscar nó {$nodeId}: " . $e->getMessage());
+                Log::warning("[MotherShipService] getChatwootConfig: falha ao buscar nó {$nodeId}: ".$e->getMessage());
                 // $node permanece null — será registrado e retornado null abaixo
             }
         }

@@ -142,7 +142,7 @@ class CustomerPortalController extends Controller
             ]);
 
             // Log operacional sem PII (PRIV-AUDIT-001: nunca logar dados do formulário).
-            $clientType       = $validated['client_type'];
+            $clientType = $validated['client_type'];
             $participanteTipo = $validated['participante_tipo'] ?? null;
             Log::info('Portal Update Request:', ['id' => $id, 'client_type' => $clientType, 'participante_tipo' => $participanteTipo]);
 
@@ -154,7 +154,7 @@ class CustomerPortalController extends Controller
             // NOVO PARTICIPANTE: cria um novo Person sem alterar o processo.
             // -----------------------------------------------------------------
             if ($participanteTipo === 'novo') {
-                $newPerson = new Person();
+                $newPerson = new Person;
                 $newPerson->name = $input('name') ?? 'Participante';
                 $newPerson->emails = [['value' => $input('email'), 'label' => 'work']];
                 $newPerson->contact_numbers = [['value' => $input('phone'), 'label' => 'work']];

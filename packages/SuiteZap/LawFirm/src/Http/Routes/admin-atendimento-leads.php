@@ -28,8 +28,8 @@ Route::prefix('atendimento/leads/{lead}/chatwoot')
         Route::get('messages', 'messages')->name('admin.lawfirm.chatwoot.lead.messages');
         Route::post('send', 'send')->name('admin.lawfirm.chatwoot.lead.send');
         Route::get('canned-responses', 'cannedResponses')->name('admin.lawfirm.chatwoot.lead.canned_responses');
-        Route::get('macros',           'macros')         ->name('admin.lawfirm.chatwoot.lead.macros');
-        Route::post('macros/{macroId}/run', 'runMacro') ->name('admin.lawfirm.chatwoot.lead.macro_run');
+        Route::get('macros', 'macros')->name('admin.lawfirm.chatwoot.lead.macros');
+        Route::post('macros/{macroId}/run', 'runMacro')->name('admin.lawfirm.chatwoot.lead.macro_run');
         Route::post('messages/{messageId}/transcribe', 'transcribeAudio')->name('admin.lawfirm.chatwoot.lead.transcribe');
-        Route::post('stage',           'updateStage')    ->name('admin.lawfirm.chatwoot.lead.stage.update');
+        Route::post('stage', 'updateStage')->name('admin.lawfirm.chatwoot.lead.stage.update');
     });

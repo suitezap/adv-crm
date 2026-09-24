@@ -58,10 +58,10 @@ class WhatsappTemplatesController extends Controller
     public function index()
     {
         // --- 1. Carrega metadados do system.php (fallback hardcoded de última instância) ---
-        $systemPath   = __DIR__ . '/../../../../Config/system.php';
+        $systemPath = __DIR__.'/../../../../Config/system.php';
         $systemConfig = file_exists($systemPath) ? require $systemPath : [];
-        $targetGroup  = collect($systemConfig)->firstWhere('key', 'lawfirm.whatsapp_templates.messages');
-        $rawFields    = collect($targetGroup['fields'] ?? [])->keyBy('name');
+        $targetGroup = collect($systemConfig)->firstWhere('key', 'lawfirm.whatsapp_templates.messages');
+        $rawFields = collect($targetGroup['fields'] ?? [])->keyBy('name');
 
         // --- 2. Tenta carregar templates globais do MotherShip ---
         $mothershipTemplates = collect();
@@ -83,19 +83,19 @@ class WhatsappTemplatesController extends Controller
         // --- 4. Monta a lista de templates resolvendo a hierarquia por chave ---
         $templates = [];
         foreach ($allKeys as $name) {
-            $configKey   = 'lawfirm.whatsapp_templates.messages.' . $name;
-            $localValue  = core()->getConfigData($configKey); // sobrescrita do tenant
+            $configKey = 'lawfirm.whatsapp_templates.messages.'.$name;
+            $localValue = core()->getConfigData($configKey); // sobrescrita do tenant
 
-            $msTemplate  = $mothershipTemplates->get($name);
-            $sysField    = $rawFields->get($name);
+            $msTemplate = $mothershipTemplates->get($name);
+            $sysField = $rawFields->get($name);
 
             // Hierarquia de texto padrão: MotherShip → system.php
             $globalDefault = $msTemplate?->default_text ?? $sysField['default'] ?? '';
 
             // Hierarquia de metadados: MotherShip → system.php → valores sintéticos
             $title = $msTemplate?->title ?? $sysField['title'] ?? $name;
-            $info  = $msTemplate?->info  ?? $sysField['info']  ?? '';
-            $rows  = $msTemplate?->rows  ?? $sysField['rows']  ?? 4;
+            $info = $msTemplate?->info ?? $sysField['info'] ?? '';
+            $rows = $msTemplate?->rows ?? $sysField['rows'] ?? 4;
 
             $templates[$name] = [
                 'name'             => $name,
@@ -109,14 +109,14 @@ class WhatsappTemplatesController extends Controller
         }
 
         // --- 5. Agrupa pelos grupos canônicos ---
-        $grouped  = [];
+        $grouped = [];
         $assigned = [];
 
         foreach (self::GROUPS as $groupKey => $meta) {
             $items = [];
             foreach ($meta['prefixes'] as $prefix) {
                 if (isset($templates[$prefix])) {
-                    $items[]    = $templates[$prefix];
+                    $items[] = $templates[$prefix];
                     $assigned[] = $prefix;
                 }
             }
@@ -145,7 +145,7 @@ class WhatsappTemplatesController extends Controller
             }
 
             $grouped[$msGroup]['templates'][] = $tpl;
-            $assigned[]                        = $name;
+            $assigned[] = $name;
         }
 
         // Qualquer sobra vai para "Outros"
@@ -167,7 +167,7 @@ class WhatsappTemplatesController extends Controller
         // Indexado por `name` para lookup O(1) no JS sem passar JSON em onclick inline.
         $tplMap = [];
         foreach ($templates as $name => $tpl) {
-            preg_match_all('/\{([a-z_]+)\}/', ($tpl['info'] ?? '') . ' ' . ($tpl['default'] ?? ''), $varMatches);
+            preg_match_all('/\{([a-z_]+)\}/', ($tpl['info'] ?? '').' '.($tpl['default'] ?? ''), $varMatches);
             $tplMap[$name] = [
                 'name'    => $tpl['name'],
                 'title'   => $tpl['title'],
@@ -189,7 +189,7 @@ class WhatsappTemplatesController extends Controller
         $channelId = core()->getCurrentChannelId();
 
         foreach ($data as $name => $value) {
-            $configKey = 'lawfirm.whatsapp_templates.messages.' . $name;
+            $configKey = 'lawfirm.whatsapp_templates.messages.'.$name;
 
             DB::table('core_config')->updateOrInsert(
                 [
@@ -204,7 +204,7 @@ class WhatsappTemplatesController extends Controller
         }
 
         // Limpa cache para que core()->getConfigData() reflita as mudanças
-        cache()->forget('core_config_' . $channelId);
+        cache()->forget('core_config_'.$channelId);
 
         return response()->json([
             'success' => true,

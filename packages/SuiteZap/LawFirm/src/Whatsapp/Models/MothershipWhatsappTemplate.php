@@ -3,6 +3,7 @@
 namespace SuiteZap\LawFirm\Whatsapp\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 /**
  * Model para templates globais de WhatsApp gerenciados pelo MotherShip.
@@ -12,15 +13,15 @@ use Illuminate\Database\Eloquent\Model;
  * painel administrativo do MotherShip — no CRM do tenant, este model
  * é sempre somente-leitura.
  *
- * @property int    $id
- * @property string $name         Chave única (ex: new_prazo_client)
- * @property string $title        Título legível
- * @property string $group        Grupo (prazos, agendador_adv, financeiro, ged, juridico)
- * @property string|null $info    Texto de ajuda / variáveis disponíveis
- * @property int    $rows         Altura do textarea
+ * @property int $id
+ * @property string $name Chave única (ex: new_prazo_client)
+ * @property string $title Título legível
+ * @property string $group Grupo (prazos, agendador_adv, financeiro, ged, juridico)
+ * @property string|null $info Texto de ajuda / variáveis disponíveis
+ * @property int $rows Altura do textarea
  * @property string $default_text Texto padrão global
- * @property bool   $is_active
- * @property int    $sort_order
+ * @property bool $is_active
+ * @property int $sort_order
  */
 class MothershipWhatsappTemplate extends Model
 {
@@ -49,9 +50,9 @@ class MothershipWhatsappTemplate extends Model
      * Retorna apenas os templates ativos, indexados por `name`.
      * Útil para lookup O(1) no controller.
      *
-     * @return \Illuminate\Support\Collection<string, self>
+     * @return Collection<string, self>
      */
-    public static function activeIndexedByName(): \Illuminate\Support\Collection
+    public static function activeIndexedByName(): Collection
     {
         return static::where('is_active', true)
             ->orderBy('sort_order')
