@@ -566,4 +566,30 @@ class ProcessoController extends Controller
 
         return redirect()->back();
     }
+
+    /**
+     * Request security key confirmation via WhatsApp.
+     * Delegates to ProcessoWhatsappService.
+     */
+    public function sendSecurityNotification($id)
+    {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.edit'), 401, 'This action is unauthorized');
+
+        try {
+            $result = $this->processoWhatsappService->sendSecurityNotification((int) $id);
+
+            if ($result['error']) {
+                session()->flash('error', $result['error']);
+            } elseif ($result['warning']) {
+                session()->flash('warning', $result['warning']);
+            } else {
+                session()->flash('success', 'Aviso de segurança enviado via WhatsApp!');
+            }
+        } catch (\Exception $e) {
+            Log::error('Erro ao enviar aviso de segurança: '.$e->getMessage());
+            session()->flash('error', 'Erro ao enviar mensagem: '.$e->getMessage());
+        }
+
+        return redirect()->back();
+    }
 }

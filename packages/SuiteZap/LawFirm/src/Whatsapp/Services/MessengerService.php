@@ -65,6 +65,21 @@ class MessengerService
         $body = $this->extractBody($rawMessage);
         $type = $this->detectType($rawMessage);
 
+        if (isset($body['buttonId']) && str_starts_with($body['buttonId'], 'opt_confirm_sec_')) {
+            $processoId = str_replace('opt_confirm_sec_', '', $body['buttonId']);
+            $processo = \SuiteZap\LawFirm\Legal\Models\Processo::find($processoId);
+            if ($processo) {
+                $processo->update(['security_notif_status' => 'confirmed']);
+                try {
+                    $chatwoot = new \SuiteZap\LawFirm\Atendimento\Services\ChatwootService();
+                    // Assumes there is a label 'cli_ciente' in the system, or we can just remove awaiting_client
+                    $chatwoot->syncContactLabels($processo->person_id, ['cli_ciente'], ['awaiting_client']);
+                } catch (\Exception $e) {
+                    Log::error("Failed to update Chatwoot label on confirm sec: " . $e->getMessage());
+                }
+            }
+        }
+
         $message = WhatsappMessage::updateOrCreate(
             ['tenant_id' => $tenantId, 'evolution_message_id' => $msgId],
             [
@@ -320,6 +335,18 @@ class MessengerService
 
         if (isset($msg['conversation'])) {
             return ['text' => $msg['conversation']];
+        }
+        if (isset($msg['buttonsResponseMessage'])) {
+            return [
+                'text' => $msg['buttonsResponseMessage']['selectedDisplayText'] ?? '',
+                'buttonId' => $msg['buttonsResponseMessage']['selectedButtonId'] ?? null,
+            ];
+        }
+        if (isset($msg['templateButtonReplyMessage'])) {
+            return [
+                'text' => $msg['templateButtonReplyMessage']['selectedDisplayText'] ?? '',
+                'buttonId' => $msg['templateButtonReplyMessage']['selectedId'] ?? null,
+            ];
         }
         if (isset($msg['extendedTextMessage']['text'])) {
             return ['text' => $msg['extendedTextMessage']['text']];

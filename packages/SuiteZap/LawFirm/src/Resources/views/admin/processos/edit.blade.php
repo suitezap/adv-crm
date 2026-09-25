@@ -251,12 +251,39 @@
 
                         {{-- Chave Secreta (IA) --}}
                         <div class="mt-2">
-                            <x-admin::form.control-group>
+                            <x-admin::form.control-group class="!mb-0">
                                 <x-admin::form.control-group.label>Chave Secreta (IA)</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.control type="text" name="sercreta"
-                                    :value="old('sercreta', $processo->sercreta)" label="Chave Secreta (IA)"
-                                    placeholder="Gerado automaticamente se vazio" maxlength="7" />
-                                <x-admin::form.control-group.error control-name="sercreta" />
+                                
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1">
+                                        <x-admin::form.control-group.control type="text" name="sercreta"
+                                            :value="old('sercreta', $processo->sercreta)" label="Chave Secreta (IA)"
+                                            placeholder="Gerado automaticamente se vazio" maxlength="7" />
+                                        <x-admin::form.control-group.error control-name="sercreta" />
+                                    </div>
+                                    
+                                    @if($processo->id && $processo->sercreta)
+                                        <div class="flex-none mt-[-5px]">
+                                            @if($processo->security_notif_status === 'confirmed')
+                                                <button type="button" disabled class="secondary-button !border-green-600 !bg-green-50 !text-green-700 pointer-events-none flex items-center gap-1 opacity-90 px-3">
+                                                    <span class="icon-done text-lg"></span> Cliente Ciente
+                                                </button>
+                                            @elseif($processo->security_notif_status === 'awaiting')
+                                                <button type="button" disabled class="secondary-button !border-amber-500 !bg-amber-50 !text-amber-700 pointer-events-none flex items-center gap-1 opacity-90 px-3">
+                                                    <span class="icon-lock text-lg opacity-50"></span> Aguardando Cliente
+                                                </button>
+                                            @else
+                                                <form action="{{ route('admin.processos.security_notif', $processo->id) }}" method="POST" class="inline-block"
+                                                      onsubmit="return confirm('Deseja enviar o aviso de segurança via WhatsApp? (Esta ação utilizará o canal Notificações)');">
+                                                    @csrf
+                                                    <button type="submit" class="secondary-button flex items-center gap-1 px-3">
+                                                        <span class="icon-lock text-lg"></span> Enviar Aviso
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
                             </x-admin::form.control-group>
                         </div>
                     </div>

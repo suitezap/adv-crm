@@ -72,6 +72,7 @@ class Processo extends Model
         'advogado_responsavel_nome',
         'advogado_responsavel_oab',
         'sercreta',
+        'security_notif_status',
 
         'envolvidos_escavador',
     ];
