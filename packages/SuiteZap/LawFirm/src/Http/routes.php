@@ -42,6 +42,8 @@ Route::middleware(['web'])->group(function () {
         ->name('lawfirm.public.portal.index');
     Route::post('portal/processo/{id}/update', [CustomerPortalController::class, 'update'])
         ->name('lawfirm.public.portal.update');
+    Route::delete('portal/processo/{id}/participante/{participanteId}', [CustomerPortalController::class, 'destroyParticipante'])
+        ->name('lawfirm.public.portal.destroy_participante');
     Route::post('portal/processo/{id}/upload', [CustomerPortalController::class, 'upload'])
         ->name('lawfirm.public.portal.upload');
 });

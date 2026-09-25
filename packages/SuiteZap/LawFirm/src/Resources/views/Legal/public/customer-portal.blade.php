@@ -291,10 +291,43 @@
                 <div class="mb-4 rounded-lg bg-indigo-50 border border-indigo-200 p-4">
                     <p class="text-sm text-indigo-800 font-medium">📋 Preencha suas informações abaixo. Seus dados serão adicionados como parte integrante deste processo.</p>
                 </div>
+
+                @if($processo->participantes->count() > 0)
+                <div class="mb-6 rounded-lg bg-white border border-gray-200 p-4 shadow-sm">
+                    <h3 class="text-md font-semibold text-gray-800 mb-3 border-b pb-2">Cadastros Realizados</h3>
+                    <ul class="divide-y divide-gray-100">
+                        @foreach($processo->participantes as $part)
+                            @php
+                                $isPf = $part->person_id ? true : false;
+                                $nome = $isPf ? ($part->person->name ?? 'N/A') : ($part->organization->name ?? 'N/A');
+                                $doc = $isPf ? ($part->person->person_details->cpf ?? '') : ($part->organization->organization_details->cnpj ?? '');
+                                $email = $isPf ? ($part->person->emails[0]['value'] ?? '') : '';
+                                $phone = $isPf ? ($part->person->contact_numbers[0]['value'] ?? '') : '';
+                            @endphp
+                            <li class="py-3 flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ $nome }}</p>
+                                    <p class="text-xs text-gray-500">{{ $isPf ? 'Pessoa Física' : 'Pessoa Jurídica' }} {{ $doc ? '- '.$doc : '' }}</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button type="button" class="text-indigo-600 hover:text-indigo-800" onclick="editarParticipante({{ $part->id }}, '{{ $isPf ? 'PF' : 'PJ' }}', '{{ addslashes($nome) }}', '{{ $doc }}', '{{ $email }}', '{{ $phone }}')" title="Editar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                    </button>
+                                    <button type="button" class="text-red-500 hover:text-red-700" onclick="apagarParticipante({{ $part->id }})" title="Apagar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
+
                 <form id="novoForm" onsubmit="event.preventDefault(); salvarNovoParticipante();">
                     @csrf
                     <input type="hidden" name="token" value="{{ request()->query('token') }}">
                     <input type="hidden" name="participante_tipo" value="novo">
+                    <input type="hidden" name="participante_id" id="participante_id" value="">
 
                     <!-- Tipo de Cliente -->
                     <div class="mb-6 pb-4 border-b border-gray-200">
@@ -619,9 +652,59 @@
         }
     }
 
+    function editarParticipante(id, tipo, nome, doc, email, phone) {
+        document.getElementById('participante_id').value = id;
+        
+        // Seleciona o radio correspondente e aciona o toggle
+        const radios = document.getElementsByName('novo_client_type');
+        for (let i = 0; i < radios.length; i++) {
+            if (radios[i].value === tipo) {
+                radios[i].checked = true;
+                toggleNovoType(tipo);
+            }
+        }
+
+        if (tipo === 'PF') {
+            document.getElementById('novo_name').value = nome;
+            document.getElementById('novo_cpf').value = doc;
+            document.getElementById('novo_email').value = email;
+            document.getElementById('novo_phone').value = phone;
+        } else {
+            document.getElementById('novo_name_pj').value = nome;
+            document.getElementById('novo_cnpj').value = doc;
+            document.getElementById('novo_rep_email').value = email;
+            document.getElementById('novo_rep_phone').value = phone;
+        }
+
+        document.getElementById('novoForm').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function apagarParticipante(id) {
+        if (!confirm('Tem certeza que deseja apagar este participante?')) return;
+
+        const csrfToken = document.querySelector('input[name="_token"]').value;
+        const tokenUrl = new URLSearchParams(window.location.search).get('token');
+
+        fetch(`{{ route('lawfirm.public.portal.index', $processo->id) }}/participante/${id}?token=${tokenUrl}`, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message || 'Apagado com sucesso', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showAlert(data.message || 'Erro ao apagar.', 'error');
+            }
+        })
+        .catch(() => showAlert('Falha na comunicação com o servidor.', 'error'));
+    }
+
     function salvarNovoParticipante() {
         const form   = document.getElementById('novoForm');
         const btn    = document.getElementById('btnSalvarNovo');
+        if (!btn) return;
         const origHtml = btn.innerHTML;
 
         btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Salvando...`;
@@ -643,6 +726,7 @@
         payload.legal_representative_cpf  = payload.novo_rep_cpf  || '';
         payload.birth_date   = payload.novo_birth_date   || '';
         payload.nationality  = payload.novo_nationality  || '';
+        payload.participante_id = document.getElementById('participante_id').value;
 
         fetch("{{ route('lawfirm.public.portal.update', $processo->id) }}", {
             method: 'POST',
@@ -652,8 +736,8 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                showAlert(data.message || 'Participante cadastrado com sucesso!', 'success');
-                form.reset();
+                showAlert(data.message || 'Participante salvo com sucesso!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
             } else {
                 showAlert(data.message || 'Erro ao cadastrar.', 'error');
             }

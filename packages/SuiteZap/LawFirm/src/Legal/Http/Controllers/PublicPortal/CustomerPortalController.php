@@ -9,6 +9,7 @@ use SuiteZap\LawFirm\GED\Services\DocumentService;
 use SuiteZap\LawFirm\Legal\Models\LawOrganizationDetail;
 use SuiteZap\LawFirm\Legal\Models\LawPersonDetail;
 use SuiteZap\LawFirm\Legal\Models\Processo;
+use SuiteZap\LawFirm\Legal\Models\ProcessoParticipante;
 use SuiteZap\LawFirm\SaaS\Services\SaasFileService;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
@@ -69,7 +70,7 @@ class CustomerPortalController extends Controller
         }
 
         $processo = Processo::findOrFail($id);
-        $processo->load('person', 'organization');
+        $processo->load(['person', 'organization', 'participantes.person', 'participantes.organization']);
 
         $clientType = $processo->person_id ? 'PF' : ($processo->organization_id ? 'PJ' : null);
 
@@ -114,6 +115,7 @@ class CustomerPortalController extends Controller
         try {
             // Whitelist estrita (PRIV-AUDIT-001): só campos do formulário do portal.
             $validated = $request->validate([
+                'participante_id'           => 'nullable|integer',
                 'participante_tipo'         => 'nullable|in:novo',
                 'client_type'               => 'required|in:PF,PJ',
                 'name'                      => 'nullable|string|max:255',
@@ -151,18 +153,32 @@ class CustomerPortalController extends Controller
             };
 
             // -----------------------------------------------------------------
-            // NOVO PARTICIPANTE: cria um novo Person sem alterar o processo.
+            // NOVO PARTICIPANTE: Cria ou atualiza um Person/Organization e vincula ao Processo
             // -----------------------------------------------------------------
             if ($participanteTipo === 'novo') {
-                $newPerson = new Person;
-                $newPerson->name = $input('name') ?? 'Participante';
-                $newPerson->emails = [['value' => $input('email'), 'label' => 'work']];
-                $newPerson->contact_numbers = [['value' => $input('phone'), 'label' => 'work']];
-                $newPerson->save();
+                $participanteId = $input('participante_id');
+                $processoParticipante = null;
+
+                if ($participanteId) {
+                    $processoParticipante = ProcessoParticipante::find($participanteId);
+                }
 
                 if ($clientType === 'PF') {
+                    $person = null;
+                    if ($processoParticipante && $processoParticipante->person_id) {
+                        $person = Person::find($processoParticipante->person_id);
+                    }
+                    if (!$person) {
+                        $person = new Person;
+                    }
+                    
+                    $person->name = $input('name') ?? 'Participante PF';
+                    $person->emails = [['value' => $input('email'), 'label' => 'work']];
+                    $person->contact_numbers = [['value' => $input('phone'), 'label' => 'work']];
+                    $person->save();
+
                     LawPersonDetail::updateOrCreate(
-                        ['person_id' => $newPerson->id],
+                        ['person_id' => $person->id],
                         [
                             'cpf'             => $input('cpf'),
                             'rg'              => $input('rg'),
@@ -170,11 +186,49 @@ class CustomerPortalController extends Controller
                             'data_nascimento' => $input('birth_date'),
                         ]
                     );
+
+                    if (!$processoParticipante) {
+                        ProcessoParticipante::create([
+                            'processo_id' => $id,
+                            'person_id'   => $person->id,
+                            'tipo_parte'  => 'Participante Adicional (PF)',
+                        ]);
+                    }
+                } else {
+                    // PJ
+                    $org = null;
+                    if ($processoParticipante && $processoParticipante->organization_id) {
+                        $org = Organization::find($processoParticipante->organization_id);
+                    }
+                    if (!$org) {
+                        $org = new Organization;
+                    }
+
+                    $org->name = $input('name') ?? 'Participante PJ';
+                    $org->save();
+
+                    LawOrganizationDetail::updateOrCreate(
+                        ['organization_id' => $org->id],
+                        [
+                            'cnpj'                => $input('cnpj'),
+                            'razao_social'        => $input('name'),
+                            'representante_legal' => $input('legal_representative_name').($input('legal_representative_cpf') ? ' (CPF: '.$input('legal_representative_cpf').')' : ''),
+                        ]
+                    );
+
+                    if (!$processoParticipante) {
+                        ProcessoParticipante::create([
+                            'processo_id'     => $id,
+                            'organization_id' => $org->id,
+                            'tipo_parte'      => 'Participante Adicional (PJ)',
+                        ]);
+                    }
                 }
 
-                Log::info('[Portal] Novo participante criado.', ['processo_id' => $id, 'person_id' => $newPerson->id]);
+                $msg = $participanteId ? 'Participante atualizado com sucesso!' : 'Participante cadastrado com sucesso!';
+                Log::info('[Portal] Participante salvo.', ['processo_id' => $id, 'participante_id' => $participanteId]);
 
-                return response()->json(['success' => true, 'message' => 'Participante cadastrado com sucesso!']);
+                return response()->json(['success' => true, 'message' => $msg]);
             }
 
             if ($clientType === 'PF' && $processo->person_id) {
@@ -278,5 +332,24 @@ class CustomerPortalController extends Controller
         }
 
         return response()->json(['success' => false, 'message' => 'Nenhum arquivo encontrado.'], 400);
+    }
+
+    /**
+     * Delete a participant from the portal.
+     */
+    public function destroyParticipante($id, $participanteId, Request $request)
+    {
+        if (! $this->verifyToken($id, $request->query('token'))) {
+            return response()->json(['success' => false, 'message' => 'Token inválido.'], 403);
+        }
+
+        $participante = ProcessoParticipante::where('processo_id', $id)->find($participanteId);
+
+        if ($participante) {
+            $participante->delete();
+            return response()->json(['success' => true, 'message' => 'Participante removido com sucesso!']);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Participante não encontrado.'], 404);
     }
 }

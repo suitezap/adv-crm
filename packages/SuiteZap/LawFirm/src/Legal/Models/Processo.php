@@ -170,6 +170,14 @@ class Processo extends Model
     }
 
     /**
+     * Get all participants (partes) added to this processo via portal or internally.
+     */
+    public function participantes(): HasMany
+    {
+        return $this->hasMany(ProcessoParticipante::class);
+    }
+
+    /**
      * Get the prazos (deadlines) for the processo.
      */
     public function prazos(): HasMany
