@@ -247,21 +247,49 @@ class ProcessoWhatsappService
             return ['sent' => false, 'warning' => null, 'error' => 'Falha ao enviar aviso de segurança: '.($response['error'] ?? 'Erro desconhecido')];
         }
 
-        // Update status to awaiting
+        // ── 1. Update Processo status ────────────────────────────────────────────
         $processo->update([
             'security_notif_status' => 'awaiting',
             'status'                => 'Aguardando Cliente',
         ]);
 
-        // Update Chatwoot conversation status if needed
-        // For Chatwoot, we apply the status label `awaiting_client` or similar
-        // We can leverage ChatwootService directly
+        // ── 2. Cascade stage update to parent Caso (moves the Kanban card) ───────
+        // The Kanban board is driven by Caso.legal_pipeline_stage_id — updating only
+        // Processo.status won't move the card. We need to update the Caso too.
+        $processo->loadMissing('caso');
+        if ($processo->caso) {
+            // Find the "Aguardando Cliente" stage ID (code: aguard_cliente)
+            $aguardStage = \SuiteZap\LawFirm\Legal\Models\LegalPipelineStage::where('code', 'aguard_cliente')->first();
+            if ($aguardStage) {
+                $processo->caso->update([
+                    'status'                  => 'Aguardando Cliente',
+                    'legal_pipeline_stage_id' => $aguardStage->id,
+                ]);
+                // Refresh and dispatch event so SyncCasoStageToChatwootListener fires
+                $processo->caso->refresh();
+                \Illuminate\Support\Facades\Event::dispatch(
+                    new \SuiteZap\LawFirm\Legal\Events\CasoStageUpdated($processo->caso)
+                );
+            }
+        }
+
+        // ── 3. Sync Chatwoot tags ────────────────────────────────────────────────
+        // IMPORTANT: syncContactLabels expects Chatwoot contact_id, NOT CRM person_id.
+        // We must resolve the actual Chatwoot contact via the phone number.
         try {
             $chatwoot = new ChatwootService;
-            // Chatwoot service manages status labels globally
-            $chatwoot->syncContactLabels($processo->person_id, ['awaiting_client'], []);
+            $name   = $processo->person?->name ?? 'Cliente';
+            $email  = is_array($processo->person?->emails)
+                ? ($processo->person->emails[0]['value'] ?? null)
+                : null;
+            $chatwootContactId = $chatwoot->findOrCreateContact($phone, $name, $email);
+
+            if ($chatwootContactId) {
+                $chatwoot->syncContactLabels($chatwootContactId, ['cas_agcli'], ['cas_novo', 'cas_anal', 'cas_agcli', 'cas_prod', 'cas_prot', 'cas_agj', 'cas_prazo', 'cas_aud', 'cas_sent', 'cas_rec', 'cas_exec', 'cas_enc']);
+                Log::info('[ProcessoWhatsappService] Tag cas_agcli synced to Chatwoot contact.', ['chatwoot_contact_id' => $chatwootContactId]);
+            }
         } catch (\Exception $e) {
-            Log::error('Failed to update Chatwoot label for security notif: '.$e->getMessage());
+            Log::error('[ProcessoWhatsappService] Failed to update Chatwoot label for security notif: '.$e->getMessage());
         }
 
         return ['sent' => true, 'warning' => null, 'error' => null];

@@ -5,8 +5,11 @@ namespace SuiteZap\LawFirm\Whatsapp\Services;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Atendimento\Services\ChatwootService;
+use SuiteZap\LawFirm\Legal\Events\CasoStageUpdated;
+use SuiteZap\LawFirm\Legal\Models\LegalPipelineStage;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\Whatsapp\Models\WhatsappContact;
@@ -69,15 +72,41 @@ class MessengerService
 
         if (isset($body['buttonId']) && str_starts_with($body['buttonId'], 'opt_confirm_sec_')) {
             $processoId = str_replace('opt_confirm_sec_', '', $body['buttonId']);
-            $processo = Processo::find($processoId);
+            $processo = Processo::with(['person', 'caso'])->find($processoId);
             if ($processo) {
-                $processo->update(['security_notif_status' => 'confirmed']);
+                $processo->update([
+                    'security_notif_status' => 'confirmed',
+                    'status'                => 'Em Produção Jurídica',
+                ]);
+
+                // Cascade to parent Caso so Kanban card advances
+                if ($processo->caso) {
+                    $nextStage = LegalPipelineStage::where('code', 'em_prod_juridica')->first();
+                    if ($nextStage) {
+                        $processo->caso->update([
+                            'status'                  => 'Em Produção Jurídica',
+                            'legal_pipeline_stage_id' => $nextStage->id,
+                        ]);
+                        $processo->caso->refresh();
+                        Event::dispatch(new CasoStageUpdated($processo->caso));
+                    }
+                }
+
+                // Sync Chatwoot tags — resolve real Chatwoot contact ID by phone
                 try {
                     $chatwoot = new ChatwootService;
-                    // Assumes there is a label 'cli_ciente' in the system, or we can just remove awaiting_client
-                    $chatwoot->syncContactLabels($processo->person_id, ['cli_ciente'], ['awaiting_client']);
+                    $personPhone = collect($processo->person?->contact_numbers ?? [])->first();
+                    $phoneVal = is_object($personPhone) ? $personPhone->value : ($personPhone['value'] ?? null);
+                    if ($phoneVal) {
+                        $name = $processo->person?->name ?? 'Cliente';
+                        $chatwootContactId = $chatwoot->findOrCreateContact($phoneVal, $name);
+                        if ($chatwootContactId) {
+                            $pool = ['cas_novo', 'cas_anal', 'cas_agcli', 'cas_prod', 'cas_prot', 'cas_agj', 'cas_prazo', 'cas_aud', 'cas_sent', 'cas_rec', 'cas_exec', 'cas_enc'];
+                            $chatwoot->syncContactLabels($chatwootContactId, ['cas_prod'], $pool);
+                        }
+                    }
                 } catch (\Exception $e) {
-                    Log::error('Failed to update Chatwoot label on confirm sec: '.$e->getMessage());
+                    Log::error('[MessengerService] Failed to update Chatwoot label on confirm sec: '.$e->getMessage());
                 }
             }
         }
