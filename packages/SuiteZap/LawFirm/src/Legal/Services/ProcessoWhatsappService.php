@@ -297,4 +297,47 @@ class ProcessoWhatsappService
 
         return ['sent' => true, 'warning' => null, 'error' => null];
     }
+
+    /**
+     * Manually confirm the security notification (bypass WhatsApp reply).
+     */
+    public function confirmSecurityNotification(int $processoId): void
+    {
+        $processo = $this->processoRepository->with(['person', 'caso'])->findOrFail($processoId);
+
+        $processo->update([
+            'security_notif_status' => 'confirmed',
+            'status'                => 'Em Produção Jurídica',
+        ]);
+
+        // Cascade to parent Caso so Kanban card advances
+        if ($processo->caso) {
+            $nextStage = \SuiteZap\LawFirm\Legal\Models\LegalPipelineStage::where('code', 'em_prod_juridica')->first();
+            if ($nextStage) {
+                $processo->caso->update([
+                    'status'                  => 'Em Produção Jurídica',
+                    'legal_pipeline_stage_id' => $nextStage->id,
+                ]);
+                $processo->caso->refresh();
+                \Illuminate\Support\Facades\Event::dispatch(new \SuiteZap\LawFirm\Legal\Events\CasoStageUpdated($processo->caso));
+            }
+        }
+
+        // Sync Chatwoot tags
+        try {
+            $chatwoot = new \SuiteZap\LawFirm\Atendimento\Services\ChatwootService;
+            $personPhone = collect($processo->person?->contact_numbers ?? [])->first();
+            $phoneVal = is_object($personPhone) ? $personPhone->value : ($personPhone['value'] ?? null);
+            if ($phoneVal) {
+                $name = $processo->person?->name ?? 'Cliente';
+                $chatwootContactId = $chatwoot->findOrCreateContact($phoneVal, $name);
+                if ($chatwootContactId) {
+                    $pool = ['cas_novo', 'cas_anal', 'cas_agcli', 'cas_prod', 'cas_prot', 'cas_agj', 'cas_prazo', 'cas_aud', 'cas_sent', 'cas_rec', 'cas_exec', 'cas_enc'];
+                    $chatwoot->syncContactLabels($chatwootContactId, ['cas_prod'], $pool);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('[ProcessoWhatsappService] Failed to update Chatwoot label on manual confirm: '.$e->getMessage());
+        }
+    }
 }

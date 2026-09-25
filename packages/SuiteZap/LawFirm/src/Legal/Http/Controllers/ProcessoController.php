@@ -592,4 +592,22 @@ class ProcessoController extends Controller
 
         return redirect()->back();
     }
+
+    /**
+     * Manually confirm security notification.
+     */
+    public function confirmSecurityNotification($id)
+    {
+        abort_if(! bouncer()->hasPermission('lawfirm.processos.edit'), 401, 'This action is unauthorized');
+
+        try {
+            $this->processoWhatsappService->confirmSecurityNotification((int) $id);
+            session()->flash('success', 'Aviso de segurança confirmado manualmente!');
+        } catch (\Exception $e) {
+            Log::error('Erro ao confirmar aviso de segurança manualmente: '.$e->getMessage());
+            session()->flash('error', 'Erro ao confirmar: '.$e->getMessage());
+        }
+
+        return redirect()->back();
+    }
 }

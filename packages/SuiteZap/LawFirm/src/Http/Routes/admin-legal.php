@@ -44,6 +44,7 @@ Route::prefix('processos')->controller(ProcessoController::class)->group(functio
     Route::post('{id}/request-registration', 'requestRegistration')->name('admin.processos.request_registration');
     Route::post('{id}/request-documents', 'requestDocuments')->name('admin.processos.request_documents');
     Route::post('{id}/security-notif', 'sendSecurityNotification')->name('admin.processos.security_notif');
+    Route::post('{id}/security-notif-confirm', 'confirmSecurityNotification')->name('admin.processos.security_notif_confirm');
 
     // Filtered DataGrids (context tabs)
     Route::get('leads/processos/{id}', 'leadProcessos')->name('admin.leads.processos');

@@ -269,9 +269,19 @@
                                                     <span class="icon-done text-lg"></span> Cliente Ciente
                                                 </button>
                                             @elseif($processo->security_notif_status === 'awaiting')
-                                                <button type="button" disabled class="secondary-button !border-amber-500 !bg-amber-50 !text-amber-700 pointer-events-none flex items-center gap-1 opacity-90 px-3">
-                                                    <span class="icon-lock text-lg opacity-50"></span> Aguardando Cliente
-                                                </button>
+                                                <div class="flex items-center gap-1">
+                                                    <button type="button" disabled class="secondary-button !border-amber-500 !bg-amber-50 !text-amber-700 pointer-events-none flex items-center gap-1 opacity-90 px-3">
+                                                        <span class="icon-lock text-lg opacity-50"></span> Aguardando Cliente
+                                                    </button>
+                                                    <form action="{{ route('admin.processos.security_notif_confirm', $processo->id) }}" method="POST" class="inline-block"
+                                                          onsubmit="return confirm('Deseja confirmar manualmente que o cliente está ciente?');">
+                                                        @csrf
+                                                        <button type="submit" class="secondary-button flex items-center gap-1 px-3" title="Confirmar Ciente Manualmente">
+                                                            <span class="icon-done text-lg"></span> Ciente
+                                                        </button>
+                                                    </form>
+                                                </div>
+
                                             @else
                                                 <form action="{{ route('admin.processos.security_notif', $processo->id) }}" method="POST" class="inline-block"
                                                       onsubmit="return confirm('Deseja enviar o aviso de segurança via WhatsApp? (Esta ação utilizará o canal Notificações)');">
