@@ -168,10 +168,10 @@ class CustomerPortalController extends Controller
                     if ($processoParticipante && $processoParticipante->person_id) {
                         $person = Person::find($processoParticipante->person_id);
                     }
-                    if (!$person) {
+                    if (! $person) {
                         $person = new Person;
                     }
-                    
+
                     $person->name = $input('name') ?? 'Participante PF';
                     $person->emails = [['value' => $input('email'), 'label' => 'work']];
                     $person->contact_numbers = [['value' => $input('phone'), 'label' => 'work']];
@@ -187,7 +187,7 @@ class CustomerPortalController extends Controller
                         ]
                     );
 
-                    if (!$processoParticipante) {
+                    if (! $processoParticipante) {
                         ProcessoParticipante::create([
                             'processo_id' => $id,
                             'person_id'   => $person->id,
@@ -200,7 +200,7 @@ class CustomerPortalController extends Controller
                     if ($processoParticipante && $processoParticipante->organization_id) {
                         $org = Organization::find($processoParticipante->organization_id);
                     }
-                    if (!$org) {
+                    if (! $org) {
                         $org = new Organization;
                     }
 
@@ -216,7 +216,7 @@ class CustomerPortalController extends Controller
                         ]
                     );
 
-                    if (!$processoParticipante) {
+                    if (! $processoParticipante) {
                         ProcessoParticipante::create([
                             'processo_id'     => $id,
                             'organization_id' => $org->id,
@@ -347,6 +347,7 @@ class CustomerPortalController extends Controller
 
         if ($participante) {
             $participante->delete();
+
             return response()->json(['success' => true, 'message' => 'Participante removido com sucesso!']);
         }
 
