@@ -2,8 +2,11 @@
 
 namespace SuiteZap\LawFirm\Legal\Services;
 
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use SuiteZap\LawFirm\Atendimento\Services\ChatwootService;
+use SuiteZap\LawFirm\Legal\Events\CasoStageUpdated;
+use SuiteZap\LawFirm\Legal\Models\LegalPipelineStage;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Legal\Repositories\ProcessoRepository;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
@@ -259,7 +262,7 @@ class ProcessoWhatsappService
         $processo->loadMissing('caso');
         if ($processo->caso) {
             // Find the "Aguardando Cliente" stage ID (code: aguard_cliente)
-            $aguardStage = \SuiteZap\LawFirm\Legal\Models\LegalPipelineStage::where('code', 'aguard_cliente')->first();
+            $aguardStage = LegalPipelineStage::where('code', 'aguard_cliente')->first();
             if ($aguardStage) {
                 $processo->caso->update([
                     'status'                  => 'Aguardando Cliente',
@@ -267,8 +270,8 @@ class ProcessoWhatsappService
                 ]);
                 // Refresh and dispatch event so SyncCasoStageToChatwootListener fires
                 $processo->caso->refresh();
-                \Illuminate\Support\Facades\Event::dispatch(
-                    new \SuiteZap\LawFirm\Legal\Events\CasoStageUpdated($processo->caso)
+                Event::dispatch(
+                    new CasoStageUpdated($processo->caso)
                 );
             }
         }
@@ -278,8 +281,8 @@ class ProcessoWhatsappService
         // We must resolve the actual Chatwoot contact via the phone number.
         try {
             $chatwoot = new ChatwootService;
-            $name   = $processo->person?->name ?? 'Cliente';
-            $email  = is_array($processo->person?->emails)
+            $name = $processo->person?->name ?? 'Cliente';
+            $email = is_array($processo->person?->emails)
                 ? ($processo->person->emails[0]['value'] ?? null)
                 : null;
             $chatwootContactId = $chatwoot->findOrCreateContact($phone, $name, $email);
