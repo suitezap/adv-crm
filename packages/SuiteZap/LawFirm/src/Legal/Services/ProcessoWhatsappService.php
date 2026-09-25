@@ -250,7 +250,7 @@ class ProcessoWhatsappService
         // Update status to awaiting
         $processo->update([
             'security_notif_status' => 'awaiting',
-            'status' => 'Aguardando Cliente'
+            'status'                => 'Aguardando Cliente',
         ]);
 
         // Update Chatwoot conversation status if needed
