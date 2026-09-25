@@ -6,6 +6,8 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\Atendimento\Services\ChatwootService;
+use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
 use SuiteZap\LawFirm\Whatsapp\Models\WhatsappContact;
 use SuiteZap\LawFirm\Whatsapp\Models\WhatsappMessage;
@@ -67,15 +69,15 @@ class MessengerService
 
         if (isset($body['buttonId']) && str_starts_with($body['buttonId'], 'opt_confirm_sec_')) {
             $processoId = str_replace('opt_confirm_sec_', '', $body['buttonId']);
-            $processo = \SuiteZap\LawFirm\Legal\Models\Processo::find($processoId);
+            $processo = Processo::find($processoId);
             if ($processo) {
                 $processo->update(['security_notif_status' => 'confirmed']);
                 try {
-                    $chatwoot = new \SuiteZap\LawFirm\Atendimento\Services\ChatwootService();
+                    $chatwoot = new ChatwootService;
                     // Assumes there is a label 'cli_ciente' in the system, or we can just remove awaiting_client
                     $chatwoot->syncContactLabels($processo->person_id, ['cli_ciente'], ['awaiting_client']);
                 } catch (\Exception $e) {
-                    Log::error("Failed to update Chatwoot label on confirm sec: " . $e->getMessage());
+                    Log::error('Failed to update Chatwoot label on confirm sec: '.$e->getMessage());
                 }
             }
         }
@@ -338,13 +340,13 @@ class MessengerService
         }
         if (isset($msg['buttonsResponseMessage'])) {
             return [
-                'text' => $msg['buttonsResponseMessage']['selectedDisplayText'] ?? '',
+                'text'     => $msg['buttonsResponseMessage']['selectedDisplayText'] ?? '',
                 'buttonId' => $msg['buttonsResponseMessage']['selectedButtonId'] ?? null,
             ];
         }
         if (isset($msg['templateButtonReplyMessage'])) {
             return [
-                'text' => $msg['templateButtonReplyMessage']['selectedDisplayText'] ?? '',
+                'text'     => $msg['templateButtonReplyMessage']['selectedDisplayText'] ?? '',
                 'buttonId' => $msg['templateButtonReplyMessage']['selectedId'] ?? null,
             ];
         }

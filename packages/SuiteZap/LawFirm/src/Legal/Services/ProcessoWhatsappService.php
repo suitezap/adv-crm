@@ -2,6 +2,8 @@
 
 namespace SuiteZap\LawFirm\Legal\Services;
 
+use Illuminate\Support\Facades\Log;
+use SuiteZap\LawFirm\Atendimento\Services\ChatwootService;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 use SuiteZap\LawFirm\Legal\Repositories\ProcessoRepository;
 use SuiteZap\LawFirm\SaaS\Services\MotherShipService;
@@ -217,19 +219,19 @@ class ProcessoWhatsappService
             return ['sent' => false, 'warning' => 'Mensagem não enviada. Instância de Notificações não está configurada.', 'error' => null];
         }
 
-        $title = "Resposta Rápida";
-        $description = "🔒 *Aviso de segurança:* Por segurança, este é o canal oficial de comunicação sobre seu processo. Para que suas mensagens sejam encaminhadas corretamente, *informe sempre o código de segurança deste processo: " . $processo->sercreta . "*. Dúvidas e informações devem ser tratadas preferencialmente por este WhatsApp.\n\nEscolha uma das opções abaixo:";
-        $fallbackMsg = "🔒 *Aviso de segurança:* Por segurança, este é o canal oficial de comunicação sobre seu processo. Para que suas mensagens sejam encaminhadas corretamente, *informe sempre o código de segurança deste processo: " . $processo->sercreta . "*. Dúvidas e informações devem ser tratadas preferencialmente por este WhatsApp.\n\nResponda com \"✅ Estou Ciente\" para confirmar a leitura.";
+        $title = 'Resposta Rápida';
+        $description = '🔒 *Aviso de segurança:* Por segurança, este é o canal oficial de comunicação sobre seu processo. Para que suas mensagens sejam encaminhadas corretamente, *informe sempre o código de segurança deste processo: '.$processo->sercreta."*. Dúvidas e informações devem ser tratadas preferencialmente por este WhatsApp.\n\nEscolha uma das opções abaixo:";
+        $fallbackMsg = '🔒 *Aviso de segurança:* Por segurança, este é o canal oficial de comunicação sobre seu processo. Para que suas mensagens sejam encaminhadas corretamente, *informe sempre o código de segurança deste processo: '.$processo->sercreta."*. Dúvidas e informações devem ser tratadas preferencialmente por este WhatsApp.\n\nResponda com \"✅ Estou Ciente\" para confirmar a leitura.";
 
         $buttons = [
             [
                 'type'        => 'reply',
                 'displayText' => '✅ Estou Ciente',
-                'id'          => 'opt_confirm_sec_' . $processo->id,
+                'id'          => 'opt_confirm_sec_'.$processo->id,
             ],
         ];
 
-        $footer = "Evolution API";
+        $footer = 'Evolution API';
 
         $response = $this->evolutionService->sendButtons(
             $config['instance'],
@@ -242,7 +244,7 @@ class ProcessoWhatsappService
         );
 
         if (! ($response['success'] ?? false)) {
-            return ['sent' => false, 'warning' => null, 'error' => 'Falha ao enviar aviso de segurança: ' . ($response['error'] ?? 'Erro desconhecido')];
+            return ['sent' => false, 'warning' => null, 'error' => 'Falha ao enviar aviso de segurança: '.($response['error'] ?? 'Erro desconhecido')];
         }
 
         // Update status to awaiting
@@ -252,11 +254,11 @@ class ProcessoWhatsappService
         // For Chatwoot, we apply the status label `awaiting_client` or similar
         // We can leverage ChatwootService directly
         try {
-            $chatwoot = new \SuiteZap\LawFirm\Atendimento\Services\ChatwootService();
+            $chatwoot = new ChatwootService;
             // Chatwoot service manages status labels globally
             $chatwoot->syncContactLabels($processo->person_id, ['awaiting_client'], []);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Failed to update Chatwoot label for security notif: " . $e->getMessage());
+            Log::error('Failed to update Chatwoot label for security notif: '.$e->getMessage());
         }
 
         return ['sent' => true, 'warning' => null, 'error' => null];
