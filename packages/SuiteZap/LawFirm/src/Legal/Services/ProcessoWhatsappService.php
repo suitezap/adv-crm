@@ -312,20 +312,20 @@ class ProcessoWhatsappService
 
         // Cascade to parent Caso so Kanban card advances
         if ($processo->caso) {
-            $nextStage = \SuiteZap\LawFirm\Legal\Models\LegalPipelineStage::where('code', 'em_prod_juridica')->first();
+            $nextStage = LegalPipelineStage::where('code', 'em_prod_juridica')->first();
             if ($nextStage) {
                 $processo->caso->update([
                     'status'                  => 'Em Produção Jurídica',
                     'legal_pipeline_stage_id' => $nextStage->id,
                 ]);
                 $processo->caso->refresh();
-                \Illuminate\Support\Facades\Event::dispatch(new \SuiteZap\LawFirm\Legal\Events\CasoStageUpdated($processo->caso));
+                Event::dispatch(new CasoStageUpdated($processo->caso));
             }
         }
 
         // Sync Chatwoot tags
         try {
-            $chatwoot = new \SuiteZap\LawFirm\Atendimento\Services\ChatwootService;
+            $chatwoot = new ChatwootService;
             $personPhone = collect($processo->person?->contact_numbers ?? [])->first();
             $phoneVal = is_object($personPhone) ? $personPhone->value : ($personPhone['value'] ?? null);
             if ($phoneVal) {
