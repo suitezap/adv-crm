@@ -170,6 +170,7 @@ class CustomerPortalController extends Controller
                     }
                     if (! $person) {
                         $person = new Person;
+                        $person->user_id = $processo->user_id ?? 1;
                     }
 
                     $person->name = $input('name') ?? 'Participante PF';
@@ -202,6 +203,7 @@ class CustomerPortalController extends Controller
                     }
                     if (! $org) {
                         $org = new Organization;
+                        $org->user_id = $processo->user_id ?? 1;
                     }
 
                     $org->name = $input('name') ?? 'Participante PJ';
