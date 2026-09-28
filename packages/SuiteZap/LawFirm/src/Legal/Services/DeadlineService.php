@@ -5,7 +5,7 @@ namespace SuiteZap\LawFirm\Legal\Services;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
-use SuiteZap\LawFirm\Events\PrazoCreated;
+use SuiteZap\LawFirm\Legal\Events\PrazoCreated;
 use SuiteZap\LawFirm\Legal\Models\Prazo;
 use SuiteZap\LawFirm\Legal\Models\Processo;
 
