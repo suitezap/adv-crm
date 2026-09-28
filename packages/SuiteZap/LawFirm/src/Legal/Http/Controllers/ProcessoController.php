@@ -476,9 +476,9 @@ class ProcessoController extends Controller
             return $query->where('name', 'like', '%'.$term.'%');
         })->paginate(10);
 
-        $data = collect($results->items())->map(function($person) {
+        $data = collect($results->items())->map(function ($person) {
             return [
-                'id' => $person->id,
+                'id'   => $person->id,
                 'name' => $person->getRawOriginal('name') ?: $person->name,
             ];
         });
@@ -501,9 +501,9 @@ class ProcessoController extends Controller
             return $query->where('name', 'like', '%'.$term.'%');
         })->paginate(10);
 
-        $data = collect($results->items())->map(function($org) {
+        $data = collect($results->items())->map(function ($org) {
             return [
-                'id' => $org->id,
+                'id'   => $org->id,
                 'name' => $org->getRawOriginal('name') ?: $org->name,
             ];
         });
