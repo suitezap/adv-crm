@@ -141,7 +141,7 @@
                     <div id="lf-modal-create-container" class="block">
                         <div id="lf-modal-context-badge" class="hidden mx-4 mt-3 px-3 py-2 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-xs">
                             <div class="flex items-center gap-1.5">
-                                <span class="text-sm">💬</span>
+                                <span class="text-sm" id="lf-modal-context-icon">💬</span>
                                 <span id="lf-modal-context-text">Vinculado à conversa do chat</span>
                             </div>
                             <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono font-medium" id="lf-modal-context-phone"></span>
@@ -151,6 +151,7 @@
                         <input type="hidden" id="lf-bg-titulo" value="">
                         <input type="hidden" id="lf-bg-telefone" value="">
                         <input type="hidden" id="lf-bg-lead-id" value="">
+                        <input type="hidden" id="lf-bg-processo-id" value="">
                         <div class="border-b px-4 py-2.5 dark:border-gray-800 space-y-3">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-0.5">Título *</label>
@@ -185,6 +186,23 @@
                                         class="w-full border border-gray-300 dark:border-gray-800 dark:bg-gray-900 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-blue-300 outline-none dark:text-gray-300">
                                 </div>
                             </div>
+                            <!-- Oportunidade (Lead) -->
+                            <div class="w-full" id="lf-lead-field-wrap">
+                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-0.5">Oportunidade (Lead)</label>
+                                <div class="relative w-full">
+                                    <input type="text" id="lf-inp-lead-search"
+                                        class="w-full border border-gray-300 dark:border-gray-800 dark:bg-gray-900 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-300 outline-none dark:text-gray-300 pr-8"
+                                        placeholder="Digite para buscar oportunidade..." autocomplete="off">
+                                    <span id="lf-lead-clear" class="hidden absolute right-2 top-1/2 -translate-y-1/2 icon-cross-large cursor-pointer text-lg text-gray-400 hover:text-red-500"></span>
+                                    <div id="lf-lead-dropdown" class="hidden absolute z-20 w-full rounded bg-white shadow-[0px_10px_20px_0px_#0000001F] dark:bg-gray-900 left-0 top-full mt-1 border border-gray-200 dark:border-gray-800">
+                                        <ul id="lf-lead-results" class="flex flex-col max-h-48 overflow-y-auto p-1"></ul>
+                                        <p id="lf-lead-no-results" class="hidden text-xs text-gray-400 px-3 py-2">Nenhuma oportunidade encontrada.</p>
+                                        <p id="lf-lead-loading" class="hidden text-xs text-gray-400 px-3 py-2">Buscando...</p>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="lf-inp-lead-id" value="">
+                            </div>
+
                             <!-- Participants -->
                             <div class="w-full">
                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-0.5">Participantes</label>
@@ -256,13 +274,17 @@
             var lfUrlParams = (function () {
                 var p = new URLSearchParams(window.location.search);
                 return {
-                    conversaId : p.get('conversa_id') || '',
-                    nome       : p.get('nome')        || '',
-                    titulo     : p.get('titulo')      || '',
-                    telefone   : p.get('telefone')    || '',
-                    leadId     : p.get('lead_id')     || ''
+                    conversaId    : p.get('conversa_id')    || '',
+                    nome          : p.get('nome')           || '',
+                    titulo        : p.get('titulo')         || '',
+                    telefone      : p.get('telefone')       || '',
+                    leadId        : p.get('lead_id')        || '',
+                    processoId    : p.get('processo_id')    || '',
+                    processoTitulo: p.get('processo_titulo') ? decodeURIComponent(p.get('processo_titulo')) : ''
                 };
             })();
+
+            var hasProcessoContext = !!(lfUrlParams.processoId);
 
             var hasChatContext = !!(lfUrlParams.conversaId || lfUrlParams.nome || lfUrlParams.telefone);
 
@@ -279,6 +301,104 @@
                 }
             }
 
+            // Se tem contexto de Processo, exibe banner de contexto processual
+            if (hasProcessoContext) {
+                var chatBanner2 = document.getElementById('lf-agenda-chat-banner');
+                if (chatBanner2 && !hasChatContext) {
+                    var nomeEl2 = document.getElementById('lf-chat-banner-nome');
+                    var convEl2 = document.getElementById('lf-chat-banner-conv');
+                    if (nomeEl2) nomeEl2.textContent = lfUrlParams.processoTitulo || 'Processo #' + lfUrlParams.processoId;
+                    if (convEl2) convEl2.textContent = '(Processo #' + lfUrlParams.processoId + ')';
+                    var bannerIconEl = chatBanner2.querySelector('span.text-base');
+                    if (bannerIconEl) bannerIconEl.textContent = '📁';
+                    chatBanner2.classList.remove('hidden');
+                    chatBanner2.classList.add('flex');
+                }
+            }
+
+            // ------------------------------------------------------------------
+            // Lead autocomplete (Oportunidade)
+            // ------------------------------------------------------------------
+            var lfLeadSearchUrl = "{{ route('admin.processos.search_lead') }}";
+            var lfLeadSearchTimer = null;
+
+            function lfSetLead(id, title) {
+                document.getElementById('lf-inp-lead-id').value = id || '';
+                document.getElementById('lf-inp-lead-search').value = title || '';
+                var clearBtn = document.getElementById('lf-lead-clear');
+                if (clearBtn) clearBtn.classList.toggle('hidden', !id);
+                document.getElementById('lf-lead-dropdown').classList.add('hidden');
+            }
+
+            document.addEventListener('input', function(e) {
+                if (e.target && e.target.id === 'lf-inp-lead-search') {
+                    var val = e.target.value.trim();
+                    var dd = document.getElementById('lf-lead-dropdown');
+                    var resultsList = document.getElementById('lf-lead-results');
+                    var noRes = document.getElementById('lf-lead-no-results');
+                    var loading = document.getElementById('lf-lead-loading');
+
+                    // Se o campo foi esvaziado manualmente, limpar o ID oculto
+                    if (!val) {
+                        document.getElementById('lf-inp-lead-id').value = '';
+                        document.getElementById('lf-lead-clear').classList.add('hidden');
+                        dd.classList.add('hidden');
+                        return;
+                    }
+
+                    if (val.length < 2) { dd.classList.add('hidden'); return; }
+
+                    dd.classList.remove('hidden');
+                    if (resultsList) resultsList.innerHTML = '';
+                    if (noRes) noRes.classList.add('hidden');
+                    if (loading) loading.classList.remove('hidden');
+
+                    clearTimeout(lfLeadSearchTimer);
+                    lfLeadSearchTimer = setTimeout(function() {
+                        fetch(lfLeadSearchUrl + '?query=' + encodeURIComponent(val), {
+                            method: 'GET',
+                            credentials: 'same-origin',
+                            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                        })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (loading) loading.classList.add('hidden');
+                            var items = (data.data || []).slice(0, 8);
+                            if (!items.length) {
+                                if (noRes) noRes.classList.remove('hidden');
+                                return;
+                            }
+                            items.forEach(function(lead) {
+                                var li = document.createElement('li');
+                                li.className = 'cursor-pointer rounded px-3 py-2 text-sm text-gray-800 hover:bg-blue-50 dark:text-gray-300 dark:hover:bg-gray-800';
+                                li.textContent = lead.title || lead.name || ('Lead #' + lead.id);
+                                li.addEventListener('click', function() {
+                                    lfSetLead(lead.id, lead.title || lead.name || ('Lead #' + lead.id));
+                                });
+                                if (resultsList) resultsList.appendChild(li);
+                            });
+                        })
+                        .catch(function() {
+                            if (loading) loading.classList.add('hidden');
+                            if (noRes) noRes.classList.remove('hidden');
+                        });
+                    }, 300);
+                }
+            });
+
+            // Botão limpar lead
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.id === 'lf-lead-clear') {
+                    lfSetLead('', '');
+                }
+                // Fechar dropdown ao clicar fora
+                var dd = document.getElementById('lf-lead-dropdown');
+                var inp = document.getElementById('lf-inp-lead-search');
+                if (dd && inp && !dd.contains(e.target) && e.target !== inp) {
+                    dd.classList.add('hidden');
+                }
+            });
+
             // ------------------------------------------------------------------
             // Helpers de modal
             // ------------------------------------------------------------------
@@ -290,6 +410,13 @@
                 document.getElementById('lf-modal-view-container').classList.add('hidden');
                 document.getElementById('lf-modal-create-container').classList.remove('hidden');
                 document.getElementById('lf-modal-title').textContent = '🏛️ Nova Atividade';
+                // Limpar campo Lead
+                document.getElementById('lf-inp-lead-id').value = '';
+                document.getElementById('lf-inp-lead-search').value = '';
+                var clearBtn = document.getElementById('lf-lead-clear');
+                if (clearBtn) clearBtn.classList.add('hidden');
+                var dd = document.getElementById('lf-lead-dropdown');
+                if (dd) dd.classList.add('hidden');
             };
 
             // Participants variables and logic
@@ -456,6 +583,11 @@
 
                 var freshToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
+                var selectedLeadId = document.getElementById('lf-inp-lead-id').value || null;
+                // Lead vem do campo visível (digitado) OU do contexto de URL (chat/processo)
+                var finalLeadId = selectedLeadId || lfUrlParams.leadId || null;
+                var finalProcessoId = lfUrlParams.processoId || null;
+
                 fetch(storeUrl, {
                     method: 'POST',
                     credentials: 'same-origin',
@@ -471,7 +603,8 @@
                         data_inicio: ini,
                         data_fim:    fim || null,
                         is_done:     false,
-                        lead_id:     lfUrlParams.leadId || null,
+                        lead_id:     finalLeadId ? parseInt(finalLeadId) : null,
+                        processo_id: finalProcessoId ? parseInt(finalProcessoId) : null,
                         participants: {
                             users: lfParticipants.users.map(function(u){ return u.id; }),
                             persons: lfParticipants.persons.map(function(p){ return p.id; })
@@ -682,23 +815,48 @@
                 document.getElementById('lf-field-tipo').value = 'meeting';
 
                 // Campos ocultos de background
-                document.getElementById('lf-bg-conversa-id').value = lfUrlParams.conversaId || '';
-                document.getElementById('lf-bg-nome').value        = lfUrlParams.nome || '';
-                document.getElementById('lf-bg-titulo').value      = lfUrlParams.titulo || '';
-                document.getElementById('lf-bg-telefone').value    = lfUrlParams.telefone || '';
-                document.getElementById('lf-bg-lead-id').value     = lfUrlParams.leadId || '';
+                document.getElementById('lf-bg-conversa-id').value  = lfUrlParams.conversaId || '';
+                document.getElementById('lf-bg-nome').value         = lfUrlParams.nome || '';
+                document.getElementById('lf-bg-titulo').value       = lfUrlParams.titulo || '';
+                document.getElementById('lf-bg-telefone').value     = lfUrlParams.telefone || '';
+                document.getElementById('lf-bg-lead-id').value      = lfUrlParams.leadId || '';
+                document.getElementById('lf-bg-processo-id').value  = lfUrlParams.processoId || '';
+
+                // Pré-popular campo Lead quando veio do chat ou de um processo com lead
+                if (lfUrlParams.leadId) {
+                    // Lead pré-populado via URL: apenas preenche o ID oculto
+                    // O texto do campo Lead permanece editável (usuário pode trocar)
+                    document.getElementById('lf-inp-lead-id').value = lfUrlParams.leadId;
+                    // Não preenche o texto de busca para o usuário poder ver o campo limpo
+                    // e escolher outro se quiser — a vinculação já ocorre pelo ID oculto
+                } else {
+                    document.getElementById('lf-inp-lead-id').value = '';
+                    document.getElementById('lf-inp-lead-search').value = '';
+                    document.getElementById('lf-lead-clear').classList.add('hidden');
+                }
 
                 // Badge informativo no topo do modal
                 var badge = document.getElementById('lf-modal-context-badge');
                 if (badge) {
-                    if (hasChatContext) {
+                    if (hasProcessoContext) {
+                        // Contexto de processo: mostra processo e (se houver) lead
+                        var iconEl = document.getElementById('lf-modal-context-icon');
+                        if (iconEl) iconEl.textContent = '📁';
+                        document.getElementById('lf-modal-context-text').textContent =
+                            'Vinculado ao Processo: ' + (lfUrlParams.processoTitulo || '#' + lfUrlParams.processoId);
+                        var phoneEl = document.getElementById('lf-modal-context-phone');
+                        if (phoneEl) phoneEl.textContent = '';
+                        badge.classList.remove('hidden');
+                    } else if (hasChatContext) {
+                        var iconEl2 = document.getElementById('lf-modal-context-icon');
+                        if (iconEl2) iconEl2.textContent = '💬';
                         var parts = [];
                         if (lfUrlParams.nome) parts.push(lfUrlParams.nome);
                         if (lfUrlParams.conversaId) parts.push('Conversa #' + lfUrlParams.conversaId);
                         if (lfUrlParams.titulo && lfUrlParams.titulo !== lfUrlParams.nome) parts.push(lfUrlParams.titulo);
                         document.getElementById('lf-modal-context-text').textContent = 'Vinculado a: ' + parts.join(' • ');
-                        var phoneEl = document.getElementById('lf-modal-context-phone');
-                        if (phoneEl) phoneEl.textContent = lfUrlParams.telefone ? ('📱 ' + lfUrlParams.telefone) : '';
+                        var phoneEl2 = document.getElementById('lf-modal-context-phone');
+                        if (phoneEl2) phoneEl2.textContent = lfUrlParams.telefone ? ('📱 ' + lfUrlParams.telefone) : '';
                         badge.classList.remove('hidden');
                     } else {
                         badge.classList.add('hidden');

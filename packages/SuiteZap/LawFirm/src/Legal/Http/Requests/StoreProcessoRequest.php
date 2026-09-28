@@ -32,7 +32,7 @@ class StoreProcessoRequest extends FormRequest
             'numero_cnj'              => ['nullable', 'string', 'unique:processos,numero_cnj', new ValidarCNJ],
             'protocolo_distribuicao'  => 'nullable|string|max:255',
             'status'                  => 'required|string|max:255',
-            'person_id'               => 'nullable|exists:persons,id',
+            'person_id'               => 'required|integer|exists:persons,id',
             'organization_id'         => 'nullable|exists:organizations,id',
             'lead_id'                 => 'nullable|exists:leads,id',
             'caso_id'                 => 'nullable|integer|exists:law_casos,id',

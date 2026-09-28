@@ -188,7 +188,13 @@
         }
 
         function abrirAgenda() {
-            window.open("{{ route('admin.lawfirm.agenda.viewer') }}?clean=true", 'AgendaJuridica', 'width=1200,height=800,left=100,top=100');
+            var processoId    = {{ $processo->id }};
+            var leadId        = {{ $processo->lead_id ?? 'null' }};
+            var processoTitulo = encodeURIComponent("{{ addslashes($processo->titulo ?? '') }}");
+            var params = '?clean=true&processo_id=' + processoId;
+            if (leadId) params += '&lead_id=' + leadId;
+            params += '&processo_titulo=' + processoTitulo;
+            window.open("{{ route('admin.lawfirm.agenda.viewer') }}" + params, 'AgendaJuridica', 'width=1200,height=800,left=100,top=100');
         }
 
         // Initialize explicitly on load for existing inputs

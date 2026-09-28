@@ -88,3 +88,25 @@ Formato de cada entrada:
 **Regra criada para evitar repetição:** Modelos base globais ou de pacote que não utilizam `tenant_id` explícito (como `Activity`) devem ser consultados usando os identificadores locais da entidade (ex: `user_id`). Além disso, blocos `catch (\Exception $e)` em controllers MUST chamar `\Log::error($e->getMessage(), ['exception' => $e])` antes de retornar uma resposta HTTP genérica 500, garantindo a observabilidade do erro.
 
 **Referência:** Correção imediata de regressão | **Versão corrigida:** 2026-09-12
+
+---
+
+## 2026-09-27 — Lookup de Pessoas e Casos / Processos (Sobrescrita EAV e RouteNotFound)
+
+**O que quebrou:**
+1. Abertura das telas de edição/criação de Casos e Processos (`/admin/juridico/processos/{id}/edit` e `casos/{id}/edit`) quebrava com HTTP 500 (`RouteNotFoundException: Route [admin.casos.search_processo] not defined`).
+2. O JavaScript das telas de edição quebrava com `Uncaught SyntaxError: Unexpected token '<'`, congelando seletores, autocomplete e botões de limpeza.
+3. No autocomplete de Pessoa, a busca por "Maria" retornava "Nova Pessoa Teste" em vez de "Maria da Silva Bastos Veiria" (ID 12).
+
+**Causa raiz:**
+1. Os templates Blade chamavam `route('admin.casos.search_processo')`, enquanto a rota registrada no pacote pertence ao grupo `admin.lawfirm.casos.search_processo`.
+2. A tag de fechamento `</script>` foi omitida antes de `@endpush` em `casos/edit.blade.php`, injetando HTML do layout diretamente dentro do bloco de script.
+3. O modelo `Person` do Krayin CRM utiliza trait EAV (`CustomAttribute`). Ao executar `response()->json($results)`, o método `toArray()` sobrescrevia o valor da coluna nativa `name` pelo valor divergente/defasado da tabela `person_attribute_values`.
+
+**Regra criada para evitar repetição:**
+1. Endpoints de busca e autocomplete para lookups NUNCA devem serializar cegamente modelos EAV com `response()->json($model)`. Devem mapear explicitamente a coleção e utilizar `$model->getRawOriginal('name') ?: $model->name`.
+2. Rotas do pacote LawFirm devem sempre utilizar o namespace canônico `admin.lawfirm.*`.
+3. Todo `@push('scripts')` deve conter sua tag `</script>` devidamente fechada antes de `@endpush`.
+
+**Referência:** INC-2026-09-27 (`.ai/incidents/INC-2026-09-27-processos-casos-lookup-eav.md`) · `.ai/LESSONS.md` (Lições 12, 13, 14) | **Versão corrigida:** 2026-09-27
+

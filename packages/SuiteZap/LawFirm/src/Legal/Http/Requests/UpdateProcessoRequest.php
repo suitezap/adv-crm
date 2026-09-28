@@ -38,7 +38,7 @@ class UpdateProcessoRequest extends FormRequest
             'titulo'                  => 'required|string|max:255',
             'numero_cnj'              => ['nullable', 'string', 'unique:processos,numero_cnj,'.$processoId, new ValidarCNJ],
             'status'                  => 'required|string|max:255',
-            'person_id'               => 'nullable|exists:persons,id',
+            'person_id'               => 'required|integer|exists:persons,id',
             'organization_id'         => 'nullable|exists:organizations,id',
             'lead_id'                 => 'nullable|exists:leads,id',
             'caso_id'                 => 'nullable|integer|exists:law_casos,id',

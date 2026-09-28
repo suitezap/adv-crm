@@ -26,7 +26,7 @@ class StoreCasoRequest extends FormRequest
             'prioridade'      => 'nullable|string|in:baixa,media,alta,critica',
             'descricao'       => 'nullable|string',
             'user_id'         => 'nullable|integer|exists:users,id',
-            'person_id'       => 'nullable|integer|exists:persons,id',
+            'person_id'       => 'required|integer|exists:persons,id',
             'organization_id' => 'nullable|integer|exists:organizations,id',
         ];
     }

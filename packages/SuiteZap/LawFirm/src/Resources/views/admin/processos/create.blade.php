@@ -45,22 +45,34 @@
                             <x-admin::form.control-group.error control-name="titulo" />
                         </x-admin::form.control-group>
 
-                        {{-- Trigger v-lookup-component registration --}}
-                        <x-admin::attributes.edit.lookup />
+                        {{-- x-admin::lookup already registered via the component itself --}}
 
                         {{-- Cliente e Empresa --}}
                         <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
 
                             {{-- Pessoa (Cliente) --}}
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('lawfirm::app.processos.form.person') (Opcional)
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('lawfirm::app.processos.form.person')
                                 </x-admin::form.control-group.label>
-                                <v-lookup-component
-                                    :attribute="{{ json_encode(['code' => 'person_id', 'name' => 'Pessoa', 'lookup_type' => 'persons']) }}"
-                                    :value="null"
-                                    validations=""
-                                ></v-lookup-component>
+
+                                <div class="relative" id="lf-person-wrapper">
+                                    <input
+                                        type="text"
+                                        id="lf-person-search"
+                                        autocomplete="off"
+                                        placeholder="@lang('lawfirm::app.processos.form.person')"
+                                        class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                    />
+                                    <input type="hidden" name="person_id" id="lf-person-id" value="" />
+                                    <div id="lf-person-results" class="absolute top-full z-10 mt-1 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-900 dark:bg-gray-800 max-h-40 overflow-y-auto"></div>
+                                </div>
+                                <div id="lf-person-selected" class="mt-1 hidden">
+                                    <span class="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                        👤 <span id="lf-person-selected-label"></span>
+                                        <button type="button" onclick="lfClearPerson()" class="ml-1 text-blue-400 hover:text-red-500">&times;</button>
+                                    </span>
+                                </div>
                                 <x-admin::form.control-group.error control-name="person_id" />
                             </x-admin::form.control-group>
 
@@ -69,11 +81,24 @@
                                 <x-admin::form.control-group.label>
                                     Empresa (Opcional)
                                 </x-admin::form.control-group.label>
-                                <v-lookup-component
-                                    :attribute="{{ json_encode(['code' => 'organization_id', 'name' => 'Empresa', 'lookup_type' => 'organizations']) }}"
-                                    :value="null"
-                                    validations=""
-                                ></v-lookup-component>
+
+                                <div class="relative" id="lf-org-wrapper">
+                                    <input
+                                        type="text"
+                                        id="lf-org-search"
+                                        autocomplete="off"
+                                        placeholder="Empresa"
+                                        class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                    />
+                                    <input type="hidden" name="organization_id" id="lf-org-id" value="" />
+                                    <div id="lf-org-results" class="absolute top-full z-10 mt-1 hidden w-full rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-900 dark:bg-gray-800 max-h-40 overflow-y-auto"></div>
+                                </div>
+                                <div id="lf-org-selected" class="mt-1 hidden">
+                                    <span class="inline-flex items-center gap-1 rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                        🏢 <span id="lf-org-selected-label"></span>
+                                        <button type="button" onclick="lfClearOrg()" class="ml-1 text-green-400 hover:text-red-500">&times;</button>
+                                    </span>
+                                </div>
                                 <x-admin::form.control-group.error control-name="organization_id" />
                             </x-admin::form.control-group>
 
@@ -424,92 +449,233 @@
                 function toggleMask() { document.getElementById('opposing_party_document').value = ''; }
             </script>
 
-            {{-- ── Caso AJAX Selector Logic ────────────────────────── --}}
-            <script>
-                (function() {
-                    const searchInput = document.getElementById('lf-caso-search');
-                    const hiddenInput = document.getElementById('lf-caso-id');
-                    const resultsBox = document.getElementById('lf-caso-results');
-                    const selectedBox = document.getElementById('lf-caso-selected');
-                    const selectedLabel = document.getElementById('lf-caso-selected-label');
-                    const searchUrl = "{{ route('admin.processos.search_caso') }}";
-                    let debounceTimer = null;
+            
+        {{-- ── Vanilla JS Lookups (Event Delegated for Vue hydration) ── --}}
+        <script>
+            let lfDebouncePerson = null;
+            let lfDebounceOrg = null;
+            let lfDebounceCaso = null;
 
-                    // Debounced search on keyup
-                    searchInput.addEventListener('input', function() {
-                        clearTimeout(debounceTimer);
-                        const query = this.value.trim();
-                        if (query.length < 2) { resultsBox.classList.add('hidden'); return; }
-
-                        debounceTimer = setTimeout(function() {
-                            fetch(searchUrl + '?query=' + encodeURIComponent(query))
-                                .then(r => r.json())
-                                .then(data => {
-                                    const items = data.data || data;
-                                    if (!items.length) {
-                                        resultsBox.innerHTML = '<div class="px-3 py-2 text-xs text-gray-400 italic">Nenhum caso encontrado</div>';
-                                    } else {
-                                        resultsBox.innerHTML = items.map(c =>
-                                            `<div class="lf-caso-item px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                                                  data-id="${c.id}" data-titulo="${c.titulo}">
-                                                <span class="font-medium">#${c.id}</span> — ${c.titulo}
-                                                ${c.area ? '<span class="text-xs text-gray-400 ml-1">(' + c.area + ')</span>' : ''}
-                                            </div>`
-                                        ).join('');
-                                    }
-                                    resultsBox.classList.remove('hidden');
-
-                                    // Bind click events
-                                    resultsBox.querySelectorAll('.lf-caso-item').forEach(el => {
-                                        el.addEventListener('click', function() {
-                                            lfSelectCaso(this.dataset.id, this.dataset.titulo);
-                                        });
-                                    });
-                                })
-                                .catch(() => { resultsBox.classList.add('hidden'); });
-                        }, 300);
-                    });
-
-                    // Close dropdown on outside click
-                    document.addEventListener('click', function(e) {
-                        if (!e.target.closest('#lf-caso-selector-wrapper')) {
-                            resultsBox.classList.add('hidden');
-                        }
-                    });
-
-                    // Select a caso
-                    window.lfSelectCaso = function(id, titulo) {
-                        hiddenInput.value = id;
-                        selectedLabel.textContent = '#' + id + ' — ' + titulo;
-                        selectedBox.classList.remove('hidden');
-                        searchInput.value = '';
-                        searchInput.classList.add('hidden');
-                        resultsBox.classList.add('hidden');
-                    };
-
-                    // Clear selection
-                    window.lfClearCaso = function() {
-                        hiddenInput.value = '';
-                        selectedBox.classList.add('hidden');
-                        searchInput.classList.remove('hidden');
-                        searchInput.value = '';
-                        searchInput.focus();
-                    };
-
-                    // Pre-load if caso_id is set (from query param or old input)
-                    const presetId = hiddenInput.value;
-                    if (presetId) {
-                        fetch(searchUrl + '?query=')
+            document.addEventListener('input', function(e) {
+                // Pessoa Search
+                if (e.target && e.target.id === 'lf-person-search') {
+                    clearTimeout(lfDebouncePerson);
+                    const q = e.target.value.trim();
+                    const resultsBox = document.getElementById('lf-person-results');
+                    if (q.length < 2) { resultsBox.classList.add('hidden'); return; }
+                    
+                    lfDebouncePerson = setTimeout(function() {
+                        fetch("{{ route('admin.processos.search_person') }}?query=" + encodeURIComponent(q))
                             .then(r => r.json())
                             .then(data => {
                                 const items = data.data || data;
-                                const match = items.find(c => String(c.id) === String(presetId));
-                                if (match) lfSelectCaso(match.id, match.titulo);
+                                if (!items.length) {
+                                    resultsBox.innerHTML = '<div class="px-4 py-2 text-sm text-gray-400 italic">Nenhuma pessoa encontrada</div>';
+                                } else {
+                                    resultsBox.innerHTML = items.map(p => {
+                                        const nameEscaped = p.name ? p.name.replace(/'/g, "\'") : '';
+                                        return `<div class="lf-person-item cursor-pointer px-4 py-2 text-sm text-gray-800 hover:bg-blue-50 dark:text-white dark:hover:bg-gray-900 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                              onclick="lfSelectPerson('${p.id}', '${nameEscaped}')">${p.name}</div>`;
+                                    }).join('');
+                                }
+                                resultsBox.classList.remove('hidden');
                             })
-                            .catch(() => {});
+                            .catch(() => resultsBox.classList.add('hidden'));
+                    }, 300);
+                }
+
+                // Empresa Search
+                if (e.target && e.target.id === 'lf-org-search') {
+                    clearTimeout(lfDebounceOrg);
+                    const q = e.target.value.trim();
+                    const resultsBox = document.getElementById('lf-org-results');
+                    if (q.length < 2) { resultsBox.classList.add('hidden'); return; }
+                    
+                    lfDebounceOrg = setTimeout(function() {
+                        fetch("{{ route('admin.processos.search_organization') }}?query=" + encodeURIComponent(q))
+                            .then(r => r.json())
+                            .then(data => {
+                                const items = data.data || data;
+                                if (!items.length) {
+                                    resultsBox.innerHTML = '<div class="px-4 py-2 text-sm text-gray-400 italic">Nenhuma empresa encontrada</div>';
+                                } else {
+                                    resultsBox.innerHTML = items.map(o => {
+                                        const nameEscaped = o.name ? o.name.replace(/'/g, "\'") : '';
+                                        return `<div class="lf-org-item cursor-pointer px-4 py-2 text-sm text-gray-800 hover:bg-green-50 dark:text-white dark:hover:bg-gray-900 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                              onclick="lfSelectOrg('${o.id}', '${nameEscaped}')">${o.name}</div>`;
+                                    }).join('');
+                                }
+                                resultsBox.classList.remove('hidden');
+                            })
+                            .catch(() => resultsBox.classList.add('hidden'));
+                    }, 300);
+                }
+
+                // Caso Search (Only present in Processos)
+                if (e.target && e.target.id === 'lf-caso-search') {
+                    clearTimeout(lfDebounceCaso);
+                    const q = e.target.value.trim();
+                    const resultsBox = document.getElementById('lf-caso-results');
+                    if (q.length < 2) { resultsBox.classList.add('hidden'); return; }
+                    
+                    lfDebounceCaso = setTimeout(function() {
+                        fetch("{{ route('admin.processos.search_caso') }}?query=" + encodeURIComponent(q))
+                            .then(r => r.json())
+                            .then(data => {
+                                const items = data.data || data;
+                                if (!items.length) {
+                                    resultsBox.innerHTML = '<div class="px-3 py-2 text-xs text-gray-400 italic">Nenhum caso encontrado</div>';
+                                } else {
+                                    resultsBox.innerHTML = items.map(c => {
+                                        const tituloEscaped = c.titulo ? c.titulo.replace(/'/g, "\'") : '';
+                                        const areaHtml = c.area ? `<span class="text-xs text-gray-400 ml-1">(${c.area})</span>` : '';
+                                        return `<div class="lf-caso-item px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                              onclick="lfSelectCaso('${c.id}', '${tituloEscaped}')">
+                                            <span class="font-medium">#${c.id}</span> — ${c.titulo} ${areaHtml}
+                                        </div>`;
+                                    }).join('');
+                                }
+                                resultsBox.classList.remove('hidden');
+                            })
+                            .catch(() => resultsBox.classList.add('hidden'));
+                    }, 300);
+                }
+
+                // Processo Search (Only present in Casos)
+                if (e.target && e.target.id === 'lf-processo-search') {
+                    clearTimeout(lfDebounceCaso); // reuse debounce var
+                    const q = e.target.value.trim();
+                    const resultsBox = document.getElementById('lf-processo-results');
+                    if (q.length < 2) { resultsBox.classList.add('hidden'); return; }
+                    
+                    lfDebounceCaso = setTimeout(function() {
+                        fetch("{{ route('admin.lawfirm.casos.search_processo') }}?query=" + encodeURIComponent(q))
+                            .then(r => r.json())
+                            .then(data => {
+                                const items = data.data || data;
+                                if (!items.length) {
+                                    resultsBox.innerHTML = '<div class="px-3 py-2 text-xs text-gray-400 italic">Nenhum processo encontrado</div>';
+                                } else {
+                                    resultsBox.innerHTML = items.map(c => {
+                                        const tituloEscaped = c.titulo ? c.titulo.replace(/'/g, "\'") : '';
+                                        return `<div class="lf-processo-item px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                              onclick="lfSelectProcesso('${c.id}', '${tituloEscaped}')">
+                                            <span class="font-medium">#${c.id}</span> — ${c.titulo}
+                                        </div>`;
+                                    }).join('');
+                                }
+                                resultsBox.classList.remove('hidden');
+                            })
+                            .catch(() => resultsBox.classList.add('hidden'));
+                    }, 300);
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    if (e.target && ['lf-person-search', 'lf-org-search', 'lf-caso-search', 'lf-processo-search'].includes(e.target.id)) {
+                        e.preventDefault();
                     }
-                })();
-            </script>
-        @endpush
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#lf-person-wrapper') && !e.target.closest('#lf-person-selected')) {
+                    const r = document.getElementById('lf-person-results'); if(r) r.classList.add('hidden');
+                }
+                if (!e.target.closest('#lf-org-wrapper') && !e.target.closest('#lf-org-selected')) {
+                    const r = document.getElementById('lf-org-results'); if(r) r.classList.add('hidden');
+                }
+                if (!e.target.closest('#lf-caso-selector-wrapper')) {
+                    const r = document.getElementById('lf-caso-results'); if(r) r.classList.add('hidden');
+                }
+                if (!e.target.closest('#lf-processo-selector-wrapper')) {
+                    const r = document.getElementById('lf-processo-results'); if(r) r.classList.add('hidden');
+                }
+            });
+
+            window.lfSelectPerson = function(id, name) {
+                document.getElementById('lf-person-id').value = id;
+                document.getElementById('lf-person-selected-label').textContent = name;
+                document.getElementById('lf-person-selected').classList.remove('hidden');
+                const s = document.getElementById('lf-person-search'); s.value = ''; s.classList.add('hidden');
+                document.getElementById('lf-person-results').classList.add('hidden');
+            };
+            window.lfClearPerson = function() {
+                document.getElementById('lf-person-id').value = '';
+                document.getElementById('lf-person-selected').classList.add('hidden');
+                const s = document.getElementById('lf-person-search'); s.classList.remove('hidden'); s.value = ''; s.focus();
+            };
+
+            window.lfSelectOrg = function(id, name) {
+                document.getElementById('lf-org-id').value = id;
+                document.getElementById('lf-org-selected-label').textContent = name;
+                document.getElementById('lf-org-selected').classList.remove('hidden');
+                const s = document.getElementById('lf-org-search'); s.value = ''; s.classList.add('hidden');
+                document.getElementById('lf-org-results').classList.add('hidden');
+            };
+            window.lfClearOrg = function() {
+                document.getElementById('lf-org-id').value = '';
+                document.getElementById('lf-org-selected').classList.add('hidden');
+                const s = document.getElementById('lf-org-search'); s.classList.remove('hidden'); s.value = ''; s.focus();
+            };
+
+            window.lfSelectCaso = function(id, titulo) {
+                document.getElementById('lf-caso-id').value = id;
+                document.getElementById('lf-caso-selected-label').textContent = '#' + id + ' — ' + titulo;
+                document.getElementById('lf-caso-selected').classList.remove('hidden');
+                const s = document.getElementById('lf-caso-search'); s.value = ''; s.classList.add('hidden');
+                document.getElementById('lf-caso-results').classList.add('hidden');
+            };
+            window.lfClearCaso = function() {
+                document.getElementById('lf-caso-id').value = '';
+                document.getElementById('lf-caso-selected').classList.add('hidden');
+                const s = document.getElementById('lf-caso-search'); s.classList.remove('hidden'); s.value = ''; s.focus();
+            };
+
+            window.lfSelectProcesso = function(id, titulo) {
+                document.getElementById('lf-processo-id').value = id;
+                document.getElementById('lf-processo-selected-label').textContent = '#' + id + ' — ' + titulo;
+                document.getElementById('lf-processo-selected').classList.remove('hidden');
+                const s = document.getElementById('lf-processo-search'); s.value = ''; s.classList.add('hidden');
+                document.getElementById('lf-processo-results').classList.add('hidden');
+            };
+            window.lfClearProcesso = function() {
+                document.getElementById('lf-processo-id').value = '';
+                document.getElementById('lf-processo-selected').classList.add('hidden');
+                const s = document.getElementById('lf-processo-search'); s.classList.remove('hidden'); s.value = ''; s.focus();
+            };
+            
+            // For create/edit views, hide the search input if there is already a selected value on load
+            window.addEventListener('load', function() {
+                // setTimeout ensures Vue has mounted and finished rendering our elements
+                setTimeout(function() {
+                    const pid = document.getElementById('lf-person-id');
+                    if (pid && pid.value) { 
+                        const ps = document.getElementById('lf-person-search'); 
+                        if(ps) ps.classList.add('hidden'); 
+                    }
+                    
+                    const oid = document.getElementById('lf-org-id');
+                    if (oid && oid.value) { 
+                        const o_s = document.getElementById('lf-org-search'); 
+                        if(o_s) o_s.classList.add('hidden'); 
+                    }
+                    
+                    const cid = document.getElementById('lf-caso-id');
+                    if (cid && cid.value) { 
+                        const c_s = document.getElementById('lf-caso-search'); 
+                        if(c_s) c_s.classList.add('hidden'); 
+                    }
+
+                    const proid = document.getElementById('lf-processo-id');
+                    if (proid && proid.value) { 
+                        const p_s = document.getElementById('lf-processo-search'); 
+                        if(p_s) p_s.classList.add('hidden'); 
+                    }
+                }, 100);
+            });
+        </script>
+@endpush
 
 </x-admin::layouts>

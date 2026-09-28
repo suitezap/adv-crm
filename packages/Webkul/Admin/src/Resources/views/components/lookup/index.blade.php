@@ -21,7 +21,7 @@
                         class="overflow-hidden text-ellipsis"
                         :title="selectedItem?.name"
                     >
-                        @{{ selectedItem?.name !== "" ? selectedItem?.name : "@lang('admin::app.components.lookup.click-to-add')" }}
+                        @{{ selectedItem?.name ? selectedItem?.name : "@lang('admin::app.components.lookup.click-to-add')" }}
                     </span>
 
                     <!-- Icons Container -->
@@ -66,6 +66,7 @@
                         placeholder="@lang('admin::app.components.lookup.search')"
                         ref="searchInput"
                         @keyup="search"
+                        @keydown.enter.prevent
                     />
 
                     <!-- Search Icon (absolute positioned) -->

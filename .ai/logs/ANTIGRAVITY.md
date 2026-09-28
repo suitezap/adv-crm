@@ -327,3 +327,39 @@ Actions:
 
 Result:
 DONE
+
+---
+
+## [2026-09-27 23:15] BUGFIX-LOOKUP-001 — Resolução de Erros de Rota, Blade e Autocomplete EAV <a id="2026-09-27-bugfix-lookup-001"></a>
+
+Agent:
+ANTIGRAVITY
+
+Role:
+ORCHESTRATOR / IMPLEMENTER
+
+Objective:
+Diagnosticar e solucionar falhas críticas na edição de Processos e Casos (`/admin/juridico/processos/{id}/edit` e `casos/{id}/edit`): erro HTTP 500 RouteNotFound, SyntaxError no JavaScript do Blade e divergência de dados no autocomplete de pessoas provocada pela serialização EAV do Krayin CRM; documentar no Obsidian e na governança interna.
+
+Actions:
+1. Diagnóstico e resolução do erro HTTP 500:
+   - Identificada exceção `Symfony\Component\Routing\Exception\RouteNotFoundException: Route [admin.casos.search_processo] not defined`.
+   - Corrigido o nome da rota nas views Blade (`casos/edit.blade.php`, `casos/create.blade.php`, `processos/edit.blade.php`, `processos/create.blade.php`) para o namespace canônico `admin.lawfirm.casos.search_processo`.
+2. Diagnóstico e resolução do JavaScript SyntaxError:
+   - Identificado `Uncaught SyntaxError: Unexpected token '<'` em `casos/edit.blade.php`.
+   - Adicionada a tag de fechamento `</script>` faltante antes de `@endpush`, restabelecendo o funcionamento de seletores e autocomplete.
+3. Resolução da divergência de dados no Autocomplete (EAV Krayin CRM):
+   - Investigada a causa de a busca por "Maria" retornar "Nova Pessoa Teste" em vez de "Maria da Silva Bastos Veiria" (ID 12).
+   - Constatado que `response()->json($results)` invocava `toArray()` do modelo `Person`, que sobrepunha o valor da coluna nativa `name` pelo valor defasado da tabela `person_attribute_values`.
+   - Refatorados `ProcessoController::searchPerson()` e `searchOrganization()` para mapear explicitamente a coleção e utilizar `$person->getRawOriginal('name') ?: $person->name`.
+   - Ajustados os templates Blade e componentes de lookup para suportar payload `{ data: [...] }` e array direto com `@keydown.enter.prevent`.
+4. Documentação:
+   - Criada nota técnica no repositório Obsidian: `D:\Z.Hermes\obsidian\LawFirm - Erros e Solucoes.md`.
+   - Atualizado o índice do Obsidian: `D:\Z.Hermes\obsidian\_Index.md`.
+   - Criado relatório de incidente interno: `.ai/incidents/INC-2026-09-27-processos-casos-lookup-eav.md`.
+   - Registradas Lições 12, 13 e 14 no `.ai/LESSONS.md`.
+   - Atualizado registro de incidentes e regras no `GUARDRAILS.md`.
+
+Result:
+DONE
+

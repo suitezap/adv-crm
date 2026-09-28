@@ -92,6 +92,7 @@ remove_logo.php
 /fix_user_create.py
 /test-dns.ps1
 *.bak-before-*
+/scratch/
 
 # OpenSpec local planning artifacts (tooling local — não versionar; decisão REPO-HYGIENE-002)
 openspec/
