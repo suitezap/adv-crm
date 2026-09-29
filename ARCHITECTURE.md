@@ -1434,3 +1434,12 @@ ChatwootWebhookController         valida payload.inbox_id == config['inbox_id'] 
 *   **Isolamento multi-tenant:** sem queries cross-tenant novas; `REDIS_PREFIX` inalterado; sem tocar módulos suspensos de `Whatsapp/`.
 *   **Imagem:** `suitezap/lawfirm:v3.56.2`, `suitezap/lawfirm:3.56.2` e `suitezap/lawfirm:latest` para `docker push`/`pull`. Task `DOCKER-004` (OpenCode).
 
+### 4.95 Bump v3.56.3 — Portal Participantes, Agenda Lead→Prazo e Correções (DOCKER-005)
+
+*   **Contexto:** 26 commits sobre a `3.56.2` (62 arquivos): listagem/edição/remoção de participantes no portal do cliente (`law_processo_participantes`), campo Lead visível na agenda com vínculo automático Processo→Prazo, correção de namespace `PrazoCreated` em `DeadlineService`, botão de confirmação manual de notificação (`security_notif_status` em `processos`), mais 4 migrations (`mothership_whatsapp_templates` + seed, `security_notif_status`, `law_processo_participantes`). Working tree limpo no build.
+*   **Decisões:**
+    1. `LawFirmServiceProvider::VERSION` → `3.56.3`; `docker/entrypoint.sh` → `LF v3.56.3`; `docker-stack-template.yml` → `suitezap/lawfirm:v3.56.3`.
+    2. Rebuild com `docker build -t suitezap/lawfirm:3.56.3 -t suitezap/lawfirm:v3.56.3 -t suitezap/lawfirm:latest .` e push das três tags. As 4 migrations rodam via entrypoint no deploy (validar `migrate` na VPS após `pull`).
+*   **Isolamento multi-tenant:** sem queries cross-tenant novas; `REDIS_PREFIX` inalterado; sem tocar módulos suspensos de `Whatsapp/` (apenas templates via MotherShip, padrão já aprovado em `WA-TPL-001`).
+*   **Imagem:** `suitezap/lawfirm:v3.56.3`, `suitezap/lawfirm:3.56.3` e `suitezap/lawfirm:latest` para `docker push`/`pull`. Task `DOCKER-005` (OpenCode).
+
