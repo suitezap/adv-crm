@@ -63,3 +63,15 @@
 - **Incidente:** `.ai/incidents/INC-2026-09-30-doc-drift-v356.md`.
 - **Isolamento:** aplicação em worktree dedicado; a árvore principal (`/home/rootz/Sync/Lawfirm`, branch `feature/ajustes-no-leads-view`) não foi modificada — WIP de outro agente preservado.
 - **Pendências não resolvidas:** (a) procedimento de release não compartilhado com o OpenCode — causa raiz real; (b) ADR §4.94 registra conteúdo não commitado no build da v3.56.2; (c) `docs/ARCHITECTURE.md` (cópia) desatualizada; (d) `OPS-WEBHOOK-001` Unassigned; (e) `.git/` segue sincronizado pelo Syncthing (INC-2026-09-15).
+
+## 2026-09-30 — DOC-003 (Regra 15: Cobertura da Série no changelog de qualidade)
+
+- **Lock:** `.ai/locks/DOC-003.lock.yaml` (base `8f563040`, worktree `/home/rootz/lawfirm-doc002`).
+- **Autorização:** DSK7 em 2026-09-30, após validar o merge do DOC-002 feito pelo Antigravity.
+- **Gatilho:** validação pós-merge. O Antigravity mergeou o DOC-002 (`62c61153`, `8f563040`) e publicou a v3.56.3 (`DOCKER-005`, ADR §4.95) corretamente documentada nos DOIS changelogs — primeiro release a passar pelo guardrail da Regra 14, quecumpreu seu papel.
+- **Furo encontrado na própria Regra 14:** ela compara `LawFirmServiceProvider::VERSION` apenas com a entrada MAIS RECENTE de cada changelog. No estado real, `CHANGELOG.md` raiz tinha 3.56.0-3.56.3 mas o `quality/CHANGELOG.md` só tinha 3.56.2 e 3.56.3 — v3.56.0 e v3.56.1 ausentes — e o validador retornava exit 0 (verde). A Regra 14 detecta deriva de PONTA (release sem doc), nao deriva de INTERVALO (release na raiz, ausente no derivado).
+- **Correcao:** nova **Regra 15 (Cobertura da Serie)** exige que toda versao da serie corrente (major.minor do codigo) presente no CHANGELOG raiz esteja tambem no quality/CHANGELOG. Escopo restrito a serie corrente: series antigas (3.55.x e anteriores) ficam fora para nao gerar divida historica infinita. A Regra 14 foi refatorada para deduplicar a serie preservando a ordem de aparicao.
+- **Entradas retroativas:** v3.56.0 e v3.56.1 adicionadas ao quality/CHANGELOG.md, em ordem decrescente (3.56.3, 3.56.2, 3.56.1, 3.56.0).
+- **Verificacao (4 cenarios):** (1) estado real pre-correcao -> Regra 15 falha citando v3.56.1 e v3.56.0; (2) apos as entradas -> exit 0; (3) removendo v3.56.1 -> Regra 15 falha citando a versao; (4) codigo em v3.57.0 (serie diferente) -> so a Regra 14 dispara, a Regra 15 NAO exige as 3.56.x, confirmando que e cirugica.
+- **Incidente:** `.ai/incidents/INC-2026-09-30-changelog-cobertura.md`.
+- **Erro próprio:** a primeira tentativa de reordenar os blocos do changelog duplicou secoes; detectada pelo proprio diff, revertida com `git checkout --` e refeita com patch ancorado.

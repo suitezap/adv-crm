@@ -6,6 +6,10 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 
 ## [v3.56.3] - 2026-09-28 (DOCKER-005 — Portal Participantes, Agenda e Alerta WhatsApp)
 
+### Corrigido
+- `validate_test_docs.py`: nova **Regra 15 (Cobertura da Série)**, que exige que **toda** versão da série corrente presente no `CHANGELOG.md` raiz também esteja neste arquivo. A Regra 14 (criada no `DOC-002`) só comparava a entrada mais recente, então aprovava changelogs com lacunas no meio da série. Incidente `INC-2026-09-30-changelog-cobertura`.
+- Entradas retroativas das versões **v3.56.0** e **v3.56.1** neste arquivo — ambas documentadas na raiz e nos ADRs §4.92/§4.93, porém ausentes aqui sem que o validador detectasse.
+
 ### Adicionado
 - Entrada da release **v3.56.3** consolidada no ADR §4.95 do `ARCHITECTURE.md` (`DOCKER-005`, OpenCode).
 - Suporte a gestão de participantes no Portal do Cliente (`law_processo_participantes`), campo `Lead` em eventos da Agenda com vínculo a Processo→Prazo, e notificação de segurança via WhatsApp com botões interativos e webhook.
@@ -33,6 +37,30 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 ### Pendente
 - Catálogo de testes mantém **24 `implemented_unverified` + 4 `planned`** (20 `active` de 48), com 17 concentrados em `ai-assistant`. A verificação exige ambiente de execução containerizado, ausente no servidor (ver `QA-DATA-001`).
 - O ADR §4.94 registra que parte do conteúdo da v3.56.2 estava **não commitada no momento do build da imagem** — a imagem reflete o disco, não um commit. Reconciliação entre imagem publicada e histórico do repositório permanece pendente.
+
+## [v3.56.1] - 2026-09-18 (DOCKER-003 — Chatwoot Lead Chat e Sincronia de EAV)
+
+### Adicionado
+- Entrada retroativa (DOC-003, 2026-09-30): a release estava documentada no `CHANGELOG.md` raiz e no ADR §4.93, mas **ausente neste arquivo**. A lacuna não era detectada porque a Regra 14 só comparava a entrada mais recente — a nova **Regra 15 (Cobertura da Série)** fecha esse furo.
+- Modal de chat do Chatwoot na visualização de Leads: `ChatwootLeadController` (proxy interno com gates de autenticação CRM), rotas `admin-atendimento-leads.php`, modal Blade e botão no painel de ferramentas.
+- Triggers MySQL `after_person_insert` / `after_lead_insert` para consistência bidirecional com a arquitetura EAV do Krayin em inserções diretas ao banco (triagem n8n).
+
+### Infraestrutura
+- Imagens `suitezap/lawfirm:3.56.1`, `suitezap/lawfirm:v3.56.1` e `latest` publicadas.
+
+## [v3.56.0] - 2026-09-15 (DOCKER-002 — Integração Chatwoot em Leads)
+
+### Adicionado
+- Entrada retroativa (DOC-003, 2026-09-30): release documentada no `CHANGELOG.md` raiz e no ADR §4.92, mas **ausente neste arquivo**. Mesma lacuna da v3.56.1, agora coberta pela Regra 15.
+- Coluna `chatwoot_conversation_id` (INT, nullable) em `leads` + campo no model `Lead`.
+- Workflow n8n de Triagem: nó *Add Coluna Chatwoot* com query dinâmica sobre o schema do tenant via `$json.id` (`N8N-001`); nó de validação de saldo SuiteCoins como gate financeiro (`ADR-N8N-001`).
+
+### Corrigido
+- Migration `2026_09_14_185800_add_chatwoot_conversation_id_to_leads_table` tornada idempotente (`hasTable`/`hasColumn` guards).
+- `ProcessoObserver::forceCleanupCalendarEvent` filtrando por `user_id` do dono (a tabela `activities` não tem `tenant_id`).
+
+### Infraestrutura
+- Imagens `suitezap/lawfirm:3.56.0` (digest `sha256:9a129f3a`) e `latest` publicadas.
 
 ## [v3.55.0] - 2026-08-21 (Etapa 1 — Governança e Validador)
 

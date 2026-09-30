@@ -202,19 +202,50 @@ def validate_catalog(catalog_path=CATALOG_PATH, repo_root=REPO_ROOT):
         errors.append("Regra 14 (Versão do Código): LawFirmServiceProvider.php não encontrado.")
 
     if code_version:
+        # Extrai as versões em ordem de aparição, deduplicadas (preserva a ordem decrescente).
+        series_by_file = {}
         for changelog in (REPO_ROOT / "CHANGELOG.md", QUALITY_DIR / "CHANGELOG.md"):
             if not changelog.exists():
                 continue
-            versions = CHANGELOG_RE.findall(changelog.read_text(encoding="utf-8", errors="replace"))
-            if not versions:
+            raw = CHANGELOG_RE.findall(changelog.read_text(encoding="utf-8", errors="replace"))
+            series = []
+            for v in raw:
+                if v not in series:
+                    series.append(v)
+            series_by_file[changelog] = series
+            if not series:
                 errors.append(f"Regra 14 (CHANGELOG Sem Versões): '{changelog.name}' não declara nenhuma versão reconhecível.")
                 continue
-            latest = versions[0]  # entrada mais recente = primeira ocorrência
+            latest = series[0]  # entrada mais recente = primeira ocorrência
             if latest != code_version:
                 errors.append(
                     f"Regra 14 (Deriva de Versão): código em v{code_version} mas "
                     f"'{changelog.name}' tem entrada mais recente em v{latest}. "
                     f"Adicione a entrada da release v{code_version} ao changelog."
+                )
+
+        # Regra 15: Cobertura da série entre os CHANGELOGs.
+        # A Regra 14 só compara a entrada mais recente, então passa verde mesmo com
+        # lacunas no meio da série. Situação real em 2026-09-30: código em v3.56.3,
+        # CHANGELOG raiz com 3.56.0→3.56.3, mas quality/CHANGELOG.md sem entrada
+        # para 3.56.0 e 3.56.1 — e o validador aprovava.
+        root_cl = REPO_ROOT / "CHANGELOG.md"
+        qual_cl = QUALITY_DIR / "CHANGELOG.md"
+        root_series = series_by_file.get(root_cl) or []
+        qual_series = series_by_file.get(qual_cl) or []
+        if root_series and qual_series:
+            # Considera apenas versões a partir da major.minor da linha 3.56 —
+            # séries antigas podem ter convenções diferentes e não são o escopo
+            # desta regra (evita exigir, p.ex., 3.55.x no changelog de qualidade).
+            line = ".".join(code_version.split(".")[:2]) if code_version else ""
+            covered = [v for v in root_series if v.startswith(line + ".")]
+            missing = [v for v in covered if v not in qual_series]
+            if missing:
+                errors.append(
+                    f"Regra 15 (Cobertura da Série): '{qual_cl.name}' não declara "
+                    f"{len(missing)} versão(ões) presente(s) no CHANGELOG raiz: "
+                    f"{', '.join('v' + v for v in missing)}. "
+                    f"Adicione as entradas ausentes (a série atual é {line}.x)."
                 )
 
     return errors, warnings

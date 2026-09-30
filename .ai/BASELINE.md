@@ -40,7 +40,8 @@
 - **Causa raiz de processo:** os três bumps foram executados por agentes distintos — `DOCKER-002` e `DOCKER-004` (OpenCode), `DOCKER-003` (**Antigravity**), conforme `.ai/TASKS.md`. A v3.56.1, do Antigravity, também ficou sem changelog: **o defeito não é exclusivo do OpenCode** (problema de documentação já conhecido pelo DSK7), e sim a ausência de um procedimento de release verificado por qualquer agente. O bump inclui, por convenção, atualizar os CHANGELOGs, mas a convenção não é automatizada, não é exigida por checklist, e os CHANGELOGs não são gerados a partir do ADR — que foi corretamente atualizado nas três releases.
 - **Sobre atribuição:** commits assinados `SuiteZap <suitezap@gmail.com>` não distinguem agente; a atribuição vem só do campo *Owner* do `.ai/TASKS.md`.
 - **Correção aplicada (DOC-002):** entradas v3.56.0, v3.56.1 e v3.56.2 adicionadas ao `CHANGELOG.md` raiz e ao `quality/CHANGELOG.md`; este `BASELINE.md` reconciliado; **Regra 14 (Consistência de Versão)** criada no validador — compara `LawFirmServiceProvider::VERSION` com a entrada mais recente de cada CHANGELOG e **falha o CI** na divergência. Testada nos dois sentidos.
-- **Prevenção:** qualquer bump futuro sem entrada de changelog passa a quebrar o `lawfirm-ci.yml`.
+- **Furo residual e seu fechamento (DOC-003, 2026-09-30):** a Regra 14 detecta *deriva de ponta* (release sem documentação), mas não *deriva de intervalo* (release documentada na raiz e ausente no arquivo derivado) — passava verde com a v3.56.0 e a v3.56.1 fora do `quality/CHANGELOG.md`. A **Regra 15 (Cobertura da Série)** exige que toda versão da série corrente da raiz esteja também no changelog de qualidade. Ver `INC-2026-09-30-changelog-cobertura`.
+- **Prevenção:** qualquer bump futuro sem entrada de changelog passa a quebrar o `lawfirm-ci.yml` (Regra 14), e qualquer lacuna no meio da série também (Regra 15).
 
 ### Diretriz Arquitetural sobre Imagens Docker (`suitezap/lawfirm:latest`)
 > [!IMPORTANT]
