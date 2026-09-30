@@ -2,6 +2,30 @@
 
 Este checklist deve ser executado obrigatoriamente antes de qualquer publicação de versão do LawFirm CRM para Staging ou Produção.
 
+> ## ⚠️ LEIA ANTES: [`.ai/REGRAS-DE-RELEASE.md`](../.ai/REGRAS-DE-RELEASE.md)
+>
+> **Regra obrigatória para todos os agentes (Antigravity, OpenCode, Hermes e humano).** A seção 0 é **gate**: se qualquer item dela falhar, **não prossiga** para nenhuma outra seção. As releases `v3.56.0`, `v3.56.1` e `v3.56.2` (15–23/09/2026) foram publicadas sem entrada em changelog porque este gate não existia.
+
+## 0. 🚦 GATE DE RELEASE — bloqueia todas as demais seções
+
+- [ ] `LawFirmServiceProvider::VERSION` alterado para a nova versão e **coincidente** com `docker/entrypoint.sh` e `docker-stack-template.yml`.
+- [ ] ADR criado no `ARCHITECTURE.md` na seção `4.x` subsequente.
+- [ ] **Entrada no `CHANGELOG.md` (raiz), no TOPO**, em ordem decrescente de versão.
+- [ ] **Entrada no `quality/CHANGELOG.md`, no TOPO**, com a mesma versão e o efeito sobre testes/qualidade.
+- [ ] Toda versão da série corrente presente no `CHANGELOG.md` raiz **também** está no `quality/CHANGELOG.md` (paridade de série — Regra 15).
+- [ ] `.ai/BASELINE.md` atualizado (`CODE_VERSION` e `DOCUMENTED_VERSION`).
+- [ ] **`python quality/scripts/validate_test_docs.py` retorna `exit 0`.** Gate automático (Regras 14 e 15); falha o `lawfirm-ci.yml`.
+- [ ] **Todas as alterações COMMITADAS antes do build** — a imagem reflete o disco, e disco sujo publica código sem histórico (ADR §4.94).
+- [ ] Lock `.ai/locks/{TASK}.lock.yaml` criado **antes** de começar, com `write_scope` cobrindo todos os arquivos tocados, agora em `RELEASED`.
+
+```bash
+python quality/scripts/validate_test_docs.py; echo "validador exit=$?"
+grep -m1 "const VERSION" packages/SuiteZap/LawFirm/src/Providers/LawFirmServiceProvider.php
+grep -E "^## " CHANGELOG.md | head -2
+grep -E "^## " quality/CHANGELOG.md | head -2
+git status --porcelain        # tem que estar vazio: sem WIP no momento do build
+```
+
 ---
 
 ## 1. Validação Estática e Documental

@@ -19,6 +19,19 @@
 
 6. **Este AGENTS.md nunca deve conter uma regra de código que já existe no SKILL.md.** Se uma regra nova de código for necessária, ela deve ser adicionada ao SKILL.md, não aqui.
 
+7. **⚠️ REGRAS OBRIGATÓRIAS (`.ai/`)** — dois documentos em `.ai/` **substituem** qualquer convenção implícita e valem para **todos** os agentes, sem exceção:
+
+   | Documento | Quando se aplica |
+   |---|---|
+   | **[`.ai/REGRAS-DE-RELEASE.md`](.ai/REGRAS-DE-RELEASE.md)** | Bump de versão, build de imagem, publicação no Docker Hub, alteração de changelog |
+   | **[`.ai/REGRAS-DE-CONCORRENCIA.md`](.ai/REGRAS-DE-CONCORRENCIA.md)** | Qualquer edição de código, criação de lock, troca de branch, rebase, pull, ou contato com trabalho não commitado de outro agente |
+
+   **Resumo de `REGRAS-DE-RELEASE.md`:** 8 passos na ordem, sendo o **validador (passo 7) o gate** — `python quality/scripts/validate_test_docs.py` tem que sair `exit 0` **antes** de publicar imagem. As releases `v3.56.0`, `v3.56.1` e `v3.56.2` (15–23/09/2026) foram publicadas sem entrada em changelog porque esse gate não era exigido por nenhum checklist.
+
+   **Resumo de `REGRAS-DE-CONCORRENCIA.md`:** lock antes de editar; `write_scope` é limite; **nunca** trocar de branch numa árvore com WIP (use `git worktree`); nunca apagar lock de outro agente; `.git/` nunca sincronizado pelo Syncthing.
+
+8. **Atribuição de autoria é limitada.** Todos os commits são assinados `SuiteZap <suitezap@gmail.com>` — **o git não distingue agente**. A única fonte de atribuição é o campo *Owner* do `.ai/TASKS.md`. Não acuse nem defenda um agente com base em memória: consulte o `TASKS.md` e, se o registro não sustentar, declare que não é verificável.
+
 ---
 
 ## 2. Ecossistema Multiagente e Papéis Formais
