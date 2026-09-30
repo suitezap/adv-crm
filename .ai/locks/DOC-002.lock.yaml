@@ -16,7 +16,7 @@ started_at: "2026-09-30T21:05:00Z"
 last_checkpoint_at: "2026-09-30T21:05:00Z"
 base_commit: "e8afb269"
 workspace: "worktree-lawfirm-doc002"
-status: ACTIVE
+status: RELEASED
 
 # Escopo revisto em 2026-09-30: aplicacao sobre a 2.1 atualizada (e8afb269).
 # O codigo esta em v3.56.2 (nao 3.56.0): faltam TRES releases nos CHANGELOGs

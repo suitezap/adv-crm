@@ -14,7 +14,7 @@ started_at: "2026-09-30T22:30:00Z"
 last_checkpoint_at: "2026-09-30T22:30:00Z"
 base_commit: "8f563040"
 workspace: "worktree-lawfirm-doc002"
-status: ACTIVE
+status: RELEASED
 
 # Estende a Regra 14 (DOC-002) para checar COBERTURA DA SERIE, nao apenas a
 # entrada mais recente. A Regra 14 original aprova quando a release atual esta

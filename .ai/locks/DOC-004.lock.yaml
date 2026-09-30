@@ -14,7 +14,7 @@ started_at: "2026-09-30T23:15:00Z"
 last_checkpoint_at: "2026-09-30T23:15:00Z"
 base_commit: "d3b6223f"
 workspace: "vps-hermes"
-status: ACTIVE
+status: RELEASED
 
 # Institui as duas regras obrigatorias em .ai/, ancoradas no AGENTS.md e no
 # RELEASE_CHECKLIST.md (o documento lido no momento do bump). Autorizado pelo
