@@ -24,7 +24,7 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 - Registro do incidente `INC-2026-09-30-doc-drift-v356` em `.ai/incidents/`.
 
 ### Corrigido
-- `validate_test_docs.py`: nova **Regra 14 (Consistência de Versão)**, que compara `LawFirmServiceProvider::VERSION` com a entrada mais recente de cada CHANGELOG. Nenhuma das 13 regras anteriores fazia essa comparação — o validador executava com **0 erros** durante o drift, o que permitiu três releases seguidas sem rastro documental.
+- `validate_test_docs.py`: nova **Regra 14 (Consistência de Versão)**, que compara `LawFirmServiceProvider::VERSION` com a entrada mais recente de cada CHANGELOG. Nenhuma das 13 regras anteriores fazia essa comparação — o validador executava com **0 erros** durante o drift, o que permitiu três releases seguidas sem rastro documental. O drift ocorreu sob **todos** os agentes envolvidos (`DOCKER-002`/OpenCode, `DOCKER-003`/Antigravity, `DOCKER-004`/OpenCode, conforme o campo *Owner* do `.ai/TASKS.md`): o defeito é o procedimento de release não verificado, não um agente específico.
 
 ### Verificado
 - `LawFirmServiceProvider::VERSION` = `3.56.2` na `2.1` (`e8afb269`).

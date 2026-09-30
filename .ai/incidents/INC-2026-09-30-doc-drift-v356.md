@@ -33,10 +33,14 @@ Três releases consecutivas foram publicadas no Docker Hub e registradas em ADR 
 
 ## Causa raiz
 
-1. **De processo:** os bumps foram executados por agentes distintos (OpenCode em `DOCKER-002`/`004`, Antigravity em `DOCKER-003`). O procedimento de bump inclui, por convenção, atualizar os CHANGELOGs — mas não é automatizado, não é verificado, e os CHANGELOGs não são gerados a partir do ADR. Relatado pelo DSK7: o OpenCode não possui as skills de governança do Antigravity/Hermes.
-2. **De guardrail:** `quality/scripts/validate_test_docs.py` tinha 13 regras, **nenhuma** comparando a versão do código com a documentação. O validador executava com **0 erros** durante todo o drift.
+**Confirmação do DSK7 (2026-09-30):** o OpenCode é um problema conhecido de documentação — confirmado pelo operador, que relata ter reportado a necessidade de documentação e mesmo assim visto releases serem publicadas sem changelog.
 
-É a **terceira** ocorrência do mesmo defeito: `DOC-001` fechou a de v3.55.1 (2026-08-26) com o mesmo formato.
+1. **De processo — o procedimento de release não é verificado por nenhum agente.** Os três bumps foram executados por agentes distintos: `DOCKER-002` (OpenCode), `DOCKER-003` (**Antigravity**) e `DOCKER-004` (OpenCode), conforme `.ai/TASKS.md`. A release v3.56.1, atribuída ao **Antigravity**, também ficou sem entrada nos CHANGELOGs — o que demonstra que **o defeito não é exclusivo do OpenCode**: nenhum dos agentes tem o procedimento de bump como rotina verificada, e nada no fluxo impede uma release publicada sem rastro documental. O bump inclui, por convenção, atualizar os CHANGELOGs, mas essa convenção não é automatizada, não é exigida por nenhum checklist, e os CHANGELOGs não são gerados a partir do ADR (que, nas três releases, **foi** atualizado corretamente).
+2. **De guardrail — nenhuma das 13 regras do `validate_test_docs.py` comparava a versão do código com a documentação.** O validador executava com **0 erros** durante todo o drift, inclusive sob o Antigravity.
+
+É a **terceira** ocorrência do mesmo defeito: `DOC-001` fechou a de v3.55.1 (2026-08-26) com o mesmo formato de falha.
+
+**Sobre atribuição:** os commits são assinados `SuiteZap <suitezap@gmail.com>` — a identidade do git **não distingue agente**. A atribuição vem exclusivamente do campo *Owner* no `.ai/TASKS.md`, então divergências de atribuição entre o registro e a realidade são invisíveis para o git. Se o `TASKS.md` estiver errado, o registro está errado.
 
 ## Impacto
 
