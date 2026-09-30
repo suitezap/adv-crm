@@ -1,0 +1,19 @@
+task_id: DOC-005
+owner: HERMES
+write_scope:
+  - .ai/REGRAS-OPENCODE-OPERACAO.md
+  - .ai/incidents/INC-2026-09-30-furos-documentacao.md
+  - .ai/locks/DOC-005.lock.yaml
+  - .ai/TASKS.md
+  - .ai/LOG_INDEX.md
+  - .ai/CURRENT.md
+  - AGENTS.md
+  - .ai/logs/HERMES.md
+started_at: "2026-09-30T23:50:00Z"
+last_checkpoint_at: "2026-09-30T23:50:00Z"
+base_commit: "d3b6223f"
+workspace: "worktree-lawfirm-doc002"
+status: ACTIVE
+
+# Auditoria de referencias cruzadas (.ai/ x quality/ x disco) + regras do OpenCode
+# para OPS-WEBHOOK-001. Autorizado pelo DSK7 em 2026-09-30.

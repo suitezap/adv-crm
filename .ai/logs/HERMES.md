@@ -91,3 +91,19 @@
   - Backup do WIP alheio em `~/.hermes/cache/wip-backup-feature-ajustes-20260930/` com hashes md5, ANTES de qualquer operacao.
   - Trabalho aplicado no worktree da `2.1`, nunca na arvore principal com WIP.
   - **Erro proprio corrigido:** as regras foram escritas inicialmente na arvore principal (`feature/ajustes-no-leads-view`, que esta 30 commits atrasada e nao contem o DOC-003). Detectado ao tentar atualizar o TASKS.md, onde DOC-003 nao existia. Arquivos removidos daquela arvore e reaplicados no worktree correto; WIP alheio verificado intacto.
+
+## 2026-09-30 — DOC-005 (Auditoria de referencias + regras do OpenCode para OPS-WEBHOOK-001)
+
+- **Lock:** `.ai/locks/DOC-005.lock.yaml` (base `d3b6223f`).
+- **Autorizacao:** DSK7 pediu reavaliacao mais profunda de furos documentais + regras para o OpenCode no OPS-WEBHOOK-001.
+- **Metodo:** varredura de TODOS os caminhos referenciados em `.ai/**/*.md` e `quality/**/*.md` contra o disco; conferencia cruzada TEST_CATALOG x COVERAGE_MATRIX; verificacao de `test_file`/`documentation`/`source_references`.
+- **5 furos com o validador em VERDE (15 regras):**
+  1. `CHATWOOT-E2E-001` (planned) cita `tests/e2e/workflows/test_chatwoot_sac_workflow.py` — INEXISTENTE. Tambem em `quality/COVERAGE_MATRIX.md:83`.
+  2. **Furo de guardrail:** a Regra 4 so checa `test_file` em `implemented_unverified`/`active`/`quarantined`/`disabled` — **`planned` fica de fora**, entao um teste planejado pode citar arquivo inexistente e o CI passa. Mesma classe da Regra 14.
+  3. `.ai/TASKS.md` referencia `INC-2026-09-15-sync-conflict-git-index.md`, que **nao esta no repo** (so na arvore local, nao commitado). A SSOT cita um documento que a SSOT nao contem.
+  4. Os 20 testes `active` declaram `last_verified_version` em v3.55.0 (7) ou v3.55.1 (13); codigo em **v3.56.3**. **Nenhum teste ativo verificado na versao corrente** — cobertura nominal 3 releases atras.
+  5. `INC-2026-09-27-processos-casos-lookup-eav.md` cita `packages/Webkul/LawFirm/src/Routes/web.php`, inexistente (reais: `packages/Webkul/Admin/src/Routes/{Admin,Front}/web.php`). Provavel heranca do fork.
+- **Verificado como CORRETO:** matriz x catalogo batem nos dois sentidos; 14 modulos em `quality/modules/` existem e todos citados; `docker/testing/Dockerfile.playwright` existe; nenhuma referencia quebrada em `AGENTS.md` nem `RELEASE_CHECKLIST.md`.
+- **Entregue:** `.ai/REGRAS-OPENCODE-OPERACAO.md` (com a secao de furos) e divisao do `OPS-WEBHOOK-001` em `ENV-001` (OpenCode) / `SEC-001` (operador) / `VER-001` (Hermes), com a mae dependente das tres. `AGENTS.md` §1.7 referencia o terceiro documento de regras.
+- **Licao estrutural:** gate automatizado que cobre o caso principal nao garante ausencia de casos analogos. Regra 14 cobria deriva de ponta, nao de intervalo; Regra 4 cobria status que exigem codigo, nao `planned`.
+- **Erro proprio:** o arquivo foi escrito inicialmente na arvore principal (branch errada) e movido para o worktree da 2.1 — mesma armadilha do DOC-004. Verificado apos.
