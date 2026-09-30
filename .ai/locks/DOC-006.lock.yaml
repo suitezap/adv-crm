@@ -1,0 +1,28 @@
+task_id: DOC-006
+owner: HERMES
+write_scope:
+  - .stignore
+  - .ai/incidents/INC-2026-09-15-sync-conflict-git-index.md
+  - .ai/incidents/INC-2026-09-30-furos-documentacao.md
+  - .ai/INSTRUCOES-OPENCODE-OPS-WEBHOOK.md
+  - tests/e2e/pages/chatwoot_page.py
+  - tests/e2e/workflows/test_chatwoot_sac_workflow.py
+  - quality/TEST_CATALOG.yaml
+  - quality/COVERAGE_MATRIX.md
+  - quality/scripts/validate_test_docs.py
+  - .ai/TASKS.md
+  - .ai/LOG_INDEX.md
+  - .ai/CURRENT.md
+  - .ai/locks/DOC-006.lock.yaml
+  - .ai/logs/HERMES.md
+started_at: "2026-09-30T00:20:00Z"
+last_checkpoint_at: "2026-09-30T00:20:00Z"
+base_commit: "d3b6223f"
+workspace: "worktree-lawfirm-doc002"
+status: ACTIVE
+
+# Resolve os 3 pontos pendentes da auditoria DOC-005:
+# (2) CHATWOOT-E2E-001: implementar o arquivo + estender a Regra 4 para 'planned'
+# (3) INC-2026-09-15: versionar o incidente + criar .stignore (acao corretiva do Syncthing)
+#Mais: instrucoes de implementacao do OPS-WEBHOOK-001 para o OpenCode.
+# Autorizado pelo DSK7 em 2026-09-30.

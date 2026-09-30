@@ -34,6 +34,7 @@
 | `DOC-003` | Hermes | DONE | `.ai/logs/HERMES.md#2026-09-30-doc-003` |
 | `DOC-004` | Hermes | DONE | `.ai/logs/HERMES.md#2026-09-30-doc-004` |
 | `DOC-005` | Hermes | DONE | `.ai/logs/HERMES.md#2026-09-30-doc-005` |
+| `DOC-006` | Hermes | DONE | `.ai/logs/HERMES.md#2026-09-31-doc-006` |
 | `DOCKER-005` | OpenCode | DONE | - (ADR §4.95, bump v3.56.3) |
 | `BUGFIX-LOOKUP-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-09-27-bugfix-lookup-001` |
 | `OPS-WEBHOOK-001` | Unassigned | TODO | - (runbook: `quality/runbooks/webhook-secrets.md`) |

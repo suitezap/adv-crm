@@ -107,3 +107,13 @@
 - **Entregue:** `.ai/REGRAS-OPENCODE-OPERACAO.md` (com a secao de furos) e divisao do `OPS-WEBHOOK-001` em `ENV-001` (OpenCode) / `SEC-001` (operador) / `VER-001` (Hermes), com a mae dependente das tres. `AGENTS.md` §1.7 referencia o terceiro documento de regras.
 - **Licao estrutural:** gate automatizado que cobre o caso principal nao garante ausencia de casos analogos. Regra 14 cobria deriva de ponta, nao de intervalo; Regra 4 cobria status que exigem codigo, nao `planned`.
 - **Erro proprio:** o arquivo foi escrito inicialmente na arvore principal (branch errada) e movido para o worktree da 2.1 — mesma armadilha do DOC-004. Verificado apos.
+
+
+## 2026-09-31 — DOC-006 (CHATWOOT-E2E-001 implementado + Regra 4 p/ planned + .stignore + instrucoes OpenCode)
+
+- **Lock:** `.ai/locks/DOC-006.lock.yaml` (base `d3b6223f`).
+- **Autorizacao:** DSK7 pediu executar os itens 2 e 3 da auditoria DOC-005, mais criar as instrucoes do OPS-WEBHOOK-001 para o OpenCode.
+- **Item 2 — CHATWOOT-E2E-001:** o teste era valioso (P1, ACL + middleware 403 + isolamento) com os 6 `source_references` existentes, mas o arquivo nao existia. **Implementado** `tests/e2e/workflows/test_chatwoot_sac_workflow.py` (4 testes) + Page Object `tests/e2e/pages/chatwoot_page.py`. Status movido `planned` -> `implemented_unverified`; `COVERAGE_MATRIX.md` atualizado. **Regra 4 estendida para `planned`** — fecha o furo de guardrail. Testada: injetando um planned com caminho inexistente, o validador falha (exit 1).
+- **Item 3 — INC-2026-09-15:** causa confirmada — Syncthing sincronizava a pasta Lawfirm inteira, e **nao existia .stignore algum**. Criado `.stignore` versionado na raiz: exclui `.git/` (ADR-GOV-003), segredos (ADR-GOV-005), artefatos de runtime e `*sync-conflict*`. O incidente foi versionado no repo com a secao de Resolucao. **Pendencias reais**: servico Syncthing `inactive` no Hermes (regra so vale quando voltar); DSK7 precisa ter o mesmo `.stignore` ativo; conflict-file de 261 KB segue intacto por decisao do operador.
+- **Instrucoes OpenCode:** `.ai/INSTRUCOES-OPENCODE-OPS-WEBHOOK.md` — roteiro da `OPS-WEBHOOK-ENV-001` com a ordem fail-closed -> aceito, a regra inviolavel de segredo, os furos de documentacao e o criterio de conclusao (ele nao fecha a `OPS-WEBHOOK-001`).
+- **Erro proprio:** dois patches no `.ai/TASKS.md` falharam silenciosamente e as linhas DOC-004/005 e OPS-WEBHOOK-ENV-001 ficaram ausentes do arquivo — percebi ao validar e reinseri. Verificar presence apos cada patch, nao assumir sucesso pelo retorno "True" do patch com ancora errada.
