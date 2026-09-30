@@ -21,6 +21,7 @@
 | `PRIV-AUDIT-001` | Platform / Segurança | DONE | OpenCode | - | Ondas 1-3 + secret Whatsapp. Suite completa 117/117 local. Commits fd11bf12, 8fe299d1, d8da0362, 6c2c9f9e. Branch feature/priv-audit-onda-1-tenant-isolation-gates. |
 | `SEC-HARD-002` | Platform / Segurança | VERIFIED | OpenCode | - | Ondas 1-3: 28 blades + 21 gates em `EscavadorController` + `ESC-SEC-001` estendido. Pest 121/121 local 2026-09-12. |
 | `OPS-WEBHOOK-001` | Operação | TODO | Unassigned | - | Cadastrar segredos de webhook em produção (Asaas, tenant-Asaas, Evolution). Runbook: `quality/runbooks/webhook-secrets.md`. |
+| `DOC-002` | Documentação | DONE | Hermes | - | Documenta v3.56.0/3.56.1/3.56.2 nos CHANGELOGs (3º ciclo do `BASELINE_VERSION_MISMATCH`); reconcilia `BASELINE.md`, `ROADMAP.md`, `LOG_INDEX.md` e a contradição de `QA-DATA-001` no `CURRENT.md`; cria **Regra 14 (Consistência de Versão)** no `validate_test_docs.py`. Incidente `INC-2026-09-30-doc-drift-v356`. Autorizado pelo DSK7 em 2026-09-30. |
 | `REPO-HYGIENE-001` | Repositório | DONE | OpenCode | - | `C*` removida (dir-lixo `C<U+F03A>` deletado; `openspec/changes/` explicitamente ignorado). Owners: 48x `unassigned` preservados — atribuir nomes exige decisão humana (gate já cobrado em `quality/RELEASE_CHECKLIST.md`). |
 | `OS-001` | Documentation | DONE | Antigravity | - | OpenSpec spec created and feature de ajustes concluída. |
 | `REPO-HYGIENE-002` | Repositório | DONE | OpenCode | - | `openspec/` ignorado; specs removidas do remoto. Commit 02765c92, push origin/2.1. |

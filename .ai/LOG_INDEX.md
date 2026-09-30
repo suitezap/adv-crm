@@ -6,7 +6,7 @@
 
 | Task ID | Agente Responsável | Status | Ponteiro de Entrada no Log |
 |---|---|---|---|
-| `CI-001` | Antigravity | IMPLEMENTED_NOT_VERIFIED | `.ai/logs/ANTIGRAVITY.md#2026-08-26-1240-ci-001` |
+| `CI-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-08-26-1240-ci-001` |
 | `GOV-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-08-26-2320-gov-001--project-baseline` |
 | `GOV-002` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-08-26-2325-gov-002--multi-agent-governance-bootstrap` |
 | `HERMES-001` | Hermes | DONE | `.ai/logs/HERMES.md#2026-08-30-hermes-001-audit` |
@@ -15,8 +15,8 @@
 | `QA-HARNESS-001` | Hermes | BLOCKED | - |
 | `QA-JUR-001` | Hermes | BLOCKED | - |
 | `DOCKER-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-09-04-docker-001--production-image-hygiene-and-publish` |
-| `DOC-001` | OpenCode | TODO | `.ai/logs/OPENCODE.md#2026-08-26-2315-system-bootstrap` |
-| `GAP-001` | OpenCode | TODO | `.ai/logs/OPENCODE.md#2026-08-26-2315-system-bootstrap` |
+| `DOC-001` | OpenCode | DONE | `.ai/logs/OPENCODE.md#2026-08-26-2315-system-bootstrap` |
+| `GAP-001` | OpenCode | DONE | `.ai/logs/OPENCODE.md#2026-08-26-2315-system-bootstrap` |
 | `FIN-COBRANCAS-001` | OpenCode | VERIFIED | `.ai/logs/OPENCODE.md#2026-09-09-fin-cobrancas-001` |
 | `PRIV-AUDIT-001` | OpenCode | DONE | `.ai/logs/OPENCODE.md#2026-09-09-priv-audit-001` |
 | `OS-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md` |
@@ -25,6 +25,14 @@
 | `REPO-HYGIENE-002` | OpenCode | DONE | `.ai/logs/OPENCODE.md#2026-09-12-repo-hygiene-002` |
 | `DOCKER-002` | OpenCode | DONE | `.ai/logs/OPENCODE.md#2026-09-15-docker-002` |
 | `N8N-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-09-15-n8n-001` |
+| `DOCKER-003` | Antigravity | DONE | - (ADR §4.93) |
+| `DOCKER-004` | OpenCode | VERIFIED | - (ADR §4.94) |
+| `DOC-002` | Hermes | DONE | `.ai/logs/HERMES.md#2026-09-30-doc-002` |
+| `OPS-WEBHOOK-001` | Unassigned | TODO | - (runbook: `quality/runbooks/webhook-secrets.md`) |
+
+> **Sincronizado em 2026-09-30 (DOC-002):** `DOC-001`, `GAP-001` e `CI-001` constavam como `TODO`/`IMPLEMENTED_NOT_VERIFIED` neste índice embora já estivessem `DONE` no `TASKS.md`. `DOCKER-003`/`DOCKER-004` estavam ausentes. Reconciliado.
+>
+> **Regra de manutenção:** este índice é derivado do `TASKS.md`. Ao transicionar uma task, atualizar **os dois** no mesmo commit — a divergência entre eles já ocorreu três vezes (2026-08-26, 2026-09-15, 2026-09-30).
 | `SKILLS-UPD-001` | OpenCode | VERIFIED | `.ai/logs/OPENCODE.md#2026-09-16-skills-upd-001` |
 | `SKILLS-UPD-002` | OpenCode | DONE | `.ai/logs/OPENCODE.md#2026-09-19-skills-upd-002` |
 | `DOCKER-003` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-09-18-docker-003` |

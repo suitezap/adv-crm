@@ -4,6 +4,23 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 
 ---
 
+## [v3.56.2] - 2026-09-28 (DOCKER-003 / DOCKER-004 — releases acumuladas sem entrada de changelog)
+
+### Adicionado
+- Entradas de changelog para as três releases acumuladas (`DOC-002`, 2026-09-30): **v3.56.0** (`DOCKER-002`), **v3.56.1** (`DOCKER-003`) e **v3.56.2** (`DOCKER-004`) estavam publicadas no Docker Hub e documentadas nos ADRs §4.92–§4.94 do `ARCHITECTURE.md`, porém **ausentes** do `CHANGELOG.md` raiz e deste arquivo.
+- Registro do incidente `INC-2026-09-30-doc-drift-v356` em `.ai/incidents/`.
+
+### Corrigido
+- `validate_test_docs.py`: nova **Regra 14 (Consistência de Versão)**, que compara `LawFirmServiceProvider::VERSION` com a entrada mais recente de cada CHANGELOG. Nenhuma das 13 regras anteriores fazia essa comparação — o validador executava com **0 erros** durante o drift, o que permitiu três releases seguidas sem rastro documental.
+
+### Verificado
+- `LawFirmServiceProvider::VERSION` = `3.56.2` na `2.1` (`e8afb269`).
+- Regra 14 testada nos dois sentidos: exit 0 com as versões alinhadas; exit 1 com CHANGELOG regredido artificialmente.
+
+### Pendente
+- Catálogo de testes mantém **24 `implemented_unverified` + 4 `planned`** (20 `active` de 48), com 17 concentrados em `ai-assistant`. A verificação exige ambiente de execução containerizado, ausente no servidor (ver `QA-DATA-001`).
+- O ADR §4.94 registra que parte do conteúdo da v3.56.2 estava **não commitada no momento do build da imagem** — a imagem reflete o disco, não um commit. Reconciliação entre imagem publicada e histórico do repositório permanece pendente.
+
 ## [v3.55.0] - 2026-08-21 (Etapa 1 — Governança e Validador)
 
 ### Adicionado

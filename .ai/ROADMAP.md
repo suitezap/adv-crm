@@ -2,6 +2,8 @@
 
 > **Projeto:** LawFirm CRM Multi-Agent QA
 > **Regra Fundamental:** `ROADMAP ≠ CURRENT TASK`. A presença de fases futuras no roadmap não autoriza sua execução antecipada.
+>
+> **⚠️ Sincronizado em 2026-09-30 (DOC-002).** Este arquivo estava defasado: listava `HERMES-001`, `QA-ENV-001` e `DOCKER-001` como pendentes quando todas estão `DONE` no `TASKS.md`. Statusos reconciliados.
 
 ---
 
@@ -11,9 +13,11 @@
 
 ---
 
-## Fase 1: Diagnóstico e Auditoria de Infraestrutura VPS (EM PREPARAÇÃO)
-- [ ] `HERMES-001` (Status: `READY`): Auditoria técnica e diagnóstico da VPS pelo agente Hermes (`reports/hermes-001-audit.md`).
-- [ ] `QA-ENV-001` (Status: `BLOCKED`): Provisionamento e configuração do ambiente de QA na VPS após aprovação da auditoria.
+## Fase 1: Diagnóstico e Auditoria de Infraestrutura VPS (CONCLUÍDA)
+- [x] `HERMES-001`: Auditoria técnica e diagnóstico da VPS pelo agente Hermes. Resultado: `.ai/handoffs/RESULT-HERMES-001.md`.
+- [x] `QA-ENV-001`: Provisionamento e configuração do ambiente de QA na VPS. Resultado: `.ai/handoffs/RESULT-QA-ENV-001.md`.
+
+> **Nota de ambiente (2026-09-30):** a infraestrutura self-hosted foi **desativada** (Portainer removido, Docker ausente no servidor). As Fases 2 e 3 dependem de um ambiente de execução containerizado que **precisa ser reprovisionado**.
 
 ---
 
@@ -30,5 +34,23 @@
 
 ---
 
-## Fase 4: Otimização de Imagens e Pipeline de Release
-- [ ] `DOCKER-001` (Status: `TODO`): Higienização da imagem oficial de produção `suitezap/lawfirm` (remoção estrita de artefatos de teste/governança).
+## Fase 4: Otimização de Imagens e Pipeline de Release (CONCLUÍDA)
+- [x] `DOCKER-001`: Higienização da imagem oficial `suitezap/lawfirm`.
+- [x] `DOCKER-002`: Bump v3.56.0 (`chatwoot_conversation_id` em leads) + migration idempotente.
+- [x] `DOCKER-003`: Bump v3.56.1 (modal de chat Chatwoot no Lead, proxy controller, triggers EAV).
+- [x] `DOCKER-004`: Bump v3.56.2 (consolidação Atendimento/Chatwoot sobre 3.56.1).
+
+---
+
+## Pendências Ativas Fora do Roteiro de QA
+
+| Task | Status | Observação |
+|---|---|---|
+| `OPS-WEBHOOK-001` | `TODO` / Unassigned | Segredos de webhook de produção (Asaas, tenant-Asaas, Evolution). Runbook: `quality/runbooks/webhook-secrets.md`. **Provável bloqueador do piloto.** |
+| `KAN-001` | `BLOCKED` | Kanban jurídico + Chatwoot; aguardando manutenção de tags pelo operador. |
+
+## Bloqueadores de Ambiente (2026-09-30)
+
+1. **Sem Docker no servidor** — Portainer desativado, `docker` ausente. As imagens v3.56.x existem no Docker Hub mas nada as executa.
+2. **`.git/` sincronizado pelo Syncthing** — incidente `INC-2026-09-15` documenta sync-conflict no índice; a ação corretiva (excluir `.git/` da sincronização) **não foi executada** e viola o `ADR-GOV-003`.
+3. **Testes não verificados** — 24 `implemented_unverified` + 4 `planned` no catálogo (20 `active` de 48), 17 em `ai-assistant`.

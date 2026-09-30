@@ -1,3 +1,26 @@
+## **LF v3.56.2 (Setembro 2026)** - *Patch Release — Consolidação Atendimento/Chatwoot*
+
+* [infra] Rebuild completo da imagem e push das três tags `suitezap/lawfirm:3.56.2`, `suitezap/lawfirm:v3.56.2` e `latest` (`DOCKER-004`, OpenCode). ADR §4.94.
+* [maintenance] Consolidação do estado do disco sobre a v3.56.1: rotas `admin-atendimento-leads.php`, proxy `ChatwootLeadController`, modal `chatwoot-chat-modal.blade.php`, ajustes em `routes.php` e `lead-tools-panel.blade.php`.
+* [maintenance] Skills AAS v17.3.0 (`SKILLS-UPD-001/002`) excluídas da imagem por higiene (`.agents/` no `.dockerignore`).
+
+> **Nota de transparência (DOC-002):** o ADR §4.94 registra que parte das alterações consolidadas nesta release estava **ainda não commitada no momento do build** — a imagem reflete o disco, não um commit. O conteúdo acima foi reconstituído a partir do ADR e do estado do repositório.
+
+## **LF v3.56.1 (Setembro 2026)** - *Minor Release — Chatwoot no Lead e Sincronia de EAV*
+
+* [feature] Modal de chat do Chatwoot integrado à visualização de Leads: `ChatwootLeadController` (proxy interno com gates de autenticação CRM), rotas `admin-atendimento-leads.php`, modal Blade e botão de ação no painel de ferramentas (`DOCKER-003`, Antigravity). ADR §4.93.
+* [feature] Triggers automáticos no MySQL (`after_person_insert`, `after_lead_insert`) para consistência bidirecional com a arquitetura EAV do Krayin em inserções diretas ao banco (triagem n8n).
+* [infra] Imagens `suitezap/lawfirm:v3.56.1`, `suitezap/lawfirm:3.56.1` e `latest` publicadas.
+
+## **LF v3.56.0 (Setembro 2026)** - *Minor Release — Integração Chatwoot em Leads*
+
+* [feature] Coluna `chatwoot_conversation_id` (INT, nullable) em `leads` + campo no model `Lead` (`9ae71f95`).
+* [fixed] Remoção de Processo no domínio Legal retornava falha; `ProcessoObserver::forceCleanupCalendarEvent` corrigido para filtrar por `user_id` do dono (a tabela `activities` não tem `tenant_id`) (`af3821dd`).
+* [fixed] Dropdown de estágios de Leads e traduções `pt_BR` nos views (`2c5e8d15`).
+* [fixed] Migration `2026_09_14_185800_add_chatwoot_conversation_id_to_leads_table` tornada idempotente (`hasTable`/`hasColumn` guards). Conexão default mantida de propósito: as 18 migrations irmãs de `Webkul/Lead` e a de `processos` usam `Schema::` sem conexão nomeada.
+* [maintenance] Workflow n8n de Triagem: nó *Add Coluna Chatwoot* com query dinâmica sobre o schema do tenant via `$json.id` (`N8N-001`); nó de validação de saldo SuiteCoins como gate financeiro (`ADR-N8N-001`).
+* [infra] Imagens `suitezap/lawfirm:v3.56.0` (digest `sha256:9a129f3a`) e `latest` publicadas (`DOCKER-002`, OpenCode). ADR §4.92.
+
 ## **LF v3.55.1 (Setembro 2026)** - *Patch Release — Segurança e Verificação*
 
 * [security] Isolamento `tenant_id` obrigatório (FIN-COBRANCAS-001): colunas + backfill + NOT NULL condicional em financeiro, cobranças Asaas, processos e histórico de IA; escopo global `TenantScope`/`BelongsToTenant`.
