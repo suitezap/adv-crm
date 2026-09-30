@@ -1,0 +1,24 @@
+task_id: DOC-003
+owner: HERMES
+write_scope:
+  - quality/scripts/validate_test_docs.py
+  - quality/CHANGELOG.md
+  - .ai/TASKS.md
+  - .ai/LOG_INDEX.md
+  - .ai/CURRENT.md
+  - .ai/BASELINE.md
+  - .ai/locks/DOC-003.lock.yaml
+  - .ai/logs/HERMES.md
+  - .ai/incidents/INC-2026-09-30-changelog-cobertura.md
+started_at: "2026-09-30T22:30:00Z"
+last_checkpoint_at: "2026-09-30T22:30:00Z"
+base_commit: "8f563040"
+workspace: "worktree-lawfirm-doc002"
+status: ACTIVE
+
+# Estende a Regra 14 (DOC-002) para checar COBERTURA DA SERIE, nao apenas a
+# entrada mais recente. A Regra 14 original aprova quando a release atual esta
+# documentada, mesmo com lacunas no meio da serie — situacao observada na v3.56.3:
+# o codigo estava em 3.56.3, o CHANGELOG raiz tinha 3.56.0-3.56.3, mas o
+# quality/CHANGELOG.md nao tinha entrada para 3.56.0 nem 3.56.1, e o validador
+# passava verde. Autorizado pelo DSK7 em 2026-09-30.
