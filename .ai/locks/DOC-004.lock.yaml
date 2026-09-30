@@ -1,0 +1,22 @@
+task_id: DOC-004
+owner: HERMES
+write_scope:
+  - .ai/REGRAS-DE-RELEASE.md
+  - .ai/REGRAS-DE-CONCORRENCIA.md
+  - AGENTS.md
+  - quality/RELEASE_CHECKLIST.md
+  - .ai/TASKS.md
+  - .ai/LOG_INDEX.md
+  - .ai/CURRENT.md
+  - .ai/locks/DOC-004.lock.yaml
+  - .ai/logs/HERMES.md
+started_at: "2026-09-30T23:15:00Z"
+last_checkpoint_at: "2026-09-30T23:15:00Z"
+base_commit: "d3b6223f"
+workspace: "vps-hermes"
+status: ACTIVE
+
+# Institui as duas regras obrigatorias em .ai/, ancoradas no AGENTS.md e no
+# RELEASE_CHECKLIST.md (o documento lido no momento do bump). Autorizado pelo
+# DSK7 em 2026-09-30, apos ele esclarecer que o OpenCode atuava no MotherShip
+# e que nao ha distincao de autoria no git.

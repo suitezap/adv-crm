@@ -75,3 +75,19 @@
 - **Verificacao (4 cenarios):** (1) estado real pre-correcao -> Regra 15 falha citando v3.56.1 e v3.56.0; (2) apos as entradas -> exit 0; (3) removendo v3.56.1 -> Regra 15 falha citando a versao; (4) codigo em v3.57.0 (serie diferente) -> so a Regra 14 dispara, a Regra 15 NAO exige as 3.56.x, confirmando que e cirugica.
 - **Incidente:** `.ai/incidents/INC-2026-09-30-changelog-cobertura.md`.
 - **Erro próprio:** a primeira tentativa de reordenar os blocos do changelog duplicou secoes; detectada pelo proprio diff, revertida com `git checkout --` e refeita com patch ancorado.
+
+## 2026-09-30 — DOC-004 (Regras obrigatorias de release e concorrencia)
+
+- **Lock:** `.ai/locks/DOC-004.lock.yaml` (base `d3b6223f`, worktree `/home/rootz/lawfirm-doc002`).
+- **Autorizacao:** DSK7 em 2026-09-30. Contexto esclarecido pelo operador: o OpenCode atuava no **MotherShip** (poucas acoes no LawFirm) e **nao ha distincao de autoria no git** — todos os commits sao `SuiteZap <suitezap@gmail.com>`.
+- **Objetivo:** fechar a causa raiz de processo. A deteccao ja era automatica (Regras 14 e 15, no CI); faltava a **obrigacao** declarada. Tres releases ficaram sem changelog porque nenhum checklist exigia a entrada — o `RELEASE_CHECKLIST.md` mencionava changelog apenas para registrar o digest da imagem.
+- **Entregue:**
+  1. `.ai/REGRAS-DE-RELEASE.md` — 8 passos obrigatorios, na ordem, com o validador (passo 7) como gate antes de publicar imagem; ordem decrescente dos changelogs; o que cada guardrail detecta; 6 regras permanentes.
+  2. `.ai/REGRAS-DE-CONCORRENCIA.md` — lock antes de editar; `write_scope` como limite; nunca trocar de branch em arvore com WIP (usar worktree, com o procedimento de symlink de vendor/.env); lock orfao nunca se apaga; `.git/` nunca sincronizado; backup de WIP alheio antes de tocar; remote usa SSH.
+  3. `AGENTS.md` §1.7 e §1.8 — as duas regras entram na hierarquia de fontes de verdade, com resumo executivo; §1.8 registra que o git nao distingue agente.
+  4. `quality/RELEASE_CHECKLIST.md` secao 0 — gate que BLOQUEIA as demais secoes se falhar, com comando de verificacao copia-e-cola.
+- **Por que `.ai/` e nao `.agents/skills/`:** `.agents/` e um clone do AAS completo (com `node_modules/`, ~2.2MB de indice) e varia entre agentes (`.gemini/`, `.opencode/`). `.ai/` e a SSOT que os tres agentes ja leem porbootstrap (AGENTS.md §1.2). Regras de processo belongem a SSOT, nao ao catalogo de skills.
+- **Mitigacoes de risco aplicadas:**
+  - Backup do WIP alheio em `~/.hermes/cache/wip-backup-feature-ajustes-20260930/` com hashes md5, ANTES de qualquer operacao.
+  - Trabalho aplicado no worktree da `2.1`, nunca na arvore principal com WIP.
+  - **Erro proprio corrigido:** as regras foram escritas inicialmente na arvore principal (`feature/ajustes-no-leads-view`, que esta 30 commits atrasada e nao contem o DOC-003). Detectado ao tentar atualizar o TASKS.md, onde DOC-003 nao existia. Arquivos removidos daquela arvore e reaplicados no worktree correto; WIP alheio verificado intacto.
