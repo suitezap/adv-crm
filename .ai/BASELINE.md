@@ -22,14 +22,24 @@
 
 | Origem do Dado | Versão Encontrada | Arquivo Fonte |
 |---|---|---|
-| `DOCUMENTED_VERSION` | `v3.55.1` | `ARCHITECTURE.md`, `quality/CHANGELOG.md` |
-| `CODE_VERSION` | `3.55.1` | `packages/SuiteZap/LawFirm/src/Providers/LawFirmServiceProvider.php:47` |
-| `CHANGELOG_VERSION` | `v3.54.1` (Raiz) / `v3.55.1` (`quality/`) | `CHANGELOG.md`, `quality/CHANGELOG.md` |
-| `IMAGE_VERSION` | `candidate-local` / `latest` (Observado) | `docker-compose.test.yml`, `Dockerfile` |
+| `CODE_VERSION` | `3.56.3` | `packages/SuiteZap/LawFirm/src/Providers/LawFirmServiceProvider.php:47` |
+| `ARCHITECTURE_VERSION` | `v3.56.3` (ADR §4.95) | `ARCHITECTURE.md` (raiz) |
+| `DOCUMENTED_VERSION` | `v3.56.3` | `CHANGELOG.md` (raiz), `quality/CHANGELOG.md` |
+| `IMAGE_VERSION` | `3.56.3` / `v3.56.3` / `latest` | Docker Hub `suitezap/lawfirm` |
 
-### `BASELINE_VERSION_MISMATCH`
-- **Diagnóstico:** O arquivo `CHANGELOG.md` raiz encerra suas entradas na versão `v3.54.1 (Julho 2026)`, enquanto o código-fonte (`LawFirmServiceProvider::VERSION`), a documentação de arquitetura (`ARCHITECTURE.md`) e a memória de qualidade (`quality/CHANGELOG.md`) já operam canonicamente em `v3.55.1`.
-- **Decisão Governança:** Registrada a divergência documental existente no baseline. Criada a task documental futura `DOC-001` para consolidação do changelog. Nenhuma alteração silenciosa de código ou changelog é executada durante `GOV-001`.
+### `BASELINE_VERSION_MISMATCH` — histórico e fechamento (DOC-002, 2026-09-30)
+
+| # | Data | Ocorrência | Fechada por |
+|---|---|---|---|
+| 1 | 2026-08-26 | `CHANGELOG.md` raiz parava em v3.54.1; código em v3.55.1 | `DOC-001` |
+| 2 | 2026-09-15 | v3.56.0 (`DOCKER-002`) publicada sem entrada em CHANGELOG | `DOC-002` |
+| 3 | 2026-09-28 | v3.56.1 (`DOCKER-003`) e v3.56.2 (`DOCKER-004`) publicadas sem entrada em CHANGELOG | `DOC-002` |
+
+- **Padrão:** três ocorrências em dois meses, sempre com o mesmo formato — a release é publicada no Docker Hub e registrada em ADR no `ARCHITECTURE.md`, mas os `CHANGELOG.md` (raiz e `quality/`) não acompanham.
+- **Por que não foi detectado:** o `quality/scripts/validate_test_docs.py` validava o catálogo contra `tests/` e `quality/modules/`, mas **nenhuma das 13 regras comparava a versão do código com a documentação**. O validador executava com **0 erros** durante todo o drift.
+- **Causa raiz de processo:** os bumps foram executados por agentes distintos (OpenCode em `DOCKER-002`/`004`, Antigravity em `DOCKER-003`). O procedimento de bump inclui, por convenção, atualizar os CHANGELOGs — mas esse procedimento não é automatizado nem verificado, e os CHANGELOGs não são gerados a partir do ADR.
+- **Correção aplicada (DOC-002):** entradas v3.56.0, v3.56.1 e v3.56.2 adicionadas ao `CHANGELOG.md` raiz e ao `quality/CHANGELOG.md`; este `BASELINE.md` reconciliado; **Regra 14 (Consistência de Versão)** criada no validador — compara `LawFirmServiceProvider::VERSION` com a entrada mais recente de cada CHANGELOG e **falha o CI** na divergência. Testada nos dois sentidos.
+- **Prevenção:** qualquer bump futuro sem entrada de changelog passa a quebrar o `lawfirm-ci.yml`.
 
 ### Diretriz Arquitetural sobre Imagens Docker (`suitezap/lawfirm:latest`)
 > [!IMPORTANT]

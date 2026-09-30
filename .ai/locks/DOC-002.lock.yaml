@@ -1,0 +1,27 @@
+task_id: DOC-002
+owner: HERMES
+write_scope:
+  - CHANGELOG.md
+  - quality/CHANGELOG.md
+  - .ai/BASELINE.md
+  - .ai/ROADMAP.md
+  - .ai/LOG_INDEX.md
+  - .ai/CURRENT.md
+  - .ai/TASKS.md
+  - quality/scripts/validate_test_docs.py
+  - .ai/locks/DOC-002.lock.yaml
+  - .ai/logs/HERMES.md
+  - .ai/incidents/INC-2026-09-30-doc-drift-v356.md
+started_at: "2026-09-30T21:05:00Z"
+last_checkpoint_at: "2026-09-30T21:05:00Z"
+base_commit: "e8afb269"
+workspace: "worktree-lawfirm-doc002"
+status: ACTIVE
+
+# Escopo revisto em 2026-09-30: aplicacao sobre a 2.1 atualizada (e8afb269).
+# O codigo esta em v3.56.2 (nao 3.56.0): faltam TRES releases nos CHANGELOGs
+# (3.56.0/DOCKER-002, 3.56.1/DOCKER-003, 3.56.2/DOCKER-004). Os ADRs 4.92-4.94
+# do ARCHITECTURE.md documentam as tres; os CHANGELOGs nao acompanham.
+# Autorizacao explicita do DSK7 em 2026-09-30.
+# Aplicado em worktree isolado para nao tocar o WIP de outro agente em
+# feature/ajustes-no-leads-view (lead-tools-panel.blade.php, tests/e2e/).

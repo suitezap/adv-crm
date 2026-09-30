@@ -8,6 +8,7 @@ a documentação modular (quality/modules/) e a base de código (tests/).
 """
 
 import os
+import re
 import sys
 import yaml
 from pathlib import Path
@@ -178,6 +179,43 @@ def validate_catalog(catalog_path=CATALOG_PATH, repo_root=REPO_ROOT):
         for sref in test.get("source_references", []):
             if isinstance(sref, dict) and any(p in sref.get("path", "") for p in PROHIBITED_COMPONENTS):
                 errors.append(f"Regra 13 (Caminho Obsoleto): Teste '{t_id}' referencia caminho descontinuado: '{sref.get('path')}'.")
+
+    # Regra 14: Consistência de versão entre o código e a documentação
+    # Impede a reincidência do BASELINE_VERSION_MISMATCH: entre 2026-09-15 e
+    # 2026-09-28 as releases v3.56.0, v3.56.1 e v3.56.2 foram publicadas no Docker
+    # Hub e documentadas nos ADRs do ARCHITECTURE.md, porém ausentes dos CHANGELOGs.
+    # Nenhuma das 13 regras anteriores comparava a versão do código com a doc.
+    CODE_VERSION_FILE = REPO_ROOT / "packages/SuiteZap/LawFirm/src/Providers/LawFirmServiceProvider.php"
+    CODE_VERSION_RE = re.compile(r"const\s+VERSION\s*=\s*'([^']+)'")
+    # Só títulos de release, ancorados em '##' para não casar headings internos:
+    #   '## **LF v3.56.2 (Setembro 2026)** - ...'  ou  '## [v3.56.2] - ...'
+    CHANGELOG_RE = re.compile(r"(?m)^##\s+(?:\*\*\s*)?(?:LF\s+)?\[?\**\s*v?(\d+\.\d+\.\d+)")
+
+    code_version = None
+    if CODE_VERSION_FILE.exists():
+        m = CODE_VERSION_RE.search(CODE_VERSION_FILE.read_text(encoding="utf-8", errors="replace"))
+        if m:
+            code_version = m.group(1)
+        else:
+            errors.append("Regra 14 (Versão do Código): não foi possível extrair LawFirmServiceProvider::VERSION.")
+    else:
+        errors.append("Regra 14 (Versão do Código): LawFirmServiceProvider.php não encontrado.")
+
+    if code_version:
+        for changelog in (REPO_ROOT / "CHANGELOG.md", QUALITY_DIR / "CHANGELOG.md"):
+            if not changelog.exists():
+                continue
+            versions = CHANGELOG_RE.findall(changelog.read_text(encoding="utf-8", errors="replace"))
+            if not versions:
+                errors.append(f"Regra 14 (CHANGELOG Sem Versões): '{changelog.name}' não declara nenhuma versão reconhecível.")
+                continue
+            latest = versions[0]  # entrada mais recente = primeira ocorrência
+            if latest != code_version:
+                errors.append(
+                    f"Regra 14 (Deriva de Versão): código em v{code_version} mas "
+                    f"'{changelog.name}' tem entrada mais recente em v{latest}. "
+                    f"Adicione a entrada da release v{code_version} ao changelog."
+                )
 
     return errors, warnings
 
