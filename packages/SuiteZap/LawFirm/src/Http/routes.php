@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\View\FileViewFinder;
 use SuiteZap\LawFirm\Atendimento\Http\Controllers\ChatwootWebhookController;
 use SuiteZap\LawFirm\Escavador\Http\Controllers\WebhookController;
+use SuiteZap\LawFirm\Escavador\Http\Middleware\VerifyEscavadorWebhook;
 use SuiteZap\LawFirm\Legal\Http\Controllers\Admin\ChecklistController;
 use SuiteZap\LawFirm\Legal\Http\Controllers\PublicPortal\CustomerPortalController;
 use SuiteZap\LawFirm\SaaS\Http\Controllers\AsaasWebhookController;
@@ -12,11 +13,12 @@ use SuiteZap\LawFirm\TenantFinance\Http\Controllers\TenantAsaasWebhookController
 use SuiteZap\LawFirm\Whatsapp\Http\Controllers\WhatsappWebhookController;
 
 // ============================================================================
-// PUBLIC WEBHOOK — /api/webhooks/escavador (sem auth, sem CSRF)
-// Isento de CSRF via VerifyCsrfToken::$except no app principal.
+// PUBLIC WEBHOOKS — /api/webhooks/*
+// Isentos de CSRF via VerifyCsrfToken::$except no app principal.
 // ============================================================================
 Route::middleware(['api'])->group(function () {
     Route::post('api/webhooks/escavador', [WebhookController::class, 'handle'])
+        ->middleware(VerifyEscavadorWebhook::class)
         ->name('webhooks.escavador');
 
     Route::post('api/webhooks/asaas', [AsaasWebhookController::class, 'handle'])

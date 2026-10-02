@@ -10,7 +10,7 @@
 | `GOV-002` | Governança | DONE | Antigravity | - | Implantar SSOT multiagente, shared skills, locks, regras Syncthing e handoff HERMES-001. |
 | `HERMES-001` | QA / Infra | DONE | Hermes | - | Auditoria técnica e diagnóstico da VPS, workspace e infraestrutura de QA. Resultado: `.ai/handoffs/RESULT-HERMES-001.md`. |
 | `QA-ENV-001` | QA / Setup | DONE | Hermes | - | Provisionamento e configuração do ambiente local de QA na VPS. Resultado: `.ai/handoffs/RESULT-QA-ENV-001.md`. |
-| `QA-DATA-001` | QA / Fixtures | BLOCKED | Hermes | `QA-ENV-001` | Estruturação de dados e fixtures de teste multi-tenant. |
+| `QA-DATA-001` | QA / Fixtures | BLOCKED | Hermes | DOCKER-001 (candidate-local image) | Estruturação de dados e fixtures de teste multi-tenant. Bloqueio refinado pós-QA-ENV-001: aguarda imagem candidate-local para subir app-tenant-a/b (ver RESULT-QA-ENV-001.md). |
 | `QA-HARNESS-001` | QA / Harness | BLOCKED | Hermes | `QA-DATA-001` | Framework e runners para execução contínua de testes E2E/Playwright. |
 | `QA-JUR-001` | QA / Domínio | BLOCKED | Hermes | `QA-HARNESS-001` | Implementação de testes funcionais do domínio Jurídico (Kanban, Casos, Processos). |
 | `DOCKER-001` | Infra / Build | DONE | Antigravity | - | Higienização da imagem de produção `suitezap/lawfirm` (remoção de `tests/`, `quality/`, `.ai/`, etc.) e publicação no Docker Hub. |
@@ -27,7 +27,7 @@
 | `REPO-HYGIENE-001` | Repositório | DONE | OpenCode | - | `C*` removida (dir-lixo `C<U+F03A>` deletado; `openspec/changes/` explicitamente ignorado). Owners: 48x `unassigned` preservados — atribuir nomes exige decisão humana (gate já cobrado em `quality/RELEASE_CHECKLIST.md`). |
 | `OS-001` | Documentation | DONE | Antigravity | - | OpenSpec spec created and feature de ajustes concluída. |
 | `REPO-HYGIENE-002` | Repositório | DONE | OpenCode | - | `openspec/` ignorado; specs removidas do remoto. Commit 02765c92, push origin/2.1. |
-| `KAN-001` | Kanban / Jurídico | BLOCKED | Antigravity | tag-maintenance | Implement Kanban jurídico com integração Chatwoot. Em espera: workspace fechado p/ atualização de tags (operador, 2026-09-12). |
+| `KAN-001` | Kanban / Jurídico | READY | Antigravity | - | Implement Kanban jurídico com integração Chatwoot. Janela tag-maintenance encerrada (verificado em 2026-10-02 no DSK7). |
 | `DOCKER-002` | Infra / Build | DONE | OpenCode | - | Bump v3.56.0 (chatwoot_conversation_id em leads + fix exclusão processo + pt_BR stages) + fix migration idempotente + build/push `suitezap/lawfirm:3.56.0` (digest `sha256:9a129f3a`) e latest. Incidente sync-conflict `.git/` documentado em `.ai/incidents/INC-2026-09-15-sync-conflict-git-index.md`. |
 | `N8N-001` | Integração / n8n & Ops | DONE | Antigravity | - | Correção da query/expressão no nó `Add Coluna Chatwoot` (execução #343644/#343703) usando `$json.id` e reconexão de fluxo; ativação do nó de verificação de saldo/SuiteCoins; limpeza segura de dados de leads e pessoas no tenant `advdf2g` (online). |
 | `SKILLS-UPD-001` | Governança / Tooling | VERIFIED | OpenCode | - | Atualização AAS `.agents/skills` v13.5.0 → v17.3.0 (estratégia A: AAS Core + 8 skills curadas). Desacoplamento + install aplicados e smoke test na IDE confirmado pelo operador em 2026-09-16. Lock `.ai/locks/SKILLS-UPD-001.lock.yaml` RELEASED. |
@@ -38,3 +38,6 @@
 | `WA-BTN-001` | Whatsapp / Envio | VERIFIED | Antigravity | - | Envio de mensagens com botões interativos (CTA Url) via Evolution API ao solicitar documentos e atualização cadastral, com fallback seguro para texto puro caso o endpoint sendButtons falhe. |
 | `DOCKER-004` | Infra / Build | VERIFIED | OpenCode | - | Bump v3.56.2 (consolidação Atendimento/Chatwoot sobre 3.56.1) + ADR 4.94 + build/push `suitezap/lawfirm:3.56.2`, `:v3.56.2` e `:latest` (digest `sha256:02b7b37e`) com higiene estrita + Laravel 10.50.0. Lock `.ai/locks/DOCKER-004.lock.yaml` RELEASED. |
 | `DOCKER-005` | Infra / Build | VERIFIED | OpenCode | - | Bump v3.56.3 (portal participantes, agenda Lead→Prazo, 4 migrations) + ADR 4.95 + build/push `suitezap/lawfirm:3.56.3`, `:v3.56.3` e `:latest` (digest `sha256:a4887dd4`) com higiene estrita + Laravel 10.50.0. Lock `.ai/locks/DOCKER-005.lock.yaml` RELEASED. |
+| `WEBHOOK-SEC-002` | Platform / Segurança | IN_PROGRESS | Antigravity | - | Autenticação fail-closed no webhook Escavador via header Authorization (Bearer token) e nó MotherShip. |
+| `WEBHOOK-SEC-003` | Platform / Segurança | TODO | Antigravity | `WEBHOOK-SEC-002` | Warning log explícito quando asaas webhook_token ausente + runbook webhook-secrets.md. |
+| `OPS-WEBHOOK-ENV-001` | Operação / QA | TODO | Antigravity | `WEBHOOK-SEC-002` | Subida do stack Docker e validação da matriz fail-closed dos 5 webhooks públicos. |

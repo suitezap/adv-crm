@@ -1,5 +1,8 @@
 ## **LF v3.56.3 (Setembro 2026)** - *Patch Release — Portal Participantes, Agenda Lead→Prazo e Correções*
 
+* [security] Webhook Escavador (WEBHOOK-SEC-002, Antigravity): Middleware VerifyEscavadorWebhook com autenticação fail-closed por token via header Authorization (Bearer token) obtido em meta_data.webhook_token do nó Escavador no MotherShip. Previne estorno não autenticado de saldo suitecoin_balance.
+* [security] Webhook Asaas (WEBHOOK-SEC-003, Antigravity): Log explícito de advertência em caso de token ausente e alinhamento de documentação fail-closed em quality/runbooks/webhook-secrets.md.
+
 * [feature] Portal do Cliente: Gestão de participantes com listagem, adição/edição e remoção de partes no processo (`law_processo_participantes`), com atribuição correta de `user_id` a partir do processo (`3f6e6810`, `ae29360a`).
 * [feature] Agenda Jurídica: Campo `Lead` visível e selecionável nos formulários de atividades e vínculo automático do Processo ao Prazo (`c9fd4675`).
 * [feature] Alerta de Segurança via WhatsApp: Envio de notificação via WhatsApp com botões interativos (CTA), webhook de resposta e confirmação manual (`security_notif_status` em `processos`) (`a76f6482`, `de543570`, `659175a2`).

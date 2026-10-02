@@ -11,6 +11,8 @@ Todas as alterações, adições, quarentenas e aposentadorias de testes automat
 - Entradas retroativas das versões **v3.56.0** e **v3.56.1** neste arquivo — ambas documentadas na raiz e nos ADRs §4.92/§4.93, porém ausentes aqui sem que o validador detectasse.
 
 ### Adicionado
+- Autenticação fail-closed em webhook Escavador (`WEBHOOK-SEC-002`, Antigravity) via middleware `VerifyEscavadorWebhook` e header `Authorization` (Bearer token).
+- Atualização do runbook `quality/runbooks/webhook-secrets.md` e tratamento fail-closed de webhooks Asaas/Escavador (`WEBHOOK-SEC-003`, Antigravity).
 - Entrada da release **v3.56.3** consolidada no ADR §4.95 do `ARCHITECTURE.md` (`DOCKER-005`, OpenCode).
 - Suporte a gestão de participantes no Portal do Cliente (`law_processo_participantes`), campo `Lead` em eventos da Agenda com vínculo a Processo→Prazo, e notificação de segurança via WhatsApp com botões interativos e webhook.
 

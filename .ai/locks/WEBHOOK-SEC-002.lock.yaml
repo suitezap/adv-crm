@@ -1,0 +1,16 @@
+task_id: WEBHOOK-SEC-002
+owner: ANTIGRAVITY
+status: IN_PROGRESS
+acquired_at: "2026-10-02T14:28:00-03:00"
+base_commit: "1c5b4625"
+write_scope:
+  - packages/SuiteZap/LawFirm/src/Escavador/Http/Middleware/VerifyEscavadorWebhook.php
+  - packages/SuiteZap/LawFirm/src/Http/routes.php
+  - packages/SuiteZap/LawFirm/src/Escavador/Services/EscavadorService.php
+  - packages/SuiteZap/LawFirm/src/Escavador/Http/Controllers/WebhookController.php
+  - quality/runbooks/webhook-secrets.md
+  - .ai/TASKS.md
+  - CHANGELOG.md
+description: >
+  Autenticação fail-closed com hash_equals no webhook POST /api/webhooks/escavador
+  via header Authorization (Bearer token) obtido em meta_data.webhook_token do nó Escavador.
