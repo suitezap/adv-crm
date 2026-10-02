@@ -48,6 +48,13 @@ Follow-ups documentados em `.ai/TASKS.md`: `DOC-001`, `GAP-001`, `KAN-001` (rest
 ---
 
 ## 6. Próximo Passo Seguro
-Atualizar o serviço na VPS para a versão `suitezap/lawfirm:v3.56.3` e seguir com validações operacionais.
+
+**Bloqueado por 2 furos de segurança** (`WEBHOOK-SEC-002` e `WEBHOOK-SEC-003`): o webhook do Escavador é rota
+pública sem autenticação e altera saldo financeiro. **Corrigir antes de qualquer teste de webhook** — o
+`ENV-001` vai exercitar esses endpoints.
+
+Ordem: Furo A → Furo B → `ENV-001` no DSK7 (Antigravity) → `SEC-001` (DSK7 popula segredos) → `VER-001` (Hermes).
+
+Atualizar o serviço na VPS para `suitezap/lawfirm:v3.56.3` fica para depois dos furos.
 ---
 *2026-09-30: state refreshed after DOC-002 e DOCKER-005 (v3.56.3) — CHANGELOGs e governança reconciliados; Regra 14 ativa.*

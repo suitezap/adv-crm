@@ -43,6 +43,7 @@
 >
 > **Regra de manutenção:** este índice é derivado do `TASKS.md`. Ao transicionar uma task, atualizar **os dois** no mesmo commit — a divergência entre eles já ocorreu três vezes (2026-08-26, 2026-09-15, 2026-09-30).
 
+- [2026-10-01 - Auditoria estática dos webhooks: 2 furos de segurança + reatribuição da ENV-001](logs/HERMES.md#2026-10-01--auditoria-estática-dos-webhooks)
 - [2026-08-31 - Sincronização Completa de Tags Chatwoot](logs/ANTIGRAVITY.md#2026-08-31---sincronização-completa-de-tags-chatwoot)
 
 

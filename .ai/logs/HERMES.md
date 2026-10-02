@@ -117,3 +117,44 @@
 - **Item 3 — INC-2026-09-15:** causa confirmada — Syncthing sincronizava a pasta Lawfirm inteira, e **nao existia .stignore algum**. Criado `.stignore` versionado na raiz: exclui `.git/` (ADR-GOV-003), segredos (ADR-GOV-005), artefatos de runtime e `*sync-conflict*`. O incidente foi versionado no repo com a secao de Resolucao. **Pendencias reais**: servico Syncthing `inactive` no Hermes (regra so vale quando voltar); DSK7 precisa ter o mesmo `.stignore` ativo; conflict-file de 261 KB segue intacto por decisao do operador.
 - **Instrucoes OpenCode:** `.ai/INSTRUCOES-OPENCODE-OPS-WEBHOOK.md` — roteiro da `OPS-WEBHOOK-ENV-001` com a ordem fail-closed -> aceito, a regra inviolavel de segredo, os furos de documentacao e o criterio de conclusao (ele nao fecha a `OPS-WEBHOOK-001`).
 - **Erro proprio:** dois patches no `.ai/TASKS.md` falharam silenciosamente e as linhas DOC-004/005 e OPS-WEBHOOK-ENV-001 ficaram ausentes do arquivo — percebi ao validar e reinseri. Verificar presence apos cada patch, nao assumir sucesso pelo retorno "True" do patch com ancora errada.
+
+## 2026-10-01 — Auditoria estática dos webhooks (2 furos + reatribuição)
+
+**Task:** `WEBHOOK-SEC-002`, `WEBHOOK-SEC-003` · **Base:** `e2ef3f0d` · **Lock:** `WEBHOOK-SEC-002`
+
+Auditoria por leitura de código dos 8 controllers de webhook do LawFirm, feita durante o planejamento da
+`OPS-WEBHOOK-001` (o Docker não existe no host Hermes, então o stack de testes não sobe aqui).
+
+### FURO A (🔴 alta) — `WEBHOOK-SEC-002`
+
+`POST /api/webhooks/escavador` é rota **pública** (isentada de CSRF em `VerifyCsrfToken.php:18`) e
+`Escavador/Http/Controllers/WebhookController.php` **não tem nenhuma autenticação** — o único termo de auth
+no arquivo inteiro é um comentário. A única guarda (linha 71) é idempotência, não auth.
+
+Com um `POST {"id":"<external_id>","status":"erro"}`:
+1. Localiza o `EscavadorRequest` pelo `external_id`
+2. `markFailed()`
+3. `refundBalance()` → `Subscription::increment('suitecoin_balance', $cost)`
+
+**Altera saldo financeiro sem autenticação.** É o único dos 4 webhooks sem guarda (Chatwoot tem HMAC,
+WhatsApp tem `webhook-token`, tenant-Asaas tem ambos).
+
+Correção especificada: middleware `VerifyEscavadorWebhook` com `hash_equals`, **fail-closed** (secret
+ausente rejeita tudo) e secret no MotherShip (`meta_data` do nó Escavador).
+
+### FURO B (🟡 média) — `WEBHOOK-SEC-003`
+
+`SaaS/Http/Controllers/AsaasWebhookController.php:28` — o docblock diz que `asaas-access-token` é
+"opcional mas altamente recomendado" → `isAuthorized()` falha **aberto**. Sem token configurado, qualquer
+POST é aceito. O 200-em-falha de auth é deliberado (não revela a rota) e está OK.
+
+### Reatribuição da `OPS-WEBHOOK-ENV-001`
+
+O Hermes **não tem Docker** (`docker: command not found`, sem socket). O DSK7 tem (Docker Desktop).
+A task estava atribuída ao OpenCode — **atribuição errada, minha**. Passada para o **Antigravity**, que opera
+no DSK7 e é o único com o ambiente acessível.
+
+Também corrigidas 2 linhas duplicadas que já existiam no `TASKS.md` (a `ENV-001` aparecia 2× e a célula de
+descrição da `OPS-WEBHOOK-001` também).
+
+**Documento com as instruções:** `~/.hermes/cache/WEBHOOK-001-furos-e-instrucoes.md`
