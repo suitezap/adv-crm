@@ -182,12 +182,12 @@ class EscavadorService
                 $node = InfrastructureNode::on('mothership')
                     ->where(function ($q) use ($name) {
                         $q->where('name', $name)
-                          ->orWhere('type', 'escavador');
+                            ->orWhere('type', 'escavador');
                     })
                     ->where('status', 'active')
                     ->first();
             } catch (\Throwable $e) {
-                Log::warning('EscavadorService: Falha ao consultar nó Escavador no MotherShip DB: ' . $e->getMessage());
+                Log::warning('EscavadorService: Falha ao consultar nó Escavador no MotherShip DB: '.$e->getMessage());
                 $node = null;
             }
 

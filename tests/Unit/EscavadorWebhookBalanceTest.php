@@ -8,15 +8,16 @@
  * antes da lógica de negócio não garante nada se houver outro caminho até o
  * estorno — é exatamente o tipo de furo que a auditoria original encontrou.
  *
- * @see \SuiteZap\LawFirm\Escavador\Http\Middleware\VerifyEscavadorWebhook
+ * @see VerifyEscavadorWebhook
  */
-
-uses(Tests\TestCase::class);
+uses(TestCase::class);
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
+use SuiteZap\LawFirm\Escavador\Http\Controllers\WebhookController;
 use SuiteZap\LawFirm\Escavador\Http\Middleware\VerifyEscavadorWebhook;
 use Symfony\Component\HttpFoundation\Response;
+use Tests\TestCase;
 
 /**
  * Invés de usar o Eloquent (que exigiria MySQL), montamos um container mínimo
@@ -25,21 +26,37 @@ use Symfony\Component\HttpFoundation\Response;
  */
 function fakeContainer(?string $balance = null)
 {
-    return new class($balance) {
+    return new class($balance)
+    {
         public ?string $balance;
+
         public bool $incrementCalled = false;
 
-        public function __construct($balance) { $this->balance = $balance; }
+        public function __construct($balance)
+        {
+            $this->balance = $balance;
+        }
 
-        public function where($a, $b) { return $this; }
+        public function where($a, $b)
+        {
+            return $this;
+        }
 
         public function first()
         {
-            if ($this->balance === null) { return null; }
+            if ($this->balance === null) {
+                return null;
+            }
 
-            return new class($this) {
+            return new class($this)
+            {
                 public $sub;
-                public function __construct($outer) { $this->sub = $outer; }
+
+                public function __construct($outer)
+                {
+                    $this->sub = $outer;
+                }
+
                 public function increment(string $col, $val): void
                 {
                     $this->sub->incrementCalled = true;
@@ -58,13 +75,14 @@ test('secret ausente rejeita mesmo com Authorization presente', function () {
     Config::set('services.escavador.webhook_token', null);
     Config::set('services.escavador.webhook_secret', null);
 
-    $middleware = new VerifyEscavadorWebhook();
+    $middleware = new VerifyEscavadorWebhook;
     $request = Request::create('/api/webhooks/escavador', 'POST');
     $request->headers->set('Authorization', 'Bearer qualquer-coisa');
 
     $chamouNext = false;
     $response = $middleware->handle($request, function () use (&$chamouNext) {
         $chamouNext = true;
+
         return response()->json(['status' => 'ok']);
     });
 
@@ -80,13 +98,14 @@ test('secret ausente rejeita mesmo com Authorization presente', function () {
 test('token inválido devolve 401 e o next() nunca é chamado', function () {
     Config::set('services.escavador.webhook_token', 'segredo-valido-abc');
 
-    $middleware = new VerifyEscavadorWebhook();
+    $middleware = new VerifyEscavadorWebhook;
     $request = Request::create('/api/webhooks/escavador', 'POST');
     $request->headers->set('Authorization', 'Bearer token-errado-xyz');
 
     $chamouNext = false;
     $response = $middleware->handle($request, function () use (&$chamouNext) {
         $chamouNext = true;
+
         // se o middleware passasse, o refundBalance rodaria aqui
         return response()->json(['status' => 'ok']);
     });
@@ -98,7 +117,7 @@ test('token inválido devolve 401 e o next() nunca é chamado', function () {
 test('payload de falha forjado com token inválido não chega ao refundBalance', function () {
     Config::set('services.escavador.webhook_token', 'segredo-valido-abc');
 
-    $middleware = new VerifyEscavadorWebhook();
+    $middleware = new VerifyEscavadorWebhook;
 
     // o payload que um atacante usaria para forjar um estorno
     $request = Request::create('/api/webhooks/escavador', 'POST', [
@@ -112,9 +131,10 @@ test('payload de falha forjado com token inválido não chega ao refundBalance',
     $estornou = false;
     $saldoAntes = 100.00;
 
-    $response = $middleware->handle($request, function () use (&$estornou, $saldoAntes) {
+    $response = $middleware->handle($request, function () use (&$estornou) {
         // simula o refundBalance que a linha 82 executaria
         $estornou = true;
+
         return response()->json(['status' => 'ok']);
     });
 
@@ -127,12 +147,13 @@ test('payload de falha forjado com token inválido não chega ao refundBalance',
 test('sem nenhum header, o middleware rejeita e nada avança', function () {
     Config::set('services.escavador.webhook_token', 'segredo-valido-abc');
 
-    $middleware = new VerifyEscavadorWebhook();
+    $middleware = new VerifyEscavadorWebhook;
     $request = Request::create('/api/webhooks/escavador', 'POST');
 
     $chamouNext = false;
     $response = $middleware->handle($request, function () use (&$chamouNext) {
         $chamouNext = true;
+
         return response()->json(['status' => 'ok']);
     });
 
@@ -147,13 +168,14 @@ test('sem nenhum header, o middleware rejeita e nada avança', function () {
 test('token válido deixa a requisição avançar até a lógica de negócio', function () {
     Config::set('services.escavador.webhook_token', 'segredo-valido-abc');
 
-    $middleware = new VerifyEscavadorWebhook();
+    $middleware = new VerifyEscavadorWebhook;
     $request = Request::create('/api/webhooks/escavador', 'POST');
     $request->headers->set('Authorization', 'Bearer segredo-valido-abc');
 
     $chamouNext = false;
     $response = $middleware->handle($request, function () use (&$chamouNext) {
         $chamouNext = true;
+
         return response()->json(['status' => 'ok']);
     });
 
@@ -168,11 +190,11 @@ test('token válido deixa a requisição avançar até a lógica de negócio', f
 test('a resposta de 401 não revela nada do secret configurado', function () {
     Config::set('services.escavador.webhook_token', 'segredo-muito-sigiloso-123');
 
-    $middleware = new VerifyEscavadorWebhook();
+    $middleware = new VerifyEscavadorWebhook;
     $request = Request::create('/api/webhooks/escavador', 'POST');
     $request->headers->set('Authorization', 'Bearer errado');
 
-    $response = $middleware->handle($request, fn() => response()->json(['status' => 'ok']));
+    $response = $middleware->handle($request, fn () => response()->json(['status' => 'ok']));
     $corpo = json_encode($response->getData(true));
 
     expect($response->getStatusCode())->toBe(Response::HTTP_UNAUTHORIZED)
@@ -184,8 +206,8 @@ test('a resposta de 401 não revela nada do secret configurado', function () {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test('refundBalance ignora tenant_id vazio', function () {
-    $controller = new \SuiteZap\LawFirm\Escavador\Http\Controllers\WebhookController();
-    $reflexao  = new ReflectionMethod($controller, 'refundBalance');
+    $controller = new WebhookController;
+    $reflexao = new ReflectionMethod($controller, 'refundBalance');
     $reflexao->setAccessible(true);
 
     // tenant_id vazio não pode estornar — mesmo que o middleware falhe
@@ -195,8 +217,8 @@ test('refundBalance ignora tenant_id vazio', function () {
 });
 
 test('refundBalance ignora custo negativo ou zero', function () {
-    $controller = new \SuiteZap\LawFirm\Escavador\Http\Controllers\WebhookController();
-    $reflexao  = new ReflectionMethod($controller, 'refundBalance');
+    $controller = new WebhookController;
+    $reflexao = new ReflectionMethod($controller, 'refundBalance');
     $reflexao->setAccessible(true);
 
     $reflexao->invoke($controller, 'tenant_a', -100.0);

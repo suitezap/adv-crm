@@ -16,8 +16,6 @@ class VerifyEscavadorWebhook
      * FAIL-CLOSED: Se o secret não estiver configurado no MotherShip (meta_data.webhook_token
      * do nó Escavador), a requisição é terminantemente rejeitada com HTTP 401.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
      * @return mixed
      */
     public function handle(Request $request, Closure $next)
