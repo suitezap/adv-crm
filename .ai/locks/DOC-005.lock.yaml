@@ -13,7 +13,7 @@ started_at: "2026-09-30T23:50:00Z"
 last_checkpoint_at: "2026-09-30T23:50:00Z"
 base_commit: "d3b6223f"
 workspace: "worktree-lawfirm-doc002"
-status: ACTIVE
+status: RELEASED
 
 # Auditoria de referencias cruzadas (.ai/ x quality/ x disco) + regras do OpenCode
 # para OPS-WEBHOOK-001. Autorizado pelo DSK7 em 2026-09-30.
