@@ -161,7 +161,10 @@ class WebhookController
      */
     private function refundBalance(string $tenantId, float $cost): void
     {
-        if ($cost <= 0) {
+        // FAIL-CLOSED: Estorno estritamente condicionado a tenant válido e custo positivo
+        if (empty($tenantId) || $cost <= 0) {
+            Log::warning("EscavadorWebhook: Tentativa de estorno ignorada (tenant_id vazio ou custo <= 0). tenant_id={$tenantId}, cost={$cost}");
+
             return;
         }
 
@@ -169,6 +172,7 @@ class WebhookController
 
         if ($subscription) {
             $subscription->increment('suitecoin_balance', $cost);
+            Log::info("EscavadorWebhook: Saldo estornado com sucesso. tenant_id={$tenantId}, cost={$cost}");
         } else {
             Log::error("EscavadorWebhook: Subscription não encontrada para estorno. tenant_id={$tenantId}");
         }

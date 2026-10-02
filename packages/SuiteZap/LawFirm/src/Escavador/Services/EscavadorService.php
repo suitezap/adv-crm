@@ -169,6 +169,44 @@ class EscavadorService
     }
 
     /**
+     * Retorna o token de validação do webhook do Escavador.
+     * Armazenado no nó Escavador ('LawFimr V1 e V2') do MotherShip (meta_data.webhook_token).
+     */
+    public static function getWebhookToken(): ?string
+    {
+        $name = 'LawFimr V1 e V2';
+        $cacheKey = 'escavador_webhook_token_'.md5($name);
+
+        return Cache::remember($cacheKey, 300, function () use ($name) {
+            try {
+                $node = InfrastructureNode::on('mothership')
+                    ->where(function ($q) use ($name) {
+                        $q->where('name', $name)
+                          ->orWhere('type', 'escavador');
+                    })
+                    ->where('status', 'active')
+                    ->first();
+            } catch (\Throwable $e) {
+                Log::warning('EscavadorService: Falha ao consultar nó Escavador no MotherShip DB: ' . $e->getMessage());
+                $node = null;
+            }
+
+            if (! $node) {
+                return config('services.escavador.webhook_token') ?? config('services.escavador.webhook_secret');
+            }
+
+            $meta = is_array($node->meta_data)
+                ? $node->meta_data
+                : json_decode($node->meta_data ?? '{}', true);
+
+            return $meta['webhook_token']
+                ?? $meta['webhook_secret']
+                ?? config('services.escavador.webhook_token')
+                ?? config('services.escavador.webhook_secret');
+        });
+    }
+
+    /**
      * Executa uma requisição HTTP para a API do Escavador.
      *
      * @param  string  $method  'get' ou 'post'

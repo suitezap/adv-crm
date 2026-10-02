@@ -25,9 +25,16 @@ use SuiteZap\LawFirm\SaaS\Services\SuiteCoinService;
  * O Asaas envia um token de autenticação no header:
  *   asaas-access-token: <token_configurado_no_painel_asaas>
  *
- * Este token é opcional mas altamente recomendado. Deve ser configurado no
+ * OBRIGATÓRIO (fail-closed desde PRIV-AUDIT-001): Deve ser configurado no
  * painel Asaas em: Menu do usuário → Integrações → Mecanismos de segurança
  * e armazenado no MotherShip (meta_data.webhook_token do nó Asaas).
+ * Sem este token, todos os eventos recebidos são rejeitados.
+ *
+ * NOTA DE ARQUITETURA (WEBHOOK-SEC-003 / Pendência DSK7):
+ * Em caso de falha de autenticação (token ausente ou inválido), o controller
+ * retorna HTTP 200 com {'success': false, 'message': 'Unauthorized'} para
+ * evitar reconhecimento de rota e re-tentativas pelo gateway. Decisão de
+ * manter 200 vs mudar para 401 reservada ao DSK7.
  */
 class AsaasWebhookController extends Controller
 {
@@ -82,7 +89,9 @@ class AsaasWebhookController extends Controller
         // Runbook: cadastrar webhook_token no nó Asaas (MotherShip) e no painel Asaas.
         $expectedToken = $config['webhook_token'] ?? null;
         if (! $expectedToken) {
-            Log::critical('AsaasWebhook: webhook_token ausente na config — evento negado. Cadastre o token no nó Asaas.');
+            Log::critical('AsaasWebhook: webhook_token ausente na infraestrutura (MotherShip nó Asaas) — evento negado (fail-closed). Cadastre o token no nó Asaas.', [
+                'ip' => $request->ip(),
+            ]);
 
             return false;
         }

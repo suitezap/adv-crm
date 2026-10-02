@@ -10,6 +10,8 @@
 * [database] 4 migrations incorporadas: templates WhatsApp no MotherShip, status de notificação de segurança e tabela de participantes do processo.
 * [infra] Imagens `suitezap/lawfirm:3.56.3`, `suitezap/lawfirm:v3.56.3` e `latest` publicadas no Docker Hub (`DOCKER-005`, OpenCode). ADR §4.95.
 
+* [security] Webhook Escavador (WEBHOOK-SEC-002, Antigravity): Middleware VerifyEscavadorWebhook com autenticação fail-closed por token via header Authorization (Bearer token) obtido em meta_data.webhook_token do nó Escavador no MotherShip. Previne estorno não autenticado de saldo suitecoin_balance.
+* [security] Webhook Asaas (WEBHOOK-SEC-003, Antigravity): Log explícito de advertência em caso de token ausente e alinhamento de documentação fail-closed em quality/runbooks/webhook-secrets.md.
 ## **LF v3.56.2 (Setembro 2026)** - *Patch Release — Consolidação Atendimento/Chatwoot*
 
 * [infra] Rebuild completo da imagem e push das três tags `suitezap/lawfirm:3.56.2`, `suitezap/lawfirm:v3.56.2` e `latest` (`DOCKER-004`, OpenCode). ADR §4.94.

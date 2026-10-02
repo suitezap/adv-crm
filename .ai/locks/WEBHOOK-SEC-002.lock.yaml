@@ -1,12 +1,16 @@
 task_id: WEBHOOK-SEC-002
-owner: HERMES
+owner: ANTIGRAVITY
+status: IMPLEMENTED_NOT_VERIFIED
+acquired_at: "2026-10-02T14:28:00-03:00"
+base_commit: "1c5b4625"
 write_scope:
+  - packages/SuiteZap/LawFirm/src/Escavador/Http/Middleware/VerifyEscavadorWebhook.php
+  - packages/SuiteZap/LawFirm/src/Http/routes.php
+  - packages/SuiteZap/LawFirm/src/Escavador/Services/EscavadorService.php
+  - packages/SuiteZap/LawFirm/src/Escavador/Http/Controllers/WebhookController.php
+  - quality/runbooks/webhook-secrets.md
   - .ai/TASKS.md
-  - .ai/LOG_INDEX.md
-  - .ai/CURRENT.md
-  - .ai/locks/WEBHOOK-SEC-002.lock.yaml
-started_at: "2026-10-01T00:00:00Z"
-base_commit: "e2ef3f0d"
-workspace: "lawfirm-doc002"
-status: RELEASED
-note: "Registra os 2 furos de webhook encontrados na auditoria estatica (Escavador sem auth; Asaas token opcional) e corrige a atribuicao da OPS-WEBHOOK-ENV-001 para Antigravity."
+  - CHANGELOG.md
+description: >
+  Autenticação fail-closed com hash_equals no webhook POST /api/webhooks/escavador
+  via header Authorization (Bearer token) obtido em meta_data.webhook_token do nó Escavador.

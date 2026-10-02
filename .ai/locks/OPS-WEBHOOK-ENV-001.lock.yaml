@@ -1,0 +1,11 @@
+task_id: OPS-WEBHOOK-ENV-001
+owner: ANTIGRAVITY
+status: IMPLEMENTED_NOT_VERIFIED
+acquired_at: "2026-10-02T18:48:00-03:00"
+base_commit: "39a5047f"
+write_scope:
+  - .ai/locks/OPS-WEBHOOK-ENV-001.lock.yaml
+  - .ai/TASKS.md
+  - .ai/handoffs/RESULT-OPS-WEBHOOK-ENV-001.md
+description: >
+  Subida do stack Docker e validacao da matriz fail-closed dos 5 webhooks publicos.
