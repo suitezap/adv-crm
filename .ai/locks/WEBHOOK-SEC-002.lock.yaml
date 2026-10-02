@@ -1,6 +1,6 @@
 task_id: WEBHOOK-SEC-002
 owner: ANTIGRAVITY
-status: IN_PROGRESS
+status: IMPLEMENTED_NOT_VERIFIED
 acquired_at: "2026-10-02T14:28:00-03:00"
 base_commit: "1c5b4625"
 write_scope:

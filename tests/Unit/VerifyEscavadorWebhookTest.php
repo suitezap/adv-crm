@@ -11,6 +11,12 @@ use Symfony\Component\HttpFoundation\Response;
 beforeEach(function () {
     // Limpa cache da chave do webhook antes de cada teste
     cache()->forget('escavador_webhook_token_'.md5('LawFimr V1 e V2'));
+    try {
+        \SuiteZap\LawFirm\SaaS\Models\InfrastructureNode::on('mothership')
+            ->where('type', 'escavador')
+            ->delete();
+    } catch (\Throwable $e) {
+    }
 });
 
 test('VerifyEscavadorWebhook rejects request when secret is not configured (fail-closed)', function () {

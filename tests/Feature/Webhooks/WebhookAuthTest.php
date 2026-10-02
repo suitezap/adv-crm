@@ -42,6 +42,10 @@ class WebhookAuthTest extends MultiDatabaseTestCase
     {
         // WEBHOOK-SEC-002: Com token válido mas external_id desconhecido → 200 not_found sem estorno
         config(['services.escavador.webhook_token' => 'test-escavador-token']);
+        InfrastructureNode::on('mothership')->updateOrCreate(
+            ['type' => 'escavador'],
+            ['name' => 'LawFimr V1 e V2', 'status' => 'active', 'meta_data' => ['webhook_token' => 'test-escavador-token']]
+        );
         cache()->forget('escavador_webhook_token_'.md5('LawFimr V1 e V2'));
 
         $response = $this->postJson(
