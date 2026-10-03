@@ -97,8 +97,10 @@ class SyntheticDataFactory
     /**
      * Subscription sintética.
      *
-     * `suitecoin_balance` alto de propósito: os testes de estorno precisam de
-     * folga para validar incremento E decremento sem saldo negativo.
+     * ⚠️ Colunas conferidas contra `docker/testing/mysql-init/02-mothership-tables.sql`:
+     * a tabela `subscriptions` **não tem `uuid`** (PK é `id` AUTO_INCREMENT) e o
+     * plano é `plan_name`, não `plan`. `active_modules` é `JSON`, então o array
+     * é serializado pelo driver.
      *
      * @param  array<int, string>  $activeModules
      * @return array<string, mixed>
@@ -109,12 +111,13 @@ class SyntheticDataFactory
         float $balance = 1000.00
     ): array {
         return [
-            'uuid'              => self::deterministicUuid("subscription:{$tenantId}"),
             'tenant_id'         => $tenantId,
-            'plan'              => 'professional_test',
-            'active_modules'    => array_values($activeModules),
+            'plan_name'         => 'professional_test',
+            'active_modules'    => json_encode(array_values($activeModules)),
             'suitecoin_balance' => $balance,
             'status'            => 'active',
+            'current_usage_bytes' => 0,
+            'expires_at'        => '2027-12-31',
         ];
     }
 

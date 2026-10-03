@@ -76,7 +76,9 @@ class TenantTestSeeder
         $counts = [];
 
         // ── Assinatura (base de tudo que cobra saldo) ──
-        $counts['subscription'] = self::upsert(
+        // subscriptions tem PK `id` AUTO_INCREMENT e NÃO tem `uuid`
+        // (ver 02-mothership-tables.sql) — a chave natural é `tenant_id`.
+        $counts['subscriptions'] = self::upsert(
             $conn,
             'subscriptions',
             SyntheticDataFactory::subscription(SyntheticDataFactory::tenantId($tenantVariant)),

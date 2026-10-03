@@ -122,11 +122,25 @@ describe('SyntheticDataFactory — fixtures coerentes', function () {
         ];
 
         foreach ($fixtures as $i => $f) {
-            // toContain() nao aceita mensagem custom como 2o argumento —
-            // ele trataria a string como valor procurado.
-            expect($f)->toHaveKeys(['uuid', 'tenant_id']);
+            expect($f)->toHaveKey('tenant_id');
             expect($f['tenant_id'])->toBe('tenant_a');
         }
+    });
+
+    it('a subscription NAO tem uuid (PK e id AUTO_INCREMENT)', function () {
+        // subscriptions no 02-mothership-tables.sql: PK id, sem uuid
+        $sub = SyntheticDataFactory::subscription();
+
+        expect($sub)->not->toHaveKey('uuid')
+            ->and($sub)->toHaveKey('plan_name')
+            ->and($sub)->not->toHaveKey('plan');
+    });
+
+    it('active_modules e serializado (coluna JSON)', function () {
+        $sub = SyntheticDataFactory::subscription();
+
+        expect($sub['active_modules'])->toBeString()
+            ->and(json_decode($sub['active_modules'], true))->toBe(['CHATWOOT', 'AI']);
     });
 
     it('o processo aponta para um lawyer do mesmo tenant', function () {
