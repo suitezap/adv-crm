@@ -111,13 +111,13 @@ class SyntheticDataFactory
         float $balance = 1000.00
     ): array {
         return [
-            'tenant_id'         => $tenantId,
-            'plan_name'         => 'professional_test',
-            'active_modules'    => json_encode(array_values($activeModules)),
-            'suitecoin_balance' => $balance,
-            'status'            => 'active',
+            'tenant_id'           => $tenantId,
+            'plan_name'           => 'professional_test',
+            'active_modules'      => json_encode(array_values($activeModules)),
+            'suitecoin_balance'   => $balance,
+            'status'              => 'active',
             'current_usage_bytes' => 0,
-            'expires_at'        => '2027-12-31',
+            'expires_at'          => '2027-12-31',
         ];
     }
 
