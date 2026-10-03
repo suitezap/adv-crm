@@ -42,7 +42,7 @@ describe('deterministicUuid — é realmente determinístico', function () {
 
     it('gera um conjunto reprodutível de N itens', function () {
         $primeiro = SyntheticDataFactory::deterministicUuidSet('processo', 5);
-        $segundo  = SyntheticDataFactory::deterministicUuidSet('processo', 5);
+        $segundo = SyntheticDataFactory::deterministicUuidSet('processo', 5);
 
         expect($primeiro)->toHaveCount(5)
             ->and($primeiro)->toBe($segundo)
@@ -130,7 +130,7 @@ describe('SyntheticDataFactory — fixtures coerentes', function () {
     });
 
     it('o processo aponta para um lawyer do mesmo tenant', function () {
-        $lawyer  = SyntheticDataFactory::lawyer('a', '001');
+        $lawyer = SyntheticDataFactory::lawyer('a', '001');
         $processo = SyntheticDataFactory::processo('a');
 
         expect($processo['responsavel_uuid'])->toBe($lawyer['uuid']);
@@ -138,14 +138,14 @@ describe('SyntheticDataFactory — fixtures coerentes', function () {
 
     it('o card aponta para a coluna do mesmo tenant', function () {
         $coluna = SyntheticDataFactory::kanbanColumn('a', 'Triagem');
-        $card   = SyntheticDataFactory::kanbanCard('a', 'Triagem');
+        $card = SyntheticDataFactory::kanbanCard('a', 'Triagem');
 
         expect($card['column_uuid'])->toBe($coluna['uuid']);
     });
 
     it('o documento de IA aponta para o processo do mesmo tenant', function () {
         $processo = SyntheticDataFactory::processo('a');
-        $doc      = SyntheticDataFactory::aiDocument('a');
+        $doc = SyntheticDataFactory::aiDocument('a');
 
         expect($doc['processo_uuid'])->toBe($processo['uuid']);
     });

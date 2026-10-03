@@ -45,7 +45,7 @@ class SyntheticDataFactory
     {
         // \hash e \dechex explícitos: dentro de namespace, chamadas a função
         // nativa sem prefixo caem no resolver de classes do Laravel.
-        $hash = substr(\hash('sha256', 'lawfirm-test::' . $name), 0, 32);
+        $hash = substr(\hash('sha256', 'lawfirm-test::'.$name), 0, 32);
 
         return \sprintf(
             '%s-%s-4%s-%s%s-%s',
@@ -134,8 +134,8 @@ class SyntheticDataFactory
     {
         return [
             'uuid'      => self::deterministicUuid("user:admin:tenant_{$tenantVariant}"),
-            'name'      => 'Admin Teste Tenant ' . strtoupper($tenantVariant),
-            'email'     => "admin.test.{$tenantVariant}@" . self::TEST_DOMAIN,
+            'name'      => 'Admin Teste Tenant '.strtoupper($tenantVariant),
+            'email'     => "admin.test.{$tenantVariant}@".self::TEST_DOMAIN,
             'password'  => self::TEST_PASSWORD,
             'tenant_id' => self::tenantId($tenantVariant),
             'is_admin'  => true,
@@ -153,7 +153,7 @@ class SyntheticDataFactory
         return [
             'uuid'      => self::deterministicUuid("user:lawyer:tenant_{$tenantVariant}:{$variant}"),
             'name'      => "Advogado Teste {$variant}",
-            'email'     => "lawyer.test.{$variant}@" . self::TEST_DOMAIN,
+            'email'     => "lawyer.test.{$variant}@".self::TEST_DOMAIN,
             'password'  => self::TEST_PASSWORD,
             'tenant_id' => self::tenantId($tenantVariant),
             'is_admin'  => false,

@@ -50,7 +50,7 @@ class TenantTestSeeder
      */
     public static function databaseFor(string $tenantVariant): string
     {
-        return 'tenant_' . $tenantVariant . '_test';
+        return 'tenant_'.$tenantVariant.'_test';
     }
 
     /**
@@ -58,7 +58,7 @@ class TenantTestSeeder
      */
     public static function connectionFor(string $tenantVariant): string
     {
-        return 'tenant_' . $tenantVariant;
+        return 'tenant_'.$tenantVariant;
     }
 
     /**
@@ -136,8 +136,8 @@ class TenantTestSeeder
      * Upsert por chave natural — idempotente por construção.
      *
      * @param  array<string, mixed>  $row
-     * @param  array<int, string>    $keys  colunas que identificam o registro
-     * @return int  1 se escreveu, 0 se o registro já era idêntico
+     * @param  array<int, string>  $keys  colunas que identificam o registro
+     * @return int 1 se escreveu, 0 se o registro já era idêntico
      */
     private static function upsert(string $conn, string $table, array $row, array $keys): int
     {
@@ -152,6 +152,7 @@ class TenantTestSeeder
 
         if ($existing === null) {
             $query->insert($row);
+
             return 1;
         }
 
@@ -159,6 +160,7 @@ class TenantTestSeeder
         $changes = array_diff_assoc((array) $existing, $row);
         if ($changes !== []) {
             $query->where($where)->update($changes);
+
             return 1;
         }
 
@@ -206,20 +208,20 @@ class TenantTestSeeder
         $removed = 0;
 
         $spec = [
-            'ai_documents'           => ['ai-doc:001:' . SyntheticDataFactory::tenantId($tenantVariant)],
-            'chatwoot_conversations' => ['chatwoot-conv:001:' . SyntheticDataFactory::tenantId($tenantVariant)],
-            'kanban_cards'           => ['kanban-card:001:' . SyntheticDataFactory::tenantId($tenantVariant)],
-            'kanban_columns'         => ['kanban-column:Triagem:' . SyntheticDataFactory::tenantId($tenantVariant)],
-            'processos'              => ['processo:001:' . SyntheticDataFactory::tenantId($tenantVariant)],
-            'leads'                  => ['lead:001:' . SyntheticDataFactory::tenantId($tenantVariant), 'lead:002:' . SyntheticDataFactory::tenantId($tenantVariant)],
+            'ai_documents'           => ['ai-doc:001:'.SyntheticDataFactory::tenantId($tenantVariant)],
+            'chatwoot_conversations' => ['chatwoot-conv:001:'.SyntheticDataFactory::tenantId($tenantVariant)],
+            'kanban_cards'           => ['kanban-card:001:'.SyntheticDataFactory::tenantId($tenantVariant)],
+            'kanban_columns'         => ['kanban-column:Triagem:'.SyntheticDataFactory::tenantId($tenantVariant)],
+            'processos'              => ['processo:001:'.SyntheticDataFactory::tenantId($tenantVariant)],
+            'leads'                  => ['lead:001:'.SyntheticDataFactory::tenantId($tenantVariant), 'lead:002:'.SyntheticDataFactory::tenantId($tenantVariant)],
             'users'                  => [
-                'user:admin:' . SyntheticDataFactory::tenantId($tenantVariant),
-                'user:lawyer:' . SyntheticDataFactory::tenantId($tenantVariant) . ':001',
+                'user:admin:'.SyntheticDataFactory::tenantId($tenantVariant),
+                'user:lawyer:'.SyntheticDataFactory::tenantId($tenantVariant).':001',
             ],
         ];
 
         foreach ($spec as $table => $names) {
-            $uuids = array_map(fn(string $n) => SyntheticDataFactory::deterministicUuid($n), $names);
+            $uuids = array_map(fn (string $n) => SyntheticDataFactory::deterministicUuid($n), $names);
             $removed += DB::connection($conn)->table($table)->whereIn('uuid', $uuids)->delete();
         }
 
