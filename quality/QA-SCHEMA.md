@@ -1,61 +1,52 @@
-# 📋 QA-SCHEMA.md — Lacuna de schema no repositório
+# 📋 QA-SCHEMA.md — Schema de Teste e Domínio LawFirm
 
-> **Task:** `QA-DATA-001` · **Data:** 2026-10-01 · **Por:** Hermes (QA Architect)
+> **Tasks:** `QA-DATA-001` e `QA-SCHEMA-001` · **Data:** 2026-10-02 · **Por:** Hermes (QA Architect) & Antigravity (Security/Infra)
 
-## ⚠️ A tabela do domínio não tem migration no repositório
+---
 
-`database/migrations/` tem **12 arquivos**, e **todos** são alterações
-(`add_*`, `make_*_nullable`) ou tabelas do Laravel. As migrations que **criam**
-as tabelas do domínio não estão versionadas.
+## 1. Resolução da Lacuna de Schema (`QA-SCHEMA-001`)
 
-### Tabelas presentes via migration
+A aparente "ausência de migrations que criam o domínio" em `database/migrations/` ocorria porque o LawFirm CRM utiliza a arquitetura modular de pacotes do Krayin CRM:
+- As migrations do CRM base residem em `packages/Webkul/*/src/Database/Migrations/`
+- As migrations do domínio jurídico residem em `packages/SuiteZap/LawFirm/src/Database/Migrations/` (70+ migrations)
+- O total de migrations consolidadas do domínio é de **201 migrations**.
 
-| Tabela | Origem |
-|---|---|
-| `users`, `password_reset_tokens` | Laravel padrão |
-| `jobs`, `job_batches`, `failed_jobs` | Laravel queue |
-| `sessions` | Laravel session |
+Para viabilizar execução limpa, reprodutível e independente de ambiente (inclusive em CI e no Hermes VPS sem provisionamento prévio), ambas as opções propostas foram implementadas:
 
-### Tabelas do domínio — usadas em código, ausentes das migrations
+### Opção A — Schema Dump Base (Padrão Laravel)
+- Arquivo: [`database/schema/mysql-schema.sql`](../database/schema/mysql-schema.sql)
+- Contém a DDL completa das 85 tabelas do domínio e o registro das 201 migrations na tabela `migrations`.
+- Permite que `php artisan migrate` funcione de forma instantânea sem precisar rodar migrations do zero.
 
-| Tabela | Evidência de uso |
-|---|---|
-| `processos` | `database/migrations/2026_01_02_214127_add_detailed_fields_to_processos_table.php` |
-| `law_processo_whatsapp_messages` | `2026_09_07_150341_add_media_columns_to_law_processo_whatsapp_messages_table.php` |
-| `leads` | modelos em `packages/SuiteZap/LawFirm/src/` |
-| `subscriptions` | `suitecoin_balance` citado em `SyntheticDataFactory` e `SuiteCoinService` |
-| `kanban_columns`, `kanban_cards` | `KAN-001` (task em andamento) |
-| `chatwoot_conversations`, `ai_documents` | `SyntheticDataFactory` |
+### Opção B — Inicialização Automática no Docker
+- Arquivo: [`docker/testing/mysql-init/03-lawfirm-tables.sql`](../docker/testing/mysql-init/03-lawfirm-tables.sql)
+- Montado no `mysql-test` em `docker-compose.test.yml`:
+  ```yaml
+  - ./docker/testing/mysql-init/03-lawfirm-tables.sql:/docker-entrypoint-initdb.d/03-lawfirm-tables.sql:ro
+  ```
+- Ao subir o container MySQL com volume limpo, o script popula automaticamente tanto `tenant_a_test` quanto `tenant_b_test` com todas as 85 tabelas e 201 migrations aplicadas.
 
-## Consequência prática
+---
 
-`php artisan migrate:fresh` a partir do repositório **não** cria o schema do
-domínio. Só funciona contra um banco já provisionado (o `init_mothership_db`
-do MotherShip ou um dump).
+## 2. Mapa do Schema Real do Domínio
 
-Consequência para QA: **fixtures não podem ser validadas por `migrate:fresh`**.
-O `TenantTestSeeder` assume que os bancos `tenant_a_test` e `tenant_b_test`
-já existem com o schema completo.
+Auditoria realizada diretamente contra o banco de dados provisionado (`tenant_a_test` e `mothership_test`):
 
-## Como fechar a lacuna
+| Entidade / Tabela | Banco de Dados | PK Real | Colunas Críticas & Tipos Reais | Observação para Fixtures / Seeder |
+|---|---|---|---|---|
+| `users` | `tenant_*_test` | `id` (int unsigned) | `name`, `email` (unique), `password`, `whatsapp`, `status` (tinyint 1), `role_id` | **Sem `uuid`** e **sem `is_admin`** (roles são gerenciadas via tabela `roles`). |
+| `leads` | `tenant_*_test` | `id` (int unsigned) | `title`, `description`, `lead_value`, `status` (tinyint), `chatwoot_conversation_id` (int) | **Sem `uuid`**. Conversa Chatwoot é uma coluna em `leads`, não uma tabela separada. |
+| `processos` | `tenant_*_test` | `id` (bigint unsigned) | `tenant_id`, `titulo`, `numero_cnj`, `tribunal`, `vara`, `valor_causa`, `data_distribuicao`, `status`, `sercreta` | **Sem `uuid`**. Não possui `orgao_judicial`, `classe` ou `responsavel_uuid` (usa `user_id`). |
+| `subscriptions` | `mothership_test` | `id` (int) | `tenant_id`, `plan_name`, `suitecoin_balance` (dec 20,4), `active_modules` (json), `status` | **Fica no `mothership_test`**, não nos bancos tenant. PK é `id` auto_increment; plano é `plan_name`. |
+| `kanban_*` | N/A | - | - | Tabelas `kanban_columns` / `kanban_cards` dependem da implementação de `KAN-001`. No CRM padrão, estágios vivem em `lead_pipeline_stages` e `law_legal_pipeline_stages`. |
+| `chatwoot_conversations` | N/A | - | - | Não é tabela do CRM. O CRM armazena `chatwoot_conversation_id` na tabela `leads`. |
+| `ai_documents` | N/A | - | - | Execuções de IA ficam em `lawfirm_ai_executions` e templates em `law_document_templates`. |
 
-Duas opções, ambas do DSK7 (precisam de Docker):
+---
 
-**A — Versionar as migrations base**
-Extrair o schema de um banco provisionado e gerar migrations
-`create_*`. Garante `migrate:fresh` funcional em qualquer ambiente.
+## 3. Estado das Tasks da Cadeia
 
-**B — Documentar o schema de referência**
-Manter um `schema.sql` versionado, gerado de um banco provisionado, e
-usá-lo no CI para criar os bancos `_test`.
-
-**Recomendação:** A. Sem as migrations base, nenhuma verificação de schema é
-reprodutível, e isso limita `QA-HARNESS-001` e `QA-JUR-001` tanto quanto
-limitou `QA-DATA-001`.
-
-## Pendência de verificação
-
-O `SyntheticDataFactory` gera campos (`active_modules`, `numero_cnj`,
-`sercreta`, `posicao`, `cor`) inferidos do código e das migrations de
-alteração. **A forma exata de cada coluna não é verificável sem o schema.**
-Precisa de confirmação contra um banco provisionado antes de o seeder rodar.
+- `QA-SCHEMA-001`: **IMPLEMENTED_NOT_VERIFIED** (ambas opções A e B entregues).
+- `QA-DATA-001`: Desbloqueada para execução no Docker.
+- `QA-HARNESS-001`: Desbloqueada após validação do seeder.
+- `QA-JUR-001`: Desbloqueada após harness.

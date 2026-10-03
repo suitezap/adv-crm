@@ -34,6 +34,7 @@ services:
     volumes:
       - mysql-test-data:/var/lib/mysql
       - ./docker/testing/mysql-init/tenant-databases.sql:/docker-entrypoint-initdb.d/01-tenant-databases.sql:ro
+      - ./docker/testing/mysql-init/03-lawfirm-tables.sql:/docker-entrypoint-initdb.d/03-lawfirm-tables.sql:ro
     networks:
       - quality_internal
     healthcheck:

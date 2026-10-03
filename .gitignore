@@ -100,5 +100,7 @@ openspec/
 # Database dumps and backups
 /storage/backups/
 *.sql
+!docker/testing/mysql-init/*.sql
+!database/schema/*.sql
 
 
