@@ -1,10 +1,97 @@
-(?d).git
-(?d).git/**
+# .stignore — Syncthing / LawFirm
+#
+# Criado em 2026-09-30 para corrigir a pendência do incidente INC-2026-09-15
+# (sync-conflict no índice do .git/). Motivo: o ADR-GOV-003 define que `.git/`
+# NUNCA deve ser sincronizado — cada ambiente mantém clone próprio. A
+# sincronização do .git/ é a causa provável do conflito de índice.
+#
+# IMPORTANTE: este arquivo deve existir nos DOIS ambientes (Hermes/VPS e
+# DSK7/Windows) antes de a sincronização ser reativada.
+
+# --- Git: nunca sincronizar (ADR-GOV-003) ---
+.git/
+**/.git/
+*.pack
+*.idx
+
+# --- Segredos: nunca sincronizar (ADR-GOV-005) ---
 .env
-*.key
+.env.*
 *.pem
-/storage/logs/**
-/reports/**
-/coverage/**
-/test-results/**
-/playwright-report/**
+*.key
+*.p12
+*.pfx
+*.id_rsa
+storage/oauth-*.key
+
+# --- Artefatos de runtime e testes ---
+storage/logs/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+bootstrap/cache/*.php
+node_modules/
+vendor/
+tests/e2e/.pytest_cache/
+**/__pycache__/
+*.pyc
+.phpunit.cache/
+test-results/
+playwright-report/
+blob-report/
+coverage/
+reports/
+*.log
+*.sql
+*.sql.gz
+
+# --- Sync: não propagar conflitos ---
+*sync-conflict*
+.*sync-conflict*
+
+# --- Correcao 2026-10-01 (Syncthing) ---
+# O padrao 'node_modules/' acima so casa na RAIZ da pasta. Os padroes
+# abaixo alcancam QUALQUER nivel — sem eles, o .agents/skills/node_modules
+# era sincronizado (233 diretorios em conflito de delete, sync travado).
+# O prefixo (?d) autoriza o Syncthing a DELETAR no remoto diretorios que
+# contem apenas arquivos ignorados — sem isso o folder fica "failed to sync".
+(?d)**/node_modules
+(?d)**/vendor
+(?d).opencode/node_modules
+(?d).agents/skills/node_modules
+(?d).agents/skills/plugins/**/node_modules
+(?d)**/dist
+(?d)**/build
+(?d)**/.next
+(?d)**/__pycache__
+
+# --- Correcao 2026-10-01, 2a rodada ---
+# Os plugins do AAS (.agents/skills/plugins/*/skills/*) tambem contem
+# node_modules/build/.git em subdiretorios profundos. O Syncthing recusava
+# deletar 233 diretorios com "contains ignored files". O (?d) em padroes
+# curtos nao cobria essa arvore — precisa excluir a arvore INTEIRA de plugins.
+(?d).agents/skills/plugins/
+(?d).agents/skills/skills/
+(?d).agents/skills/**/.git/
+(?d).agents/skills/**/dist/
+(?d).agents/skills/**/build/
+(?d).opencode/
+
+# --- 3a rodada (corrigida): 2026-10-01 ---
+# NAO excluir .agents/ inteiro: 8 arquivos dali sao versionados no Git
+# (AGENTS.md e afins). Excluir so o LIXO de terceiros dentro dela.
+# (?d) autoriza deletar no remoto mesmo com conteudo ignorado dentro.
+(?d).agents/skills/**
+(?d).agents/plugins/**
+(?d).opencode/**
+
+# --- 4a rodada: 2026-10-01 ---
+# Os erros nomeiam paths CONCRETOS (.agents/skills/apps, /skills, /plugins).
+# Padroes genericos como '**' nao alcancam o nivel .agents/skills/<dir> —
+# no Syncthing, '**' so atravessa '/' quando precede um '/'.
+# Listar os caminhos exatos que o log reporta.
+(?d).agents/skills/apps
+(?d).agents/skills/skills
+(?d).agents/skills/plugins
+(?d).agents/skills/node_modules
+(?d).opencode

@@ -91,3 +91,70 @@
   - Backup do WIP alheio em `~/.hermes/cache/wip-backup-feature-ajustes-20260930/` com hashes md5, ANTES de qualquer operacao.
   - Trabalho aplicado no worktree da `2.1`, nunca na arvore principal com WIP.
   - **Erro proprio corrigido:** as regras foram escritas inicialmente na arvore principal (`feature/ajustes-no-leads-view`, que esta 30 commits atrasada e nao contem o DOC-003). Detectado ao tentar atualizar o TASKS.md, onde DOC-003 nao existia. Arquivos removidos daquela arvore e reaplicados no worktree correto; WIP alheio verificado intacto.
+
+## 2026-09-30 — DOC-005 (Auditoria de referencias + regras do OpenCode para OPS-WEBHOOK-001)
+
+- **Lock:** `.ai/locks/DOC-005.lock.yaml` (base `d3b6223f`).
+- **Autorizacao:** DSK7 pediu reavaliacao mais profunda de furos documentais + regras para o OpenCode no OPS-WEBHOOK-001.
+- **Metodo:** varredura de TODOS os caminhos referenciados em `.ai/**/*.md` e `quality/**/*.md` contra o disco; conferencia cruzada TEST_CATALOG x COVERAGE_MATRIX; verificacao de `test_file`/`documentation`/`source_references`.
+- **5 furos com o validador em VERDE (15 regras):**
+  1. `CHATWOOT-E2E-001` (planned) cita `tests/e2e/workflows/test_chatwoot_sac_workflow.py` — INEXISTENTE. Tambem em `quality/COVERAGE_MATRIX.md:83`.
+  2. **Furo de guardrail:** a Regra 4 so checa `test_file` em `implemented_unverified`/`active`/`quarantined`/`disabled` — **`planned` fica de fora**, entao um teste planejado pode citar arquivo inexistente e o CI passa. Mesma classe da Regra 14.
+  3. `.ai/TASKS.md` referencia `INC-2026-09-15-sync-conflict-git-index.md`, que **nao esta no repo** (so na arvore local, nao commitado). A SSOT cita um documento que a SSOT nao contem.
+  4. Os 20 testes `active` declaram `last_verified_version` em v3.55.0 (7) ou v3.55.1 (13); codigo em **v3.56.3**. **Nenhum teste ativo verificado na versao corrente** — cobertura nominal 3 releases atras.
+  5. `INC-2026-09-27-processos-casos-lookup-eav.md` cita `packages/Webkul/LawFirm/src/Routes/web.php`, inexistente (reais: `packages/Webkul/Admin/src/Routes/{Admin,Front}/web.php`). Provavel heranca do fork.
+- **Verificado como CORRETO:** matriz x catalogo batem nos dois sentidos; 14 modulos em `quality/modules/` existem e todos citados; `docker/testing/Dockerfile.playwright` existe; nenhuma referencia quebrada em `AGENTS.md` nem `RELEASE_CHECKLIST.md`.
+- **Entregue:** `.ai/REGRAS-OPENCODE-OPERACAO.md` (com a secao de furos) e divisao do `OPS-WEBHOOK-001` em `ENV-001` (OpenCode) / `SEC-001` (operador) / `VER-001` (Hermes), com a mae dependente das tres. `AGENTS.md` §1.7 referencia o terceiro documento de regras.
+- **Licao estrutural:** gate automatizado que cobre o caso principal nao garante ausencia de casos analogos. Regra 14 cobria deriva de ponta, nao de intervalo; Regra 4 cobria status que exigem codigo, nao `planned`.
+- **Erro proprio:** o arquivo foi escrito inicialmente na arvore principal (branch errada) e movido para o worktree da 2.1 — mesma armadilha do DOC-004. Verificado apos.
+
+
+## 2026-09-31 — DOC-006 (CHATWOOT-E2E-001 implementado + Regra 4 p/ planned + .stignore + instrucoes OpenCode)
+
+- **Lock:** `.ai/locks/DOC-006.lock.yaml` (base `d3b6223f`).
+- **Autorizacao:** DSK7 pediu executar os itens 2 e 3 da auditoria DOC-005, mais criar as instrucoes do OPS-WEBHOOK-001 para o OpenCode.
+- **Item 2 — CHATWOOT-E2E-001:** o teste era valioso (P1, ACL + middleware 403 + isolamento) com os 6 `source_references` existentes, mas o arquivo nao existia. **Implementado** `tests/e2e/workflows/test_chatwoot_sac_workflow.py` (4 testes) + Page Object `tests/e2e/pages/chatwoot_page.py`. Status movido `planned` -> `implemented_unverified`; `COVERAGE_MATRIX.md` atualizado. **Regra 4 estendida para `planned`** — fecha o furo de guardrail. Testada: injetando um planned com caminho inexistente, o validador falha (exit 1).
+- **Item 3 — INC-2026-09-15:** causa confirmada — Syncthing sincronizava a pasta Lawfirm inteira, e **nao existia .stignore algum**. Criado `.stignore` versionado na raiz: exclui `.git/` (ADR-GOV-003), segredos (ADR-GOV-005), artefatos de runtime e `*sync-conflict*`. O incidente foi versionado no repo com a secao de Resolucao. **Pendencias reais**: servico Syncthing `inactive` no Hermes (regra so vale quando voltar); DSK7 precisa ter o mesmo `.stignore` ativo; conflict-file de 261 KB segue intacto por decisao do operador.
+- **Instrucoes OpenCode:** `.ai/INSTRUCOES-OPENCODE-OPS-WEBHOOK.md` — roteiro da `OPS-WEBHOOK-ENV-001` com a ordem fail-closed -> aceito, a regra inviolavel de segredo, os furos de documentacao e o criterio de conclusao (ele nao fecha a `OPS-WEBHOOK-001`).
+- **Erro proprio:** dois patches no `.ai/TASKS.md` falharam silenciosamente e as linhas DOC-004/005 e OPS-WEBHOOK-ENV-001 ficaram ausentes do arquivo — percebi ao validar e reinseri. Verificar presence apos cada patch, nao assumir sucesso pelo retorno "True" do patch com ancora errada.
+
+## 2026-10-01 — Auditoria estática dos webhooks (2 furos + reatribuição)
+
+**Task:** `WEBHOOK-SEC-002`, `WEBHOOK-SEC-003` · **Base:** `e2ef3f0d` · **Lock:** `WEBHOOK-SEC-002`
+
+Auditoria por leitura de código dos 8 controllers de webhook do LawFirm, feita durante o planejamento da
+`OPS-WEBHOOK-001` (o Docker não existe no host Hermes, então o stack de testes não sobe aqui).
+
+### FURO A (🔴 alta) — `WEBHOOK-SEC-002`
+
+`POST /api/webhooks/escavador` é rota **pública** (isentada de CSRF em `VerifyCsrfToken.php:18`) e
+`Escavador/Http/Controllers/WebhookController.php` **não tem nenhuma autenticação** — o único termo de auth
+no arquivo inteiro é um comentário. A única guarda (linha 71) é idempotência, não auth.
+
+Com um `POST {"id":"<external_id>","status":"erro"}`:
+1. Localiza o `EscavadorRequest` pelo `external_id`
+2. `markFailed()`
+3. `refundBalance()` → `Subscription::increment('suitecoin_balance', $cost)`
+
+**Altera saldo financeiro sem autenticação.** É o único dos 4 webhooks sem guarda (Chatwoot tem HMAC,
+WhatsApp tem `webhook-token`, tenant-Asaas tem ambos).
+
+Correção especificada: middleware `VerifyEscavadorWebhook` com `hash_equals`, **fail-closed** (secret
+ausente rejeita tudo) e secret no MotherShip (`meta_data` do nó Escavador).
+
+### FURO B (🟡 média) — `WEBHOOK-SEC-003`
+
+`SaaS/Http/Controllers/AsaasWebhookController.php:28` — o docblock diz que `asaas-access-token` é
+"opcional mas altamente recomendado" → `isAuthorized()` falha **aberto**. Sem token configurado, qualquer
+POST é aceito. O 200-em-falha de auth é deliberado (não revela a rota) e está OK.
+
+### Reatribuição da `OPS-WEBHOOK-ENV-001`
+
+O Hermes **não tem Docker** (`docker: command not found`, sem socket). O DSK7 tem (Docker Desktop).
+A task estava atribuída ao OpenCode — **atribuição errada, minha**. Passada para o **Antigravity**, que opera
+no DSK7 e é o único com o ambiente acessível.
+
+Também corrigidas 2 linhas duplicadas que já existiam no `TASKS.md` (a `ENV-001` aparecia 2× e a célula de
+descrição da `OPS-WEBHOOK-001` também).
+
+**Documento com as instruções:** `~/.hermes/cache/WEBHOOK-001-furos-e-instrucoes.md`

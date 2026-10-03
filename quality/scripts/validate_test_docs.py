@@ -108,9 +108,23 @@ def validate_catalog(catalog_path=CATALOG_PATH, repo_root=REPO_ROOT):
 
         # Regra 4: Existência de arquivo para status que exigem código
         test_file = test.get("test_file")
-        if status in {"implemented_unverified", "active", "quarantined", "disabled"}:
+        # 'planned' incluído a partir de 2026-09-30 (DOC-006): um teste planejado
+        # que declara 'test_file' precisa que o arquivo exista. A versão anterior
+        # só cobria status que exigem código, e CHATWOOT-E2E-001 citava um arquivo
+        # inexistente sem que o validador percebesse.
+        if status in {"planned", "implemented_unverified", "active", "quarantined", "disabled"}:
             if not test_file:
-                errors.append(f"Regra 4 (Arquivo Obrigatório): Teste '{test_id}' com status '{status}' deve declarar 'test_file'.")
+                if status == "planned":
+                    # Planejado ainda pode não declarar arquivo; se declarar, tem que existir.
+                    pass
+                else:
+                    errors.append(f"Regra 4 (Arquivo Obrigatório): Teste '{test_id}' com status '{status}' deve declarar 'test_file'.")
+            elif not (repo_root / test_file).exists() and status == "planned":
+                errors.append(
+                    f"Regra 4 (Arquivo Planejado Inexistente): Teste '{test_id}' com status 'planned' "
+                    f"declara 'test_file' mas o arquivo não existe: '{test_file}'. "
+                    f"Remova a declaração ou implemente o arquivo."
+                )
             else:
                 full_test_path = repo_root / test_file
                 if not full_test_path.exists():

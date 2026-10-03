@@ -25,6 +25,8 @@
    |---|---|
    | **[`.ai/REGRAS-DE-RELEASE.md`](.ai/REGRAS-DE-RELEASE.md)** | Bump de versão, build de imagem, publicação no Docker Hub, alteração de changelog |
    | **[`.ai/REGRAS-DE-CONCORRENCIA.md`](.ai/REGRAS-DE-CONCORRENCIA.md)** | Qualquer edição de código, criação de lock, troca de branch, rebase, pull, ou contato com trabalho não commitado de outro agente |
+| **[`.ai/REGRAS-OPENCODE-OPERACAO.md`](.ai/REGRAS-OPENCODE-OPERACAO.md)** | `OPS-WEBHOOK-*`, segredos, ambiente de teste, validação de endpoint |
+| **[`.ai/INSTRUCOES-OPENCODE-OPS-WEBHOOK.md`](.ai/INSTRUCOES-OPENCODE-OPS-WEBHOOK.md)** | Roteiro passo-a-passo da `OPS-WEBHOOK-ENV-001` |
 
    **Resumo de `REGRAS-DE-RELEASE.md`:** 8 passos na ordem, sendo o **validador (passo 7) o gate** — `python quality/scripts/validate_test_docs.py` tem que sair `exit 0` **antes** de publicar imagem. As releases `v3.56.0`, `v3.56.1` e `v3.56.2` (15–23/09/2026) foram publicadas sem entrada em changelog porque esse gate não era exigido por nenhum checklist.
 

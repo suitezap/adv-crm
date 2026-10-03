@@ -849,7 +849,7 @@ tests:
     module: chatwoot
     type: E2E
     priority: P1
-    status: planned
+    status: implemented_unverified
     automated: false
     test_file: tests/e2e/workflows/test_chatwoot_sac_workflow.py
     documentation: quality/modules/chatwoot.md
