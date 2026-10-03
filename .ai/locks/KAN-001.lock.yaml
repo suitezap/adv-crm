@@ -1,0 +1,20 @@
+task_id: KAN-001
+owner: ANTIGRAVITY
+status: IMPLEMENTED_NOT_VERIFIED
+base_branch: "2.1"
+base_commit: "9e29a11e"
+created_at: "2026-10-03T18:35:00-03:00"
+last_checkpoint_at: "2026-10-03T18:55:00-03:00"
+write_scope:
+  - tests/Unit/SyncCasoStageToChatwootListenerTest.php
+  - quality/TEST_CATALOG.yaml
+  - quality/modules/legal.md
+  - .ai/TASKS.md
+  - .ai/CURRENT.md
+  - .ai/locks/KAN-001.lock.yaml
+  - .ai/logs/ANTIGRAVITY.md
+description: >
+  18 testes unitários para SyncCasoStageToChatwootListener (KAN-UNIT-001..018,
+  18/18 passing, 73 assertions, sem dependência de DB/Docker). Catalogação
+  completa em quality/TEST_CATALOG.yaml e quality/modules/legal.md. Validador
+  de integridade documental aprovado com 0 erros.

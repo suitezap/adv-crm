@@ -36,7 +36,7 @@ Follow-ups documentados em `.ai/TASKS.md`: `DOC-001`, `GAP-001`, `KAN-001` (rest
 - **`DOCKER-003`** concluída (**DONE**). Imagem `suitezap/lawfirm:3.56.1`, `suitezap/lawfirm:v3.56.1` e `latest` (digest `sha256:0401da4e36bf9cc833304a088a13e733a355d3146fb473ac1dd83e7d7f75d7e0`) publicada no Docker Hub com higiene estrita.
 - **`DOCKER-004`** concluída (**VERIFIED**, OpenCode): bump v3.56.2 + ADR 4.94; `suitezap/lawfirm:3.56.2`, `:v3.56.2`, `:latest` (digest `sha256:02b7b37e`) publicadas com higiene estrita.
 - **`DOCKER-005`** concluída (**VERIFIED**, OpenCode): bump v3.56.3 + ADR 4.95; `suitezap/lawfirm:3.56.3`, `:v3.56.3`, `:latest` (digest `sha256:a4887dd4`) publicadas com higiene estrita.
-- A tarefa `KAN-001` segue `BLOCKED` (aguardando manutenção de tags).
+- **`KAN-001`** transicionada para **`IMPLEMENTED_NOT_VERIFIED`** (Antigravity): 18 testes unitários para `SyncCasoStageToChatwootListener` (KAN-UNIT-001..018, 18/18 passing, 73 assertions, sem DB/Docker), catalogação em `quality/TEST_CATALOG.yaml` e `quality/modules/legal.md`, validador documental `validate_test_docs.py` aprovado com 0 erros. Pendente: validação E2E por Hermes.
 
 ---
 

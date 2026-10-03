@@ -363,3 +363,36 @@ Actions:
 Result:
 DONE
 
+---
+
+## [2026-10-03 18:55] KAN-001 — Testes Unitários de SyncCasoStageToChatwootListener & Governança <a id="2026-10-03-kan-001"></a>
+
+Agent:
+ANTIGRAVITY
+
+Role:
+ORCHESTRATOR / IMPLEMENTER
+
+Objective:
+Implementar suíte de testes unitários isolados para o componente `SyncCasoStageToChatwootListener` (domínio Legal / Kanban), cobrindo normalização de telefone E.164, detecção de ramo novo-caso (preservação de `ld_ganho`), fallback resiliente para tags dinâmicas e contratos de fila; registrar no catálogo de testes e módulo legal, garantindo aprovação total do validador de integridade documental sem dependência de DB/Docker.
+
+Actions:
+1. Implementação de Testes Unitários:
+   - Criado `tests/Unit/SyncCasoStageToChatwootListenerTest.php` com 18 testes e 73 assertions (KAN-UNIT-001 até KAN-UNIT-018).
+   - Cobertura completa de métodos privados via `ReflectionMethod::setAccessible(true)` e fakes anônimos para models Eloquent.
+   - Execução local via Pest: 18/18 testes passando em 3.78s sem banco de dados ou Docker.
+2. Atualização e Sincronização de Qualidade:
+   - Catalogados 18 testes em `quality/TEST_CATALOG.yaml` sob o domínio `Legal` e camada `domain`.
+   - Adicionada seção Kanban Jurídico (KAN-001) em `quality/modules/legal.md` com componentes, invariantes e tabela de rastreabilidade.
+   - Executado validador documental `python quality/scripts/validate_test_docs.py` — 0 erros (gate 100% verde).
+3. Transição de Governança:
+   - Atualizado `.ai/TASKS.md` (KAN-001 -> `IMPLEMENTED_NOT_VERIFIED`).
+   - Atualizado `.ai/CURRENT.md`.
+   - Atualizado `.ai/locks/KAN-001.lock.yaml` para `IMPLEMENTED_NOT_VERIFIED`.
+
+Result:
+IMPLEMENTED_NOT_VERIFIED
+
+Next recommended action:
+Hermes executar validação E2E no ambiente de QA para transição para VERIFIED.
+

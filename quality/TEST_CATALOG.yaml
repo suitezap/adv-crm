@@ -1271,3 +1271,438 @@ tests:
     last_verified_version: "v3.55.1"
     last_verified_date: "2026-09-09"
     notes: "Registrado em FIN-COBRANCAS-001. Executado com sucesso no data-plane local isolado (tenant_a_test/b_test/mothership_test) em 2026-09-09."
+
+  # =========================================================================
+  # DOMÍNIO: LEGAL — KANBAN (KAN-001)
+  # =========================================================================
+  - id: KAN-UNIT-001
+    name: "normalizePhone — adiciona +55 a número brasileiro de 11 dígitos"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener::normalizePhone
+        purpose: "Normalização E.164 para telefones brasileiros"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "18/18 sem DB/Docker. KAN-001."
+
+  - id: KAN-UNIT-002
+    name: "normalizePhone — não duplica prefixo 55 quando já presente"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener::normalizePhone
+        purpose: "Guard: não adicionar +55 duas vezes"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-003
+    name: "normalizePhone — remove caracteres não-numéricos antes de normalizar"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener::normalizePhone
+        purpose: "Remoção de máscara de telefone"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-004
+    name: "normalizePhone — normaliza número com código de país já formatado"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener::normalizePhone
+        purpose: "Edge case: número com +55 e máscara"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-005
+    name: "STAGE_LABEL_MAP — contém todos os 14 slugs canônicos mapeados corretamente"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P1
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: "SyncCasoStageToChatwootListener::STAGE_LABEL_MAP"
+        purpose: "Mapping stage slug → Chatwoot label"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "Inclui em-producao-juridica → CAS_PROD (ADR-ATEND-002). KAN-001."
+
+  - id: KAN-UNIT-006
+    name: "CASO_STAGE_POOL — contém exatamente 12 labels de estágio"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P1
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: "SyncCasoStageToChatwootListener::CASO_STAGE_POOL"
+        purpose: "Pool de labels que podem ser removidos do Chatwoot ao transicionar"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-007
+    name: "CASO_STAGE_POOL — ld_ganho ausente (label de lead não deve ser removido junto)"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P1
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: "SyncCasoStageToChatwootListener::CASO_STAGE_POOL"
+        purpose: "ld_ganho deve ser preservado no estágio novo-caso (ADR-ATEND-002)"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-008
+    name: "resolvePhone — retorna null quando caso não tem person"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener::resolvePhone
+        purpose: "Guard: sem person → não pode sincronizar"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-009
+    name: "resolvePhone — retorna null quando contact_numbers está vazio"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener::resolvePhone
+        purpose: "Guard: sem telefones cadastrados"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-010
+    name: "resolvePhone — retorna primeiro telefone válido em E.164"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener::resolvePhone
+        purpose: "Happy path: primeiro número da lista"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-011
+    name: "resolvePhone — pula entradas com value vazio e retorna o próximo válido"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener::resolvePhone
+        purpose: "Robustez: ignorar entradas com telefone em branco"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-012
+    name: "novoCaso detection — slugs novo-caso e novo são reconhecidos corretamente"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P1
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener::handle
+        purpose: "isNovoCaso branch: ld_ganho preservado (ADR-ATEND-002)"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-013
+    name: "novoCaso detection — slugs não-novo NÃO são tratados como novoCaso"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P1
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener::handle
+        purpose: "Non-novoCaso branch: ld_ganho removido do pool"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-014
+    name: "getDynamicCrmTagPool — inclui CASO_STAGE_POOL estático mesmo quando DB falha"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P1
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener::getDynamicCrmTagPool
+        purpose: "Fallback gracioso: pool estático quando Tag::pluck falha"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-015
+    name: "getDynamicCrmTagPool — retorna valores únicos (sem duplicatas)"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener::getDynamicCrmTagPool
+        purpose: "array_unique após merge estático+dinâmico"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-016
+    name: "SyncCasoStageToChatwootListener implementa ShouldQueue"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: SyncCasoStageToChatwootListener
+        purpose: "Listener assíncrono — não deve bloquear request HTTP"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-017
+    name: "SyncCasoStageToChatwootListener usa queue=default"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P2
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: "SyncCasoStageToChatwootListener::queue"
+        purpose: "Configuração de fila"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
+
+  - id: KAN-UNIT-018
+    name: "SyncCasoStageToChatwootListener tem tries=1 para não inundar API Chatwoot"
+    domain: Legal
+    layer: domain
+    module: legal
+    type: Unit
+    priority: P1
+    status: active
+    automated: true
+    test_file: tests/Unit/SyncCasoStageToChatwootListenerTest.php
+    documentation: quality/modules/legal.md
+    source_references:
+      - path: packages/suitezap/lawfirm/src/Legal/Listeners/SyncCasoStageToChatwootListener.php
+        symbol: "SyncCasoStageToChatwootListener::tries"
+        purpose: "Previne retry storms na API Chatwoot"
+    dependencies: []
+    external_services: []
+    tenant_scope: static_analysis
+    destructive: false
+    owner: Antigravity
+    last_verified_version: "v3.57.0-dev"
+    last_verified_date: "2026-10-03"
+    notes: "KAN-001."
