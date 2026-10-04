@@ -10,7 +10,7 @@
  *
  * @see VerifyEscavadorWebhook
  */
-uses(\Tests\TestCase::class);
+uses(TestCase::class);
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;

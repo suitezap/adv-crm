@@ -18,18 +18,20 @@
  *  6. getDynamicCrmTagPool: static fallback when Tag query fails; uniqueness
  *  7. ShouldQueue interface + queue name + tries=1
  */
+uses(TestCase::class);
 
-uses(\Tests\TestCase::class);
-
+use Illuminate\Contracts\Queue\ShouldQueue;
 use SuiteZap\LawFirm\Legal\Listeners\SyncCasoStageToChatwootListener;
+use SuiteZap\LawFirm\Legal\Models\Caso;
+use Tests\TestCase;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Helper: open a private/protected method via Reflection.
 // ──────────────────────────────────────────────────────────────────────────────
 
-function kanMethod(string $method): \ReflectionMethod
+function kanMethod(string $method): ReflectionMethod
 {
-    $rm = new \ReflectionMethod(SyncCasoStageToChatwootListener::class, $method);
+    $rm = new ReflectionMethod(SyncCasoStageToChatwootListener::class, $method);
     $rm->setAccessible(true);
 
     return $rm;
@@ -72,7 +74,7 @@ test('KAN-UNIT-004 normalizePhone strips formatting from number already with cou
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('KAN-UNIT-005 STAGE_LABEL_MAP contains all 14 canonical stage slugs', function () {
-    $rc  = new \ReflectionClass(SyncCasoStageToChatwootListener::class);
+    $rc = new ReflectionClass(SyncCasoStageToChatwootListener::class);
     $map = $rc->getConstant('STAGE_LABEL_MAP');
 
     $required = [
@@ -103,7 +105,7 @@ test('KAN-UNIT-005 STAGE_LABEL_MAP contains all 14 canonical stage slugs', funct
 // ──────────────────────────────────────────────────────────────────────────────
 
 test('KAN-UNIT-006 CASO_STAGE_POOL contains exactly 12 labels', function () {
-    $rc   = new \ReflectionClass(SyncCasoStageToChatwootListener::class);
+    $rc = new ReflectionClass(SyncCasoStageToChatwootListener::class);
     $pool = $rc->getConstant('CASO_STAGE_POOL');
 
     expect(count($pool))->toBe(12);
@@ -117,7 +119,7 @@ test('KAN-UNIT-006 CASO_STAGE_POOL contains exactly 12 labels', function () {
 });
 
 test('KAN-UNIT-007 CASO_STAGE_POOL does NOT contain ld_ganho (lead label must not be stripped)', function () {
-    $rc   = new \ReflectionClass(SyncCasoStageToChatwootListener::class);
+    $rc = new ReflectionClass(SyncCasoStageToChatwootListener::class);
     $pool = $rc->getConstant('CASO_STAGE_POOL');
 
     expect($pool)->not->toContain('ld_ganho');
@@ -131,7 +133,7 @@ test('KAN-UNIT-008 resolvePhone returns null when caso has no person', function 
     $m = kanMethod('resolvePhone');
     $l = new SyncCasoStageToChatwootListener;
 
-    $caso = new \SuiteZap\LawFirm\Legal\Models\Caso;
+    $caso = new Caso;
     $caso->setRelation('person', null);
 
     expect($m->invoke($l, $caso))->toBeNull();
@@ -141,11 +143,12 @@ test('KAN-UNIT-009 resolvePhone returns null when person has empty contact_numbe
     $m = kanMethod('resolvePhone');
     $l = new SyncCasoStageToChatwootListener;
 
-    $person = new class {
+    $person = new class
+    {
         public array $contact_numbers = [];
     };
 
-    $caso = new \SuiteZap\LawFirm\Legal\Models\Caso;
+    $caso = new Caso;
     $caso->setRelation('person', $person);
 
     expect($m->invoke($l, $caso))->toBeNull();
@@ -155,14 +158,15 @@ test('KAN-UNIT-010 resolvePhone returns first valid phone in E.164 format', func
     $m = kanMethod('resolvePhone');
     $l = new SyncCasoStageToChatwootListener;
 
-    $person = new class {
+    $person = new class
+    {
         public array $contact_numbers = [
             ['value' => '11999998888', 'label' => 'phone'],
             ['value' => '11888887777', 'label' => 'phone'],
         ];
     };
 
-    $caso = new \SuiteZap\LawFirm\Legal\Models\Caso;
+    $caso = new Caso;
     $caso->setRelation('person', $person);
 
     expect($m->invoke($l, $caso))->toBe('+5511999998888');
@@ -172,14 +176,15 @@ test('KAN-UNIT-011 resolvePhone skips entries with empty value and returns next 
     $m = kanMethod('resolvePhone');
     $l = new SyncCasoStageToChatwootListener;
 
-    $person = new class {
+    $person = new class
+    {
         public array $contact_numbers = [
             ['value' => '', 'label' => 'phone'],
             ['value' => '21987654321', 'label' => 'phone'],
         ];
     };
 
-    $caso = new \SuiteZap\LawFirm\Legal\Models\Caso;
+    $caso = new Caso;
     $caso->setRelation('person', $person);
 
     expect($m->invoke($l, $caso))->toBe('+5521987654321');
@@ -216,8 +221,8 @@ test('KAN-UNIT-014 getDynamicCrmTagPool always includes CASO_STAGE_POOL even whe
     $l = new SyncCasoStageToChatwootListener;
 
     // Tag::pluck will fail (no MySQL) — static pool must still be in result.
-    $pool       = $m->invoke($l);
-    $rc         = new \ReflectionClass(SyncCasoStageToChatwootListener::class);
+    $pool = $m->invoke($l);
+    $rc = new ReflectionClass(SyncCasoStageToChatwootListener::class);
     $staticPool = $rc->getConstant('CASO_STAGE_POOL');
 
     foreach ($staticPool as $label) {
@@ -241,7 +246,7 @@ test('KAN-UNIT-015 getDynamicCrmTagPool returns unique values only', function ()
 
 test('KAN-UNIT-016 SyncCasoStageToChatwootListener implements ShouldQueue', function () {
     expect(new SyncCasoStageToChatwootListener)
-        ->toBeInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class);
+        ->toBeInstanceOf(ShouldQueue::class);
 });
 
 test('KAN-UNIT-017 SyncCasoStageToChatwootListener dispatches to the default queue', function () {
