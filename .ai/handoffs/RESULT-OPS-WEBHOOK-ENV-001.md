@@ -10,14 +10,14 @@ ROLE:
 Security QA / Infrastructure
 
 WORKSPACE:
-DSK7 — d:\Z.Hermes\www\adv-crm — branch 2.1 @ 39a5047f
+DSK7 — d:\Z.Hermes\www\adv-crm — branch 2.1 @ b7e2e087 (revalidado em 2026-10-03)
 
 ---
 
 ENTRY GATES:
 
 LOCK:
-`.ai/locks/OPS-WEBHOOK-ENV-001.lock.yaml` acquired (base commit 39a5047f), status IN_PROGRESS.
+`.ai/locks/OPS-WEBHOOK-ENV-001.lock.yaml` acquired (base commit b7e2e087), status IN_PROGRESS -> IMPLEMENTED_NOT_VERIFIED.
 
 ---
 
@@ -130,4 +130,4 @@ Nenhuma operação de escrita em dados de produção.
 
 ---
 
-*Entregue pelo ANTIGRAVITY em 2026-10-02 — base 2.1 @ 39a5047f. Task OPS-WEBHOOK-ENV-001.*
+*Entregue pelo ANTIGRAVITY em 2026-10-02 e revalidado contra stack ao vivo em 2026-10-03 — base 2.1 @ b7e2e087. Task OPS-WEBHOOK-ENV-001 (IMPLEMENTED_NOT_VERIFIED).*

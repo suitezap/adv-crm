@@ -49,12 +49,12 @@ Follow-ups documentados em `.ai/TASKS.md`: `DOC-001`, `GAP-001`, `KAN-001` (rest
 
 ## 6. Próximo Passo Seguro
 
-**Bloqueado por 2 furos de segurança** (`WEBHOOK-SEC-002` e `WEBHOOK-SEC-003`): o webhook do Escavador é rota
-pública sem autenticação e altera saldo financeiro. **Corrigir antes de qualquer teste de webhook** — o
-`ENV-001` vai exercitar esses endpoints.
+A base de segurança e o teste de ambiente foram concluídos com sucesso:
+- **`WEBHOOK-SEC-002`** (middleware fail-closed no Escavador) e **`WEBHOOK-SEC-003`** (log critical no Asaas) commitados em `4c3ce129`.
+- **`OPS-WEBHOOK-ENV-001`** executado no DSK7 pelo Antigravity com a stack Docker ativa: guard de isolamento aprovado e matriz fail-closed dos 5 endpoints comprovada.
 
-Ordem: Furo A → Furo B → `ENV-001` no DSK7 (Antigravity) → `SEC-001` (DSK7 popula segredos) → `VER-001` (Hermes).
-
-Atualizar o serviço na VPS para `suitezap/lawfirm:v3.56.3` fica para depois dos furos.
+**Próxima etapa da cadeia:**
+1. **`OPS-WEBHOOK-SEC-001`** (DSK7 / operador): Criar os tokens nos painéis externos (Asaas, Evolution) e gravar direto no banco de produção (segredo nunca passa por agente).
+2. **`OPS-WEBHOOK-VER-001`** (Hermes): Validar o comportamento ponta a ponta na VPS e emitir veredito de QA para encerrar a `OPS-WEBHOOK-001`.
 ---
-*2026-09-30: state refreshed after DOC-002 e DOCKER-005 (v3.56.3) — CHANGELOGs e governança reconciliados; Regra 14 ativa.*
+*2026-10-03: state refreshed after KAN-001 e revalidação ao vivo de OPS-WEBHOOK-ENV-001.*
