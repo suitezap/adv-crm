@@ -37,6 +37,7 @@
 | `DOC-006` | Hermes | DONE | `.ai/logs/HERMES.md#2026-09-31-doc-006` |
 | `DOCKER-005` | OpenCode | DONE | - (ADR §4.95, bump v3.56.3) |
 | `BUGFIX-LOOKUP-001` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-09-27-bugfix-lookup-001` |
+| `REPO-HYGIENE-003` | Antigravity | DONE | `.ai/logs/ANTIGRAVITY.md#2026-10-07-repo-hygiene-003` |
 | `OPS-WEBHOOK-001` | Unassigned | TODO | - (runbook: `quality/runbooks/webhook-secrets.md`) |
 
 > **Sincronizado em 2026-09-30 (DOC-002):** `DOC-001`, `GAP-001` e `CI-001` constavam como `TODO`/`IMPLEMENTED_NOT_VERIFIED` neste índice embora já estivessem `DONE` no `TASKS.md`. Releases `DOCKER-003`, `DOCKER-004`, `DOCKER-005` e `DOC-002` devidamente catalogadas. Reconciliado.

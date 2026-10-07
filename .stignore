@@ -95,3 +95,8 @@ reports/
 (?d).agents/skills/plugins
 (?d).agents/skills/node_modules
 (?d).opencode
+
+# --- Scripts locais de sincronizacao (nao propagar credenciais) ---
+zsincroniza.ps1
+sync-db-from-vps.bat
+install.cmd

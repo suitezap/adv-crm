@@ -396,3 +396,42 @@ IMPLEMENTED_NOT_VERIFIED
 Next recommended action:
 Hermes executar validação E2E no ambiente de QA para transição para VERIFIED.
 
+---
+
+## [2026-10-07 10:00] REPO-HYGIENE-003 — Sanitização da Raiz e Proteção de Scripts de Sync <a id="2026-10-07-repo-hygiene-003"></a>
+
+Agent:
+ANTIGRAVITY
+
+Role:
+ORCHESTRATOR / IMPLEMENTER
+
+Objective:
+Sanitizar a raiz do repositório, descartando arquivos de backup proibidos (*.bak, *.bak2, *.ffs_db), scripts e logs temporários soltos na raiz; desindexar do Git e proteger scripts de sincronização temporários (zsincroniza.ps1, sync-db-from-vps.bat) com credenciais mantendo-os no disco local; isolá-los no .gitignore, .dockerignore e .stignore; realocar documentos manuais do Escavador para docs/escavador/, documentação histórica para docs/history/ e o plano de testes para quality/implementation_plan.md.
+
+Actions:
+1. Scripts de Sincronização Temporários Preservados:
+   - Mantidos fisicamente no disco para operação local do usuário (`zsincroniza.ps1`, `sync-db-from-vps.bat`).
+   - Desindexados do Git via `git rm --cached` para prevenir vazamento de credenciais e poluição do versionamento.
+   - Bloqueados explicitamente em `.gitignore`, `.dockerignore` e `.stignore`.
+2. Remoção de Arquivos Intrusos do Git:
+   - `install.cmd` (instalador CLI Antigravity baixado por engano na raiz) removido.
+   - `ARCHITECTURE.br` (resquício corrompido/incompleto de documento de arquitetura) removido.
+   - `generated_documents/Mothership_Documentacao_Consolidada_v3_54_1_1788735293517.pdf` removido e pasta ignorada.
+3. Preservação e Reorganização Documental:
+   - PDFs da API do Escavador e CSVs de precificação movidos para `docs/escavador/`.
+   - Documentos de governança e prompts antigos (`fechamento-governanca-...`, `plano-governanca-...`, `prompt-auditoria-...`, `HERMES_AGENT.md`) movidos para `docs/history/`.
+   - `implementation_plan.md` movido para `quality/implementation_plan.md`.
+4. Eliminação de Lixo Local no Disco (19 arquivos):
+   - Deletados backups proibidos: `AGENTS.md.pre-hierarquia.bak`, `ARCHITECTURE.md.bak`, `ARCHITECTURE.md.bak2`, `ARCHITECTURE_mothership_orient.md.bak`, `ARCHITECTURE_mothership_orient.md.bak2`.
+   - Deletado cache local do FreeFileSync `sync.ffs_db`.
+   - Deletados scripts soltos de debug/teste: `debug_docs*.php`, `test_active_highlight.php`, `test_delete_import.php`, `test_query.php`, `fix_tests.py`, `fix_user_create.py`, `test-dns.ps1`.
+   - Deletados logs e dumps temporários: `log_tail_temp.txt`, `042k26 Documentacao V1/V2...txt`.
+5. Validação de Qualidade:
+   - Executado `python quality/scripts/validate_test_docs.py` — APROVADO com 0 erros.
+   - Lock `.ai/locks/REPO-HYGIENE-003.lock.yaml` RELEASED.
+
+Result:
+DONE
+
+

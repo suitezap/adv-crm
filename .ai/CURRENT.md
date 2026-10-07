@@ -5,8 +5,9 @@
 ---
 
 ## 1. Onde estamos?
-A **Fase 0 (Governança, Baseline e Hardening Documental)** foi concluída. Entregues e mergeadas na `2.1`: **`FIN-COBRANCAS-001`**, **`PRIV-AUDIT-001`**, **`DOC-001`/`GAP-001`/`CI-001`/`REPO-HYGIENE-001`/`REPO-HYGIENE-002`**, e **`SEC-HARD-002` Ondas 1-3**.
+A **Fase 0 (Governança, Baseline e Hardening Documental)** foi concluída. Entregues e mergeadas na `2.1`: **`FIN-COBRANCAS-001`**, **`PRIV-AUDIT-001`**, **`DOC-001`/`GAP-001`/`CI-001`/`REPO-HYGIENE-001`/`REPO-HYGIENE-002`/`REPO-HYGIENE-003`**, e **`SEC-HARD-002` Ondas 1-3**.
 Em **2026-09-15**, entregue **`DOCKER-002`** (bump v3.56.0, migration idempotente de `chatwoot_conversation_id` em `leads`, build/push das imagens `suitezap/lawfirm:3.56.0` e `latest` no Docker Hub) e **`N8N-001`** (correção de query/expressão SQL no nó `Add Coluna Chatwoot` do workflow n8n de Triagem/Lead Tool para `$json.id`, reativação de nó de saldo SuiteCoins, e limpeza segura de dados de teste em `advdf2g` online).
+Em **2026-10-07**, concluída **`REPO-HYGIENE-003`** (sanitização da raiz do repositório, exclusão e isolamento de scripts de sincronização com credenciais no `.gitignore`/`.dockerignore`/`.stignore`, eliminação de lixos/backups locais e reorganização de manuais em `docs/escavador/` e histórico em `docs/history/`).
 
 ---
 
@@ -41,7 +42,7 @@ Follow-ups documentados em `.ai/TASKS.md`: `DOC-001`, `GAP-001`, `KAN-001` (rest
 ---
 
 ## 5. Quem está trabalhando?
-- **Antigravity (Orchestrator):** Concluiu `DOCKER-003` (bump v3.56.1, build e push Docker Hub com higiene estrita), suporte ao workflow n8n (`N8N-001`), triggers EAV e Chatwoot Lead Chat modal.
+- **Antigravity (Orchestrator):** Concluiu `REPO-HYGIENE-003` (sanitização da raiz do repositório, isolamento de scripts de sync temporários no .gitignore/.dockerignore/.stignore, descarte de backups e reorganização documental) e `DOCKER-003` (bump v3.56.1, build e push Docker Hub com higiene estrita), suporte ao workflow n8n (`N8N-001`), triggers EAV e Chatwoot Lead Chat modal.
 - **Hermes (QA Architect):** Entregou `DOC-002` (documentação v3.56.x nos CHANGELOGs, Regra 14 no validador e incidente doc-drift). VPS reconfigurada — aguarda revalidação de ambiente QA.
 - **OpenCode (Implementer):** Entregou `DOCKER-002` (v3.56.0), `DOCKER-004` (v3.56.2), `DOCKER-005` (v3.56.3). `SKILLS-UPD-001` e `SKILLS-UPD-002` concluídas e integradas com sucesso (**DONE**).
 

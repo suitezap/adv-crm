@@ -1,0 +1,22 @@
+task_id: REPO-HYGIENE-003
+owner: ANTIGRAVITY
+write_scope:
+  - .gitignore
+  - .dockerignore
+  - .stignore
+  - docs/escavador/
+  - docs/history/
+  - quality/implementation_plan.md
+  - zsincroniza.ps1
+  - sync-db-from-vps.bat
+  - install.cmd
+  - ARCHITECTURE.br
+  - generated_documents/
+  - .ai/TASKS.md
+  - .ai/LOG_INDEX.md
+  - .ai/logs/ANTIGRAVITY.md
+started_at: "2026-10-06T19:45:00-03:00"
+last_checkpoint_at: "2026-10-07T10:00:00-03:00"
+base_commit: "ba5c91cb"
+workspace: "local-antigravity"
+status: RELEASED

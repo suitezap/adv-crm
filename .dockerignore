@@ -49,3 +49,12 @@ storage/escavador/*
 /generate_escavador_parts.php
 /update_*.php
 /implementation_plan.md
+
+# Local synchronization and tooling exclusions
+/zsincroniza.ps1
+/sync-db-from-vps.bat
+/install.cmd
+/generated_documents/
+/docs/
+/openspec/
+/my-skills/

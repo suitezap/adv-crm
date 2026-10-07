@@ -104,3 +104,11 @@ openspec/
 !database/schema/*.sql
 
 
+
+# Temporary Production Synchronization Scripts (Local Only - Never Track or Deploy)
+/zsincroniza.ps1
+/sync-db-from-vps.bat
+/install.cmd
+
+# Generated Documents
+/generated_documents/
