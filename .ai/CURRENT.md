@@ -5,9 +5,10 @@
 ---
 
 ## 1. Onde estamos?
-A **Fase 0 (Governança, Baseline e Hardening Documental)** foi concluída. Entregues e mergeadas na `2.1`: **`FIN-COBRANCAS-001`**, **`PRIV-AUDIT-001`**, **`DOC-001`/`GAP-001`/`CI-001`/`REPO-HYGIENE-001`/`REPO-HYGIENE-002`/`REPO-HYGIENE-003`**, e **`SEC-HARD-002` Ondas 1-3**.
+A **Fase 0 (Governança, Baseline e Hardening Documental)** foi concluída. Entregues e mergeadas na `2.1`: **`FIN-COBRANCAS-001`**, **`PRIV-AUDIT-001`**, **`DOC-001`/`GAP-001`/`CI-001`/`REPO-HYGIENE-001`/`REPO-HYGIENE-002`/`REPO-HYGIENE-003`/`REPO-HYGIENE-004`**, e **`SEC-HARD-002` Ondas 1-3**.
 Em **2026-09-15**, entregue **`DOCKER-002`** (bump v3.56.0, migration idempotente de `chatwoot_conversation_id` em `leads`, build/push das imagens `suitezap/lawfirm:3.56.0` e `latest` no Docker Hub) e **`N8N-001`** (correção de query/expressão SQL no nó `Add Coluna Chatwoot` do workflow n8n de Triagem/Lead Tool para `$json.id`, reativação de nó de saldo SuiteCoins, e limpeza segura de dados de teste em `advdf2g` online).
 Em **2026-10-07**, concluída **`REPO-HYGIENE-003`** (sanitização da raiz do repositório, exclusão e isolamento de scripts de sincronização com credenciais no `.gitignore`/`.dockerignore`/`.stignore`, eliminação de lixos/backups locais e reorganização de manuais em `docs/escavador/` e histórico em `docs/history/`).
+Em **2026-10-08**, concluída **`REPO-HYGIENE-004`** (poda e limpeza de branches integradas: exclusão de `feature/ajustes-no-leads-view` e `feature/kanban-juridico-chatwoot` locais e `doc-005-006-reintegracao` e `feature/ajustes-no-leads-view` no GitHub).
 
 ---
 

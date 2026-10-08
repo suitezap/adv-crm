@@ -45,4 +45,6 @@
 | `OPS-WEBHOOK-001` | Operação | TODO | DSK7 | `OPS-WEBHOOK-VER-001` | **Tarefa-mãe**, dividida nas 3 acima. Cadastrar segredos de webhook em produção. Runbook: `quality/runbooks/webhook-secrets.md`. Bloqueador do piloto. |
 | `KAN-001` | Kanban / Jurídico | IMPLEMENTED_NOT_VERIFIED | Antigravity | - | Testes unitários de `SyncCasoStageToChatwootListener` (KAN-UNIT-001..018, 18/18 passing, 73 assertions, sem DB/Docker), catalogação em `quality/TEST_CATALOG.yaml` e `quality/modules/legal.md`, validador de integridade aprovado (0 erros). PENDENTE: validação E2E por Hermes. |
 | `REPO-HYGIENE-003` | Repositório / Higiene | DONE | Antigravity | - | Sanitização da raiz: untrack e proteção de scripts de sync temporários (zsincroniza.ps1, sync-db-from-vps.bat), descarte de lixos/backups locais, exclusão no .gitignore/.dockerignore/.stignore e organização documental. |
+| `REPO-HYGIENE-004` | Repositório / Higiene | DONE | Antigravity | - | Poda e limpeza de branches integradas: exclusão local (feature/ajustes-no-leads-view, feature/kanban-juridico-chatwoot) e remota (doc-005-006-reintegracao, feature/ajustes-no-leads-view) já 100% incorporadas à 2.1. |
+
 

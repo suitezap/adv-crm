@@ -434,4 +434,31 @@ Actions:
 Result:
 DONE
 
+---
+
+## [2026-10-08 09:55] REPO-HYGIENE-004 — Poda e Limpeza de Branches Integradas (Git Hygiene) <a id="2026-10-08-repo-hygiene-004"></a>
+
+Agent:
+ANTIGRAVITY
+
+Role:
+ORCHESTRATOR
+
+Objective:
+Remover branches locais e remotas obsoletas que já foram integralmente incorporadas ao branch principal `2.1`, garantindo conformidade e higiene no Git.
+
+Actions:
+1. Verificação de Merges:
+   - Verificado que `feature/ajustes-no-leads-view` e `feature/kanban-juridico-chatwoot` estavam com 0 commits divergentes em relação à `2.1`.
+   - Verificado que as branches remotas `origin/doc-005-006-reintegracao` e `origin/feature/ajustes-no-leads-view` estavam com seus deltas integralmente incorporados na `2.1`.
+2. Exclusão de Branches:
+   - Deletadas localmente: `feature/ajustes-no-leads-view` e `feature/kanban-juridico-chatwoot`.
+   - Deletadas no GitHub (`origin`): `doc-005-006-reintegracao` e `feature/ajustes-no-leads-view`.
+3. Validação:
+   - Branch `2.1` permanece ativa, limpa e sincronizada com `origin/2.1`.
+
+Result:
+DONE
+
+
 
